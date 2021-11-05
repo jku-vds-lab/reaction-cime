@@ -13,7 +13,7 @@ import { DatasetType, useCancellablePromise } from "projection-space-explorer";
 import React from "react";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import { trackPromise } from "react-promise-tracker";
-import { DEMO } from "../CIMEApp";
+import { DEMO } from "../ReactionCIMEApp";
 import { CIMEBackendFromEnv } from "../Backend/CIMEBackend";
 import { LoadingIndicatorView } from "./DatasetTabPanel";
 

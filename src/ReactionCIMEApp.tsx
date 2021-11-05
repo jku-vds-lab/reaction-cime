@@ -19,7 +19,7 @@ export const DEMO = false;
 
 PluginRegistry.getInstance().registerPlugin(new ChemPlugin());
 
-export function CIMEApp() {
+export function ReactionCIMEApp() {
   const [context] = useState(
     new API<AppState>(null, createRootReducer(CIMEReducers))
   );
@@ -39,7 +39,7 @@ export function CIMEApp() {
           },
         }}
         overrideComponents={{
-          datasetTab: DatasetTabPanel,
+          // datasetTab: DatasetTabPanel,
           appBar: CimeAppBar,
           tabs: [
             {

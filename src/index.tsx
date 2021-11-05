@@ -1,9 +1,9 @@
 import React from "react";
 import ReactDOM from "react-dom";
-import { CIMEApp } from "./CIMEApp";
+import { ReactionCIMEApp } from "./ReactionCIMEApp";
 import "./index.css";
 
 /**
  * Main entry point for the app.
  */
-ReactDOM.render(<CIMEApp />, document.getElementById("root"));
+ReactDOM.render(<ReactionCIMEApp />, document.getElementById("root"));
