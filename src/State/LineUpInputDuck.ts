@@ -92,7 +92,7 @@ const lineUpInput = (state = initialState, action): LineUpType => {
         state.filter &&
         Object.keys(state.filter).includes(action.input["key"])
       ) {
-        if (state.filter[action.input["key"]] == action.input["val_old"]) {
+        if (state.filter[action.input["key"]] === action.input["val_old"]) {
           const filter_new = { ...filter };
           filter_new[action.input["key"]] = action.input["val_new"];
           return { ...state, filter: filter_new };

@@ -1,8 +1,8 @@
 {
-  "name": "cime",
+  "name": "reaction-cime",
   "version": "0.1.0",
   "private": false,
-  "homepage": "https://github.com/jku-vds-lab/cime",
+  "homepage": "https://github.com/jku-vds-lab/reaction-cime",
   "module": "./lib/export.js",
   "types": "./lib/export.d.ts",
   "directories": {
@@ -13,7 +13,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/jku-vds-lab/cime.git"
+    "url": "https://github.com/jku-vds-lab/reaction-cime.git"
   },
   "dependencies": {
     "@emotion/react": "^11.4.1",
@@ -28,9 +28,10 @@
     "@types/react": "^17.0.33",
     "@types/react-dom": "^17.0.9",
     "d3v5": "npm:d3@5.16.0",
+    "lodash": "^4.17.21",
     "lodash.isequal": "^4.5.0",
     "node-sass": "^6.0.1",
-    "projection-space-explorer": "git+https://github.com/jku-vds-lab/projection-space-explorer.git#develop",
+    "projection-space-explorer": "git+https://github.com/jku-vds-lab/projection-space-explorer.git#develop-cime",
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
     "react-loader-spinner": "^4.0.0",
@@ -43,8 +44,10 @@
   },
   "scripts": {
     "windows-start": "react-scripts start",
-    "start": "NODE_OPTIONS=--max-old-space-size=8192 PORT=8080 react-scripts start",
-    "build": "NODE_OPTIONS=--max-old-space-size=8192 react-scripts build",
+    "start-opt": "NODE_OPTIONS=--max-old-space-size=8192 PORT=8080 react-scripts start",
+    "start": "react-scripts start",
+    "build-opt": "NODE_OPTIONS=--max-old-space-size=8192 react-scripts build",
+    "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "predeploy": "NODE_OPTIONS=--max-old-space-size=8192 npm run build",
@@ -73,7 +76,19 @@
     ]
   },
   "devDependencies": {
+    "@types/babel__generator": "^7.6.3",
+    "@typescript-eslint/eslint-plugin": "^4.33.0",
+    "@typescript-eslint/parser": "^4.33.0",
+    "babel-eslint": "^10.1.0",
     "copyfiles": "^2.4.1",
+    "eslint": "^7.32.0",
+    "eslint-config-react-app": "^6.0.0",
+    "eslint-plugin-flowtype": "^5.10.0",
+    "eslint-plugin-import": "^2.25.2",
+    "eslint-plugin-jest": "^24.7.0",
+    "eslint-plugin-jsx-a11y": "^6.4.1",
+    "eslint-plugin-react": "^7.26.1",
+    "eslint-plugin-react-hooks": "^4.2.0",
     "gh-pages": "^3.2.3"
   }
 }

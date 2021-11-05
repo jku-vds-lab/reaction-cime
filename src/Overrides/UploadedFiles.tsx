@@ -26,9 +26,6 @@ export const UploadedFiles = ({ onChange, refresh }) => {
   const [files, setFiles] = React.useState<IUploadedFile[]>([]);
   const { cancellablePromise } = useCancellablePromise();
 
-  React.useEffect(() => {
-    updateFiles();
-  }, [refresh]);
 
   var handleClick = (entry) => {
     onChange(entry);
@@ -46,6 +43,10 @@ export const UploadedFiles = ({ onChange, refresh }) => {
       loading_area
     );
   }
+  
+  React.useEffect(() => {
+    updateFiles();
+  }, [refresh]);
 
   var handleDelete = (file: IUploadedFile) => {
     cancellablePromise(CIMEBackendFromEnv.deleteFile(file.id))

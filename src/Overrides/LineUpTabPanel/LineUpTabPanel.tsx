@@ -38,7 +38,7 @@ export const LineUpTabPanel = connector(
     currentAggregation,
     splitRef,
   }: Props) => {
-    const handleChange = (_, value) => {};
+    // const handleChange = (_, value) => {};
 
     const onLoad = (filter) => {
       setLineUpInput_visibility(true);
@@ -167,6 +167,6 @@ export const LineUpTabPanel = connector(
   }
 );
 
-function dispatch(arg0: { type: string; input: any }) {
-  throw new Error("Function not implemented.");
-}
+// function dispatch(arg0: { type: string; input: any }) {
+//   throw new Error("Function not implemented.");
+// }

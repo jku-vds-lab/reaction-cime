@@ -32,7 +32,7 @@ export function similar(a: number, b: number, delta = 0.5) {
   return Math.abs(a - b) < delta;
 }
 export function isUnknown(v?: number | null) {
-  return v == null || v === undefined || isNaN(v);
+  return v === null || v === undefined || isNaN(v);
 }
 
 export function isDummyNumberFilter(filter: INumberFilter) {

@@ -236,12 +236,12 @@ export const LineUpContext = connector(function ({
         const ranking = lineup.data.getFirstRanking();
         if (key === "selection") {
           const filter_col = ranking.children.find((x) => {
-            return x.desc.column == UNIQUE_ID;
+            return x.desc.column === UNIQUE_ID;
           });
           filter_col?.clearFilter();
         } else {
           const filter_col = ranking.children.find((x) => {
-            return x.desc.column == key;
+            return x.desc.column === key;
           });
           filter_col?.clearFilter();
         }
@@ -297,7 +297,7 @@ export const LineUpContext = connector(function ({
 
     // add selection checkbox column
     let selection_col = ranking.children.find(
-      (x) => x.label == "Selection Checkboxes"
+      (x) => x.label === "Selection Checkboxes"
     );
     if (!selection_col) {
       selection_col = lineup.data.create(createSelectionDesc());
@@ -499,7 +499,7 @@ export const LineUpContext = connector(function ({
             ranking.clearFilters();
           } else if (key === "selection") {
             const filter_col = ranking.children.find((x) => {
-              return x.desc.column == UNIQUE_ID;
+              return x.desc.column === UNIQUE_ID;
             });
 
             let regex_str = "";
@@ -515,7 +515,7 @@ export const LineUpContext = connector(function ({
             });
           } else {
             const filter_col = ranking.children.find((x) => {
-              return x.desc.column == key;
+              return x.desc.column === key;
             });
             const my_regex = new RegExp(`^(.+,)?${cur_filter}(,.+)?$`, "i"); // i modifier says that it's not case sensitive; ^ means start of string; $ means end of string
             filter_col?.setFilter({
@@ -564,7 +564,7 @@ function myDynamicHeight(data: IGroupItem[], ranking: Ranking): IDynamicHeight {
         custom_chart_columns.includes(x.label)
     );
 
-    if (!cols || cols.length == 0)
+    if (!cols || cols.length === 0)
       return { defaultHeight: 25, height: () => 25, padding: () => 0 };
 
     const col_heights = cols.map((x) => {
@@ -643,7 +643,7 @@ function buildLineup(cols, data, pointColorScale, channelColor) {
           .build([])
       );
       custom_chart_columns.push(i);
-    } else if (i == PrebuiltFeatures.ClusterLabel) {
+    } else if (i === PrebuiltFeatures.ClusterLabel) {
       const clust_col = LineUpJS.buildCategoricalColumn(i, groupLabel_cat_color)
         .custom("visible", show)
         .width(70); // .asSet(',')
