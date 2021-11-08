@@ -8,8 +8,6 @@ import {
   createRootReducer,
   PSEIcons,
 } from "projection-space-explorer";
-import { ChemPlugin } from "./Cime/ChemPlugin";
-import { DatasetTabPanel } from "./Overrides/DatasetTabPanel";
 import { CimeAppBar } from "./Overrides/CimeAppBar";
 import { LineUpContext } from "./LineUpContext";
 import { LineUpTabPanel } from "./Overrides/LineUpTabPanel";
@@ -17,7 +15,7 @@ import { AppState, CIMEReducers } from "./State/Store";
 
 export const DEMO = false;
 
-PluginRegistry.getInstance().registerPlugin(new ChemPlugin());
+// PluginRegistry.getInstance().registerPlugin(new ChemPlugin());
 
 export function ReactionCIMEApp() {
   const [context] = useState(
@@ -39,7 +37,6 @@ export function ReactionCIMEApp() {
           },
         }}
         overrideComponents={{
-          // datasetTab: DatasetTabPanel,
           appBar: CimeAppBar,
           tabs: [
             {
