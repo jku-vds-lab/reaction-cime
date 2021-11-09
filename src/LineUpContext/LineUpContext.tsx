@@ -17,6 +17,7 @@ import {
   IGroupCellRenderer,
   renderMissingDOM,
   StringColumn,
+  deriveColumnDescriptions
 } from "lineupjs";
 
 import { CIMEBackendFromEnv } from "../Backend/CIMEBackend";
@@ -132,11 +133,11 @@ export const LineUpContext = connector(function ({
     return null;
   }
   let lineup_ref = React.useRef<any>();
-  console.log("test");
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const debouncedHighlight = React.useCallback(
-    _.debounce((hover_item) => setHoverstate(hover_item, UPDATER), 200),
-    []
+    _.debounce((hover_item) => setHoverstate(hover_item, UPDATER), 200)
+    ,[]
   );
 
   const preprocess_lineup_data = (data) => {
@@ -147,82 +148,72 @@ export const LineUpContext = connector(function ({
       );
     let lineup_data = new Array<any>();
     let columns = {};
-    data.forEach((element) => {
+    data.forEach(element => {
       // if(element[PrebuiltFeatures.ClusterLabel].length <= 0){
       //     element[PrebuiltFeatures.ClusterLabel] = [-1];
       // }
 
-      let row = {};
+      let row = {}
 
       for (const i in lineUpInput_columns) {
-        let col = lineUpInput_columns[i];
+          let col = lineUpInput_columns[i];
 
-        if (
-          !EXCLUDED_COLUMNS.includes(i) &&
-          (Object.keys(col.metaInformation).length <= 0 ||
-            !col.metaInformation.noLineUp)
-        ) {
-          if (
-            Object.keys(col.metaInformation).length > 0 &&
-            col.metaInformation.lineUpGroup
-          ) {
-            // if(col.metaInformation.lineUpGroup.endsWith(""))
-            const split = col.metaInformation.lineUpGroup.split("_");
-            if (split.length <= 1) {
-              // if the string is separated with and underscore, only the first part of the string is considered as the group. the second part of the string determines a sub value of this group
-              if (Object.keys(row).includes(col.metaInformation.lineUpGroup)) {
-                row[col.metaInformation.lineUpGroup].push(element[i]);
-              } else {
-                row[col.metaInformation.lineUpGroup] = [element[i]];
-                columns[col.metaInformation.lineUpGroup] = col;
-              }
-            } else {
-              const group_name = split[0];
-              const var_name = split[1];
-              if (Object.keys(row).includes(group_name)) {
-                if (Object.keys(row[group_name]).includes(var_name)) {
-                  row[group_name][var_name].push(element[i]);
-                } else {
-                  row[group_name][var_name] = [element[i]];
-                }
-              } else {
-                row[group_name] = {};
-                row[group_name][var_name] = [element[i]];
-              }
+          if (!EXCLUDED_COLUMNS.includes(i) && (Object.keys(col.metaInformation).length <= 0 || !col.metaInformation.noLineUp)) {
+              if(Object.keys(col.metaInformation).length > 0 && col.metaInformation.lineUpGroup){
+                  // if(col.metaInformation.lineUpGroup.endsWith(""))
+                  const split = col.metaInformation.lineUpGroup.split("_"); 
+                  if(split.length <=1){ // if the string is separated with an underscore, only the first part of the string is considered as the group. the second part of the string determines a sub value of this group
+                      if(Object.keys(row).includes(col.metaInformation.lineUpGroup)){
+                          row[col.metaInformation.lineUpGroup].push(element[i])
+                      }else{
+                          row[col.metaInformation.lineUpGroup] = [element[i]]
+                          columns[col.metaInformation.lineUpGroup] = col;
+                          columns[col.metaInformation.lineUpGroup].metaInformation.listData = true;
+                          columns[col.metaInformation.lineUpGroup].metaInformation.range = col.metaInformation.globalRange; //TODO: iterate over all columns and derive global min/max 
+                          columns[col.metaInformation.lineUpGroup].metaInformation.colorMapping = col.metaInformation.colorMapping;
+                      }
+                  }else{
+                      const group_name = split[0];
+                      const var_name = split[1];
+                      if(Object.keys(row).includes(group_name)){
+                          if(Object.keys(row[group_name]).includes(var_name)){
+                              row[group_name][var_name].push(element[i]);
+                          }else{
+                              row[group_name][var_name] = [element[i]];
+                          }
+                      }else{
+                          row[group_name] = {};
+                          row[group_name][var_name] = [element[i]];
 
-              // update column metaInformation
-              if (Object.keys(columns).includes(group_name)) {
-                columns[group_name].metaInformation.globalMin = Math.min(
-                  columns[group_name].metaInformation.globalMin,
-                  element[i]
-                );
-                columns[group_name].metaInformation.globalMax = Math.max(
-                  columns[group_name].metaInformation.globalMax,
-                  element[i]
-                );
-              } else {
-                columns[group_name] = col;
-                columns[group_name].metaInformation.customLineChart = true;
-                columns[group_name].metaInformation.globalMin = element[i];
-                columns[group_name].metaInformation.globalMax = element[i];
+                      }
+
+                      // update column metaInformation
+                      if(Object.keys(columns).includes(group_name)){
+                          columns[group_name].metaInformation.globalMin = Math.min(columns[group_name].metaInformation.globalMin, element[i]);
+                          columns[group_name].metaInformation.globalMax = Math.max(columns[group_name].metaInformation.globalMax, element[i]);
+                      }else{
+                          columns[group_name] = col;
+                          columns[group_name].metaInformation.customLineChart = true;
+                          columns[group_name].metaInformation.globalMin = element[i];
+                          columns[group_name].metaInformation.globalMax = element[i];
+                      }
+                  }
+              }else{
+                  row[i] = element[i];
+                  columns[i] = col;
               }
-            }
-          } else {
-            row[i] = element[i];
-            columns[i] = col;
           }
-        }
+
       }
 
-      row[PrebuiltFeatures.ClusterLabel] =
-        element[PrebuiltFeatures.ClusterLabel].toString();
+      row[PrebuiltFeatures.ClusterLabel] = element[PrebuiltFeatures.ClusterLabel].toString();
       row[UNIQUE_ID] = element["__meta__"]["meshIndex"];
       lineup_data.push(row);
 
       // console.log(element)
       // let row = Object.assign({}, element)
       // row[PrebuiltFeatures.ClusterLabel] = element[PrebuiltFeatures.ClusterLabel].toString();
-      // row[UNIQUE_ID] = element["__meta__"]["view"]["meshIndex"];
+      // row[UNIQUE_ID] = element["__meta__"]["meshIndex"];
       // lineup_data.push(row);
     });
 
@@ -288,7 +279,6 @@ export const LineUpContext = connector(function ({
     lineUpInput.lineup?.destroy();
     let lineup;
     lineup = builder.buildTaggle(lineup_ref.current);
-    console.log(lineup);
     if (dump) {
       lineup.restore(dump);
     }
@@ -332,6 +322,7 @@ export const LineUpContext = connector(function ({
       const currentSelection_scatter = lineUpInput_data
         .map((x, i) => {
           if (x.__meta__.selected) return i;
+          return undefined;
         })
         .filter((x) => x !== undefined);
 
@@ -409,6 +400,8 @@ export const LineUpContext = connector(function ({
     }
 
     setLineUpInput_lineup(lineup);
+    
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     lineUpInput_data,
     lineUpInput_columns,
@@ -454,9 +447,7 @@ export const LineUpContext = connector(function ({
 
   // this effect is allways executed after the component is rendered when currentAggregation changed
   React.useEffect(() => {
-    console.log("set selection");
     if (lineUpInput.lineup != null) {
-      console.log("set selection");
       // select those instances that are also selected in the scatter plot view
       if (
         currentAggregation.aggregation &&
@@ -465,13 +456,11 @@ export const LineUpContext = connector(function ({
         const currentSelection_scatter = lineUpInput_data
           .map((x, i) => {
             if (x.__meta__.selected) return i;
+            return undefined;
           })
           .filter((x) => x !== undefined);
         lineUpInput.lineup.setSelection(currentSelection_scatter);
 
-        console.log("set selection");
-        console.log(lineUpInput);
-        console.log(currentSelection_scatter);
 
         // const lineup_idx = lineup.renderer?.rankings[0]?.findNearest(currentSelection_scatter);
         // lineup.renderer?.rankings[0]?.scrollIntoView(lineup_idx);
@@ -485,6 +474,7 @@ export const LineUpContext = connector(function ({
         lineUpInput.lineup.setSelection([]);
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lineUpInput.lineup, currentAggregation]);
 
   React.useEffect(() => {
@@ -526,6 +516,7 @@ export const LineUpContext = connector(function ({
         }
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lineUpInput.lineup, lineUpInput.filter]);
 
   //https://github.com/lineupjs/lineup_app/blob/master/src/export.ts
@@ -617,40 +608,39 @@ function buildLineup(cols, data, pointColorScale, channelColor) {
     if (col.metaInformation.imgSmiles) {
       const smiles_col = "Structure: " + i;
       smiles_structure_columns.push(smiles_col);
-      builder.column(
-        LineUpJS.buildColumn("mySmilesStructureColumn", i)
-          .label(smiles_col)
-          .renderer("mySmilesStructureRenderer", "mySmilesStructureRenderer")
-          .width(50)
-          .build([])
-      );
+      builder.column(LineUpJS.buildColumn("mySmilesStructureColumn", i).label(smiles_col).renderer("mySmilesStructureRenderer", "mySmilesStructureRenderer").width(50).build([]));
 
-      builder.column(
-        LineUpJS.buildStringColumn(i)
-          .width(50)
-          .custom("visible", show)
-          .color(base_color)
-      );
-    } else if (col.metaInformation.customLineChart) {
+      builder.column(LineUpJS.buildStringColumn(i).width(50).custom("visible", show).color(base_color));
+  } else if(col.metaInformation.customLineChart){
       // builder.column(LineUpJS.buildNumberColumn(i).label(i).asMap().renderer("myLineChartRenderer", "myLineChartRenderer").width(50).build([]));
-      builder.column(
-        LineUpJS.buildColumn("myLineChartColumn", i)
-          .label(i)
-          .custom("min", col.metaInformation.globalMin)
-          .custom("max", col.metaInformation.globalMax)
-          .renderer("myLineChartRenderer", "myLineChartRenderer")
-          .width(150)
-          .build([])
-      );
+      builder.column(LineUpJS.buildColumn("myLineChartColumn", i).label(i).custom("min", col.metaInformation.globalMin).custom("max", col.metaInformation.globalMax).renderer("myLineChartRenderer", "myLineChartRenderer").width(150).build([]));
       custom_chart_columns.push(i);
-    } else if (i === PrebuiltFeatures.ClusterLabel) {
-      const clust_col = LineUpJS.buildCategoricalColumn(i, groupLabel_cat_color)
-        .custom("visible", show)
-        .width(70); // .asSet(',')
+  } else if(i === PrebuiltFeatures.ClusterLabel){
+      const clust_col = LineUpJS.buildCategoricalColumn(i, groupLabel_cat_color).custom("visible", show).width(70) // .asSet(',')
       builder.column(clust_col);
-    } else {
+  } else if(col.metaInformation.listData){
+      // builder.column(LineUpJS.buildNumberColumn(i, [-10,10]).asArray().width(100));
+      let column_desc = deriveColumnDescriptions(data, {columns: [i]})[0]
+      if(col.metaInformation.range){
+          column_desc["domain"] = col.metaInformation.range;
+      }
+
+      if(col.metaInformation.colorMapping){
+          if(Array.isArray(col.metaInformation.colorMapping)){
+              column_desc["colorMapping"] = {
+                  "type": "custom",
+                  "entries": col.metaInformation.colorMapping.map((item, index) => {return {"color": item, "value": index/(col.metaInformation.colorMapping.length-1)}})
+              };
+          }else{
+              column_desc["colorMapping"] = col.metaInformation.colorMapping;
+          }
+      // column_desc["colorMapping"] = "interpolateBrBG";
+      }
+      builder.column(column_desc)
+  }
+  else{
       builder.deriveColumns(i);
-    }
+  }
 
     // else if (typeof col.featureType !== 'undefined') {
     //     switch (col.featureType) {
@@ -688,30 +678,22 @@ function buildLineup(cols, data, pointColorScale, channelColor) {
 
   // builder.deriveColumns([]);
 
-  builder.column(
-    LineUpJS.buildStringColumn("Annotations").editable().color(base_color)
-  );
-  builder.column(
-    LineUpJS.buildStringColumn(UNIQUE_ID).width(50).color(base_color)
-  ); // we need this to be able to filter by all indices; this ID corresponds to the mesh index
+  builder.column(LineUpJS.buildStringColumn("Annotations").editable().color(base_color))
+    builder.column(LineUpJS.buildStringColumn(UNIQUE_ID).width(50).color(base_color)); // we need this to be able to filter by all indices; this ID corresponds to the mesh index
 
-  builder.defaultRanking(true);
-  // builder.deriveColors();
-  builder.registerRenderer(
-    "mySmilesStructureRenderer",
-    new MySmilesStructureRenderer()
-  );
-  builder.registerRenderer("myLineChartRenderer", new MyLineChartRenderer());
-  // builder.registerRenderer("myBarCellRenderer", new BarCellRenderer(true));
-  builder.registerColumnType("mySmilesStructureColumn", StructureImageColumn);
-  builder.registerColumnType("myLineChartColumn", TestColumn);
-  builder.sidePanel(true, true); // collapse side panel by default
-  builder.livePreviews({
-    filter: false,
-  });
-  //@ts-ignore
-  builder.dynamicHeight(myDynamicHeight);
-  builder.animated(false);
+    builder.defaultRanking(true);
+    // builder.deriveColors();
+    builder.registerRenderer("mySmilesStructureRenderer", new MySmilesStructureRenderer());
+    builder.registerRenderer("myLineChartRenderer", new MyLineChartRenderer());
+    // builder.registerRenderer("myBarCellRenderer", new BarCellRenderer(true));
+    builder.registerColumnType("mySmilesStructureColumn", StructureImageColumn);
+    builder.registerColumnType("myLineChartColumn", TestColumn); 
+    builder.sidePanel(true, true); // collapse side panel by default
+    builder.livePreviews({
+        filter: false
+    });
+    builder.dynamicHeight(myDynamicHeight);
+    builder.animated(false);
 
   return builder;
 }

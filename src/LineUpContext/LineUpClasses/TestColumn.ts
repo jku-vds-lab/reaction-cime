@@ -440,7 +440,7 @@ export class TestColumn extends MapColumn<number[]> {
   ): this;
   on(type: string | string[], listener: IEventListener | null): this; // required for correct typings in *.d.ts
   on(type: string | string[], listener: IEventListener | null): this {
-    return super.on(<any>type, listener);
+    return super.on(type as any, listener);
   }
 
   getOriginalMapping() {

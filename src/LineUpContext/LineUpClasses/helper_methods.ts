@@ -1,6 +1,5 @@
 import { format } from "d3v5";
 import {
-  IKeyValue,
   IMapAbleDesc,
   IMappingFunction,
   INumberFilter,
