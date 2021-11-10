@@ -27,6 +27,7 @@
     "@types/node": "^12.20.36",
     "@types/react": "^17.0.33",
     "@types/react-dom": "^17.0.9",
+    "customize-cra": "^1.0.0",
     "d3v5": "npm:d3@5.16.0",
     "lodash": "^4.17.21",
     "lodash.isequal": "^4.5.0",
@@ -43,13 +44,13 @@
     "web-vitals": "^1.1.2"
   },
   "scripts": {
-    "windows-start": "react-scripts start",
-    "start-opt": "NODE_OPTIONS=--max-old-space-size=8192 PORT=8080 react-scripts start",
-    "start": "react-scripts start",
-    "build-opt": "NODE_OPTIONS=--max-old-space-size=8192 react-scripts build",
-    "build": "react-scripts build",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject",
+    "windows-start": "react-app-rewired start",
+    "start-opt": "NODE_OPTIONS=--max-old-space-size=8192 PORT=8080 react-app-rewired start",
+    "start": "react-app-rewired start",
+    "build-opt": "NODE_OPTIONS=--max-old-space-size=8192 react-app-rewired build",
+    "build": "react-app-rewired build",
+    "test": "react-app-rewired test",
+    "eject": "react-app-rewired eject",
     "predeploy": "NODE_OPTIONS=--max-old-space-size=8192 npm run build",
     "deploy": "NODE_OPTIONS=--max-old-space-size=8192 gh-pages -d build",
     "precompile:lib": "rm -rf ./lib",
@@ -89,6 +90,7 @@
     "eslint-plugin-jsx-a11y": "^6.4.1",
     "eslint-plugin-react": "^7.26.1",
     "eslint-plugin-react-hooks": "^4.2.0",
-    "gh-pages": "^3.2.3"
+    "gh-pages": "^3.2.3",
+    "react-app-rewired": "^2.1.8"
   }
 }

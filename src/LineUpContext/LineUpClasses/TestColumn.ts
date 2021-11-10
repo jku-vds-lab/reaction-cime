@@ -320,13 +320,14 @@ export class TestColumn extends MapColumn<number[]> {
       : super.getExportValue(row, format);
   }
 
+  getFormatedLabelArray(arr): string{
+    return "[" + arr.map(item => this.numberFormat(item)).toString() + "]";
+  }
+
   getLabels(row: IDataRow) {
     const v = this.getRawValue(row);
-
-    return Object.keys(v).map((key) => ({
-      key,
-      value: v[key].map((val) => this.numberFormat(val)),
-    }));
+    console.log(v)
+    return v.map(({key, value}) => ({key, value: this.getFormatedLabelArray(value)}));
   }
 
   getSortMethod() {

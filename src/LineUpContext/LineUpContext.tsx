@@ -495,7 +495,7 @@ export const LineUpContext = connector(function ({
             let regex_str = "";
             lineUpInput.filter[key].forEach((element) => {
               regex_str += "|";
-              regex_str += element["__meta__"]["meshIndex"];
+              regex_str += element;//["__meta__"]["meshIndex"];
             });
             regex_str = regex_str.substr(1); // remove the leading "|"
             const my_regex = new RegExp(`^(${regex_str})$`, "i"); // i modifier says that it's not case sensitive; ^ means start of string; $ means end of string

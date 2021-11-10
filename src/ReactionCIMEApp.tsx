@@ -12,6 +12,7 @@ import { LineUpContext } from "./LineUpContext";
 import { LineUpTabPanel } from "./Overrides/LineUpTabPanel";
 import { AppState, CIMEReducers } from "./State/Store";
 import { DATASETCONFIG } from "./datasetconfig";
+import { AggregationTabPanel } from "./Overrides/AggregationTabPanel";
 
 export const DEMO = false;
 
@@ -49,6 +50,14 @@ export function ReactionCIMEApp() {
         },
       ],
       tabs: [
+        {
+          name: "aggregatDS",
+          //@ts-ignore
+          tab: AggregationTabPanel,
+          title: "Aggregate",
+          description: "Aggregated Dataset that should be shown in the background",
+          icon: PSEIcons.Dataset,
+        },
         {
           name: "lineup",
           //@ts-ignore
