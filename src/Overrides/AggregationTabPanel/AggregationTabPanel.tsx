@@ -1,14 +1,17 @@
 import { Box, Typography } from "@mui/material";
 import { connect, ConnectedProps } from "react-redux";
+import { setAggregateDatasetAction } from "../../State/AggregateDatasetDuck";
 import { AppState } from "../../State/Store";
 import { AggregatedDatasetDrop } from "./AggregatedDatasetDrop";
 
 const mapStateToProps = (state: AppState) => ({
   dataset: state.dataset,
   currentAggregation: state.currentAggregation,
+  datasetEntries: state.datasetEntries
 });
 
 const mapDispatchToProps = (dispatch) => ({
+  setDataset: dataset => dispatch(setAggregateDatasetAction(dataset)),
 });
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
@@ -20,7 +23,8 @@ type Props = PropsFromRedux & {
 };
 
 export const AggregationTabPanel = connector(
-  ({}: Props) => {
+  ({setDataset, datasetEntries}: Props) => {
+    console.log(datasetEntries)
     
     return (
       <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
@@ -30,9 +34,9 @@ export const AggregationTabPanel = connector(
           </Typography>
         </Box>
         <AggregatedDatasetDrop
-            onChange={() => {console.log("test")}} />
+            onChange={(dataset) => {setDataset(dataset)}} />
         <Box paddingLeft={2} paddingTop={1} paddingRight={2}>
-          ASDF
+          asdf
         </Box>
       </div>
     );

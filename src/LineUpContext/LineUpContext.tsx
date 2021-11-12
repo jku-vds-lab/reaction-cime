@@ -152,7 +152,7 @@ export const LineUpContext = connector(function ({
       // if(element[PrebuiltFeatures.ClusterLabel].length <= 0){
       //     element[PrebuiltFeatures.ClusterLabel] = [-1];
       // }
-
+      console.log(element)
       let row = {}
 
       for (const i in lineUpInput_columns) {

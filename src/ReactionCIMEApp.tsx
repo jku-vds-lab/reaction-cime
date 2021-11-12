@@ -7,14 +7,16 @@ import {
   PSEIcons,
   setDatasetEntriesAction,
 } from "projection-space-explorer";
+import * as THREE from 'three';
 import { CimeAppBar } from "./Overrides/CimeAppBar";
 import { LineUpContext } from "./LineUpContext";
 import { LineUpTabPanel } from "./Overrides/LineUpTabPanel";
 import { AppState, CIMEReducers } from "./State/Store";
 import { DATASETCONFIG } from "./datasetconfig";
 import { AggregationTabPanel } from "./Overrides/AggregationTabPanel";
+import { GLHeatmap } from "./Overrides/AggregationLayer/GLHeatmap";
+import { AggregationLayer } from "./Overrides/AggregationLayer/AggregationLayer";
 
-export const DEMO = false;
 
 // PluginRegistry.getInstance().registerPlugin(new ChemPlugin());
 
@@ -26,6 +28,7 @@ export function ReactionCIMEApp() {
   );
 
   context.store.dispatch(setDatasetEntriesAction(DATASETCONFIG))
+  
 
   return <PSEContextProvider context={context}><Application
     config={{
@@ -67,6 +70,10 @@ export function ReactionCIMEApp() {
           icon: PSEIcons.PseLineup,
         },
       ],
+      layers: [{
+        order: -1,
+        component: () => <AggregationLayer></AggregationLayer>
+      }]
     }}
   /></PSEContextProvider>
 
