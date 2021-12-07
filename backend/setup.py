@@ -6,6 +6,7 @@ setup(
     include_package_data=True,
     install_requires=[
         'flask',
+        'flask_sqlalchemy',
         'projection-space-explorer @ git+https://github.com/jku-vds-lab/projection-space-explorer.git@develop-cime#egg=projection-space-explorer&subdirectory=backend',
         'flask-cors',
         'rdkit-pypi',

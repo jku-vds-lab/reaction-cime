@@ -1,78 +1,92 @@
 
-import { CameraTransformations, RenderingContextEx } from 'projection-space-explorer'
+import { CameraTransformations, ContinuousMapping, SchemeColor } from 'projection-space-explorer'
 import * as React from 'react'
-import { connect } from 'react-redux'
+import { connect, ConnectedProps } from "react-redux";
 import * as THREE from 'three'
+import { AppState } from '../../State/Store';
+import { AggregateDataset } from '../AggregationTabPanel/AggregateDataset'
 import { GLHeatmap } from './GLHeatmap'
 
-type AggregationLayerProps = {
-    viewTransform: CameraTransformations
-}
 
-const mapStateToProps = state => ({
-    viewTransform: state.viewTransform as CameraTransformations
+
+const mapStateToProps = (state: AppState) => ({
+    aggregateDataset: state.aggregateDataset as AggregateDataset,
+    aggregateColor: state.aggregateColor,
 })
 const mapDispatchToProps = (dispatch: any) => ({
+    
 })
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
+type PropsFromRedux = ConnectedProps<typeof connector>;
 
-const AggregationLayer = connector(({  }: AggregationLayerProps) => {
-    var arr = [[-68.63237573405219,-72.60442862855822,]
-        ,[-33.4210922694048,-72.60442862855822,]
-        ,[1.7901911952425849,-72.60442862855822,0.0]
-        ,[37.00147465988998,-72.60442862855822,]
-        ,[72.21275812453736,-72.60442862855822,]
-        ,[-68.63237573405219,-35.970975946614715,]
-        ,[-33.4210922694048,-35.970975946614715,9.230136385552946]
-        ,[1.7901911952425849,-35.970975946614715,16.684928472095358]
-        ,[37.00147465988998,-35.970975946614715,22.972915986783004]
-        ,[72.21275812453736,-35.970975946614715,]
-        ,[-68.63237573405219,0.662476735328795,]
-        ,[-33.4210922694048,0.662476735328795,22.018889439919846]
-        ,[1.7901911952425849,0.662476735328795,17.09708391241856]
-        ,[37.00147465988998,0.662476735328795,21.170857542513634]
-        ,[72.21275812453736,0.662476735328795,]
-        ,[-68.63237573405219,37.295929417272305,]
-        ,[-33.4210922694048,37.295929417272305,9.370991882020375]
-        ,[1.7901911952425849,37.295929417272305,9.561317447766088]
-        ,[37.00147465988998,37.295929417272305,6.001010531532636]
-        ,[72.21275812453736,37.295929417272305,]
-        ,[-68.63237573405219,73.9293820992158,]
-        ,[-33.4210922694048,73.9293820992158,]
-        ,[1.7901911952425849,73.9293820992158,]
-        ,[37.00147465988998,73.9293820992158,]
-        ,[72.21275812453736,73.9293820992158,]];
+type AggregationLayerProps = PropsFromRedux & {
+}
 
 
-    var arr_pred = arr.map((row) => row[2]);
+const AggregationLayer = connector(({ aggregateDataset }: AggregationLayerProps) => {
+    
+    let [texture, setTexture] = React.useState(null)
+    let [width, setWidth] = React.useState(100);
+    let [height, setHeight] = React.useState(100);
 
-    var dummyRGBA = new Uint8Array(arr_pred.length * 4);
-    for(var i=0; i < arr_pred.length; i++){
-        console.log(arr_pred[i])
-        // RGB from 0 to 255
-        dummyRGBA[4*i] = 255*arr_pred[i]/23;
-        // OPACITY
-        dummyRGBA[4*i + 3] = 255;
-        // if(arr_pred[i] === undefined){
-        //     dummyRGBA[4*i + 3] = 0;
-        // }
-    }
-    let dummyDataTex = new THREE.DataTexture(dummyRGBA, Math.sqrt(arr_pred.length), Math.sqrt(arr_pred.length), THREE.RGBAFormat);
-    dummyDataTex.magFilter = THREE.LinearMipMapLinearFilter;
-    // dummyDataTex.minFilter = THREE.LinearMipMapLinearFilter;
+    React.useEffect(() => {
 
-    let texture = dummyDataTex//new THREE.TextureLoader().load('https://threejsfundamentals.org/threejs/resources/images/wall.jpg');
-    console.log(texture)
-    return <GLHeatmap
-    texture={texture}
-    size={{
-      x: 0,
-      y: 0,
-      width: 100,
-      height: 100
-    }}
-  ></GLHeatmap>
+        if(aggregateDataset && aggregateDataset.vectors){
+            
+            setWidth(aggregateDataset.bounds.x["max"]-aggregateDataset.bounds.x["min"]);
+            setHeight(aggregateDataset.bounds.y["max"]-aggregateDataset.bounds.y["min"]);
+
+            var arr_pred = aggregateDataset.vectors.map((row) => row["val"]);
+            // TODO: user input to choose colormap
+            let background_colorMapping = new ContinuousMapping(
+                {
+                    palette: [new SchemeColor('#fefefe'), new SchemeColor('#111111')],
+                    type: 'sequential'
+                },
+                // {palette:'dark2', type:'sequential'}, // TODO: use custom color scale
+                // new ContinuosScale([
+                //     new SchemeColor('#fefefe'),
+                //     new SchemeColor('#111111')
+                //   ]),
+                aggregateDataset.columns["val"].range
+            );
+
+            var bgRGBA = new Uint8Array(arr_pred.length * 4);
+            for(var i=0; i < arr_pred.length; i++){ // set opacity to 0 if value is not given
+                if(arr_pred[i] === undefined || isNaN(arr_pred[i]) || arr_pred[i] === ""){
+                    bgRGBA[4*i + 3] = 0;
+                }else{
+                    // RGB from 0 to 255
+                    var rgb = background_colorMapping.map(arr_pred[i]).rgb
+                    bgRGBA[4*i] = rgb.r;
+                    bgRGBA[4*i+1] = rgb.g;
+                    bgRGBA[4*i+2] = rgb.b;
+                    // OPACITY
+                    bgRGBA[4*i + 3] = 255;
+                }
+            }
+            let bgDataTex = new THREE.DataTexture(bgRGBA, Math.sqrt(arr_pred.length), Math.sqrt(arr_pred.length), THREE.RGBAFormat);
+            bgDataTex.magFilter = THREE.LinearMipMapLinearFilter;
+            // bgDataTex.minFilter = THREE.LinearMipMapLinearFilter;
+            
+            setTexture(bgDataTex);
+    
+        }else{
+            setTexture(null);
+        }
+    }, [aggregateDataset])
+    
+    return texture && <GLHeatmap
+        // texture={new THREE.TextureLoader().load('https://threejsfundamentals.org/threejs/resources/images/wall.jpg')}
+        texture={texture}
+        size={{
+        x: 0,
+        y: 0,
+        width: width,
+        height: height
+        }}
+    ></GLHeatmap>
     
 })
 

@@ -45,28 +45,22 @@ export const GLHeatmap = connector(({ viewTransform, texture, size }: Props) => 
     const [scene] = useState(() => new THREE.Scene())
     const [mesh, setMesh] = useState<THREE.Mesh>(new THREE.Mesh())
 
+    useEffect(() =>  {
+        ref.current.appendChild(renderer.domElement);
+    }, [])
 
     useEffect(() => {
-        ref.current.appendChild(renderer.domElement);
-
-        // var geometry = new THREE.BoxGeometry(16, 16, 16);
-        // var material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
-
         var groundMaterial = new THREE.MeshBasicMaterial({ map: texture, side: THREE.DoubleSide });
         var mesh = new THREE.Mesh(new THREE.PlaneBufferGeometry(size.width, size.height), groundMaterial);
         mesh.position.y = size.x;
         mesh.position.x = size.y;
         mesh.position.z = 0.0;
 
-        // const cube = new THREE.Mesh(geometry, material);
         scene.add(mesh);
 
         setMesh(mesh)
-    }, [])
+    }, [texture, size, size.x, size.y, size.width, size.height])
 
-    useEffect(() => {
-
-    }, [texture])
 
     useEffect(() => {
         if (viewTransform) {

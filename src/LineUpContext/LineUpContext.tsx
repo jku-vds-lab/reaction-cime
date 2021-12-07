@@ -20,11 +20,12 @@ import {
   deriveColumnDescriptions
 } from "lineupjs";
 
-import { CIMEBackendFromEnv } from "../Backend/CIMEBackend";
+import { ReactionCIMEBackendFromEnv } from "../Backend/ReactionCIMEBackend";
 import * as _ from "lodash";
 import React from "react";
 import {
   ACluster,
+  AStorytelling,
   DiscreteMapping,
   EXCLUDED_COLUMNS,
   MyWindowPortal,
@@ -33,7 +34,6 @@ import {
   setDetailVisibility,
   setHoverState,
   ShallowSet,
-  StoriesUtil,
 } from "projection-space-explorer";
 import { TestColumn } from "./LineUpClasses/TestColumn";
 import { setLineUpInput_lineup } from "../State/LineUpInputDuck";
@@ -51,7 +51,7 @@ const mapStateToProps = (state: AppState) => ({
   lineUpInput_data: state.dataset?.vectors,
   lineUpInput_columns: state.dataset?.columns,
   currentAggregation: state.currentAggregation,
-  activeStory: StoriesUtil.getActive(state.stories),
+  activeStory: AStorytelling.getActive(state.stories),
   pointColorScale: state.pointColorScale,
   channelColor: state.channelColor,
   detailView: state.detailView,
@@ -152,7 +152,6 @@ export const LineUpContext = connector(function ({
       // if(element[PrebuiltFeatures.ClusterLabel].length <= 0){
       //     element[PrebuiltFeatures.ClusterLabel] = [-1];
       // }
-      console.log(element)
       let row = {}
 
       for (const i in lineUpInput_columns) {
@@ -161,8 +160,8 @@ export const LineUpContext = connector(function ({
           if (!EXCLUDED_COLUMNS.includes(i) && (Object.keys(col.metaInformation).length <= 0 || !col.metaInformation.noLineUp)) {
               if(Object.keys(col.metaInformation).length > 0 && col.metaInformation.lineUpGroup){
                   // if(col.metaInformation.lineUpGroup.endsWith(""))
-                  const split = col.metaInformation.lineUpGroup.split("_"); 
-                  if(split.length <=1){ // if the string is separated with an underscore, only the first part of the string is considered as the group. the second part of the string determines a sub value of this group
+                  const split = col.metaInformation.lineUpGroup.split(":"); 
+                  if(split.length <=1){ // if the string is separated with a colon, only the first part of the string is considered as the group. the second part of the string determines a sub value of this group
                       if(Object.keys(row).includes(col.metaInformation.lineUpGroup)){
                           row[col.metaInformation.lineUpGroup].push(element[i])
                       }else{
@@ -375,7 +374,7 @@ export const LineUpContext = connector(function ({
             // only update, if it is a new filter
             const filter = typeof cur?.filter === "string" ? cur?.filter : null; // only allow string filters -> no regex (TODO: remove regex checkbox)
             if (lineup_smiles_col && filter) {
-              CIMEBackendFromEnv.getSubstructureCount(
+              ReactionCIMEBackendFromEnv.getSubstructureCount(
                 lineUpInput_data.map((d) => d[lineup_smiles_col.desc.column]),
                 filter
               )
@@ -921,13 +920,13 @@ export class MySmilesStructureRenderer implements ICellRendererFactory {
         // @ts-ignore
         let smiles = d.v[col.desc.column];
         // TODO: Change undefined to id, how to get dataset id?
-        CIMEBackendFromEnv.getStructureFromSmiles(
+        ReactionCIMEBackendFromEnv.getStructureFromSmiles(
           undefined,
           smiles,
           false,
           null
         ).then((x) => {
-          if (x.length > 100) {
+          if (x && x.length > 100) {
             // check if it is actually long enogh to be an img
             n.style.backgroundImage = `url('data:image/jpg;base64,${x}')`;
           } else {
@@ -956,7 +955,7 @@ export class MySmilesStructureRenderer implements ICellRendererFactory {
             });
           })
           .then(() => {
-            CIMEBackendFromEnv.getMCSFromSmilesList(formData).then((x) => {
+            ReactionCIMEBackendFromEnv.getMCSFromSmilesList(formData).then((x) => {
               n.style.backgroundImage = `url('data:image/jpg;base64,${x}')`;
               n.alt = formData.getAll("smiles_list").toString();
             });

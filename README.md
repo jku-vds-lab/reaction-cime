@@ -7,7 +7,7 @@ This is the repository for the public cime library (as discussed in the paper). 
 First clone this repository, preferably using ssh.
 
 ```
-git clone git@github.com:jku-vds-lab/cime.git
+git clone git@github.com:jku-vds-lab/reaction-cime.git
 ```
 
 After this step you can install the dependencies using
@@ -47,3 +47,16 @@ npm link projection-space-explorer
 (Note that you need to to this step AFTER the npm install step)
 
 After this step you can run your changes in PSE, then build them using the commands provided in the PSE repository.
+
+
+## run backend
+
+in "backend" folder execute: 
+
+```
+pip install -e .
+set FLASK_APP=reaction_cime
+set FLASK_ENV=development
+python -m flask run
+```
+

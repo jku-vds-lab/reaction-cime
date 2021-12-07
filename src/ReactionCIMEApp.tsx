@@ -5,18 +5,16 @@ import {
   Application,
   createRootReducer,
   PSEIcons,
-  setDatasetEntriesAction,
 } from "projection-space-explorer";
-import * as THREE from 'three';
-import { CimeAppBar } from "./Overrides/CimeAppBar";
 import { LineUpContext } from "./LineUpContext";
 import { LineUpTabPanel } from "./Overrides/LineUpTabPanel";
 import { AppState, CIMEReducers } from "./State/Store";
-import { DATASETCONFIG } from "./datasetconfig";
 import { AggregationTabPanel } from "./Overrides/AggregationTabPanel";
-import { GLHeatmap } from "./Overrides/AggregationLayer/GLHeatmap";
 import { AggregationLayer } from "./Overrides/AggregationLayer/AggregationLayer";
+import { DatasetTabPanel } from "./Overrides/Dataset/DatasetTabPanel";
+import { RemoteUMAPEmbeddingController } from "./Overrides/Embeddings/RemoteUMAPEmbeddingController";
 
+export const DEMO = false;
 
 // PluginRegistry.getInstance().registerPlugin(new ChemPlugin());
 
@@ -27,24 +25,25 @@ export function ReactionCIMEApp() {
     new API<AppState>(null, createRootReducer(CIMEReducers))
   );
 
-  context.store.dispatch(setDatasetEntriesAction(DATASETCONFIG))
+  // context.store.dispatch(setDatasetEntriesAction(DATASETCONFIG))
   
 
   return <PSEContextProvider context={context}><Application
     config={{
       preselect: {
-        initOnMount: true, // should default dataset be loaded? could specify url to default
-        url: DATASETCONFIG[0].path
+        initOnMount: false, // should default dataset be loaded? could specify url to default // TODO: define a default dataset that is already uploaded (e.g. domain.csv)
+        // url: DATASETCONFIG[0].path
       }
     }}
     features={{
-      disableEmbeddings: {
-        tsne: true,
-        forceatlas: true,
-      },
+      embeddings: [
+        {id:"umap", name:"UMAP"},
+        // {id:"umapRemote", name:"UMAP Remote", embController: new RemoteUMAPEmbeddingController()}
+      ],
     }}
     overrideComponents={{
-      appBar: CimeAppBar,
+      datasetTab: DatasetTabPanel,
+      appBar: null,//CimeAppBar, --> remove when null
       detailViews: [
         {
           name: "lineup",
@@ -70,10 +69,12 @@ export function ReactionCIMEApp() {
           icon: PSEIcons.PseLineup,
         },
       ],
-      layers: [{
-        order: -1,
-        component: () => <AggregationLayer></AggregationLayer>
-      }]
+      layers: [
+        {
+          order: -1,
+          component: () => <AggregationLayer></AggregationLayer>
+        }
+    ]
     }}
   /></PSEContextProvider>
 
