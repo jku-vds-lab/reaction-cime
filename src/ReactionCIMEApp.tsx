@@ -5,6 +5,7 @@ import {
   Application,
   createRootReducer,
   PSEIcons,
+  DEFAULT_UMAP_SETTINGS,
 } from "projection-space-explorer";
 import { LineUpContext } from "./LineUpContext";
 import { LineUpTabPanel } from "./Overrides/LineUpTabPanel";
@@ -37,7 +38,7 @@ export function ReactionCIMEApp() {
     }}
     features={{
       embeddings: [
-        {id:"umap", name:"UMAP"},
+        {id:"umap", name:"UMAP", settings: DEFAULT_UMAP_SETTINGS},
         // {id:"umapRemote", name:"UMAP Remote", embController: new RemoteUMAPEmbeddingController()}
       ],
     }}
