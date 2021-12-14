@@ -1,14 +1,11 @@
-import { Box, Typography } from "@mui/material";
-import { CategoryOptionsAPI, DatasetType, SelectFeatureComponent, useCancellablePromise } from "projection-space-explorer";
+import { Box } from "@mui/material";
+import { CategoryOptionsAPI, SelectFeatureComponent, useCancellablePromise } from "projection-space-explorer";
 import { connect, ConnectedProps } from "react-redux";
 import { setAggregateDatasetAction } from "../../State/AggregateDatasetDuck";
 import { AppState } from "../../State/Store";
 import { AggregateDataset } from "./AggregateDataset";
-import { AggregatedDatasetDrop } from "./AggregatedDatasetDrop";
-import React from "react";
 import { setAggregateColor } from "../../State/AggregateColorDuck";
 import { ReactionCIMEBackendFromEnv } from "../../Backend/ReactionCIMEBackend";
-import dataset from "projection-space-explorer/dist/components/Ducks/DatasetDuck";
 
 const mapStateToProps = (state: AppState) => ({
   aggregateColor: state.aggregateColor,

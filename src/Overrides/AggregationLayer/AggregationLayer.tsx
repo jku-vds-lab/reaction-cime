@@ -1,5 +1,5 @@
 
-import { CameraTransformations, ContinuousMapping, SchemeColor } from 'projection-space-explorer'
+import { ContinuousMapping, SchemeColor } from 'projection-space-explorer'
 import * as React from 'react'
 import { connect, ConnectedProps } from "react-redux";
 import * as THREE from 'three'
@@ -29,28 +29,29 @@ const AggregationLayer = connector(({ aggregateDataset }: AggregationLayerProps)
     let [texture, setTexture] = React.useState(null)
     let [width, setWidth] = React.useState(100);
     let [height, setHeight] = React.useState(100);
+    let [x, setX] = React.useState(0);
+    let [y, setY] = React.useState(0);
 
     React.useEffect(() => {
 
         if(aggregateDataset && aggregateDataset.vectors){
             
             setWidth(aggregateDataset.bounds.x["max"]-aggregateDataset.bounds.x["min"]);
-            setHeight(aggregateDataset.bounds.y["max"]-aggregateDataset.bounds.y["min"]);
+            setHeight(aggregateDataset.bounds.y["max"]-aggregateDataset.bounds.y["min"]); 
+
+            // need to set x and y because the center is not at 0 0 if max and min are unequal
+            setY((Math.abs(aggregateDataset.bounds.x["max"])-Math.abs(aggregateDataset.bounds.x["min"]))/2);
+            setX((Math.abs(aggregateDataset.bounds.y["max"])-Math.abs(aggregateDataset.bounds.y["min"]))/2);
 
             var arr_pred = aggregateDataset.vectors.map((row) => row["val"]);
-            // TODO: user input to choose colormap
             let background_colorMapping = new ContinuousMapping(
                 {
                     palette: [new SchemeColor('#fefefe'), new SchemeColor('#111111')],
                     type: 'sequential'
                 },
-                // {palette:'dark2', type:'sequential'}, // TODO: use custom color scale
-                // new ContinuosScale([
-                //     new SchemeColor('#fefefe'),
-                //     new SchemeColor('#111111')
-                //   ]),
                 aggregateDataset.columns["val"].range
             );
+            console.log(background_colorMapping)
 
             var bgRGBA = new Uint8Array(arr_pred.length * 4);
             for(var i=0; i < arr_pred.length; i++){ // set opacity to 0 if value is not given
@@ -81,8 +82,8 @@ const AggregationLayer = connector(({ aggregateDataset }: AggregationLayerProps)
         // texture={new THREE.TextureLoader().load('https://threejsfundamentals.org/threejs/resources/images/wall.jpg')}
         texture={texture}
         size={{
-        x: 0,
-        y: 0,
+        x: x,
+        y: y,
         width: width,
         height: height
         }}

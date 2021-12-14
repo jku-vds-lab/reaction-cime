@@ -12,11 +12,11 @@ import { DatasetDrop } from "./DatasetDrop";
 import Loader from "react-loader-spinner";
 import { AppState } from "../../State/Store";
 import { connect, ConnectedProps } from "react-redux";
-import { setAggregateDatasetAction } from "../../State/AggregateDatasetDuck";
-import { AggregateDataset } from "../AggregationTabPanel/AggregateDataset";
 import { UploadedFiles } from "./UploadedFiles";
 import { useState } from "react";
 import { BackendCSVLoader } from "./BackendCSVLoader";
+import { setAggregateDatasetAction } from "../../State/AggregateDatasetDuck";
+import { setAggregateColor } from "../../State/AggregateColorDuck";
   
   export const LoadingIndicatorView = (props) => {
     const { promiseInProgress } = usePromiseTracker({ area: props.area });
@@ -60,6 +60,8 @@ import { BackendCSVLoader } from "./BackendCSVLoader";
   });
   
   const mapDispatchToProps = (dispatch) => ({
+    setAggregateDataset: dataset => dispatch(setAggregateDatasetAction(dataset)),
+    setAggregateColor: aggregateColor => dispatch(setAggregateColor(aggregateColor)),
   });
   
   const connector = connect(mapStateToProps, mapDispatchToProps);
@@ -70,10 +72,16 @@ import { BackendCSVLoader } from "./BackendCSVLoader";
     onDataSelected
   };
 
-  export const DatasetTabPanel = connector(({onDataSelected}: Props) => {
+  export const DatasetTabPanel = connector(({onDataSelected, setAggregateColor, setAggregateDataset}: Props) => {
     const { cancellablePromise, cancelPromises } = useCancellablePromise();
     let abort_controller = new AbortController();
     const [refreshUploadedFiles, setRefreshUploadedFiles] = useState(0);
+
+    const intermediateOnDataSelected = (dataset) => {
+      setAggregateDataset(null);
+      setAggregateColor({key: "None", name: "None"});
+      onDataSelected(dataset);
+    }
   
     return (
       <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
@@ -85,7 +93,7 @@ import { BackendCSVLoader } from "./BackendCSVLoader";
   
         <DatasetDrop
           onDatasetChange={(dataset) => {
-            onDataSelected(dataset);
+            intermediateOnDataSelected(dataset);
             setRefreshUploadedFiles(refreshUploadedFiles + 1);
           }}
           cancellablePromise={cancellablePromise}
@@ -104,7 +112,7 @@ import { BackendCSVLoader } from "./BackendCSVLoader";
           new BackendCSVLoader().resolvePath(
             entry,
             (dataset) => {
-              onDataSelected(dataset);
+              intermediateOnDataSelected(dataset);
             },
             cancellablePromise,
             null,

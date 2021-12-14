@@ -201,6 +201,25 @@ export class ReactionCIMEBackend {
   };
 
 
+  public project_dataset = async(filename:string, params:object, selected_feature_info:object) => {
+    const formData = new FormData();
+    formData.append("filename", filename);
+    formData.append("params", JSON.stringify(params));
+    formData.append("selected_feature_info", JSON.stringify(selected_feature_info));
+    return fetch(this.baseUrl + "/project_dataset", {
+      method: "POST",
+      body: formData
+    })
+      .then(this.handleErrors)
+      .then((response) => response.json())
+      .then(this.handleJSONErrors)
+      .catch((error) => {
+        alert("error when projecting dataset");
+        console.log(error);
+      })
+  }
+
+
   public upload_csv_file = async (
     file,
     controller?

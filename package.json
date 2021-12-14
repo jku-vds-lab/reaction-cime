@@ -93,6 +93,7 @@
     "eslint-plugin-react": "^7.26.1",
     "eslint-plugin-react-hooks": "^4.2.0",
     "gh-pages": "^3.2.3",
-    "react-app-rewired": "^2.1.8"
+    "react-app-rewired": "^2.1.8",
+    "worker-loader": "^3.0.8"
   }
 }

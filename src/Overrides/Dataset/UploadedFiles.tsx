@@ -18,21 +18,13 @@ import {
   import { LoadingIndicatorView } from "./DatasetTabPanel";
   
 
+  const loading_area = "update_uploaded_files_list";
   export const UploadedFiles = ({ onChange, refresh }) => {
     const [files, setFiles] = React.useState<string[]>([]);
     const { cancellablePromise } = useCancellablePromise();
   
-    React.useEffect(() => {
-      updateFiles();
-    }, [refresh]);
-  
-    var handleClick = (entry) => {
-      onChange(entry);
-    };
-  
-    const loading_area = "update_uploaded_files_list";
-  
-    function updateFiles() {
+    
+    const updateFiles = () => {
       trackPromise(
         cancellablePromise(ReactionCIMEBackendFromEnv.getUploadedFiles())
           .then((data) => {
@@ -42,6 +34,16 @@ import {
         loading_area
       );
     }
+
+    React.useEffect(() => {
+      updateFiles();
+    }, [refresh]);
+  
+    var handleClick = (entry) => {
+      onChange(entry);
+    };
+  
+  
   
     var handleDelete = (file: string) => {
       cancellablePromise(ReactionCIMEBackendFromEnv.deleteFile(file))

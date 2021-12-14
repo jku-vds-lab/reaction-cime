@@ -5,7 +5,8 @@ from rdkit import Chem
 from rdkit.Chem import Draw, rdFMCS
 from io import BytesIO
 import base64
-from .helper_functions import generate_rename_list, get_mcs, smiles_to_base64, aggregate_col
+from .helper_functions import generate_rename_list, get_mcs, smiles_to_base64, aggregate_col, rescale_and_encode
+import json
 
 _log = logging.getLogger(__name__)
 
@@ -18,7 +19,7 @@ def hello():
 
 @reaction_cime_api.route('/get_uploaded_files_list', methods=['GET'])
 def get_uploaded_files_list():
-    return jsonify(list(get_cime_dbo().get_table_names()))
+    return jsonify(get_cime_dbo().get_table_names())
 
 @reaction_cime_api.route('/delete_file/<filename>', methods=['GET'])
 def delete_uploaded_file(filename):
@@ -31,6 +32,7 @@ def delete_uploaded_file(filename):
 
 def get_cime_dbo():
     return current_app.config['REACTION_CIME_DBO']
+
 
 # --------------- process dataset ------------------
 import os
@@ -89,10 +91,8 @@ def get_points_of_interest(filename):
     # domain = pd.read_csv("./temp-files/%s"%filename)
     # domain = get_cime_dbo().get_dataframe_from_table(filename)
 
-    # TODO: make dynamic, by which feature we want to filter (e.g. user could change the settings in the front-end maybe with parallel coordinates?)
-    # poi_domain = domain[domain['yield']>0]
     print(filename)
-    poi_domain = get_cime_dbo().get_dataframe_from_table_filter(filename, "yield > 0")
+    poi_domain = get_poi_df_from_db(filename)
     print(len(poi_domain))
 
     new_cols = generate_rename_list(poi_domain)
@@ -104,6 +104,11 @@ def get_points_of_interest(filename):
     return csv_buffer.getvalue()
 
 
+def get_poi_df_from_db(filename):
+    # TODO: make dynamic, by which feature we want to filter (e.g. user could change the settings in the front-end maybe with parallel coordinates?)
+    poi_domain = get_cime_dbo().get_dataframe_from_table_filter(filename, "yield > 0")
+    return poi_domain
+
 @reaction_cime_api.route('/get_agg_csv/<filename>/<col_name>', methods=['GET'])
 def get_aggregated_dataset(filename, col_name):
     agg_domain = get_cime_dbo().get_dataframe_from_table(filename, columns=["x", "y", col_name])
@@ -113,6 +118,70 @@ def get_aggregated_dataset(filename, col_name):
     agg_df.to_csv(csv_buffer, index=False)
 
     return csv_buffer.getvalue()
+
+
+from openTSNE import TSNE
+import umap
+from sklearn.decomposition import PCA
+import gower
+@reaction_cime_api.route('/project_dataset', methods=['OPTIONS', 'POST'])
+def project_dataset():
+    filename = request.form.get("filename")
+    params = json.loads(request.form.get("params"))
+    selected_feature_info = json.loads(request.form.get("selected_feature_info"))
+    proj_df = get_cime_dbo().get_dataframe_from_table(filename, columns=list(selected_feature_info.keys()))
+
+    # TODO: if params["useSelection"]: only project selected points --> do this in front-end? do this at all?
+
+    # handle custom initialization of coordinates
+    initialization = None
+    if params["seeded"]: # take custom seed from current coordinates
+        initialization = get_poi_df_from_db(filename)[["x","y"]].values
+
+
+    # rescale numerical values and encode categorical values
+    proj_df, categorical_features = rescale_and_encode(proj_df, params, selected_feature_info)
+
+
+    # handle custom metrics
+    metric = params["distanceMetric"]
+    if metric == None or metric == "":
+        metric = "euclidean"
+    if metric == "gower": # we precompute the similarity matrix with the gower metric
+        metric = "precomputed"
+        normalized_values = gower.gower_matrix(proj_df, cat_features=categorical_features)
+    else: # otherwise, the similarity can be done by a pre-configured function and we just hand over the values
+        normalized_values = proj_df.values
+
+
+
+    # project the data
+    if params["embedding_method"] == "umap":
+        if initialization == None:
+            initialization = "spectral"
+        proj = umap.UMAP(n_neighbors=int(params["nNeighbors"]), n_components=2, metric=metric, n_epochs=int(params["iterations"]), init=initialization, verbose=True) # output_metric="euclidean" --> ? learning_rate=float(params["learningRate"]) --> if we have user input for this, we would need "auto" as an option 
+        proj_data = proj.fit_transform(normalized_values)
+    elif params["embedding_method"] == "tsne":
+        if initialization == None:
+            initialization = "pca"
+        proj = TSNE(2, metric=metric, perplexity=int(params["perplexity"]), n_iter=int(params["iterations"]), initialization=initialization, verbose=True) #, learning_rate=float(params["learningRate"]) --> if we have user input for this, we would need "auto" as an option 
+        proj_data = proj.fit(normalized_values)
+    else:
+        print("--- defaulting to PCA embedding")
+        pca = PCA(n_components=2)
+        proj_data = pca.fit_transform(normalized_values)
+
+
+    # update the coordinates in the dataset
+    start_time = time.time()
+    get_cime_dbo().update_row_bulk(filename, proj_df.index, {"x":proj_data[:,0], "y": proj_data[:,1]})
+    delta_time = time.time()-start_time
+    print("--- took", time.strftime('%H:%M:%S', time.gmtime(delta_time)), "to update database")
+    print("--- took %i min %f s to update database"%(delta_time/60, delta_time%60))
+
+    print("return poi positions")
+    return {"done": "true", "embedding": get_poi_df_from_db(filename)[["x","y"]].to_dict('records')}
+
 
 
 # --------------- chem specific ------------------- 

@@ -4,20 +4,20 @@
 
 import re
 
-def add_meta_info_time_series_data(column, timesteps, featureLabel, lineUpGroup, globalRange=None, colorMapping=None):
-    for t in range(timesteps):
-        modifiers = '"featureLabel":"%s", "lineUpGroup":"%s", "project":false'%(featureLabel, lineUpGroup)
-        if globalRange:
-            modifiers += ', "globalRange":%s'%globalRange
-        if colorMapping:
-            modifiers += ', "colorMapping":['
-            for c in colorMapping: # need to do it this way, because otherwise it gives single quotes...
-                modifiers += '"%s",'%c
-            modifiers = modifiers[:-1] # remove last comma
-            modifiers += ']'
+# def add_meta_info_time_series_data(column, timesteps, featureLabel, lineUpGroup, globalRange=None, colorMapping=None):
+#     for t in range(timesteps):
+#         modifiers = '"featureLabel":"%s", "lineUpGroup":"%s", "project":false'%(featureLabel, lineUpGroup)
+#         if globalRange:
+#             modifiers += ', "globalRange":%s'%globalRange
+#         if colorMapping:
+#             modifiers += ', "colorMapping":['
+#             for c in colorMapping: # need to do it this way, because otherwise it gives single quotes...
+#                 modifiers += '"%s",'%c
+#             modifiers = modifiers[:-1] # remove last comma
+#             modifiers += ']'
             
-        col = column%t
-        rename_dict[col] = '%s{%s}'%(col, modifiers)
+#         col = column%t
+#         rename_dict[col] = '%s{%s}'%(col, modifiers)
 
 
 def generate_global_ranges(domain):
@@ -128,6 +128,57 @@ def aggregate_col(df, value_col, sample_size=200):
     
     return pd.DataFrame({"x": Xi.flatten(), "y": Yi.flatten(), "val": zi.flatten()})
 
+
+# --- rescale and encode values
+def rescale_and_encode(proj_df, params, selected_feature_info):
+    categorical_feature_list = []
+    for col in selected_feature_info.keys():
+        info = selected_feature_info[col]
+
+        if info["featureType"] == "String":
+            proj_df = proj_df.drop(columns = [col])
+            print("featureType: String --> TODO: handle")
+
+        elif info["featureType"] == "Quantitative":
+            if info["normalize"]:
+                if params["normalizationMethod"] == "normalize01": # scale values between [0;1]
+                    div = info["range"]["max"] - info["range"]["min"]
+                    if div == 0: # when all values are equal in a column, the range is 0, which would lead to an error
+                        div = 1
+                    proj_df[col] = (proj_df[col] - info["range"]["min"]) / div
+                else: # otherwise: "standardize" values to have 0 mean and unit standard deviation
+                    mean = proj_df[col].mean()
+                    std = proj_df[col].std()
+                    if(std <= 0): # when all values are equal in a column, the standard deviation can be 0, which would lead to an error
+                        std = 1
+                    proj_df[col] = (proj_df[col]-mean)/std
+            
+        elif info["featureType"] == "Categorical":
+            if params["encodingMethod"] == "onehot":
+                hot_encoded = pd.get_dummies(proj_df[col], prefix=col, dummy_na=True)
+                proj_df = proj_df.drop(columns = [col])
+                proj_df = proj_df.join(hot_encoded)
+            else:
+                categorical_feature_list.append(col)
+                proj_df[col] = pd.Categorical(proj_df[col]).codes
+
+        elif info["featureType"] == "Date":
+            proj_df = proj_df.drop(columns = [col])
+            print("featureType: Date --> TODO: handle")
+
+        elif info["featureType"] == "Binary":
+            proj_df[col] = pd.Categorical(proj_df[col]).codes
+
+        elif info["featureType"] == "Ordinal":
+            proj_df = proj_df.drop(columns = [col])
+            print("featureType: Ordinal --> TODO: handle")
+
+        elif info["featureType"] == "Array":
+            proj_df = proj_df.drop(columns = [col])
+            print("featureType: Array --> TODO: handle")
+
+    categorical_features = [col in categorical_feature_list for col in proj_df.columns] #np.zeros((len(proj_df.columns),), dtype=np.bool)
+    return proj_df, categorical_features
 
 
 # ----------------- chem functions ----------------------

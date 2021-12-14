@@ -6,6 +6,7 @@ import {
   createRootReducer,
   PSEIcons,
   DEFAULT_UMAP_SETTINGS,
+  DEFAULT_TSNE_SETTINGS,
 } from "projection-space-explorer";
 import { LineUpContext } from "./LineUpContext";
 import { LineUpTabPanel } from "./Overrides/LineUpTabPanel";
@@ -13,7 +14,7 @@ import { AppState, CIMEReducers } from "./State/Store";
 import { AggregationTabPanel } from "./Overrides/AggregationTabPanel";
 import { AggregationLayer } from "./Overrides/AggregationLayer/AggregationLayer";
 import { DatasetTabPanel } from "./Overrides/Dataset/DatasetTabPanel";
-import { RemoteUMAPEmbeddingController } from "./Overrides/Embeddings/RemoteUMAPEmbeddingController";
+import { RemoteEmbeddingController } from "./Overrides/Embeddings/RemoteEmbeddingController";
 
 export const DEMO = false;
 
@@ -38,8 +39,9 @@ export function ReactionCIMEApp() {
     }}
     features={{
       embeddings: [
-        {id:"umap", name:"UMAP", settings: DEFAULT_UMAP_SETTINGS},
-        // {id:"umapRemote", name:"UMAP Remote", embController: new RemoteUMAPEmbeddingController()}
+        // {id:"umap", name:"UMAP", settings: DEFAULT_UMAP_SETTINGS},
+        {id:"umapRemote", name:"UMAP Remote", settings: {nneighbors:true}, embController: new RemoteEmbeddingController("umap")},
+        {id:"tsneRemote", name:"t-SNE Remote", settings: {perplexity:true}, embController: new RemoteEmbeddingController("tsne")}
       ],
     }}
     overrideComponents={{
