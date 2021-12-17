@@ -29,7 +29,7 @@ export const DatasetDrop = ({
           var fileName = file.name as string;
 
           if (fileName.endsWith("csv")) {
-            abort_controller = new AbortController();
+            // abort_controller = new AbortController();
             new BackendCSVLoader().resolveContent(
                 file,
                 onDatasetChange,

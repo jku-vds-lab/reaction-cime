@@ -1,5 +1,5 @@
 import pickle
-from flask import Blueprint, request, current_app, abort, jsonify
+from flask import Blueprint, request, current_app, abort, jsonify, Response, stream_with_context
 import logging
 from rdkit import Chem
 from rdkit.Chem import Draw, rdFMCS
@@ -92,7 +92,7 @@ def get_points_of_interest(filename):
     # domain = get_cime_dbo().get_dataframe_from_table(filename)
 
     print(filename)
-    poi_domain = get_poi_df_from_db(filename)
+    poi_domain = get_poi_df_from_db(filename, get_cime_dbo())
     print(len(poi_domain))
 
     new_cols = generate_rename_list(poi_domain)
@@ -104,10 +104,14 @@ def get_points_of_interest(filename):
     return csv_buffer.getvalue()
 
 
-def get_poi_df_from_db(filename):
+def get_poi_df_from_db(filename, cime_dbo):
     # TODO: make dynamic, by which feature we want to filter (e.g. user could change the settings in the front-end maybe with parallel coordinates?)
-    poi_domain = get_cime_dbo().get_dataframe_from_table_filter(filename, "yield > 0")
+    poi_domain = cime_dbo.get_dataframe_from_table_filter(filename, "yield > 0")
     return poi_domain
+
+def get_poi_mask(filename, cime_dbo):
+    mask = cime_dbo.get_filter_mask(filename, "yield > 0")
+    return mask
 
 @reaction_cime_api.route('/get_agg_csv/<filename>/<col_name>', methods=['GET'])
 def get_aggregated_dataset(filename, col_name):
@@ -136,7 +140,7 @@ def project_dataset():
     # handle custom initialization of coordinates
     initialization = None
     if params["seeded"]: # take custom seed from current coordinates
-        initialization = get_poi_df_from_db(filename)[["x","y"]].values
+        initialization = get_poi_df_from_db(filename, get_cime_dbo())[["x","y"]].values
 
 
     # rescale numerical values and encode categorical values
@@ -159,6 +163,7 @@ def project_dataset():
     if params["embedding_method"] == "umap":
         if initialization == None:
             initialization = "spectral"
+
         proj = umap.UMAP(n_neighbors=int(params["nNeighbors"]), n_components=2, metric=metric, n_epochs=int(params["iterations"]), init=initialization, verbose=True) # output_metric="euclidean" --> ? learning_rate=float(params["learningRate"]) --> if we have user input for this, we would need "auto" as an option 
         proj_data = proj.fit_transform(normalized_values)
     elif params["embedding_method"] == "tsne":
@@ -180,8 +185,204 @@ def project_dataset():
     print("--- took %i min %f s to update database"%(delta_time/60, delta_time%60))
 
     print("return poi positions")
-    return {"done": "true", "embedding": get_poi_df_from_db(filename)[["x","y"]].to_dict('records')}
+    return {"done": "true", "embedding": get_poi_df_from_db(filename, get_cime_dbo())[["x","y"]].to_dict('records')}
 
+
+
+@reaction_cime_api.route('/terminate_projection_thread/<filename>', methods=["GET"])
+def terminate_projection_thread(filename):
+    current_app.config["TERMINATE_PROJECTION_" + filename] = True
+    return {"msg": "ok"}
+
+    
+import threading
+import ctypes
+import time
+  
+# https://www.geeksforgeeks.org/python-different-ways-to-kill-a-thread/
+class ProjectionThread(threading.Thread):
+    def __init__(self, filename, params, selected_feature_info, cime_dbo):
+        threading.Thread.__init__(self)
+        self.filename = filename
+        self.params = params
+        self.selected_feature_info = selected_feature_info
+        self.cime_dbo = cime_dbo
+
+        self.current_step = "0"
+        self.done = False
+        self.emb = None
+        self.msg = "init..."
+             
+    def run(self):
+        try:
+
+            self.msg = "load dataset..."
+            self.proj_df = self.cime_dbo.get_dataframe_from_table(self.filename, columns=list(self.selected_feature_info.keys()))
+
+            self.msg = "seeding..."
+            # handle custom initialization of coordinates
+            initialization = None
+            if self.params["seeded"]: # take custom seed from current coordinates
+                initialization = get_poi_df_from_db(self.filename, self.cime_dbo)[["x","y"]].values
+
+            # TODO: if params["useSelection"]: only project selected points --> do this in front-end? do this at all?
+
+            self.msg = "rescale and encode..."
+            # rescale numerical values and encode categorical values
+            proj_df, categorical_features = rescale_and_encode(self.proj_df, self.params, self.selected_feature_info)
+
+
+            self.msg = "calc metric..."
+            # handle custom metrics
+            metric = self.params["distanceMetric"]
+            if metric == None or metric == "":
+                metric = "euclidean"
+            if metric == "gower": # we precompute the similarity matrix with the gower metric
+                metric = "precomputed"
+                normalized_values = gower.gower_matrix(proj_df, cat_features=categorical_features)
+            else: # otherwise, the similarity can be done by a pre-configured function and we just hand over the values
+                normalized_values = proj_df.values
+
+            
+            self.msg = "calc embedding..."
+            # project the data
+            # --- umap
+            if self.params["embedding_method"] == "umap":
+                if initialization == None:
+                    initialization = "spectral"
+
+                # https://pypi.org/project/tqdm/#parameters
+                # use TQDM to update steps for front-end
+                class CustomTQDM:
+                    def __init__(self, parent):
+                        self.parent = parent
+
+                    def write(self, str):
+                        try:
+                            int(str) # if it is not possible to parse it as int, we reached the end?
+                            self.parent.current_step = str
+                        except ValueError:
+                            print(str)
+                        
+                    def flush(self):
+                        pass
+
+                proj = umap.UMAP(n_neighbors=int(self.params["nNeighbors"]), n_components=2, metric=metric, n_epochs=int(self.params["iterations"]), init=initialization, tqdm_kwds={"bar_format": '{n_fmt}' ,"file": CustomTQDM(self)}, verbose=True) # output_metric="euclidean" --> ? learning_rate=float(params["learningRate"]) --> if we have user input for this, we would need "auto" as an option 
+                proj_data = proj.fit_transform(normalized_values)
+
+            # --- tsne
+            elif self.params["embedding_method"] == "tsne":
+                # https://github.com/pavlin-policar/openTSNE/blob/master/openTSNE/callbacks.py
+                from openTSNE.callbacks import Callback
+                class CustomCallback(Callback):
+                    def __init__(self, parent):
+                        self.parent = parent
+                        
+                    def optimization_about_to_start(self):
+                        """This is called at the beginning of the optimization procedure."""
+                        print("start optimization")
+                        pass
+                        
+                    def __call__(self, iteration, error, embedding): # error is current KL divergence of the given embedding
+                        poi_mask = get_poi_mask(self.parent.filename, self.parent.cime_dbo)
+                        self.parent.current_step = iteration
+                        self.parent.emb = [{"x": row[0], "y": row[1]} for row in embedding[poi_mask["mask"]]]
+                #         return True # with this optimization will be interrupted
+
+                if initialization == None:
+                    initialization = "pca"
+                proj = TSNE(2, metric=metric, callbacks_every_iters=10, callbacks=[CustomCallback(self)], perplexity=int(self.params["perplexity"]), n_iter=int(self.params["iterations"]), initialization=initialization, verbose=True) #, learning_rate=float(params["learningRate"]) --> if we have user input for this, we would need "auto" as an option 
+                proj_data = proj.fit(normalized_values)
+            # --- pca
+            else:
+                print("--- defaulting to PCA embedding")
+                pca = PCA(n_components=2)
+                proj_data = pca.fit_transform(normalized_values)
+
+            self.msg = "save embedding..."
+            # update the coordinates in the dataset
+            start_time = time.time()
+            self.cime_dbo.update_row_bulk(self.filename, proj_df.index, {"x":proj_data[:,0], "y": proj_data[:,1]})
+            delta_time = time.time()-start_time
+            print("--- took", time.strftime('%H:%M:%S', time.gmtime(delta_time)), "to update database")
+            print("--- took %i min %f s to update database"%(delta_time/60, delta_time%60))
+
+            self.msg = "finished!"
+
+        except Exception as e:
+            self.msg = "error during projection"
+            print(e)
+
+        finally:
+            self.done = True
+    
+    def get_id(self):
+ 
+        # returns id of the respective thread
+        if hasattr(self, '_thread_id'):
+            return self._thread_id
+        for id, thread in threading._active.items():
+            if thread is self:
+                return id
+  
+    def raise_exception(self):
+        thread_id = self.get_id()
+        res = ctypes.pythonapi.PyThreadState_SetAsyncExc(thread_id,
+              ctypes.py_object(SystemExit))
+        if res > 1:
+            ctypes.pythonapi.PyThreadState_SetAsyncExc(thread_id, 0)
+            print('Exception raise failure')
+
+        self.done = True
+        self.msg = "client-side termination"
+
+
+
+# differnt approach could have been with sockets: https://www.shanelynn.ie/asynchronous-updates-to-a-webpage-with-flask-and-socket-io/
+@reaction_cime_api.route('/project_dataset_async', methods=['OPTIONS', 'POST'])
+def project_dataset_async():
+    filename = request.form.get("filename")
+    params = json.loads(request.form.get("params"))
+    selected_feature_info = json.loads(request.form.get("selected_feature_info"))
+    cime_dbo = get_cime_dbo()
+
+    current_app.config["TERMINATE_PROJECTION_" + filename] = False
+
+    def my_generator():
+        
+        proj = ProjectionThread(filename, params, selected_feature_info, cime_dbo)
+        proj.start()
+        while True:
+            time.sleep(2)
+            terminate = False
+            if "TERMINATE_PROJECTION_" + filename in current_app.config.keys():
+                terminate = current_app.config["TERMINATE_PROJECTION_" + filename]
+
+            # https://stackoverflow.com/questions/41146144/how-to-fix-assertionerror-value-must-be-bytes-error-in-python2-7-with-apache
+            yield json.dumps({"step": proj.current_step, "msg": proj.msg, "emb": proj.emb}).encode('utf-8')
+            if terminate:
+                proj.raise_exception()
+                proj.join()
+            if proj.done: #proj.current_step >= params["iterations"] or proj.interrupt:
+                yield json.dumps({"step": None, "msg": None, "emb": get_poi_df_from_db(filename, cime_dbo)[["x","y"]].to_dict('records')}).encode('utf-8')
+                break
+    
+    # https://flask.palletsprojects.com/en/1.1.x/patterns/streaming/
+    return Response(stream_with_context(my_generator()))
+    
+
+# @reaction_cime_api.route('/project_dataset_async_test', methods=['OPTIONS', 'POST'])
+# def project_dataset_async_test():
+
+#     def my_generator():
+        
+#         yield json.dumps({"step":1, "emb":"hello"}).encode('utf-8')
+#         time.sleep(5)
+#         yield json.dumps({"step":2, "emb":"hello2"}).encode('utf-8')
+#         yield json.dumps({"step":3, "emb":"hello3"}).encode('utf-8')
+#         time.sleep(1)
+#         yield json.dumps({"step":5, "emb":"hello4"}).encode('utf-8')
+#     return Response(my_generator())
 
 
 # --------------- chem specific ------------------- 

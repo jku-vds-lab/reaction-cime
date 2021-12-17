@@ -36,15 +36,26 @@ export class RemoteEmbeddingController extends EmbeddingController {
         })
 
         this.worker.addEventListener('message', (e) => {
-            var Y = e.data
-            this.stepper(Y)
-            this.notifier()
+            if(e.data.messageType === "step"){
+                this.stepper(e.data["embedding"])
+                this.notifier(e.data["step"], e.data["msg"])
+            }else if(e.data.messageType === "terminated"){
+                this.worker.terminate();
+            }
         }, false);
     }
 
-    step() {
+    terminate(){
         this.worker.postMessage({
-            messageType: 'step'
-        })
+            messageType: 'abort'
+        });
+        
+    }
+
+    step() {
+        // step is not controlled by the ProjectionControlCard anymore
+        // this.worker.postMessage({
+        //     messageType: 'step'
+        // })
     }
 }

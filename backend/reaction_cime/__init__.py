@@ -1,17 +1,12 @@
-from sqlalchemy.sql.expression import table
-from sqlalchemy.sql.sqltypes import INTEGER
 from .reaction_cime_api import reaction_cime_api
-from projection_space_explorer import pse_api
-from .db import ACimeDBO
 from flask import Flask
 from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
 import os
 import logging
 import pandas as pd
-from sqlalchemy import MetaData, Table, schema, update, Column, Integer, String, PickleType
+from sqlalchemy import MetaData, Table
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import Session
 
 
 def create_app():
@@ -21,7 +16,7 @@ def create_app():
     CORS(app)
 
     basedir = os.path.abspath(os.path.dirname(__file__))
-    temp_dir = os.path.join(basedir, 'temp-files/')
+    temp_dir = os.path.join(basedir, '../../temp-files/')
     if not os.path.exists(temp_dir):
         os.makedirs(temp_dir)
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + temp_dir + 'app.sqlite' #'sqlite://' + app.config['REACTION_CIME_FILES_DIRECTORY'] + "//app.sqlite"
@@ -133,7 +128,12 @@ class ReactionCIMEDBO():
     def get_dataframe_from_table_filter(self, table_name, filter):
         sql_stmt = "SELECT * FROM " + table_name + " WHERE " + filter
         return pd.read_sql(sql_stmt, self.db.engine, index_col="id")
-    
+
+    def get_filter_mask(self, table_name, filter):
+        sql_stmt = "SELECT id, CASE WHEN " + filter + " THEN true ELSE false END as mask FROM " + table_name
+        mask = pd.read_sql(sql_stmt, self.db.engine, index_col="id")
+        mask["mask"] = mask["mask"].astype("bool")
+        return mask
     def drop_table(self, table_name):
         base = declarative_base()
         table = self.metadata.tables.get(table_name)

@@ -176,6 +176,8 @@ export class ReactionCIMEBackend {
       });
   };
 
+
+
   public calculateHDBScanClusters = async (
     X,
     min_cluster_size,
@@ -201,20 +203,33 @@ export class ReactionCIMEBackend {
   };
 
 
-  public project_dataset = async(filename:string, params:object, selected_feature_info:object) => {
-    const formData = new FormData();
-    formData.append("filename", filename);
-    formData.append("params", JSON.stringify(params));
-    formData.append("selected_feature_info", JSON.stringify(selected_feature_info));
-    return fetch(this.baseUrl + "/project_dataset", {
-      method: "POST",
-      body: formData
+  public terminate_projection = async (filename): Promise<{ response: any }> => {
+    console.log("backend: terminate_projection")
+    let path = this.baseUrl + "/terminate_projection_thread/" + filename;
+
+    return fetch(path, {
+      ...this.fetchParams,
+      method: "GET",
     })
       .then(this.handleErrors)
       .then((response) => response.json())
       .then(this.handleJSONErrors)
       .catch((error) => {
-        alert("error when projecting dataset");
+        console.log(error);
+      });
+  };
+
+  public project_dataset = async(filename:string, params:object, selected_feature_info:object, controller?) => {
+    const formData = new FormData();
+    formData.append("filename", filename);
+    formData.append("params", JSON.stringify(params));
+    formData.append("selected_feature_info", JSON.stringify(selected_feature_info));
+    return fetch(this.baseUrl + "/project_dataset_async", {
+      method: "POST",
+      body: formData,
+      signal: controller?.signal,
+    }).then(this.handleErrors)
+      .catch((error) => {
         console.log(error);
       })
   }

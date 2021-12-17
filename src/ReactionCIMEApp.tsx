@@ -5,8 +5,6 @@ import {
   Application,
   createRootReducer,
   PSEIcons,
-  DEFAULT_UMAP_SETTINGS,
-  DEFAULT_TSNE_SETTINGS,
 } from "projection-space-explorer";
 import { LineUpContext } from "./LineUpContext";
 import { LineUpTabPanel } from "./Overrides/LineUpTabPanel";
