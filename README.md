@@ -53,10 +53,21 @@ After this step you can run your changes in PSE, then build them using the comma
 
 in "backend" folder execute: 
 
+for Windows:
+
 ```
 pip install -e .
 set FLASK_APP=reaction_cime
 set FLASK_ENV=development
+python -m flask run
+```
+
+for Linux:
+
+```
+pip install -e .
+export FLASK_APP=reaction_cime
+export FLASK_ENV=development
 python -m flask run
 ```
 
