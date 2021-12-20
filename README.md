@@ -80,5 +80,5 @@ docker run -d -p 5000:5000 --detach reaction_cime
 with Docker (development version):
 ```
 docker build -f Dockerfile -t reaction_cime .
-docker run -d -p 5000:5000 -v "{absolute path to backend folder}:/app/backend" -v "{absolute path to backend folder}:/app/temp-files"  --detach reaction_cime
+docker run -d -p 5000:5000 -v "{absolute path to backend folder}:/app/backend" -v "{absolute path to temp-files folder}:/app/temp-files"  --detach reaction_cime
 ```

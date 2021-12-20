@@ -17,6 +17,26 @@ def hello():
     return "Hello World"
 
 
+# --------- server management --------- 
+from flask import render_template
+@reaction_cime_api.route("/")
+def index():
+    return render_template("jku-vds-lab/reaction-cime/index.html")
+
+@reaction_cime_api.route('/index.html')
+def index_2():
+    return render_template('jku-vds-lab/reaction-cime/index.html')
+
+@reaction_cime_api.route('/manifest.json')
+def manifest():
+    return render_template('jku-vds-lab/reaction-cime/manifest.json')
+
+# @reaction_cime_api.route('/favicon.ico')
+# def favicon():
+#     return render_template('jku-vds-lab/reaction-cime/favicon.ico')
+
+# --------------- database ------------------
+
 @reaction_cime_api.route('/get_uploaded_files_list', methods=['GET'])
 def get_uploaded_files_list():
     return jsonify(get_cime_dbo().get_table_names())

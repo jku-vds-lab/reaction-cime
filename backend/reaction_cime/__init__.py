@@ -12,7 +12,7 @@ from sqlalchemy.ext.declarative import declarative_base
 def create_app():
     print("---create_app-----")
 
-    app = Flask(__name__)
+    app = Flask(__name__, template_folder="../../build", static_folder="../../build/jku-vds-lab/reaction-cime/static", static_url_path="/jku-vds-lab/reaction-cime/static")#, static_folder="../../build/static", template_folder="../../build")
     CORS(app)
 
     basedir = os.path.abspath(os.path.dirname(__file__))
