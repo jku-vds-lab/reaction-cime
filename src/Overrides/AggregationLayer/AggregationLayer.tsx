@@ -35,6 +35,8 @@ const AggregationLayer = connector(({ aggregateDataset }: AggregationLayerProps)
     React.useEffect(() => {
 
         if(aggregateDataset && aggregateDataset.vectors){
+
+            console.log('in AggreagtionLayer.tsx, aggregateDataset', aggregateDataset)
             
             setWidth(aggregateDataset.bounds.x["max"]-aggregateDataset.bounds.x["min"]);
             setHeight(aggregateDataset.bounds.y["max"]-aggregateDataset.bounds.y["min"]); 

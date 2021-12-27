@@ -219,6 +219,26 @@ export class ReactionCIMEBackend {
       });
   };
 
+  public getNearestData = async(filename:string, x, y, d) => {
+    console.log('calling get_nearest_data: filename, x, y, d :>> ', filename, x, y, d);
+    const formData = new FormData();
+    formData.append("filename", filename);
+    formData.append("x", JSON.stringify(x));
+    formData.append("y", JSON.stringify(y));
+    formData.append("d", JSON.stringify(d));
+    return fetch(this.baseUrl + "/get_nearest_from_csv", {
+      // TODO figure out a way of using GET plus parameters since body is apparently illegal
+      method: "POST",
+      body: formData,
+    }).then(this.handleErrors)
+      .catch((error) => {
+        console.log(error);
+      })
+  }
+  // ReactionCIMEBackendFromEnv.getNearestData('domain_5000', 5, 5, 8).then((response)=>{
+  //   console.log('getNearestData response', response)
+  // })
+
   public project_dataset = async(filename:string, params:object, selected_feature_info:object, controller?) => {
     const formData = new FormData();
     formData.append("filename", filename);

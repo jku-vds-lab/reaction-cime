@@ -6,6 +6,7 @@ import { AppState } from "../../State/Store";
 import { AggregateDataset } from "./AggregateDataset";
 import { setAggregateColor } from "../../State/AggregateColorDuck";
 import { ReactionCIMEBackendFromEnv } from "../../Backend/ReactionCIMEBackend";
+import dataset from "projection-space-explorer/dist/components/Ducks/DatasetDuck";
 
 const mapStateToProps = (state: AppState) => ({
   aggregateColor: state.aggregateColor,
@@ -25,6 +26,7 @@ type Props = PropsFromRedux & {};
 
 export const AggregationTabPanel = connector(({setAggregateDataset, setAggregateColor, aggregateColor, poiDataset}: Props) => {
     const { cancellablePromise, cancelPromises } = useCancellablePromise(); //TODO: cancelPromises --> use this to cancel promises on demand
+    console.log('AgTabP.tsx poiDataset', poiDataset)
     const categoryOptions = poiDataset?.categories;
 
     // let [categoryOptions, setCategoryOptions] = React.useState(null);
