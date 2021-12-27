@@ -90,7 +90,6 @@ export class ReactionCIMEBackend {
 
 
   public getStructureFromSmiles = (
-    id: string | number,
     smiles: string,
     highlight = false,
     controller
@@ -102,7 +101,6 @@ export class ReactionCIMEBackend {
 
     const formData = new FormData();
     formData.append("smiles", smiles);
-    formData.append("filename", id?.toString());
 
     let path = this.baseUrl + "/get_mol_img";
     if (highlight) {
@@ -229,6 +227,7 @@ export class ReactionCIMEBackend {
       body: formData,
       signal: controller?.signal,
     }).then(this.handleErrors)
+    .then((response)=>{this.resetAggregationCache(); return response;})
       .catch((error) => {
         console.log(error);
       })
@@ -266,14 +265,84 @@ export class ReactionCIMEBackend {
   };
 
 
-  loadingArea = "global_loading_indicator";
-  public loadAggCSV(finished: (dataset: any) => void, path, column, cancellablePromise?: ReturnType<typeof useCancellablePromise>["cancellablePromise"], modifiers?: string, controller?: AbortController) {
-    // request the server to return a csv file using the unique filename
-    const agg_path = ReactionCIMEBackendFromEnv.baseUrl + "/get_agg_csv/" + path + "/" + column; // TODO: make dynamic
-    const promise = cancellablePromise
-      ? cancellablePromise(
-          d3v5.csv(agg_path, {...ReactionCIMEBackendFromEnv.fetchParams, signal: controller?.signal,}), controller
-        ) : d3v5.csv(agg_path, {...ReactionCIMEBackendFromEnv.fetchParams, signal: controller?.signal,});
+
+  protected agg_dataset_cache:[{x: {min: number, max: number}, y: {min: number, max: number}, data: any}] = null;
+  protected cur_agg_path = "";
+  protected cur_agg_column = "";
+  // reset when reprojecting, when dataset is changed, and when column is changed
+  protected resetAggregationCache = ()=>{
+    this.agg_dataset_cache = null;
+  };
+  protected cache_agg_data(range:{x: {min: number, max: number}, y: {min: number, max: number}}, vectors:any){
+    if(this.agg_dataset_cache == null){
+      this.agg_dataset_cache = [{...range, data:vectors}]
+    }else{
+      this.agg_dataset_cache.push({...range, data:vectors})
+    }
+  }
+  protected is_within_boundaries(val1:number, val2:number){
+    const bound = Math.abs(val2*0.5)
+    if(val1 < (val2 + bound) && val1 > (val2 - bound)){
+      return true;
+    }
+    return false;
+  }
+  protected handleAggregationCache = (path:string, column:string, range: {x: {min: number, max: number}, y: {min: number, max: number}}) => {
+    console.log(this.agg_dataset_cache)
+    if(this.cur_agg_path !== path || this.cur_agg_column !== column){
+      this.resetAggregationCache();
+      this.cur_agg_path = path;
+      this.cur_agg_column = column;
+      return null;
+    }
+    if(this.agg_dataset_cache == null)
+      return null;
+    
+    let filtered = this.agg_dataset_cache.filter((value) => {
+      // if it lies within a certain range of the cached data, we take it
+      if(this.is_within_boundaries(range.x.min, value.x.min) 
+      && this.is_within_boundaries(range.x.max, value.x.max)
+      && this.is_within_boundaries(range.y.min, value.y.min)
+      && this.is_within_boundaries(range.y.max, value.y.max)
+      ){
+        return true;
+      }
+      return false;
+    })
+    console.log(filtered)
+    if(filtered.length === 1)
+      return filtered[0]
+    if(filtered.length > 1){
+      // TODO: sort by similarity and return most similar
+      // filtered.sort()
+      return filtered[0]
+    }
+    
+    return null;
+  };
+
+
+  public loadAggCSV(finished: (dataset: any) => void, path:string, column:string, range: {x: {min: number, max: number}, y: {min: number, max: number}}, cancellablePromise?: ReturnType<typeof useCancellablePromise>["cancellablePromise"], controller?: AbortController, loadingArea?:string) {
+    if(range == null){
+      range = {x: {min: -1000, max: 1000}, y: {min: -1000, max: 1000}}
+    }
+
+    const cached_data = this.handleAggregationCache(path, column, range);
+    let promise = null;
+    if (cached_data) {
+      console.log("cached!")
+      console.log(cached_data)
+      promise = this.async_cache(cached_data.data);
+    }else{
+      // request the server to return a csv file using the unique filename
+      // const agg_path = ReactionCIMEBackendFromEnv.baseUrl + "/get_agg_csv/" + path + "/" + column + "?x_min=" + range.x.min + "&x_max=" + range.x.max + "&y_min=" + range.y.min + "&y_max="+range.y.max; // TODO: make dynamic
+      const agg_path = ReactionCIMEBackendFromEnv.baseUrl + "/get_agg_csv_cached/" + path + "/" + column + "?x_min=" + range.x.min + "&x_max=" + range.x.max + "&y_min=" + range.y.min + "&y_max="+range.y.max; // TODO: make dynamic
+
+      promise = cancellablePromise
+        ? cancellablePromise(
+            d3v5.csv(agg_path, {...ReactionCIMEBackendFromEnv.fetchParams, signal: controller?.signal,}), controller
+          ) : d3v5.csv(agg_path, {...ReactionCIMEBackendFromEnv.fetchParams, signal: controller?.signal,});
+    }
     trackPromise(
       promise
         .then((vectors) => {
@@ -281,13 +350,16 @@ export class ReactionCIMEBackend {
                 console.log("aggregation dataset is empty");
                 alert("aggregation dataset is empty")
             }else{
+                if(cached_data == null){
+                  this.cache_agg_data(range, vectors);
+                }
                 finished(vectors)
             }
         })
         .catch((error) => {
           console.log(error);
         }),
-      this.loadingArea
+      loadingArea
     );
   }
 }

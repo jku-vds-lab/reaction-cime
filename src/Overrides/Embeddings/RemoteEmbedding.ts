@@ -69,8 +69,4 @@ export class RemoteEmbedding {
         })
     }
 
-    // step(callback_fn:(emb)=>void){
-    //     // TODO: implement step logic
-    //     this.getUpdate(callback_fn)
-    // }
 }

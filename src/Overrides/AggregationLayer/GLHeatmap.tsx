@@ -21,21 +21,22 @@ type Props = PropsFromRedux & {
     /**
      * THREE texture
      */
-    texture: THREE.Texture
+    textures: [THREE.Texture]
+    
 
     /**
      * World coordinate size
      */
-    size: {
+    sizes: [{
         x: number
         y: number
         width: number
         height: number
-    }
+    }]
 }
 
 
-export const GLHeatmap = connector(({ viewTransform, texture, size }: Props) => {
+export const GLHeatmap = connector(({ viewTransform, textures, sizes }: Props) => {
     const ref = React.useRef<any>()
 
     const [renderer] = useState(() => new THREE.WebGLRenderer({
@@ -43,23 +44,33 @@ export const GLHeatmap = connector(({ viewTransform, texture, size }: Props) => 
         alpha: true
     }))
     const [scene] = useState(() => new THREE.Scene())
-    const [mesh, setMesh] = useState<THREE.Mesh>(new THREE.Mesh())
+    const [rerender, setRerender] = useState(0)
 
     useEffect(() =>  {
         ref.current.appendChild(renderer.domElement);
+        // eslint-disable-next-line
     }, [])
 
     useEffect(() => {
-        var groundMaterial = new THREE.MeshBasicMaterial({ map: texture, side: THREE.DoubleSide });
-        var mesh = new THREE.Mesh(new THREE.PlaneBufferGeometry(size.width, size.height), groundMaterial);
-        mesh.position.y = size.x;
-        mesh.position.x = size.y;
-        mesh.position.z = 0.0;
-
-        scene.add(mesh);
-
-        setMesh(mesh)
-    }, [texture, size, size.x, size.y, size.width, size.height])
+        scene.clear(); // clears the scene
+        for(let i in textures){
+            const texture = textures[i]
+            const size = sizes[i]
+            
+            if(texture != null && size != null){
+                var groundMaterial = new THREE.MeshBasicMaterial({ map: texture, side: THREE.DoubleSide, transparent: true }); 
+                var mesh = new THREE.Mesh(new THREE.PlaneBufferGeometry(size.width, size.height), groundMaterial);
+                mesh.position.x = size.x;
+                mesh.position.y = size.y;
+                mesh.position.z = 0.0;
+                // mesh.name="background" // could remove by name
+    
+                scene.add(mesh);
+            }
+        }
+        setRerender(rerender+1)
+        // eslint-disable-next-line
+    }, [textures, sizes])
 
 
     useEffect(() => {
@@ -69,11 +80,12 @@ export const GLHeatmap = connector(({ viewTransform, texture, size }: Props) => 
 
             renderer.setPixelRatio(window.devicePixelRatio);
             renderer.setSize(w, h)
+            renderer.setClearColor( 0x000000, 0 );
 
             // Create orthographic camera
             var camera = new THREE.OrthographicCamera(w / - 2, w / 2, h / 2, h / - 2, 1, 1000);
 
-            camera.position.z = 100;
+            camera.position.z = 1;
             camera.lookAt(new THREE.Vector3(0, 0, 0));
 
             camera.position.x = viewTransform.centerX
@@ -88,7 +100,8 @@ export const GLHeatmap = connector(({ viewTransform, texture, size }: Props) => 
                 console.log(e)
             }
         }
-    }, [viewTransform, mesh])
+    // eslint-disable-next-line
+    }, [viewTransform, scene, scene.children, rerender])
 
     return <div style={{  }} ref={ref} />
 })

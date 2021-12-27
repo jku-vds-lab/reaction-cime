@@ -919,9 +919,7 @@ export class MySmilesStructureRenderer implements ICellRendererFactory {
       update: (n: HTMLImageElement, d: IDataRow) => {
         // @ts-ignore
         let smiles = d.v[col.desc.column];
-        // TODO: Change undefined to id, how to get dataset id?
         ReactionCIMEBackendFromEnv.getStructureFromSmiles(
-          undefined,
           smiles,
           false,
           null

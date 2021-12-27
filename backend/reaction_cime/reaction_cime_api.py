@@ -27,9 +27,6 @@ def index():
 def index_2():
     return render_template('jku-vds-lab/reaction-cime/index.html')
 
-@reaction_cime_api.route('/manifest.json')
-def manifest():
-    return render_template('jku-vds-lab/reaction-cime/manifest.json')
 
 # @reaction_cime_api.route('/favicon.ico')
 # def favicon():
@@ -111,9 +108,7 @@ def get_points_of_interest(filename):
     # domain = pd.read_csv("./temp-files/%s"%filename)
     # domain = get_cime_dbo().get_dataframe_from_table(filename)
 
-    print(filename)
     poi_domain = get_poi_df_from_db(filename, get_cime_dbo())
-    print(len(poi_domain))
 
     new_cols = generate_rename_list(poi_domain)
     poi_domain.columns = new_cols
@@ -135,7 +130,59 @@ def get_poi_mask(filename, cime_dbo):
 
 @reaction_cime_api.route('/get_agg_csv/<filename>/<col_name>', methods=['GET'])
 def get_aggregated_dataset(filename, col_name):
-    agg_domain = get_cime_dbo().get_dataframe_from_table(filename, columns=["x", "y", col_name])
+
+    range = {"x_min": request.args.get("x_min"), 
+        "x_max": request.args.get("x_max"),
+        "y_min": request.args.get("y_min"), 
+        "y_max": request.args.get("y_max"),
+        }
+    filter = "x > {x_min} and x < {x_max} and y > {y_min} and y < {y_max}".format(**range)
+    agg_domain = get_cime_dbo().get_dataframe_from_table_filter(filename, filter, columns=["x", "y", col_name])
+    agg_df = aggregate_col(agg_domain, col_name, sample_size=200) # TODO: dynamic sample_size
+
+    csv_buffer = StringIO()
+    agg_df.to_csv(csv_buffer, index=False)
+
+    return csv_buffer.getvalue()
+
+current_col_name = {}
+agg_dataset_cache = {}
+def handle_agg_dataset_cache(filename, col_name):
+    if filename not in agg_dataset_cache.keys():
+        agg_dataset_cache[filename] = None
+        current_col_name[filename] = None
+
+    # dataset is not cached and has to be loaded
+    if current_col_name[filename] is None or current_col_name[filename] != col_name or agg_dataset_cache[filename] is None:
+        agg_domain = get_cime_dbo().get_dataframe_from_table(filename, columns=["x", "y", col_name])
+        agg_dataset_cache[filename] = agg_domain
+        current_col_name[filename] = col_name
+
+    # return cached version of dataset
+    return agg_dataset_cache[filename]
+
+def reset_agg_dataset_cache(filename=None):
+    global current_col_name, agg_dataset_cache
+    if filename is None:
+        current_col_name = {}
+        agg_dataset_cache = {}
+    else:
+        current_col_name[filename] = None
+        agg_dataset_cache[filename] = None
+
+
+@reaction_cime_api.route('/get_agg_csv_cached/<filename>/<col_name>', methods=['GET'])
+def get_aggregated_dataset_cached(filename, col_name):
+    range = {"x_min": float(request.args.get("x_min")), 
+        "x_max": float(request.args.get("x_max")),
+        "y_min": float(request.args.get("y_min")), 
+        "y_max": float(request.args.get("y_max")),
+        }
+
+    agg_domain = handle_agg_dataset_cache(filename, col_name)
+    print("---------------------")
+    print(agg_domain.dtypes)
+    agg_domain = agg_domain[(agg_domain["x"] < range["x_max"]) * (agg_domain["x"] > range["x_min"]) * (agg_domain["y"] < range["y_max"]) * (agg_domain["y"] > range["y_min"])]
     agg_df = aggregate_col(agg_domain, col_name, sample_size=200) # TODO: dynamic sample_size
 
     csv_buffer = StringIO()
@@ -257,9 +304,16 @@ class ProjectionThread(threading.Thread):
             metric = self.params["distanceMetric"]
             if metric == None or metric == "":
                 metric = "euclidean"
+
             if metric == "gower": # we precompute the similarity matrix with the gower metric
                 metric = "precomputed"
                 normalized_values = gower.gower_matrix(proj_df, cat_features=categorical_features)
+
+                if initialization == "pca" and self.params["embedding_method"] == "tsne":
+                    print("--- calculating PCA for tSNE with Gowers distance")
+                    pca = PCA(n_components=2)
+                    initialization = pca.fit_transform(proj_df.values)
+                
             else: # otherwise, the similarity can be done by a pre-configured function and we just hand over the values
                 normalized_values = proj_df.values
 

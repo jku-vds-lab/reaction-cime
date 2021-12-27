@@ -103,7 +103,6 @@ export class AggregateDataset {
 
         });
 
-        console.log(this.columns)
     }
 
     private retrieveFeatureTypes(metaInformation: {}, key: string) {
@@ -129,7 +128,7 @@ export class AggregateDataset {
         } else if (metaInformation[key].range) {
             this.columns[key].range = metaInformation[key].range;
             this.columns[key].featureType = FeatureType.Quantitative;
-        } else { //TODO: adhance this by automatic derivation of other featuretypes as well
+        } else { //TODO: enhance this by automatic derivation of other featuretypes as well
             // infer for each feature whether it contains numeric, date, or arbitrary values
             var contains_number = {};
             var contains_date = {};

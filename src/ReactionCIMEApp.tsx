@@ -75,7 +75,7 @@ export function ReactionCIMEApp() {
           order: -1,
           component: () => <AggregationLayer></AggregationLayer>
         }
-    ]
+       ]
     }}
   /></PSEContextProvider>
 

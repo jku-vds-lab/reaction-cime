@@ -15,7 +15,6 @@ import { connect, ConnectedProps } from "react-redux";
 import { UploadedFiles } from "./UploadedFiles";
 import { useState } from "react";
 import { BackendCSVLoader } from "./BackendCSVLoader";
-import { setAggregateDatasetAction } from "../../State/AggregateDatasetDuck";
 import { setAggregateColor } from "../../State/AggregateColorDuck";
   
   export const LoadingIndicatorView = (props) => {
@@ -60,7 +59,6 @@ import { setAggregateColor } from "../../State/AggregateColorDuck";
   });
   
   const mapDispatchToProps = (dispatch) => ({
-    setAggregateDataset: dataset => dispatch(setAggregateDatasetAction(dataset)),
     setAggregateColor: aggregateColor => dispatch(setAggregateColor(aggregateColor)),
   });
   
@@ -72,13 +70,12 @@ import { setAggregateColor } from "../../State/AggregateColorDuck";
     onDataSelected
   };
 
-  export const DatasetTabPanel = connector(({onDataSelected, setAggregateColor, setAggregateDataset}: Props) => {
+  export const DatasetTabPanel = connector(({onDataSelected, setAggregateColor}: Props) => {
     const { cancellablePromise, cancelPromises } = useCancellablePromise();
     let abort_controller = new AbortController();
     const [refreshUploadedFiles, setRefreshUploadedFiles] = useState(0);
 
     const intermediateOnDataSelected = (dataset) => {
-      setAggregateDataset(null);
       setAggregateColor({key: "None", name: "None"});
       onDataSelected(dataset);
     }
