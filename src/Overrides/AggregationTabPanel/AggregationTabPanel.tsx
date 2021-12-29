@@ -8,6 +8,7 @@ import { AggregateDataset } from "./AggregateDataset";
 import { setAggregateColor } from "../../State/AggregateColorDuck";
 import Dataset, { setDatasetAction } from "projection-space-explorer/dist/components/Ducks/DatasetDuck";
 import { ReactionCIMEBackendFromEnv } from "../../Backend/ReactionCIMEBackend";
+import { downloadImpl } from '../../Utility/Utils'
 
 const mapStateToProps = (state: AppState) => ({
   aggregateColor: state.aggregateColor,
@@ -102,15 +103,7 @@ export const AggregationTabPanel = connector(({setAggregateDataset, setAggregate
           ReactionCIMEBackendFromEnv.getNearestData("domain_5000", (document.getElementById('nearestX') as HTMLInputElement).value, (document.getElementById('nearestY') as HTMLInputElement).value,(document.getElementById('distance') as HTMLInputElement).value).then( (response) => 
             {
               console.log(`response`, response)
-              const data = JSON.stringify(response, null, 1)
-              const mimetype = 'application/csv'
-              const name = 'k_nearest_data.csv'
-              var b = new Blob([data], { type: mimetype });
-              var csvURL = window.URL.createObjectURL(b);
-              let tempLink = document.createElement("a");
-              tempLink.href = csvURL;
-              tempLink.setAttribute("download", name);
-              tempLink.click();
+              downloadImpl(JSON.stringify(response, null, 1), 'k_nearest_data.csv', 'application/csv')
               // console.log('BEFORE setDataset', state)
               // poiDataset.vectors.splice(0, 10)
               // console.log('after splice:', poiDataset)
