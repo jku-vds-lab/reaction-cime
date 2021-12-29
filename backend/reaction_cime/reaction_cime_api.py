@@ -127,7 +127,6 @@ def get_points_of_interest(filename):
 def get_poi_df_from_db(filename, cime_dbo):
     # TODO: make dynamic, by which feature we want to filter (e.g. user could change the settings in the front-end maybe with parallel coordinates?)
     # example code for distance filter
-    # "((x-2)*(x-2))+((y-10)*(y-10)) < 8*8"
     poi_domain = cime_dbo.get_dataframe_from_table_filter(filename, "yield > 0")
     return poi_domain
 
@@ -135,13 +134,24 @@ def get_poi_mask(filename, cime_dbo):
     mask = cime_dbo.get_filter_mask(filename, "yield > 0")
     return mask
 
-@reaction_cime_api.route('/get_nearest_from_csv/<filename>/<x>/<y>/<d>', methods=['GET'])
-def get_nearest_points_given_coords(filename, x, y, d):
+@reaction_cime_api.route('/get_k_nearest_from_csv/<filename>/<x>/<y>/<k>', methods=['GET'])
+def get_k_nearest_points(filename, x, y, k):
+    # k nearest points in the database filename to the point x,y will be returned
+    # example code for distance filter
+    nearest_points_domain = get_cime_dbo().get_dataframe_from_table_filter(filename, 'ORDER BY ((x-('+str(x)+'))*(x-('+str(x)+')))+((y-('+str(y)+'))*(y-('+str(y)+'))) LIMIT '+str(k)+';', where=False)
+
+    csv_buffer = StringIO()
+    nearest_points_domain.to_csv(csv_buffer, index=False)
+    
+    return csv_buffer.getvalue()
+
+@reaction_cime_api.route('/get_radius_from_csv/<filename>/<x>/<y>/<d>', methods=['GET'])
+def get_points_given_radius(filename, x, y, d):
     # all points in the database filename that have distance no greater than d to the point x,y will be returned
     # example code for distance filter
     # "((x-2)*(x-2))+((y-10)*(y-10)) < 8*8"
     d2 = int(d) * int(d)
-    nearest_points_domain = get_cime_dbo().get_dataframe_from_table_filter(filename, '((x-'+str(x)+')*(x-'+str(x)+'))+((y-'+str(y)+')*(y-'+str(y)+')) < '+str(d2))
+    nearest_points_domain = get_cime_dbo().get_dataframe_from_table_filter(filename, '((x-('+str(x)+'))*(x-('+str(x)+')))+((y-('+str(y)+'))*(y-('+str(y)+'))) < '+str(d2))
 
     csv_buffer = StringIO()
     nearest_points_domain.to_csv(csv_buffer, index=False)
