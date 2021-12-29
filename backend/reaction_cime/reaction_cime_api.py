@@ -135,13 +135,18 @@ def get_poi_mask(filename, cime_dbo):
     mask = cime_dbo.get_filter_mask(filename, "yield > 0")
     return mask
 
-@reaction_cime_api.route('/get_nearest_from_csv/<filename>/<x>/<y>/<d>', methods=['POST'])
+@reaction_cime_api.route('/get_nearest_from_csv/<filename>/<x>/<y>/<d>', methods=['GET'])
 def get_nearest_points_given_coords(filename, x, y, d):
     # all points in the database filename that have distance no greater than d to the point x,y will be returned
     # example code for distance filter
     # "((x-2)*(x-2))+((y-10)*(y-10)) < 8*8"
-    nearest_points = get_cime_dbo().get_dataframe_from_table_filter(filename, '((x-'+str(x)+')*(x-'+str(x)+'))+((y-'+str(y)+')*(y-'+str(y)+')) < '+str(d*d))
-    return nearest_points
+    d2 = int(d) * int(d)
+    nearest_points_domain = get_cime_dbo().get_dataframe_from_table_filter(filename, '((x-'+str(x)+')*(x-'+str(x)+'))+((y-'+str(y)+')*(y-'+str(y)+')) < '+str(d2))
+
+    csv_buffer = StringIO()
+    nearest_points_domain.to_csv(csv_buffer, index=False)
+    
+    return csv_buffer.getvalue()
 
 @reaction_cime_api.route('/get_agg_csv/<filename>/<col_name>', methods=['GET'])
 def get_aggregated_dataset(filename, col_name):
