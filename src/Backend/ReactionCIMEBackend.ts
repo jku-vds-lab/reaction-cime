@@ -220,15 +220,15 @@ export class ReactionCIMEBackend {
       });
   };
 
-  public getNearestData = async(filename:string, x, y, d) => {
-    console.log('calling get_nearest_data: filename, x, y, d :>> ', filename, x, y, d);
-    let path = this.baseUrl + "/get_nearest_from_csv/" + filename + "/" + x + "/" + y + "/" + d;
+  public getNearestData = async(filename:string, x, y, k) => {
+    console.log('calling get_nearest_data: filename, x, y, k :>> ', filename, x, y, k);
+    let path = this.baseUrl + "/get_k_nearest_from_csv/" + filename + "/" + x + "/" + y + "/" + k;
 
     return d3v5.csv(path, {
       ...this.fetchParams
     }).then((vectors) => {
       if(vectors.length <= 0){
-          console.log("no data within distance of clicked coordinates");
+          console.log("selection is empty");
       }else{
         // TODO: export to utility / API file as this is used twice in different places
         vectors = vectors.map((vector) => {
