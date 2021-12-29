@@ -230,6 +230,7 @@ export class ReactionCIMEBackend {
       if(vectors.length <= 0){
           console.log("no data within distance of clicked coordinates");
       }else{
+        // TODO: export to utility / API file as this is used twice in different places
         vectors = vectors.map((vector) => {
           return AVector.create(vector);
         });
