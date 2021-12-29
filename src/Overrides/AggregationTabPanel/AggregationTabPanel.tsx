@@ -6,7 +6,7 @@ import aggregateDataset, { setAggregateDatasetAction } from "../../State/Aggrega
 import { AppState } from "../../State/Store";
 import { AggregateDataset } from "./AggregateDataset";
 import { setAggregateColor } from "../../State/AggregateColorDuck";
-import setDatasetAction from "projection-space-explorer/dist/components/Ducks/DatasetDuck"
+import { setDatasetAction } from "projection-space-explorer/dist/components/Ducks/DatasetDuck"
 import { ReactionCIMEBackendFromEnv } from "../../Backend/ReactionCIMEBackend";
 import { downloadImpl } from '../../Utility/Utils'
 
