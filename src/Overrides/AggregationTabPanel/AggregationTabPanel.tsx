@@ -1,21 +1,24 @@
 import { Box } from "@mui/material";
 import { CategoryOptionsAPI, SelectFeatureComponent, useCancellablePromise } from "projection-space-explorer";
+// import { CategoryOptionsAPI, SelectFeatureComponent, useCancellablePromise } from "projection-space-explorer";
 import { connect, ConnectedProps } from "react-redux";
-import { setAggregateDatasetAction } from "../../State/AggregateDatasetDuck";
+import aggregateDataset, { setAggregateDatasetAction } from "../../State/AggregateDatasetDuck";
 import { AppState } from "../../State/Store";
 import { AggregateDataset } from "./AggregateDataset";
 import { setAggregateColor } from "../../State/AggregateColorDuck";
+import Dataset, { setDatasetAction } from "projection-space-explorer/dist/components/Ducks/DatasetDuck";
 import { ReactionCIMEBackendFromEnv } from "../../Backend/ReactionCIMEBackend";
-import dataset from "projection-space-explorer/dist/components/Ducks/DatasetDuck";
 
 const mapStateToProps = (state: AppState) => ({
   aggregateColor: state.aggregateColor,
   poiDataset: state.dataset,
+  state: state
 });
 
 const mapDispatchToProps = (dispatch) => ({
   setAggregateDataset: dataset => dispatch(setAggregateDatasetAction(dataset)),
-  setAggregateColor: aggregateColor => dispatch(setAggregateColor(aggregateColor)),
+  setDataset: dataset => dispatch(setDatasetAction(dataset)),
+  setAggregateColor: aggregateColor => dispatch(setAggregateColor(aggregateColor))
 });
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
@@ -24,7 +27,11 @@ type PropsFromRedux = ConnectedProps<typeof connector>;
 
 type Props = PropsFromRedux & {};
 
-export const AggregationTabPanel = connector(({setAggregateDataset, setAggregateColor, aggregateColor, poiDataset}: Props) => {
+function hello(){
+  console.log('debug button hello world')
+}
+
+export const AggregationTabPanel = connector(({setAggregateDataset, setAggregateColor, setDataset, aggregateColor, poiDataset, state}: Props) => {
     const { cancellablePromise, cancelPromises } = useCancellablePromise(); //TODO: cancelPromises --> use this to cancel promises on demand
     console.log('AgTabP.tsx poiDataset', poiDataset)
     const categoryOptions = poiDataset?.categories;
@@ -82,7 +89,27 @@ export const AggregationTabPanel = connector(({setAggregateDataset, setAggregate
               <div></div>
         }
         </Box>
-      </div>
+          <div>
+            <input type="text" id="nearestX" defaultValue="5"></input>
+          </div>
+          <div>
+            <input type="text" id="nearestY" defaultValue="5"></input>
+          </div>
+          <div>
+            <input type="text" id="distance" defaultValue="10"></input>
+          </div>
+          <div><button type="button" onClick={() =>
+          ReactionCIMEBackendFromEnv.getNearestData("domain_5000", (document.getElementById('nearestX') as HTMLInputElement).value, (document.getElementById('nearestY') as HTMLInputElement).value,(document.getElementById('distance') as HTMLInputElement).value).then( (response) => 
+            {
+              console.log('BEFORE setDataset', state)
+              poiDataset.vectors.splice(0, 10)
+              console.log('after splice:', poiDataset)
+              setDataset(poiDataset)
+              console.log('AFTER setDataset', state)
+            }
+          )
+          }>debug button</button></div>
+          </div>
     );
   }
 );
