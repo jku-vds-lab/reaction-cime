@@ -6,9 +6,6 @@ import { AggregateDataset } from "./AggregateDataset";
 import { ReactionCIMEBackendFromEnv } from "../../Backend/ReactionCIMEBackend";
 
 export var AggregatedDatasetDrop = ({ onChange }: { onChange(dataset: AggregateDataset): void; }) => {
-    ReactionCIMEBackendFromEnv.getNearestData('domain_5000', 5, 5, 8).then((response)=>{
-        console.log('getNearestData response', response)
-    })
     return <Grid container item alignItems="stretch" justifyContent="center" direction="column" style={{ padding: '16px' }}>
         <DragAndDrop accept=".csv" handleDrop={(files) => {
             if (files == null || files.length <= 0) {

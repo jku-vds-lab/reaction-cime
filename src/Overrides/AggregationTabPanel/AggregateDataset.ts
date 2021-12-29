@@ -25,9 +25,6 @@ export class AggregateDataset {
     columns: { [name: string] : ColumnType }
 
     constructor(vectors) {
-        ReactionCIMEBackendFromEnv.getNearestData('domain_5000', 5, 5, 8).then((response)=>{
-            console.log('getNearestData response', response)
-        })
         this.vectors = vectors;
         this.columns = {};
 
