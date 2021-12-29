@@ -102,6 +102,15 @@ export const AggregationTabPanel = connector(({setAggregateDataset, setAggregate
           ReactionCIMEBackendFromEnv.getNearestData("domain_5000", (document.getElementById('nearestX') as HTMLInputElement).value, (document.getElementById('nearestY') as HTMLInputElement).value,(document.getElementById('distance') as HTMLInputElement).value).then( (response) => 
             {
               console.log(`response`, response)
+              const data = JSON.stringify(response, null, 1)
+              const mimetype = 'application/csv'
+              const name = 'k_nearest_data.csv'
+              var b = new Blob([data], { type: mimetype });
+              var csvURL = window.URL.createObjectURL(b);
+              let tempLink = document.createElement("a");
+              tempLink.href = csvURL;
+              tempLink.setAttribute("download", name);
+              tempLink.click();
               // console.log('BEFORE setDataset', state)
               // poiDataset.vectors.splice(0, 10)
               // console.log('after splice:', poiDataset)
