@@ -118,8 +118,8 @@ const AggregationLayer = connector(({ aggregateColor, poiDataset, viewTransform 
         }
         let bgDataTex = new THREE.DataTexture(bgRGBA, Math.sqrt(arr_pred.length), Math.sqrt(arr_pred.length), THREE.RGBAFormat);
         // bgDataTex.magFilter = THREE.LinearMipMapLinearFilter; // this causes border artefacts
-        // bgDataTex.magFilter = THREE.NearestFilter; // this makes it discrete
-        bgDataTex.magFilter = THREE.LinearFilter; // this causes border artefacts
+        bgDataTex.magFilter = THREE.NearestFilter; // this makes it discrete
+        // bgDataTex.magFilter = THREE.LinearFilter; // this causes border artefacts
         // bgDataTex.minFilter = THREE.LinearMipMapLinearFilter; // this causes everything to go black
         bgDataTex.minFilter = THREE.LinearFilter;
 
@@ -161,18 +161,18 @@ const AggregationLayer = connector(({ aggregateColor, poiDataset, viewTransform 
     }, [aggregateDataset, aggregateDatasetZoomed])
 
 
-    return (textures && textures.length > 0 && sizes && sizes.length > 0) && <div>
-        <LoadingIndicatorDialog
-            handleClose={() => {
-                cancelPromises();
-            }}
-            area={loading_area}
-        />
-    <GLHeatmap
+    return <div>
+    <LoadingIndicatorDialog
+        handleClose={() => {
+            cancelPromises();
+        }}
+        area={loading_area}
+    />
+    {(textures && textures.length > 0 && sizes && sizes.length > 0) && <GLHeatmap
             // texture={new THREE.TextureLoader().load('https://threejsfundamentals.org/threejs/resources/images/wall.jpg')}
             textures={textures}
             sizes={sizes}
-        ></GLHeatmap>
+        ></GLHeatmap>}
     </div>
     
 })

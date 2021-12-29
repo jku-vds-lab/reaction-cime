@@ -180,8 +180,6 @@ def get_aggregated_dataset_cached(filename, col_name):
         }
 
     agg_domain = handle_agg_dataset_cache(filename, col_name)
-    print("---------------------")
-    print(agg_domain.dtypes)
     agg_domain = agg_domain[(agg_domain["x"] < range["x_max"]) * (agg_domain["x"] > range["x_min"]) * (agg_domain["y"] < range["y_max"]) * (agg_domain["y"] > range["y_min"])]
     agg_df = aggregate_col(agg_domain, col_name, sample_size=200) # TODO: dynamic sample_size
 
@@ -377,6 +375,7 @@ class ProjectionThread(threading.Thread):
             # update the coordinates in the dataset
             start_time = time.time()
             self.cime_dbo.update_row_bulk(self.filename, proj_df.index, {"x":proj_data[:,0], "y": proj_data[:,1]})
+            reset_agg_dataset_cache(self.filename) # reset cached data
             delta_time = time.time()-start_time
             print("--- took", time.strftime('%H:%M:%S', time.gmtime(delta_time)), "to update database")
             print("--- took %i min %f s to update database"%(delta_time/60, delta_time%60))

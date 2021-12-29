@@ -202,7 +202,6 @@ export class ReactionCIMEBackend {
 
 
   public terminate_projection = async (filename): Promise<{ response: any }> => {
-    console.log("backend: terminate_projection")
     let path = this.baseUrl + "/terminate_projection_thread/" + filename;
 
     return fetch(path, {
@@ -288,7 +287,6 @@ export class ReactionCIMEBackend {
     return false;
   }
   protected handleAggregationCache = (path:string, column:string, range: {x: {min: number, max: number}, y: {min: number, max: number}}) => {
-    console.log(this.agg_dataset_cache)
     if(this.cur_agg_path !== path || this.cur_agg_column !== column){
       this.resetAggregationCache();
       this.cur_agg_path = path;
@@ -309,7 +307,6 @@ export class ReactionCIMEBackend {
       }
       return false;
     })
-    console.log(filtered)
     if(filtered.length === 1)
       return filtered[0]
     if(filtered.length > 1){
@@ -330,8 +327,6 @@ export class ReactionCIMEBackend {
     const cached_data = this.handleAggregationCache(path, column, range);
     let promise = null;
     if (cached_data) {
-      console.log("cached!")
-      console.log(cached_data)
       promise = this.async_cache(cached_data.data);
     }else{
       // request the server to return a csv file using the unique filename

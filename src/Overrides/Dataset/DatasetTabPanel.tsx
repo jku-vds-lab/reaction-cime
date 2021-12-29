@@ -19,6 +19,7 @@ import { setAggregateColor } from "../../State/AggregateColorDuck";
   
   export const LoadingIndicatorView = (props) => {
     const { promiseInProgress } = usePromiseTracker({ area: props.area });
+    
     return (
       promiseInProgress && (
         <div

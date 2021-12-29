@@ -3,10 +3,12 @@ import { CategoryOptionsAPI, SelectFeatureComponent } from "projection-space-exp
 import { connect, ConnectedProps } from "react-redux";
 import { AppState } from "../../State/Store";
 import { setAggregateColor } from "../../State/AggregateColorDuck";
+import { useEffect } from "react";
 
 const mapStateToProps = (state: AppState) => ({
   aggregateColor: state.aggregateColor,
   poiDataset: state.dataset,
+  workspace: state.projections.workspace
 });
 
 const mapDispatchToProps = (dispatch) => ({
@@ -19,8 +21,14 @@ type PropsFromRedux = ConnectedProps<typeof connector>;
 
 type Props = PropsFromRedux & {};
 
-export const AggregationTabPanel = connector(({setAggregateColor, aggregateColor, poiDataset}: Props) => {
+export const AggregationTabPanel = connector(({setAggregateColor, aggregateColor, poiDataset, workspace}: Props) => {
     const categoryOptions = poiDataset?.categories;
+
+    useEffect(() => {
+      // reset aggregate color to hide the aggregated dataset in the background
+      setAggregateColor({key: "None", name: "None"})
+    // eslint-disable-next-line
+    }, [workspace]) // this is triggered during the embedding
 
     return (
       <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>

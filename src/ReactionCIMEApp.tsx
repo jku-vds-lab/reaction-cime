@@ -18,7 +18,8 @@ export const DEMO = false;
 
 // PluginRegistry.getInstance().registerPlugin(new ChemPlugin());
 
-export function ReactionCIMEApp() {
+
+export const ReactionCIMEApp = () => {
   // const [context] = useState(new API<RootState>(null, rootReducer))
 
   const [context] = useState(
@@ -39,7 +40,8 @@ export function ReactionCIMEApp() {
       embeddings: [
         // {id:"umap", name:"UMAP", settings: DEFAULT_UMAP_SETTINGS},
         {id:"umapRemote", name:"UMAP Remote", settings: {nneighbors:true}, embController: new RemoteEmbeddingController("umap")},
-        {id:"tsneRemote", name:"t-SNE Remote", settings: {perplexity:true}, embController: new RemoteEmbeddingController("tsne")}
+        {id:"tsneRemote", name:"t-SNE Remote", settings: {perplexity:true}, embController: new RemoteEmbeddingController("tsne")},
+        {id:"pcaRemote", name:"PCA Remote", settings: {}, embController: new RemoteEmbeddingController("pca")}
       ],
     }}
     overrideComponents={{
