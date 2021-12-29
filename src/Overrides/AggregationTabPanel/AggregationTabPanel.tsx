@@ -128,7 +128,7 @@ export const AggregationTabPanel = connector(
           <input type="text" id="nearestY" defaultValue="5"></input>
         </div>
         <div>
-          <input type="text" id="distance" defaultValue="10"></input>
+          <input type="text" id="k" defaultValue="10"></input>
         </div>
         <div>
           <button
@@ -138,7 +138,7 @@ export const AggregationTabPanel = connector(
                 "domain_5000",
                 (document.getElementById("nearestX") as HTMLInputElement).value,
                 (document.getElementById("nearestY") as HTMLInputElement).value,
-                (document.getElementById("distance") as HTMLInputElement).value
+                (document.getElementById("k") as HTMLInputElement).value
               ).then((response) => {
                 console.log(`response`, response);
                 downloadImpl(
