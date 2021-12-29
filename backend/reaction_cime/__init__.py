@@ -125,8 +125,11 @@ class ReactionCIMEDBO():
             columns.append("id")
         return pd.read_sql(table_name, self.db.engine, index_col="id", columns=columns)
 
-    def get_dataframe_from_table_filter(self, table_name, filter):
-        sql_stmt = "SELECT * FROM " + table_name + " WHERE " + filter
+    def get_dataframe_from_table_filter(self, table_name, filter, where=True):
+        if where:
+            sql_stmt = "SELECT * FROM " + table_name + " WHERE " + filter
+        else:
+            sql_stmt = "SELECT * FROM " + table_name + " " + filter
         return pd.read_sql(sql_stmt, self.db.engine, index_col="id")
 
     def get_filter_mask(self, table_name, filter):
