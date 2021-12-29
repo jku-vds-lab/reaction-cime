@@ -101,11 +101,12 @@ export const AggregationTabPanel = connector(({setAggregateDataset, setAggregate
           <div><button type="button" onClick={() =>
           ReactionCIMEBackendFromEnv.getNearestData("domain_5000", (document.getElementById('nearestX') as HTMLInputElement).value, (document.getElementById('nearestY') as HTMLInputElement).value,(document.getElementById('distance') as HTMLInputElement).value).then( (response) => 
             {
-              console.log('BEFORE setDataset', state)
-              poiDataset.vectors.splice(0, 10)
-              console.log('after splice:', poiDataset)
-              setDataset(poiDataset)
-              console.log('AFTER setDataset', state)
+              console.log(`response`, response)
+              // console.log('BEFORE setDataset', state)
+              // poiDataset.vectors.splice(0, 10)
+              // console.log('after splice:', poiDataset)
+              // setDataset(poiDataset)
+              // console.log('AFTER setDataset', state)
             }
           )
           }>debug button</button></div>
