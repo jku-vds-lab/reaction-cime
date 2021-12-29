@@ -32,9 +32,17 @@ function hello(){
   console.log('debug button hello world')
 }
 
-export const AggregationTabPanel = connector(({setAggregateDataset, setAggregateColor, setDataset, aggregateColor, poiDataset, state}: Props) => {
+export const AggregationTabPanel = connector(
+  ({
+    setAggregateDataset,
+    setAggregateColor,
+    setDataset,
+    aggregateColor,
+    poiDataset,
+    state,
+  }: Props) => {
     const { cancellablePromise, cancelPromises } = useCancellablePromise(); //TODO: cancelPromises --> use this to cancel promises on demand
-    console.log('AgTabP.tsx poiDataset', poiDataset)
+    console.log("AgTabP.tsx poiDataset", poiDataset);
     const categoryOptions = poiDataset?.categories;
 
     // let [categoryOptions, setCategoryOptions] = React.useState(null);
@@ -45,7 +53,7 @@ export const AggregationTabPanel = connector(({setAggregateDataset, setAggregate
     //     setCategoryOptions({"attributes": catOpt});
     //   }
     // }, [poiDataset?.columns]);
-    
+
     return (
       <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
         {/* <Box paddingLeft={2} paddingTop={1} paddingRight={2}>
@@ -55,7 +63,7 @@ export const AggregationTabPanel = connector(({setAggregateDataset, setAggregate
         </Box>
         <AggregatedDatasetDrop onChange={(dataset) => {setAggregateDataset(new AggregateDataset(dataset))}} /> */}
         <Box paddingLeft={2} paddingTop={1} paddingRight={2}>
-        {/* {
+          {/* {
             categoryOptions != null ?
                 <SelectFeatureComponent label={"color"} default_val={aggregateColor} categoryOptions={categoryOptions} onChange={(newValue) => {
                     var attribute = null
@@ -67,52 +75,89 @@ export const AggregationTabPanel = connector(({setAggregateDataset, setAggregate
                 :
                 <div></div>
         } */}
-        { //TODO: check, if it makes sense to also include categorical values, or if it is ok to only use numerical values (like for "size")
-          categoryOptions != null && CategoryOptionsAPI.hasCategory(categoryOptions, "size") ?
-              <SelectFeatureComponent label={"color"} default_val={aggregateColor} categoryOptions={CategoryOptionsAPI.getCategory(categoryOptions, "size")} onChange={(newValue) => {
-                  var attribute = null
+          {
+            //TODO: check, if it makes sense to also include categorical values, or if it is ok to only use numerical values (like for "size")
+            categoryOptions != null &&
+            CategoryOptionsAPI.hasCategory(categoryOptions, "size") ? (
+              <SelectFeatureComponent
+                label={"color"}
+                default_val={aggregateColor}
+                categoryOptions={CategoryOptionsAPI.getCategory(
+                  categoryOptions,
+                  "size"
+                )}
+                onChange={(newValue) => {
+                  var attribute = null;
                   if (newValue && newValue !== "") {
-                    attribute = CategoryOptionsAPI.getCategory(categoryOptions, "size").attributes.filter(a => a.key === newValue)[0]
+                    attribute = CategoryOptionsAPI.getCategory(
+                      categoryOptions,
+                      "size"
+                    ).attributes.filter((a) => a.key === newValue)[0];
                   }
-                  if (attribute === null || attribute === undefined){
-                    attribute = {key: "None", name: "None"}
+                  if (attribute === null || attribute === undefined) {
+                    attribute = { key: "None", name: "None" };
                   }
                   setAggregateColor(attribute);
 
-                  if(attribute.key === "None"){
-                    setAggregateDataset(null)
+                  if (attribute.key === "None") {
+                    setAggregateDataset(null);
                   } else {
                     let abort_controller = new AbortController(); //TODO: reiterate where AbortController needs to be instantiated --> can it be moved inside the loadAggCSV function?
-                    ReactionCIMEBackendFromEnv.loadAggCSV((dataset) => {setAggregateDataset(new AggregateDataset(dataset))}, poiDataset.info.path, attribute.key, cancellablePromise, null, abort_controller)
+                    ReactionCIMEBackendFromEnv.loadAggCSV(
+                      (dataset) => {
+                        setAggregateDataset(new AggregateDataset(dataset));
+                      },
+                      poiDataset.info.path,
+                      attribute.key,
+                      cancellablePromise,
+                      null,
+                      abort_controller
+                    );
                   }
-              }}></SelectFeatureComponent>
-              :
+                }}
+              ></SelectFeatureComponent>
+            ) : (
               <div></div>
-        }
+            )
+          }
         </Box>
-          <div>
-            <input type="text" id="nearestX" defaultValue="5"></input>
-          </div>
-          <div>
-            <input type="text" id="nearestY" defaultValue="5"></input>
-          </div>
-          <div>
-            <input type="text" id="distance" defaultValue="10"></input>
-          </div>
-          <div><button type="button" onClick={() =>
-          ReactionCIMEBackendFromEnv.getkNearestData("domain_5000", (document.getElementById('nearestX') as HTMLInputElement).value, (document.getElementById('nearestY') as HTMLInputElement).value,(document.getElementById('distance') as HTMLInputElement).value).then( (response) => 
-            {
-              console.log(`response`, response)
-              downloadImpl(JSON.stringify(response, null, 1), 'k_nearest_data.csv', 'text/csv')
-              // console.log('BEFORE setDataset', state)
-              // poiDataset.vectors.splice(0, 10)
-              // console.log('after splice:', poiDataset)
-              // setDataset(poiDataset)
-              // console.log('AFTER setDataset', state)
+        <div>
+          <input type="text" id="nearestX" defaultValue="5"></input>
+        </div>
+        <div>
+          <input type="text" id="nearestY" defaultValue="5"></input>
+        </div>
+        <div>
+          <input type="text" id="distance" defaultValue="10"></input>
+        </div>
+        <div>
+          <button
+            type="button"
+            onClick={() =>
+              ReactionCIMEBackendFromEnv.getkNearestData(
+                "domain_5000",
+                (document.getElementById("nearestX") as HTMLInputElement).value,
+                (document.getElementById("nearestY") as HTMLInputElement).value,
+                (document.getElementById("distance") as HTMLInputElement).value
+              ).then((response) => {
+                console.log(`response`, response);
+                downloadImpl(
+                  JSON.stringify(response, null, 1),
+                  "k_nearest_data.csv",
+                  "text/csv"
+                );
+                // console.log('BEFORE setDataset', state)
+                // poiDataset.vectors.splice(0, 10)
+                // console.log('after splice:', poiDataset)
+                // setDataset(poiDataset)
+                // console.log('AFTER setDataset', state)
+              })
             }
-          )
-          }>debug button</button></div>
-          </div>
+          >
+            debug button
+          </button>
+        </div>
+      </div>
     );
   }
 );
