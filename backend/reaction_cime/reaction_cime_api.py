@@ -146,11 +146,11 @@ def get_k_nearest_points(filename, x, y, k):
         link to the dataset.
 
     x:
-        x coordinate of the point for which the nearest neighbours should be returned
+        The x coordinate of the point for which the nearest neighbours should be returned
     y:
-        y coordinate of the point for which the nearest neighbours should be returned
+        The y coordinate of the point for which the nearest neighbours should be returned
     k:
-        amount of neighbours to return
+        The amount of neighbours to return
 
     Returns
     ----------

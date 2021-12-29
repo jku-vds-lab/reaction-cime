@@ -220,8 +220,18 @@ export class ReactionCIMEBackend {
       });
   };
 
-  public getNearestData = async(filename:string, x, y, k) => {
-    console.log('calling get_nearest_data: filename, x, y, k :>> ', filename, x, y, k);
+  /**
+   * Utilizes d3v5.csv() and the corresponding API route to issue an HTTP GET request for a CSV.
+   * This CSV will be returned by a database query in which the k nearest entries to the coordinates (x,y) are selected.
+   * @param {string} filename - The filename which serves as a link to the dataset, i.e., the table name in the database.
+   * @param {string} x - The x coordinate of the point for which the nearest neighbours should be returned
+   * @param {string} y - The y coordinate of the point for which the nearest neighbours should be returned
+   * @param {string} k - The amount of neighbours to return
+   * @returns {Promise} - Returns a promise of the vectors returned by the database query.
+   */
+  public getkNearestData = async(filename:string, x:string, y:string, k:string) => {
+    // TODO consider accepting integer parameters and converting them here to append them to the path string
+    // console.log('calling get_nearest_data: filename, x, y, k :>> ', filename, x, y, k);
     let path = this.baseUrl + "/get_k_nearest_from_csv/" + filename + "/" + x + "/" + y + "/" + k;
 
     return d3v5.csv(path, {
@@ -230,7 +240,7 @@ export class ReactionCIMEBackend {
       if(vectors.length <= 0){
           console.log("selection is empty");
       }else{
-        // TODO: export to utility / API file as this is used twice in different places
+        // TODO is this necessary for compatibility with the loaded dataset?
         vectors = vectors.map((vector) => {
           return AVector.create(vector);
         });

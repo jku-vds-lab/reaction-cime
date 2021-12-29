@@ -7,7 +7,7 @@
  * @param {string} data - The content of the file to be downloaded. Make sure you call JSON.stringify(data) before passing it, if necessary.
  * @param {string} name - The name of the file including document file extension (such as "file.csv")
  * @param {string} mimetype - The mimetype of the file (such as "text/csv", see https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types)
- * @returns {void} no return value
+ * @returns {void} - no return value
  */
 export const downloadImpl = (data: string, name: string, mimetype: string) => {
     var b = new Blob([data], { type: mimetype });

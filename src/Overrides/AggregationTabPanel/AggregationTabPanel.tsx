@@ -100,7 +100,7 @@ export const AggregationTabPanel = connector(({setAggregateDataset, setAggregate
             <input type="text" id="distance" defaultValue="10"></input>
           </div>
           <div><button type="button" onClick={() =>
-          ReactionCIMEBackendFromEnv.getNearestData("domain_5000", (document.getElementById('nearestX') as HTMLInputElement).value, (document.getElementById('nearestY') as HTMLInputElement).value,(document.getElementById('distance') as HTMLInputElement).value).then( (response) => 
+          ReactionCIMEBackendFromEnv.getkNearestData("domain_5000", (document.getElementById('nearestX') as HTMLInputElement).value, (document.getElementById('nearestY') as HTMLInputElement).value,(document.getElementById('distance') as HTMLInputElement).value).then( (response) => 
             {
               console.log(`response`, response)
               downloadImpl(JSON.stringify(response, null, 1), 'k_nearest_data.csv', 'text/csv')
