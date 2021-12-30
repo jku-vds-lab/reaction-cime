@@ -59,7 +59,7 @@ export const AggregationTabPanel = connector(
     // }, [poiDataset?.columns]);
     // console.log('AggregationTabPanel cimeBackgroundSelection:', cimeBackgroundSelection)
 
-    handleBackgroundSelectionUpdate(cimeBackgroundSelection, setCimeBackgroundSelection);
+    handleBackgroundSelectionUpdate(cimeBackgroundSelection, setCimeBackgroundSelection, poiDataset?.info?.path);
 
     return (
       <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
@@ -156,7 +156,7 @@ export const AggregationTabPanel = connector(
  * @param {any} setCimeBackgroundSelection - The dispatch function used to reset the prop after handling background selection
  * @returns {void} - no return value
  */
-function handleBackgroundSelectionUpdate(cimeBackgroundSelection: any, setCimeBackgroundSelection: (coords: any) => any) {
+function handleBackgroundSelectionUpdate(cimeBackgroundSelection: any, setCimeBackgroundSelection: (coords: any) => any, filename: string) {
   // if input for checking k-nearest neighbors (x,y coordinates and k) are not undefined
   if (
     typeof cimeBackgroundSelection?.x !== "undefined" &&
@@ -173,7 +173,7 @@ function handleBackgroundSelectionUpdate(cimeBackgroundSelection: any, setCimeBa
     } else {
       // otherwise send request to db and download response in browser
       ReactionCIMEBackendFromEnv.getkNearestData(
-        "domain_5000",
+        filename,
         cimeBackgroundSelection?.x,
         cimeBackgroundSelection?.y,
         (document.getElementById("knn-textfield") as HTMLInputElement)?.value
