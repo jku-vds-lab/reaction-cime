@@ -166,7 +166,7 @@ function handleBackgroundSelectionUpdate(cimeBackgroundSelection: any, setCimeBa
   ) {
     let k = +(document.getElementById("knn-textfield") as HTMLInputElement)
       ?.value;
-    // if input k is not integer or below 1
+    // if input k is neither integer nor below 1
     if (k < 1 || k % 1 !== 0) {
       // warn user
       alert("Invalid input for k-nearest neighbors.");
