@@ -20,7 +20,9 @@ const mapStateToProps = (state: AppState) => ({
 const mapDispatchToProps = (dispatch) => ({
   setAggregateDataset: dataset => dispatch(setAggregateDatasetAction(dataset)),
   setDataset: dataset => dispatch(setDatasetAction(dataset)),
-  setAggregateColor: aggregateColor => dispatch(setAggregateColor(aggregateColor))
+  setAggregateColor: aggregateColor => dispatch(setAggregateColor(aggregateColor)),
+  setCimeBackgroundSelection: (coords) => dispatch(setCimeBackgroundSelection(coords))
+
 });
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
@@ -40,7 +42,8 @@ export const AggregationTabPanel = connector(
     setDataset,
     aggregateColor,
     poiDataset,
-    cimeBackgroundSelection
+    cimeBackgroundSelection,
+    setCimeBackgroundSelection
   }: Props) => {
     const { cancellablePromise, cancelPromises } = useCancellablePromise(); //TODO: cancelPromises --> use this to cancel promises on demand
     console.log("AgTabP.tsx poiDataset", poiDataset);
@@ -86,6 +89,8 @@ export const AggregationTabPanel = connector(
           }
         });
       }
+      // reset x/y coordinates for safety, such that no other prop update will trigger this download
+      setCimeBackgroundSelection(null)
     }
 
     return (
