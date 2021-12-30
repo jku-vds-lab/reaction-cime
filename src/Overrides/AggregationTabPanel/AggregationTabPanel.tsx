@@ -7,13 +7,14 @@ import { AppState } from "../../State/Store";
 import { AggregateDataset } from "./AggregateDataset";
 import { setAggregateColor } from "../../State/AggregateColorDuck";
 import { setDatasetAction } from "projection-space-explorer/dist/components/Ducks/DatasetDuck"
+import { setCimeBackgroundSelection } from "projection-space-explorer/dist/components/Ducks/CimeBackgroundSelectionDuck"
 import { ReactionCIMEBackendFromEnv } from "../../Backend/ReactionCIMEBackend";
 import { downloadImpl } from '../../Utility/Utils'
 
 const mapStateToProps = (state: AppState) => ({
   aggregateColor: state.aggregateColor,
-  poiDataset: state.dataset,
-  state: state
+  cimeBackgroundSelection: state.cimeBackgroundSelection,
+  poiDataset: state.dataset
 });
 
 const mapDispatchToProps = (dispatch) => ({
@@ -39,7 +40,7 @@ export const AggregationTabPanel = connector(
     setDataset,
     aggregateColor,
     poiDataset,
-    state,
+    cimeBackgroundSelection
   }: Props) => {
     const { cancellablePromise, cancelPromises } = useCancellablePromise(); //TODO: cancelPromises --> use this to cancel promises on demand
     console.log("AgTabP.tsx poiDataset", poiDataset);
@@ -53,6 +54,28 @@ export const AggregationTabPanel = connector(
     //     setCategoryOptions({"attributes": catOpt});
     //   }
     // }, [poiDataset?.columns]);
+    // console.log('AggregationTabPanel cimeBackgroundSelection:', cimeBackgroundSelection)
+    ReactionCIMEBackendFromEnv.getkNearestData(
+      "domain_5000",
+      cimeBackgroundSelection?.x,
+      cimeBackgroundSelection?.y,
+      (document.getElementById("k") as HTMLInputElement)?.value
+    ).then((response) => {
+      console.log(`response`, response);
+      if (typeof response !== 'undefined') {
+        downloadImpl(
+          JSON.stringify(response, null, 1),
+          "k_nearest_data.csv",
+          "text/csv"
+        );
+
+      }
+      // console.log('BEFORE setDataset', state)
+      // poiDataset.vectors.splice(0, 10)
+      // console.log('after splice:', poiDataset)
+      // setDataset(poiDataset)
+      // console.log('AFTER setDataset', state)
+    })
 
     return (
       <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
@@ -130,7 +153,7 @@ export const AggregationTabPanel = connector(
         <div>
           <input type="text" id="k" defaultValue="10"></input>
         </div>
-        <div>
+        {/* <div>
           <button
             type="button"
             onClick={() =>
@@ -156,7 +179,7 @@ export const AggregationTabPanel = connector(
           >
             debug button
           </button>
-        </div>
+        </div> */}
       </div>
     );
   }
