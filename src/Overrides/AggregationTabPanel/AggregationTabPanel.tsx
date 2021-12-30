@@ -55,24 +55,38 @@ export const AggregationTabPanel = connector(
     //   }
     // }, [poiDataset?.columns]);
     // console.log('AggregationTabPanel cimeBackgroundSelection:', cimeBackgroundSelection)
-    
-    if (typeof cimeBackgroundSelection?.x !== 'undefined' && typeof cimeBackgroundSelection?.y !== 'undefined' && (document.getElementById("k") as HTMLInputElement)?.value !== 'undefined') {
-    ReactionCIMEBackendFromEnv.getkNearestData(
-      "domain_5000",
-      cimeBackgroundSelection?.x,
-      cimeBackgroundSelection?.y,
-      (document.getElementById("knn-textfield") as HTMLInputElement)?.value
-    ).then((response) => {
-      if (typeof response !== 'undefined') {
-      console.log(`response`, response);
-        downloadImpl(
-          JSON.stringify(response, null, 1),
-          "k_nearest_data.csv",
-          "text/csv"
-        );
+
+    // if input for checking k-nearest neighbors (x,y coordinates and k) are not undefined
+    if (
+      typeof cimeBackgroundSelection?.x !== "undefined" &&
+      typeof cimeBackgroundSelection?.y !== "undefined" &&
+      (document.getElementById("knn-textfield") as HTMLInputElement)?.value !==
+        "undefined"
+    ) {
+      let k = +(document.getElementById("knn-textfield") as HTMLInputElement)?.value;
+      // if input k is not integer or below 1
+      if (k < 1 || k % 1 !== 0) {
+        // warn user
+        alert("Invalid input for k-nearest neighbors.");
+      } else {
+        // otherwise send request to db and download response in browser
+        ReactionCIMEBackendFromEnv.getkNearestData(
+          "domain_5000",
+          cimeBackgroundSelection?.x,
+          cimeBackgroundSelection?.y,
+          (document.getElementById("knn-textfield") as HTMLInputElement)?.value
+        ).then((response) => {
+          if (typeof response !== "undefined") {
+            console.log(`response`, response);
+            downloadImpl(
+              JSON.stringify(response, null, 1),
+              "k_nearest_data.csv",
+              "text/csv"
+            );
+          }
+        });
       }
-    })
-  }
+    }
 
     return (
       <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
@@ -143,7 +157,15 @@ export const AggregationTabPanel = connector(
         </Box>
         <Box paddingLeft={2} paddingTop={1} paddingRight={2}>
           {
-            <TextField id="knn-textfield" label="k-nearest neighbors" variant="outlined" defaultValue={50}/>
+            <TextField
+              id="knn-textfield"
+              label="k-nearest neighbors"
+              variant="outlined"
+              defaultValue={50}
+              fullWidth
+              size="small"
+              type="number"
+            />
           }
         </Box>
       </div>
