@@ -1,4 +1,4 @@
-import { Box } from "@mui/material";
+import { TextField, Box } from "@mui/material";
 import { CategoryOptionsAPI, SelectFeatureComponent, useCancellablePromise } from "projection-space-explorer";
 // import { CategoryOptionsAPI, SelectFeatureComponent, useCancellablePromise } from "projection-space-explorer";
 import { connect, ConnectedProps } from "react-redux";
@@ -55,27 +55,24 @@ export const AggregationTabPanel = connector(
     //   }
     // }, [poiDataset?.columns]);
     // console.log('AggregationTabPanel cimeBackgroundSelection:', cimeBackgroundSelection)
+    
+    if (typeof cimeBackgroundSelection?.x !== 'undefined' && typeof cimeBackgroundSelection?.y !== 'undefined' && (document.getElementById("k") as HTMLInputElement)?.value !== 'undefined') {
     ReactionCIMEBackendFromEnv.getkNearestData(
       "domain_5000",
       cimeBackgroundSelection?.x,
       cimeBackgroundSelection?.y,
-      (document.getElementById("k") as HTMLInputElement)?.value
+      (document.getElementById("knn-textfield") as HTMLInputElement)?.value
     ).then((response) => {
-      console.log(`response`, response);
       if (typeof response !== 'undefined') {
+      console.log(`response`, response);
         downloadImpl(
           JSON.stringify(response, null, 1),
           "k_nearest_data.csv",
           "text/csv"
         );
-
       }
-      // console.log('BEFORE setDataset', state)
-      // poiDataset.vectors.splice(0, 10)
-      // console.log('after splice:', poiDataset)
-      // setDataset(poiDataset)
-      // console.log('AFTER setDataset', state)
     })
+  }
 
     return (
       <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
@@ -144,42 +141,11 @@ export const AggregationTabPanel = connector(
             )
           }
         </Box>
-        <div>
-          <input type="text" id="nearestX" defaultValue="5"></input>
-        </div>
-        <div>
-          <input type="text" id="nearestY" defaultValue="5"></input>
-        </div>
-        <div>
-          <input type="text" id="k" defaultValue="10"></input>
-        </div>
-        {/* <div>
-          <button
-            type="button"
-            onClick={() =>
-              ReactionCIMEBackendFromEnv.getkNearestData(
-                "domain_5000",
-                (document.getElementById("nearestX") as HTMLInputElement).value,
-                (document.getElementById("nearestY") as HTMLInputElement).value,
-                (document.getElementById("k") as HTMLInputElement).value
-              ).then((response) => {
-                console.log(`response`, response);
-                downloadImpl(
-                  JSON.stringify(response, null, 1),
-                  "k_nearest_data.csv",
-                  "text/csv"
-                );
-                // console.log('BEFORE setDataset', state)
-                // poiDataset.vectors.splice(0, 10)
-                // console.log('after splice:', poiDataset)
-                // setDataset(poiDataset)
-                // console.log('AFTER setDataset', state)
-              })
-            }
-          >
-            debug button
-          </button>
-        </div> */}
+        <Box paddingLeft={2} paddingTop={1} paddingRight={2}>
+          {
+            <TextField id="knn-textfield" label="k-nearest neighbors" variant="outlined" defaultValue={50}/>
+          }
+        </Box>
       </div>
     );
   }
