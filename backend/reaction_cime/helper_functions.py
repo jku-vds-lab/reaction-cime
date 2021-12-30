@@ -2,6 +2,19 @@
 
 # ---------------- preprocess dataset --------------------
 
+def preprocess_dataset(domain):
+    value_col = domain["yield"]
+    step_col = domain["experimentCycle"]
+
+    new_cols = generate_rename_list(domain)
+    domain.columns = new_cols
+
+    # col ends with _value bzw _step -> it belongs to a time series
+    # TODO: make this dynamic
+    domain['pred_value'] = value_col
+    domain['pred_step'] = step_col
+    return domain
+
 import re
 
 # def add_meta_info_time_series_data(column, timesteps, featureLabel, lineUpGroup, globalRange=None, colorMapping=None):

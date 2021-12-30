@@ -741,25 +741,53 @@ export class MyLineChartRenderer implements ICellRendererFactory {
 
   create(col: TestColumn): ICellRenderer {
     return {
-      template: `<div class="svg-container"><svg class="svg-content" preserveAspectRatio="xMidYMid meet"><g><path class="areaChart"></path><path class="lineChart" fill="none" stroke="${base_color}" stroke-width="0.02px"></path><g><line class="focus-line"></line></g><g><text style="font-size:0.2px;" class="focus-text"></text></g><rect class="hover-rect"></rect></g></svg></div>`,
+      template: `<div class="svg-container">
+        <svg class="svg-content" preserveAspectRatio="xMidYMid meet">
+          <g>
+            <path class="areaChart"></path>
+            <path class="lineChart" fill="none" stroke="${base_color}" stroke-width="0.02px"></path>
+            <g>
+              <line class="focus-line"></line>
+              <line class="value-line-marker"></line>
+            </g>
+            <g>
+              <text style="font-size:0.2px; opacity:0;" class="marker-text">-</text>
+              <text style="font-size:0.2px;" class="focus-text"></text>
+            </g>
+            <rect class="hover-rect"></rect>
+          </g>
+        </svg></div>`,
       update: (n: HTMLImageElement, d: IDataRow) => {
         if (renderMissingDOM(n, col, d)) {
           return;
         }
+
+        
+
         // get data
         let row = col.getMap(d);
         const data_mean_list = row[0]["value"];
         const data_var_list = row[1]["value"];
         // const data_max = col.getMax();
-        const data_max =
+        let data_max =
           d3v5.max(data_mean_list, function (d) {
             return +d;
           }) + 1;
         // const data_min = col.getMin();
-        const data_min =
+        let data_min =
           d3v5.min(data_mean_list, function (d) {
             return +d;
           }) - 1;
+
+        let measurement_value = null;
+        let measurement_step = null;
+        if((col.desc.label + "_value" in d.v) && (col.desc.label + "_step" in d.v)){
+          measurement_value = d.v[col.desc.label + "_value"]
+          measurement_step = d.v[col.desc.label + "_step"]
+
+          data_min = Math.min(data_min, measurement_value-measurement_value*0.1)
+          data_max = Math.max(data_max, measurement_value+measurement_value*0.1)
+        }
 
         // this is the ratio that the chart should have
         const rel_width = WIDTH_HEIGHT_RATIO; //data_mean_list.length/4;
@@ -814,6 +842,32 @@ export class MyLineChartRenderer implements ICellRendererFactory {
               return y(d);
             }) // 1-(d/data_max)
         );
+
+
+        if(measurement_value != null && measurement_step != null){
+          // create the marker that marks an actual measurement
+          
+          svg
+            .select(".value-line-marker")
+            .style("fill", "none")
+            .attr("stroke", "#007dad")
+            .attr("stroke-width", "0.5%")
+            .attr("y1", "0")
+            .attr("y2", rel_height)
+            .attr("x1", x(measurement_step))
+            .attr("x2", x(measurement_step))
+            .style("opacity", 1);
+            
+          svg
+            .select(".marker-text")
+            .style("opacity", 1)
+            .style("color", "#007dad")
+            .attr("text-anchor", "middle")
+            .attr("alignment-baseline", "middle")
+            .attr("letter-spacing", "0px")
+            .attr("x", x(measurement_step))
+            .attr("y", y(measurement_value));
+        }
 
         // add tooltips
         // https://www.d3-graph-gallery.com/graph/line_cursor.html
@@ -877,6 +931,12 @@ export class MyLineChartRenderer implements ICellRendererFactory {
           // if(x0 > rel_width/2){
           //     x0 = x0-rel_width/2;
           // }
+          let measurement_txt = ""
+          if(i === measurement_step){
+            measurement_txt = "<tspan x='0' dy='1.2em'>measured: " +
+                Math.round(measurement_value * 100) / 100 +
+                "</tspan>"
+          }
           focusText
             .html(
               "<tspan x='0' dy='1.2em'>step: " +
@@ -885,7 +945,7 @@ export class MyLineChartRenderer implements ICellRendererFactory {
                 Math.round(data_mean_list[i] * 100) / 100 +
                 "</tspan><tspan x='0' dy='1.2em'>var: " +
                 Math.round(data_var_list[i] * 100) / 100 +
-                "</tspan>"
+                "</tspan>" + measurement_txt
             )
             .attr("x", 0) //x0
             .attr("y", 0); //y0

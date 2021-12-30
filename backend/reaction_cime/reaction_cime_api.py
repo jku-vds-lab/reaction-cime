@@ -2,10 +2,10 @@ import pickle
 from flask import Blueprint, request, current_app, abort, jsonify, Response, stream_with_context
 import logging
 from rdkit import Chem
-from rdkit.Chem import Draw, rdFMCS
+from rdkit.Chem import Draw
 from io import BytesIO
 import base64
-from .helper_functions import generate_rename_list, get_mcs, smiles_to_base64, aggregate_col, rescale_and_encode
+from .helper_functions import preprocess_dataset, get_mcs, smiles_to_base64, aggregate_col, rescale_and_encode
 import json
 
 _log = logging.getLogger(__name__)
@@ -110,8 +110,7 @@ def get_points_of_interest(filename):
 
     poi_domain = get_poi_df_from_db(filename, get_cime_dbo())
 
-    new_cols = generate_rename_list(poi_domain)
-    poi_domain.columns = new_cols
+    poi_domain = preprocess_dataset(poi_domain)
 
     csv_buffer = StringIO()
     poi_domain.to_csv(csv_buffer, index=False)
