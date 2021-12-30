@@ -146,6 +146,16 @@ export const AggregationTabPanel = connector(
   }
 );
 
+/**
+ * This is merely a helper function to decompose the code into smaller individual segments.
+ * It is used to handle the changing background selection prop, which might, e.g., be triggered when a user clicks the k-nearest neighbor option in the context menu.
+ * Specifically, it checks whether the parameters are correct, and if so, sends a query to the db to fetch the k-nearest entires to the click, with k being defined by a textfield.
+ * The response triggers the download of a csv with these entries.
+ * Afterwards, the background selection is reset, to make sure other prop updates do not trigger this db query and download.
+ * @param {any} cimeBackgroundSelection - The prop form the redux store that holds x and y coordinates of the clicks
+ * @param {any} setCimeBackgroundSelection - The dispatch function used to reset the prop after handling background selection
+ * @returns {void} - no return value
+ */
 function handleBackgroundSelectionUpdate(cimeBackgroundSelection: any, setCimeBackgroundSelection: (coords: any) => any) {
   // if input for checking k-nearest neighbors (x,y coordinates and k) are not undefined
   if (
