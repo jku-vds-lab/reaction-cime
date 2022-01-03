@@ -125,7 +125,29 @@ class ReactionCIMEDBO():
             columns.append("id")
         return pd.read_sql(table_name, self.db.engine, index_col="id", columns=columns)
 
-    def get_dataframe_from_table_filter(self, table_name, filter, where=True):
+    def get_dataframe_from_table_complete_filter(self, table_name, filter):
+        """
+        Routes an SQL query including the filter on the given table_name and returns a corresponding pandas dataframe.
+        The database in use is fixed as self.db.engine
+        The query will look like "Select * FROM table_name filter".
+        This enables queries such as "Select * FROM table_name ORDER BY x LIMIT y".
+        
+        Parameters
+        ----------
+        table_name:
+            The table to select from as part of the SQLite query
+        filter:
+            The filter to apply as part of the SQLite query
+
+        Returns
+        ----------
+        pandas.Dataframe
+            A pandas dataframe containing the query result from the database
+        """
+        sql_stmt = "SELECT * FROM " + table_name + " " + filter
+        return pd.read_sql(sql_stmt, self.db.engine, index_col="id")
+
+    def get_dataframe_from_table_filter(self, table_name, filter):
         """
         Routes an SQL query including the filter on the given table_name and returns a corresponding pandas dataframe.
         The database in use is fixed as self.db.engine
@@ -133,8 +155,7 @@ class ReactionCIMEDBO():
         The where flag is for backwards compatibility with previous utilizations of this function, feel free to change it and update the calls correspondingly.
         This enables queries such as "Select * FROM table_name ORDER BY x LIMIT y" without having to use SQL injection tricks "1=1 ORDER BY ..."
 
-        If where=True, the query will look like "Select * FROM table_name WHERE filter"
-        If where=False, the query will look like "Select * FROM table_name filter"
+        The query will look like "Select * FROM table_name WHERE filter"
 
         Parameters
         ----------
@@ -142,18 +163,13 @@ class ReactionCIMEDBO():
             The table to select from as part of the SQLite query
         filter:
             The filter to apply as part of the SQLite query
-        where: boolean
-            whether to include WHERE at the beginning of the filter string. used for backwards compatibility with old function calls
 
         Returns
         ----------
         pandas.Dataframe
             A pandas dataframe containing the query result from the database
         """
-        if where:
-            sql_stmt = "SELECT * FROM " + table_name + " WHERE " + filter
-        else:
-            sql_stmt = "SELECT * FROM " + table_name + " " + filter
+        sql_stmt = "SELECT * FROM " + table_name + " WHERE " + filter
         return pd.read_sql(sql_stmt, self.db.engine, index_col="id")
 
     def get_filter_mask(self, table_name, filter):
@@ -161,6 +177,7 @@ class ReactionCIMEDBO():
         mask = pd.read_sql(sql_stmt, self.db.engine, index_col="id")
         mask["mask"] = mask["mask"].astype("bool")
         return mask
+
     def drop_table(self, table_name):
         base = declarative_base()
         table = self.metadata.tables.get(table_name)

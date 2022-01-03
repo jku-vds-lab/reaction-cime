@@ -159,7 +159,7 @@ def get_k_nearest_points(filename, x, y, k):
     """
     
     # calculates squared euclidean distance, orders the db table by this distance, and returns k first entries
-    nearest_points_domain = get_cime_dbo().get_dataframe_from_table_filter(filename, 'ORDER BY ((x-('+str(x)+'))*(x-('+str(x)+')))+((y-('+str(y)+'))*(y-('+str(y)+'))) LIMIT '+str(k)+';', where=False)
+    nearest_points_domain = get_cime_dbo().get_dataframe_from_table_complete_filter(filename, 'ORDER BY ((x-('+str(x)+'))*(x-('+str(x)+')))+((y-('+str(y)+'))*(y-('+str(y)+'))) LIMIT '+str(k)+';')
 
     csv_buffer = StringIO()
     nearest_points_domain.to_csv(csv_buffer, index=False)
