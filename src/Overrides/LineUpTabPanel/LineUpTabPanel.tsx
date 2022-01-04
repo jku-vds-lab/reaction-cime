@@ -8,6 +8,7 @@ import {
 } from "../../State/LineUpInputDuck";
 import { AppState } from "../../State/Store";
 import React from "react";
+import { downloadImpl } from '../../Utility/Utils'
 
 const mapStateToProps = (state: AppState) => ({
   dataset: state.dataset,
@@ -51,14 +52,14 @@ export const LineUpTabPanel = connector(
     };
 
     // https://stackoverflow.com/questions/31214677/download-a-reactjs-object-as-a-file
-    const downloadImpl = (data: string, name: string, mimetype: string) => {
-      var b = new Blob([data], { type: mimetype });
-      var csvURL = window.URL.createObjectURL(b);
-      let tempLink = document.createElement("a");
-      tempLink.href = csvURL;
-      tempLink.setAttribute("download", name);
-      tempLink.click();
-    };
+    // const downloadImpl = (data: string, name: string, mimetype: string) => {
+    //   var b = new Blob([data], { type: mimetype });
+    //   var csvURL = window.URL.createObjectURL(b);
+    //   let tempLink = document.createElement("a");
+    //   tempLink.href = csvURL;
+    //   tempLink.setAttribute("download", name);
+    //   tempLink.click();
+    // };
 
     const exportCSV = () => {
       if (lineUpInput.lineup && lineUpInput.lineup.data) {

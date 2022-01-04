@@ -120,12 +120,77 @@ def get_points_of_interest(filename):
 
 def get_poi_df_from_db(filename, cime_dbo):
     # TODO: make dynamic, by which feature we want to filter (e.g. user could change the settings in the front-end maybe with parallel coordinates?)
+    # example code for distance filter
     poi_domain = cime_dbo.get_dataframe_from_table_filter(filename, "yield > 0")
     return poi_domain
 
 def get_poi_mask(filename, cime_dbo):
     mask = cime_dbo.get_filter_mask(filename, "yield > 0")
     return mask
+
+@reaction_cime_api.route('/get_k_nearest_from_csv/<filename>/<x>/<y>/<k>', methods=['GET'])
+def get_k_nearest_points(filename, x, y, k):
+    """
+    k nearest points to the point x,y in the database filename will be returned using a StringIO buffer.
+    This is implemented via an SQLite query to the database.
+
+    Parameters
+    ----------
+    filename:
+        link to the dataset.
+
+    x:
+        The x coordinate of the point for which the nearest neighbours should be returned
+    y:
+        The y coordinate of the point for which the nearest neighbours should be returned
+    k:
+        The amount of neighbours to return
+
+    Returns
+    ----------
+    str
+        StringIO.getValue() of the buffered csv created from the filtered database entries
+    """
+    
+    # calculates squared euclidean distance, orders the db table by this distance, and returns k first entries
+    nearest_points_domain = get_cime_dbo().get_dataframe_from_table_complete_filter(filename, 'ORDER BY ((x-('+str(x)+'))*(x-('+str(x)+')))+((y-('+str(y)+'))*(y-('+str(y)+'))) LIMIT '+str(k)+';')
+
+    csv_buffer = StringIO()
+    nearest_points_domain.to_csv(csv_buffer, index=False)
+    
+    return csv_buffer.getvalue()
+
+@reaction_cime_api.route('/get_radius_from_csv/<filename>/<x>/<y>/<d>', methods=['GET'])
+def get_points_given_radius(filename, x, y, r):
+    """
+    Returns all points in the database filename that have distance no greater than r to the point at coordinates (x,y).
+
+    Parameters
+    ----------
+    filename:
+        link to the dataset.
+
+    x:
+        x coordinate of the point for which the nearest neighbours should be returned
+    y:
+        y coordinate of the point for which the nearest neighbours should be returned
+    r:
+        radius around the specified coordinate in which to return data points
+
+    Returns
+    ----------
+    str
+        StringIO.getValue() of the buffered csv created from the filtered database entries
+    """
+    # squared radius for SQLite query filter condition
+    r2 = int(r) * int(r)
+    # filters using euclidean distance (squared on both sides since SQLite does not have extended maths enabled for SQRT)
+    nearest_points_domain = get_cime_dbo().get_dataframe_from_table_filter(filename, '((x-('+str(x)+'))*(x-('+str(x)+')))+((y-('+str(y)+'))*(y-('+str(y)+'))) < '+str(r2))
+
+    csv_buffer = StringIO()
+    nearest_points_domain.to_csv(csv_buffer, index=False)
+    
+    return csv_buffer.getvalue()
 
 @reaction_cime_api.route('/get_agg_csv/<filename>/<col_name>', methods=['GET'])
 def get_aggregated_dataset(filename, col_name):

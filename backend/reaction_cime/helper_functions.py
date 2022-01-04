@@ -36,8 +36,8 @@ import re
 def generate_global_ranges(domain):
     ranges = {}
     for col_sub in time_series_cols_diverging:
-        global_min = min(domain[[col for col in domain.columns if col_sub in col]].min())
-        global_max = max(domain[[col for col in domain.columns if col_sub in col]].max())
+        global_min = min(domain[[col for col in domain.columns if col_sub in col]].fillna(0).min())
+        global_max = max(domain[[col for col in domain.columns if col_sub in col]].fillna(0).max())
 
         global_range = max(abs(global_min), abs(global_max))
         # global_range = round(global_range) # do we want to be rounded?

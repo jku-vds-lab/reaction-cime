@@ -125,7 +125,51 @@ class ReactionCIMEDBO():
             columns.append("id")
         return pd.read_sql(table_name, self.db.engine, index_col="id", columns=columns)
 
+    def get_dataframe_from_table_complete_filter(self, table_name, filter):
+        """
+        Routes an SQL query including the filter on the given table_name and returns a corresponding pandas dataframe.
+        The database in use is fixed as self.db.engine
+        The query will look like "SELECT * FROM table_name filter".
+        This enables queries such as "SELECT * FROM table_name ORDER BY x LIMIT y".
+        
+        Parameters
+        ----------
+        table_name:
+            The table to select from as part of the SQLite query
+        filter:
+            The filter to apply as part of the SQLite query
+
+        Returns
+        ----------
+        pandas.Dataframe
+            A pandas dataframe containing the query result from the database
+        """
+        sql_stmt = "SELECT * FROM " + table_name + " " + filter
+        return pd.read_sql(sql_stmt, self.db.engine, index_col="id")
+
     def get_dataframe_from_table_filter(self, table_name, filter, columns=None):
+        """
+        Routes an SQL query including the filter on the given table_name and returns a corresponding pandas dataframe.
+        The database in use is fixed as self.db.engine
+
+        If columns is not None, the query will look like "SELECT columns FROM table_name WHERE filter".
+        Otherwise it wil be "SELECT * FROM table_name WHERE filter".
+
+        Parameters
+        ----------
+        table_name:
+            The table to select from as part of the SQLite query
+        filter:
+            The filter to apply as part of the SQLite query
+        columns:
+            The columns to perform a select on (SELECT columns FROM)
+
+
+        Returns
+        ----------
+        pandas.Dataframe
+            A pandas dataframe containing the query result from the database
+        """
         select_cols = "*"
         if columns is not None:
             select_cols = "id"
@@ -141,6 +185,7 @@ class ReactionCIMEDBO():
         mask = pd.read_sql(sql_stmt, self.db.engine, index_col="id")
         mask["mask"] = mask["mask"].astype("bool")
         return mask
+
     def drop_table(self, table_name):
         base = declarative_base()
         table = self.metadata.tables.get(table_name)

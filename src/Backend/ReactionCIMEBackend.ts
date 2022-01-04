@@ -2,6 +2,7 @@
 import * as d3v5 from "d3v5";
 import {useCancellablePromise} from "projection-space-explorer";
 import { trackPromise } from "react-promise-tracker";
+import { AVector } from "projection-space-explorer";
 
 export class ReactionCIMEBackend {
   protected smiles_cache = {};
@@ -215,6 +216,38 @@ export class ReactionCIMEBackend {
         console.log(error);
       });
   };
+
+  /**
+   * Utilizes d3v5.csv() and the corresponding API route to issue an HTTP GET request for a CSV.
+   * This CSV will be returned by a database query in which the k nearest entries to the coordinates (x,y) are selected.
+   * @param {string} filename - The filename which serves as a link to the dataset, i.e., the table name in the database.
+   * @param {string} x - The x coordinate of the point for which the nearest neighbours should be returned
+   * @param {string} y - The y coordinate of the point for which the nearest neighbours should be returned
+   * @param {string} k - The amount of neighbours to return
+   * @returns {Promise} - Returns a promise of the vectors returned by the database query.
+   */
+  public getkNearestData = async(filename:string, x:string, y:string, k:string) => {
+    // TODO consider accepting integer parameters and converting them here to append them to the path string
+    // console.log('calling get_nearest_data: filename, x, y, k :>> ', filename, x, y, k);
+    let path = this.baseUrl + "/get_k_nearest_from_csv/" + filename + "/" + x + "/" + y + "/" + k;
+
+    return d3v5.csv(path, {
+      ...this.fetchParams
+    }).then((vectors) => {
+      if(vectors.length <= 0){
+          console.log("selection is empty");
+      }else{
+        // TODO is this necessary for compatibility with the loaded dataset?
+        vectors = vectors.map((vector) => {
+          return AVector.create(vector);
+        });
+        return vectors;
+      }
+    }).catch((error) => {
+        console.log(error);
+      });
+      
+  }
 
   public project_dataset = async(filename:string, params:object, selected_feature_info:object, controller?) => {
     const formData = new FormData();
