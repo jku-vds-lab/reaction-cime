@@ -13,6 +13,7 @@ import { AggregationTabPanel } from "./Overrides/AggregationTabPanel";
 import { AggregationLayer } from "./Overrides/AggregationLayer/AggregationLayer";
 import { DatasetTabPanel } from "./Overrides/Dataset/DatasetTabPanel";
 import { RemoteEmbeddingController } from "./Overrides/Embeddings/RemoteEmbeddingController";
+import { ReactionCIMEBackendFromEnv } from "./Backend/ReactionCIMEBackend";
 
 export const DEMO = false;
 
@@ -28,6 +29,18 @@ export const ReactionCIMEApp = () => {
 
   // context.store.dispatch(setDatasetEntriesAction(DATASETCONFIG))
   
+//   <MenuItem onClick={() => {
+//     var coords = CameraTransformations.screenToWorld(
+//       {
+//         x: this.mouseController.currentMousePosition.x,
+//         y: this.mouseController.currentMousePosition.y,
+//       },
+//       this.createTransform()
+//     );
+//     console.log('Pressed "Download k-Nearest" option from context-menu with coords :>> ', coords);
+//     this.props.setCimeBackgroundSelection(coords);
+//     handleClose()
+// }}>Download k-Nearest</MenuItem>
 
   return <PSEContextProvider context={context}><Application
     config={{
@@ -47,6 +60,9 @@ export const ReactionCIMEApp = () => {
     overrideComponents={{
       datasetTab: DatasetTabPanel,
       appBar: null,//CimeAppBar, --> remove when null
+      contextMenuItems: [{key:"getkNN", title:"Download k-Nearest", function:(coords) => {
+        handleBackgroundSelectionDownload(coords, context.store.getState().dataset?.info?.path)
+      }}],
       detailViews: [
         {
           name: "lineup",
@@ -81,4 +97,39 @@ export const ReactionCIMEApp = () => {
     }}
   /></PSEContextProvider>
 
+}
+
+/**
+ * This is merely a helper function to decompose the code into smaller individual segments.
+ * It is used to handle the changing background selection prop, which might, e.g., be triggered when a user clicks the k-nearest neighbor option in the context menu.
+ * Specifically, it checks whether the parameters are correct, and if so, sends a query to the db to fetch the k-nearest entires to the click, with k being defined by a textfield.
+ * The response triggers the download of a csv with these entries.
+ * Afterwards, the background selection is reset, to make sure other prop updates do not trigger this db query and download.
+ * @param {any} coords - The prop that holds x and y coordinates of the clicks
+ * @returns {void} - no return value
+ */
+ function handleBackgroundSelectionDownload(coords: any, filename: string) {
+  // if input for checking k-nearest neighbors (x,y coordinates and k) are not undefined
+  if (
+    typeof coords?.x !== "undefined" &&
+    typeof coords?.y !== "undefined" &&
+    (document.getElementById("knn-textfield") as HTMLInputElement)?.value !==
+      "undefined"
+  ) {
+    let k = +(document.getElementById("knn-textfield") as HTMLInputElement)
+      ?.value;
+    // if input k is neither integer nor below 1
+    if (k < 1 || k % 1 !== 0) {
+      // warn user
+      alert("Invalid input for k-nearest neighbors.");
+    } else {
+      // otherwise send request to db and download response in browser
+      ReactionCIMEBackendFromEnv.getkNearestData(
+        filename,
+        coords?.x,
+        coords?.y,
+        (document.getElementById("knn-textfield") as HTMLInputElement)?.value
+      );
+    }
+  }
 }

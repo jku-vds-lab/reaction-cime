@@ -1,6 +1,7 @@
 import pickle
 from flask import Blueprint, request, current_app, abort, jsonify, Response, stream_with_context
 import logging
+from flask.helpers import make_response, send_file
 from rdkit import Chem
 from rdkit.Chem import Draw
 from io import BytesIO
@@ -155,10 +156,10 @@ def get_k_nearest_points(filename, x, y, k):
     # calculates squared euclidean distance, orders the db table by this distance, and returns k first entries
     nearest_points_domain = get_cime_dbo().get_dataframe_from_table_complete_filter(filename, 'ORDER BY ((x-('+str(x)+'))*(x-('+str(x)+')))+((y-('+str(y)+'))*(y-('+str(y)+'))) LIMIT '+str(k)+';')
 
-    csv_buffer = StringIO()
-    nearest_points_domain.to_csv(csv_buffer, index=False)
-    
-    return csv_buffer.getvalue()
+    response = make_response(nearest_points_domain.to_csv(index=False))
+    response.headers["Content-Disposition"] = "attachment; filename=%s_kNN_%s_%s.csv"%(filename, x, y)
+    response.headers["Content-type"] = "text/csv"
+    return response
 
 @reaction_cime_api.route('/get_radius_from_csv/<filename>/<x>/<y>/<d>', methods=['GET'])
 def get_points_given_radius(filename, x, y, r):

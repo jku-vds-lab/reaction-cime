@@ -2,7 +2,6 @@
 import * as d3v5 from "d3v5";
 import {useCancellablePromise} from "projection-space-explorer";
 import { trackPromise } from "react-promise-tracker";
-import { AVector } from "projection-space-explorer";
 
 export class ReactionCIMEBackend {
   protected smiles_cache = {};
@@ -230,22 +229,8 @@ export class ReactionCIMEBackend {
     // TODO consider accepting integer parameters and converting them here to append them to the path string
     // console.log('calling get_nearest_data: filename, x, y, k :>> ', filename, x, y, k);
     let path = this.baseUrl + "/get_k_nearest_from_csv/" + filename + "/" + x + "/" + y + "/" + k;
-
-    return d3v5.csv(path, {
-      ...this.fetchParams
-    }).then((vectors) => {
-      if(vectors.length <= 0){
-          console.log("selection is empty");
-      }else{
-        // TODO is this necessary for compatibility with the loaded dataset?
-        vectors = vectors.map((vector) => {
-          return AVector.create(vector);
-        });
-        return vectors;
-      }
-    }).catch((error) => {
-        console.log(error);
-      });
+    // window.location.href = path;
+    window.open(path);
       
   }
 

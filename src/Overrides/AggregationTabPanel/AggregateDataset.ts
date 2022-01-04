@@ -1,5 +1,4 @@
 import { FeatureType } from "projection-space-explorer";
-import { ReactionCIMEBackendFromEnv } from "../../Backend/ReactionCIMEBackend";
 
 export const DefaultFeatureLabel = "Default"
 
