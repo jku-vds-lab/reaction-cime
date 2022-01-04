@@ -37,6 +37,7 @@ import {
 
     React.useEffect(() => {
       updateFiles();
+      // eslint-disable-next-line
     }, [refresh]);
   
     var handleClick = (entry) => {

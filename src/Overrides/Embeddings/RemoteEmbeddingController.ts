@@ -2,10 +2,11 @@ import { Dataset, EmbeddingController, IBaseProjection } from "projection-space-
 import remoteWorker from "./remote.worker";
 
 export class RemoteEmbeddingController extends EmbeddingController {
-    targetBounds: any
-    private embedding_method:string;
+    targetBounds: any;
+    private embedding_method:String;
 
-    constructor(embedding_method:string){
+    constructor(embedding_method:String){ 
+        // embedding_methods currently implemented in the backend: "umap", "tsne", "pca"; it defaults to "pca"
         super()
         this.embedding_method = embedding_method
     }

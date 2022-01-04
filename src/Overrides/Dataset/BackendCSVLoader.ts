@@ -25,8 +25,6 @@ export class BackendCSVLoader implements Loader {
 
   resolvePath(entry: any, finished: (dataset: Dataset) => void, cancellablePromise?: ReturnType<typeof useCancellablePromise>["cancellablePromise"], modifiers?: string, controller?: AbortController) {
     if (entry.uploaded) {
-      // TODO: Instead of localstorage store it in state?
-      // localStorage.setItem("id", entry.path);
       // use file that is already uploaded to backend
       this.loadPOICSV(finished, entry, cancellablePromise, modifiers, controller);
     } else {

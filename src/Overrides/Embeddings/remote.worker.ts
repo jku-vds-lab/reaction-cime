@@ -30,5 +30,5 @@ ctx.addEventListener('message', function (e) {
     // }
 }, false);
 
-
-export default null;
+const helper = null;
+export default helper;

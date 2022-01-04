@@ -2,23 +2,23 @@ import { TextField, Box } from "@mui/material";
 import { CategoryOptionsAPI, SelectFeatureComponent, useCancellablePromise } from "projection-space-explorer";
 // import { CategoryOptionsAPI, SelectFeatureComponent, useCancellablePromise } from "projection-space-explorer";
 import { connect, ConnectedProps } from "react-redux";
-import aggregateDataset, { setAggregateDatasetAction } from "../../State/AggregateDatasetDuck";
 import { AppState } from "../../State/Store";
-import { AggregateDataset } from "./AggregateDataset";
 import { setAggregateColor } from "../../State/AggregateColorDuck";
 import { setDatasetAction } from "projection-space-explorer/dist/components/Ducks/DatasetDuck"
 import { setCimeBackgroundSelection } from "projection-space-explorer/dist/components/Ducks/CimeBackgroundSelectionDuck"
 import { ReactionCIMEBackendFromEnv } from "../../Backend/ReactionCIMEBackend";
 import { downloadImpl } from '../../Utility/Utils'
+import React from "react";
+
 
 const mapStateToProps = (state: AppState) => ({
   aggregateColor: state.aggregateColor,
   cimeBackgroundSelection: state.cimeBackgroundSelection,
-  poiDataset: state.dataset
+  poiDataset: state.dataset,
+  workspace: state.projections.workspace
 });
 
 const mapDispatchToProps = (dispatch) => ({
-  setAggregateDataset: dataset => dispatch(setAggregateDatasetAction(dataset)),
   setDataset: dataset => dispatch(setDatasetAction(dataset)),
   setAggregateColor: aggregateColor => dispatch(setAggregateColor(aggregateColor)),
   setCimeBackgroundSelection: (coords) => dispatch(setCimeBackgroundSelection(coords))
@@ -37,19 +37,22 @@ function hello(){
 
 export const AggregationTabPanel = connector(
   ({
-    setAggregateDataset,
     setAggregateColor,
-    setDataset,
     aggregateColor,
     poiDataset,
     cimeBackgroundSelection,
-    setCimeBackgroundSelection
+    setCimeBackgroundSelection,
+    workspace
   }: Props) => {
     const { cancellablePromise, cancelPromises } = useCancellablePromise(); //TODO: cancelPromises --> use this to cancel promises on demand
     console.log("AgTabP.tsx poiDataset", poiDataset);
     const categoryOptions = poiDataset?.categories;
 
-    // let [categoryOptions, setCategoryOptions] = React.useState(null);
+    React.useEffect(() => {
+      // reset aggregate color to hide the aggregated dataset in the background
+      setAggregateColor({key: "None", name: "None"})
+    // eslint-disable-next-line
+    }, [workspace]) // this is triggered during the embedding
 
     // React.useEffect(() => {
     //   if(poiDataset !== null && poiDataset.columns !== null){
@@ -63,12 +66,6 @@ export const AggregationTabPanel = connector(
 
     return (
       <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-        {/* <Box paddingLeft={2} paddingTop={1} paddingRight={2}>
-          <Typography variant="subtitle2" gutterBottom>
-            Upload Aggregated Dataset
-          </Typography>
-        </Box>
-        <AggregatedDatasetDrop onChange={(dataset) => {setAggregateDataset(new AggregateDataset(dataset))}} /> */}
         <Box paddingLeft={2} paddingTop={1} paddingRight={2}>
           {/* {
             categoryOptions != null ?
@@ -106,26 +103,9 @@ export const AggregationTabPanel = connector(
                   }
                   setAggregateColor(attribute);
 
-                  if (attribute.key === "None") {
-                    setAggregateDataset(null);
-                  } else {
-                    let abort_controller = new AbortController(); //TODO: reiterate where AbortController needs to be instantiated --> can it be moved inside the loadAggCSV function?
-                    ReactionCIMEBackendFromEnv.loadAggCSV(
-                      (dataset) => {
-                        setAggregateDataset(new AggregateDataset(dataset));
-                      },
-                      poiDataset.info.path,
-                      attribute.key,
-                      cancellablePromise,
-                      null,
-                      abort_controller
-                    );
-                  }
-                }}
-              ></SelectFeatureComponent>
-            ) : (
+              }}></SelectFeatureComponent>)
+              :
               <div></div>
-            )
           }
         </Box>
         <Box paddingLeft={2} paddingTop={1} paddingRight={2}>

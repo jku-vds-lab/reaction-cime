@@ -2,6 +2,19 @@
 
 # ---------------- preprocess dataset --------------------
 
+def preprocess_dataset(domain):
+    value_col = domain["yield"]
+    step_col = domain["experimentCycle"]
+
+    new_cols = generate_rename_list(domain)
+    domain.columns = new_cols
+
+    # col ends with _value bzw _step -> it belongs to a time series
+    # TODO: make this dynamic
+    domain['pred_value{"project":false}'] = value_col
+    domain['pred_step{"project":false}'] = step_col
+    return domain
+
 import re
 
 # def add_meta_info_time_series_data(column, timesteps, featureLabel, lineUpGroup, globalRange=None, colorMapping=None):
@@ -40,6 +53,7 @@ def get_time_series_modifier(col, modifier, global_ranges):
     # -- column is a tuple time series feature
     if len([ele for ele in time_series_tuples if ele in col]) > 0:
         lineUpGroup = ":".join(split_name) # for pred_mean and pred_var we need to add a colon because lineup uses the colon to find time series with 2 variables
+        modifier += '"paco":true,' # show column in parallel coordinates
     else: 
         lineUpGroup = "_".join(split_name)
 
@@ -84,9 +98,9 @@ def generate_rename_list(domain):
             modifier = get_time_series_modifier(col, modifier, global_ranges)
         # -- column is a smiles feature
         elif smiles_modifier in col.lower():
-            modifier = '"project":true,"imgSmiles":true,"featureLabel":"smiles"'
+            modifier = '"project":true,"imgSmiles":true,"featureLabel":"smiles","paco":true'
         elif col in experiment_parameters:
-            modifier = '"project":true,"featureLabel":"exp_parameters"'
+            modifier = '"project":true,"featureLabel":"exp_parameters","paco":true'
         else:
             # -- column should not be shown in lineup or in the summary view
             hide_col_list = [elem for elem in hide_lineup_summary_cols if elem in col]
@@ -95,7 +109,7 @@ def generate_rename_list(domain):
 
             # -- column does not have any special meaning
             else:
-                modifier = '"project":false'
+                modifier = '"project":false,"paco":true'
 
         new_cols.append('%s{%s}'%(col_name, modifier))
     
@@ -142,10 +156,14 @@ def rescale_and_encode(proj_df, params, selected_feature_info):
         elif info["featureType"] == "Quantitative":
             if info["normalize"]:
                 if params["normalizationMethod"] == "normalize01": # scale values between [0;1]
-                    div = info["range"]["max"] - info["range"]["min"]
+                    # upper = info["range"]["max"] # do not use this! it is info from the front-end that only has POI dataset
+                    # lower = info["range"]["min"] # do not use this! it is info from the front-end that only has POI dataset
+                    upper = proj_df[col].max()
+                    lower = proj_df[col].min()
+                    div = upper - lower
                     if div == 0: # when all values are equal in a column, the range is 0, which would lead to an error
                         div = 1
-                    proj_df[col] = (proj_df[col] - info["range"]["min"]) / div
+                    proj_df[col] = (proj_df[col] - lower) / div
                 else: # otherwise: "standardize" values to have 0 mean and unit standard deviation
                     mean = proj_df[col].mean()
                     std = proj_df[col].std()

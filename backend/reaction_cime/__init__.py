@@ -129,8 +129,8 @@ class ReactionCIMEDBO():
         """
         Routes an SQL query including the filter on the given table_name and returns a corresponding pandas dataframe.
         The database in use is fixed as self.db.engine
-        The query will look like "Select * FROM table_name filter".
-        This enables queries such as "Select * FROM table_name ORDER BY x LIMIT y".
+        The query will look like "SELECT * FROM table_name filter".
+        This enables queries such as "SELECT * FROM table_name ORDER BY x LIMIT y".
         
         Parameters
         ----------
@@ -147,15 +147,13 @@ class ReactionCIMEDBO():
         sql_stmt = "SELECT * FROM " + table_name + " " + filter
         return pd.read_sql(sql_stmt, self.db.engine, index_col="id")
 
-    def get_dataframe_from_table_filter(self, table_name, filter):
+    def get_dataframe_from_table_filter(self, table_name, filter, columns=None):
         """
         Routes an SQL query including the filter on the given table_name and returns a corresponding pandas dataframe.
         The database in use is fixed as self.db.engine
 
-        The where flag is for backwards compatibility with previous utilizations of this function, feel free to change it and update the calls correspondingly.
-        This enables queries such as "Select * FROM table_name ORDER BY x LIMIT y" without having to use SQL injection tricks "1=1 ORDER BY ..."
-
-        The query will look like "Select * FROM table_name WHERE filter"
+        If columns is not None, the query will look like "SELECT columns FROM table_name WHERE filter".
+        Otherwise it wil be "SELECT * FROM table_name WHERE filter".
 
         Parameters
         ----------
@@ -163,13 +161,23 @@ class ReactionCIMEDBO():
             The table to select from as part of the SQLite query
         filter:
             The filter to apply as part of the SQLite query
+        columns:
+            The columns to perform a select on (SELECT columns FROM)
+
 
         Returns
         ----------
         pandas.Dataframe
             A pandas dataframe containing the query result from the database
         """
-        sql_stmt = "SELECT * FROM " + table_name + " WHERE " + filter
+        select_cols = "*"
+        if columns is not None:
+            select_cols = "id"
+            for col in columns:
+                select_cols += ", " + col
+
+        sql_stmt = "SELECT " + select_cols + " FROM " + table_name + " WHERE " + filter
+        print(sql_stmt)
         return pd.read_sql(sql_stmt, self.db.engine, index_col="id")
 
     def get_filter_mask(self, table_name, filter):
