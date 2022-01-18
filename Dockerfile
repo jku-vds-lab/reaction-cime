@@ -2,24 +2,30 @@
 # define our environment
 FROM python:3.7-buster
 
-# # copy the pre-built front-end --> comment for development because we mount the volume anyway
-# COPY build/ /app/build/jku-vds-lab/reaction-cime
 
 # copy everything from our backend to our app folder # need to copy backend because we have to install the python packages
 COPY backend/ /app/backend/
 
-# copy everything from temp-files folder that includes the database --> comment for development because we mount the volume anyway
-# COPY temp-files/ /app/temp-files/
-
 # define target folder
 WORKDIR /app/backend
-
 
 RUN pip install -e .
 ENV FLASK_APP reaction_cime
 ENV FLASK_ENV development
 
+# copy the pre-built front-end --> comment for development because we mount the volume anyway
+# CONSTANTS
+# COPY build/ /app/build/jku-vds-lab/reaction-cime
 
+
+# copy everything from temp-files folder that includes the database --> comment for development because we mount the volume anyway
+# CONSTANTS
+# COPY temp-files/ /app/temp-files/
+
+
+
+
+EXPOSE 5000
 
 CMD [ "python3", "-m", "flask", "run", "--host=0.0.0.0", "--eager-loading"] 
 

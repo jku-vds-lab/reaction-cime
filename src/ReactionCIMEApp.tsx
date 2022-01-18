@@ -14,6 +14,7 @@ import { AggregationLayer } from "./Overrides/AggregationLayer/AggregationLayer"
 import { DatasetTabPanel } from "./Overrides/Dataset/DatasetTabPanel";
 import { RemoteEmbeddingController } from "./Overrides/Embeddings/RemoteEmbeddingController";
 import { ReactionCIMEBackendFromEnv } from "./Backend/ReactionCIMEBackend";
+import { CimeAppBar } from "./Overrides/CimeAppBar";
 
 export const DEMO = false;
 
@@ -59,7 +60,7 @@ export const ReactionCIMEApp = () => {
     }}
     overrideComponents={{
       datasetTab: DatasetTabPanel,
-      appBar: null,//CimeAppBar, --> remove when null
+      appBar: CimeAppBar,//CimeAppBar, --> remove when null
       contextMenuItems: [{key:"getkNN", title:"Download k-Nearest", function:(coords) => {
         handleBackgroundSelectionDownload(coords, context.store.getState().dataset?.info?.path)
       }}],
@@ -99,6 +100,7 @@ export const ReactionCIMEApp = () => {
 
 }
 
+// TODO: refactor the following function into ReactionCIME backend. it does not have to be here...
 /**
  * This is merely a helper function to decompose the code into smaller individual segments.
  * It is used to handle the changing background selection prop, which might, e.g., be triggered when a user clicks the k-nearest neighbor option in the context menu.

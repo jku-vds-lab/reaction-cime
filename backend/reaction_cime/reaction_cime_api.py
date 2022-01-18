@@ -150,7 +150,7 @@ def get_k_nearest_points(filename, x, y, k):
     Returns
     ----------
     str
-        StringIO.getValue() of the buffered csv created from the filtered database entries
+        csv created from the filtered database entries
     """
     
     # calculates squared euclidean distance, orders the db table by this distance, and returns k first entries
@@ -181,17 +181,17 @@ def get_points_given_radius(filename, x, y, r):
     Returns
     ----------
     str
-        StringIO.getValue() of the buffered csv created from the filtered database entries
+        csv created from the filtered database entries
     """
     # squared radius for SQLite query filter condition
     r2 = int(r) * int(r)
     # filters using euclidean distance (squared on both sides since SQLite does not have extended maths enabled for SQRT)
     nearest_points_domain = get_cime_dbo().get_dataframe_from_table_filter(filename, '((x-('+str(x)+'))*(x-('+str(x)+')))+((y-('+str(y)+'))*(y-('+str(y)+'))) < '+str(r2))
 
-    csv_buffer = StringIO()
-    nearest_points_domain.to_csv(csv_buffer, index=False)
-    
-    return csv_buffer.getvalue()
+    response = make_response(nearest_points_domain.to_csv(index=False))
+    response.headers["Content-Disposition"] = "attachment; filename=%s_kNN_%s_%s.csv"%(filename, x, y)
+    response.headers["Content-type"] = "text/csv"
+    return response
 
 @reaction_cime_api.route('/get_agg_csv/<filename>/<col_name>', methods=['GET'])
 def get_aggregated_dataset(filename, col_name):

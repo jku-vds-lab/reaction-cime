@@ -382,7 +382,7 @@ export class ReactionCIMEBackend {
 
 
 // Use the environment variables defined in the .env file
-if (!process.env.REACT_APP_CIME_BACKEND_URL) {
+if (process.env.REACT_APP_CIME_BACKEND_URL == null) {
   console.error("The ENV-variable REACT_APP_CIME_BACKEND_URL must be set.");
 }
 

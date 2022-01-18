@@ -121,7 +121,9 @@ const AggregationLayer = connector(({ aggregateColor, poiDataset, viewTransform 
         bgDataTex.magFilter = THREE.NearestFilter; // this makes it discrete
         // bgDataTex.magFilter = THREE.LinearFilter; // this causes border artefacts
         // bgDataTex.minFilter = THREE.LinearMipMapLinearFilter; // this causes everything to go black
-        bgDataTex.minFilter = THREE.LinearFilter;
+        // bgDataTex.minFilter = THREE.LinearFilter;
+        bgDataTex.minFilter = THREE.NearestFilter;
+
 
         let [width, height, x, y] = [100,100,0,0];
         if(dataset.bounds){

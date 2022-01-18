@@ -4,7 +4,6 @@ import { CategoryOptionsAPI, SelectFeatureComponent } from "projection-space-exp
 import { connect, ConnectedProps } from "react-redux";
 import { AppState } from "../../State/Store";
 import { setAggregateColor } from "../../State/AggregateColorDuck";
-import { setDatasetAction } from "projection-space-explorer/dist/components/Ducks/DatasetDuck"
 import React from "react";
 
 
@@ -15,7 +14,6 @@ const mapStateToProps = (state: AppState) => ({
 });
 
 const mapDispatchToProps = (dispatch) => ({
-  setDataset: dataset => dispatch(setDatasetAction(dataset)),
   setAggregateColor: aggregateColor => dispatch(setAggregateColor(aggregateColor)),
 });
 
@@ -70,6 +68,7 @@ export const AggregationTabPanel = connector(
             categoryOptions != null &&
             CategoryOptionsAPI.hasCategory(categoryOptions, "size") ? (
               <SelectFeatureComponent
+                column_info={poiDataset?.columns}
                 label={"color"}
                 default_val={aggregateColor}
                 categoryOptions={CategoryOptionsAPI.getCategory(
