@@ -285,7 +285,8 @@ export class ReactionCIMEBackend {
 
   protected agg_dataset_cache:[{x: {min: number, max: number}, y: {min: number, max: number}, data: any}] = null;
   protected cur_agg_path = "";
-  protected cur_agg_column = "";
+  protected cur_agg_value_col = "";
+  protected cur_agg_uncertainty_col = "";
   // reset when reprojecting, when dataset is changed, and when column is changed
   protected resetAggregationCache = ()=>{
     this.agg_dataset_cache = null;
@@ -304,11 +305,12 @@ export class ReactionCIMEBackend {
     }
     return false;
   }
-  protected handleAggregationCache = (path:string, column:string, range: {x: {min: number, max: number}, y: {min: number, max: number}}) => {
-    if(this.cur_agg_path !== path || this.cur_agg_column !== column){
+  protected handleAggregationCache = (path:string, value_col:string, uncertainty_col:string, range: {x: {min: number, max: number}, y: {min: number, max: number}}) => {
+    if(this.cur_agg_path !== path || this.cur_agg_value_col !== value_col || this.cur_agg_uncertainty_col !== uncertainty_col){
       this.resetAggregationCache();
       this.cur_agg_path = path;
-      this.cur_agg_column = column;
+      this.cur_agg_value_col = value_col;
+      this.cur_agg_uncertainty_col = uncertainty_col;
       return null;
     }
     if(this.agg_dataset_cache == null)
@@ -337,19 +339,22 @@ export class ReactionCIMEBackend {
   };
 
 
-  public loadAggCSV(finished: (dataset: any) => void, path:string, column:string, range: {x: {min: number, max: number}, y: {min: number, max: number}}, cancellablePromise?: ReturnType<typeof useCancellablePromise>["cancellablePromise"], controller?: AbortController, loadingArea?:string) {
+  public loadAggCSV(finished: (dataset: any) => void, path:string, value_column:string, uncertainty_col:string, range: {x: {min: number, max: number}, y: {min: number, max: number}}, cancellablePromise?: ReturnType<typeof useCancellablePromise>["cancellablePromise"], controller?: AbortController, loadingArea?:string) {
     if(range == null){
       range = {x: {min: -1000, max: 1000}, y: {min: -1000, max: 1000}}
     }
+    if(uncertainty_col === "None" || uncertainty_col == null){
+      uncertainty_col = "";
+    }
 
-    const cached_data = this.handleAggregationCache(path, column, range);
+    const cached_data = this.handleAggregationCache(path, value_column, uncertainty_col, range);
     let promise = null;
     if (cached_data) {
       promise = this.async_cache(cached_data.data);
     }else{
       // request the server to return a csv file using the unique filename
       // const agg_path = ReactionCIMEBackendFromEnv.baseUrl + "/get_agg_csv/" + path + "/" + column + "?x_min=" + range.x.min + "&x_max=" + range.x.max + "&y_min=" + range.y.min + "&y_max="+range.y.max; // TODO: make dynamic
-      const agg_path = ReactionCIMEBackendFromEnv.baseUrl + "/get_agg_csv_cached/" + path + "/" + column + "?x_min=" + range.x.min + "&x_max=" + range.x.max + "&y_min=" + range.y.min + "&y_max="+range.y.max; // TODO: make dynamic
+      const agg_path = ReactionCIMEBackendFromEnv.baseUrl + "/get_agg_csv_cached/" + path + "?value_col=" + value_column + "&uncertainty_col=" + uncertainty_col + "&x_min=" + range.x.min + "&x_max=" + range.x.max + "&y_min=" + range.y.min + "&y_max="+range.y.max; // TODO: make dynamic
 
       promise = cancellablePromise
         ? cancellablePromise(

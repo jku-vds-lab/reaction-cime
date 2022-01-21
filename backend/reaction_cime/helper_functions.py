@@ -3,23 +3,17 @@
 # ---------------- preprocess dataset --------------------
 
 def preprocess_dataset(domain):
-    value_col = domain["yield"]
-    step_col = domain["experimentCycle"]
 
     new_cols = generate_rename_list(domain)
     domain.columns = new_cols
 
-    # col ends with _value bzw _step -> it belongs to a time series
-    # TODO: make this dynamic
-    domain['pred_value{"project":false}'] = value_col
-    domain['pred_step{"project":false}'] = step_col
     return domain
 
 import re
 
-# def add_meta_info_time_series_data(column, timesteps, featureLabel, lineUpGroup, globalRange=None, colorMapping=None):
+# def add_meta_info_time_series_data(column, timesteps, featureLabel, timeSeriesGroup, globalRange=None, colorMapping=None):
 #     for t in range(timesteps):
-#         modifiers = '"featureLabel":"%s", "lineUpGroup":"%s", "project":false'%(featureLabel, lineUpGroup)
+#         modifiers = '"featureLabel":"%s", "timeSeriesGroup":"%s", "project":false'%(featureLabel, timeSeriesGroup)
 #         if globalRange:
 #             modifiers += ', "globalRange":%s'%globalRange
 #         if colorMapping:
@@ -52,12 +46,12 @@ def get_time_series_modifier(col, modifier, global_ranges):
 
     # -- column is a tuple time series feature
     if len([ele for ele in time_series_tuples if ele in col]) > 0:
-        lineUpGroup = ":".join(split_name) # for pred_mean and pred_var we need to add a colon because lineup uses the colon to find time series with 2 variables
+        timeSeriesGroup = ":".join(split_name) # for pred_mean and pred_var we need to add a colon because lineup uses the colon to find time series with 2 variables
         modifier += '"paco":true,' # show column in parallel coordinates
     else: 
-        lineUpGroup = "_".join(split_name)
+        timeSeriesGroup = "_".join(split_name)
 
-    modifier += '"featureLabel":"%s", "lineUpGroup":"%s", "project":false'%(featureLabel, lineUpGroup)
+    modifier += '"featureLabel":"%s", "timeSeriesGroup":"%s", "timestep":%s, "project":false'%(featureLabel, timeSeriesGroup, timestep)
     
 
     # -- column is a diverging time series feature
@@ -101,6 +95,14 @@ def generate_rename_list(domain):
             modifier = '"project":true,"imgSmiles":true,"featureLabel":"smiles","paco":true'
         elif col in experiment_parameters:
             modifier = '"project":true,"featureLabel":"exp_parameters","paco":true'
+        elif col == "yield":
+            # col ends with _value bzw _step in lineup -> it belongs to a lineup time series
+            # TODO: make this dynamic
+            modifier = '"project":false,"paco":true,"lineup_meta_column":"pred_value"' # signal lineup that it should add a meta_column with this label, that gives information for other columns
+        elif col == "experimentCycle":
+            # col ends with _value bzw _step in lineup -> it belongs to a lineup time series
+            # TODO: make this dynamic
+            modifier = '"project":false,"paco":false,"lineup_meta_column":"pred_step"' # signal lineup that it should add a meta_column with this label, that gives information for other columns
         else:
             # -- column should not be shown in lineup or in the summary view
             hide_col_list = [elem for elem in hide_lineup_summary_cols if elem in col]

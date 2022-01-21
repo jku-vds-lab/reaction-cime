@@ -9,6 +9,8 @@ COPY backend/ /app/backend/
 # define target folder
 WORKDIR /app/backend
 
+# RUN pip install --upgrade pip
+
 RUN pip install -e .
 ENV FLASK_APP reaction_cime
 ENV FLASK_ENV development

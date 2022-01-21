@@ -20,8 +20,9 @@ def create_app():
     if not os.path.exists(temp_dir):
         os.makedirs(temp_dir)
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + temp_dir + 'app.sqlite' #'sqlite://' + app.config['REACTION_CIME_FILES_DIRECTORY'] + "//app.sqlite"
+    # app.config['SQLALCHEMY_ECHO'] = True
 
-    app.logger.setLevel(logging.INFO)
+    app.logger.setLevel(logging.INFO) # DEBUG
 
     db = SQLAlchemy(app)
     db.create_all()
@@ -50,12 +51,12 @@ def create_app():
 #         iteration_step = Column(Integer, nullable=False)
 #         projection_coords = Column(PickleType, nullable=False)
 
-from pandas.io.sql import SQLiteTable
+
 class ReactionCIMEDBO():
 
     def __init__(self, db):
         self.db = db
-        self.metadata = MetaData(db.engine, reflect=True)
+        self.metadata = MetaData(db.engine) #, reflect=True
 
     def get_table_names(self):
         # both versions work; however, it seems like this delivers the most up-to-date version

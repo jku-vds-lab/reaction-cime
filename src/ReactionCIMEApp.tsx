@@ -14,7 +14,6 @@ import { AggregationLayer } from "./Overrides/AggregationLayer/AggregationLayer"
 import { DatasetTabPanel } from "./Overrides/Dataset/DatasetTabPanel";
 import { RemoteEmbeddingController } from "./Overrides/Embeddings/RemoteEmbeddingController";
 import { ReactionCIMEBackendFromEnv } from "./Backend/ReactionCIMEBackend";
-import { CimeAppBar } from "./Overrides/CimeAppBar";
 
 export const DEMO = false;
 
@@ -60,7 +59,7 @@ export const ReactionCIMEApp = () => {
     }}
     overrideComponents={{
       datasetTab: DatasetTabPanel,
-      appBar: CimeAppBar,//CimeAppBar, --> remove when null
+      appBar: () => <div></div>,
       contextMenuItems: [{key:"getkNN", title:"Download k-Nearest", function:(coords) => {
         handleBackgroundSelectionDownload(coords, context.store.getState().dataset?.info?.path)
       }}],

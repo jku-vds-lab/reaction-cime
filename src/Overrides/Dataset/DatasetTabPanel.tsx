@@ -60,7 +60,7 @@ import { setAggregateColor } from "../../State/AggregateColorDuck";
   });
   
   const mapDispatchToProps = (dispatch) => ({
-    setAggregateColor: aggregateColor => dispatch(setAggregateColor(aggregateColor)),
+    setAggregateColor: value => dispatch(setAggregateColor(value)),
   });
   
   const connector = connect(mapStateToProps, mapDispatchToProps);

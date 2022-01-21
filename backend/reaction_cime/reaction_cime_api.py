@@ -119,6 +119,7 @@ def get_points_of_interest(filename):
     return csv_buffer.getvalue()
 
 
+
 def get_poi_df_from_db(filename, cime_dbo):
     # TODO: make dynamic, by which feature we want to filter (e.g. user could change the settings in the front-end maybe with parallel coordinates?)
     # example code for distance filter
@@ -210,43 +211,57 @@ def get_aggregated_dataset(filename, col_name):
 
     return csv_buffer.getvalue()
 
-current_col_name = {}
+current_value_col_name = {}
+current_uncertainty_col_name = {}
 agg_dataset_cache = {}
-def handle_agg_dataset_cache(filename, col_name):
+def handle_agg_dataset_cache(filename, value_col_name, uncertainty_col_name):
     if filename not in agg_dataset_cache.keys():
         agg_dataset_cache[filename] = None
-        current_col_name[filename] = None
+        current_value_col_name[filename] = None
+        current_uncertainty_col_name[filename] = None
 
     # dataset is not cached and has to be loaded
-    if current_col_name[filename] is None or current_col_name[filename] != col_name or agg_dataset_cache[filename] is None:
-        agg_domain = get_cime_dbo().get_dataframe_from_table(filename, columns=["x", "y", col_name])
+    if current_value_col_name[filename] is None or current_value_col_name[filename] != value_col_name or agg_dataset_cache[filename] is None or current_uncertainty_col_name[filename] is None or current_uncertainty_col_name[filename] != value_col_name:
+        cols = ["x", "y", value_col_name]
+        if uncertainty_col_name is not None and uncertainty_col_name != "":
+            cols.append(uncertainty_col_name)
+        agg_domain = get_cime_dbo().get_dataframe_from_table(filename, columns=cols)
         agg_dataset_cache[filename] = agg_domain
-        current_col_name[filename] = col_name
+        current_value_col_name[filename] = value_col_name
+        current_uncertainty_col_name[filename] = uncertainty_col_name
 
     # return cached version of dataset
     return agg_dataset_cache[filename]
 
 def reset_agg_dataset_cache(filename=None):
-    global current_col_name, agg_dataset_cache
+    global current_value_col_name, agg_dataset_cache, current_uncertainty_col_name
     if filename is None:
-        current_col_name = {}
+        current_value_col_name = {}
+        current_uncertainty_col_name = {}
         agg_dataset_cache = {}
     else:
-        current_col_name[filename] = None
+        current_value_col_name[filename] = None
+        current_uncertainty_col_name[filename] = None
         agg_dataset_cache[filename] = None
 
 
-@reaction_cime_api.route('/get_agg_csv_cached/<filename>/<col_name>', methods=['GET'])
-def get_aggregated_dataset_cached(filename, col_name):
+@reaction_cime_api.route('/get_agg_csv_cached/<filename>', methods=['GET'])
+def get_aggregated_dataset_cached(filename):
+    value_col_name = request.args.get("value_col")
+    uncertainty_col_name = request.args.get("uncertainty_col")
     range = {"x_min": float(request.args.get("x_min")), 
         "x_max": float(request.args.get("x_max")),
         "y_min": float(request.args.get("y_min")), 
         "y_max": float(request.args.get("y_max")),
         }
 
-    agg_domain = handle_agg_dataset_cache(filename, col_name)
+    agg_domain = handle_agg_dataset_cache(filename, value_col_name, uncertainty_col_name)
     agg_domain = agg_domain[(agg_domain["x"] < range["x_max"]) * (agg_domain["x"] > range["x_min"]) * (agg_domain["y"] < range["y_max"]) * (agg_domain["y"] > range["y_min"])]
-    agg_df = aggregate_col(agg_domain, col_name, sample_size=200) # TODO: dynamic sample_size
+    agg_df = aggregate_col(agg_domain, value_col_name, sample_size=200) # TODO: dynamic sample_size
+    print(uncertainty_col_name)
+    if uncertainty_col_name is not None and uncertainty_col_name != "":
+        agg_uncertainty_df = aggregate_col(agg_domain, uncertainty_col_name, sample_size=200) # TODO: dynamic sample_size
+        agg_df["uncertainty"] = agg_uncertainty_df["val"]
 
     csv_buffer = StringIO()
     agg_df.to_csv(csv_buffer, index=False)

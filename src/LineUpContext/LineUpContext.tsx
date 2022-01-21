@@ -158,18 +158,18 @@ export const LineUpContext = connector(function ({
           let col = lineUpInput_columns[i];
 
           if (!EXCLUDED_COLUMNS.includes(i) && (Object.keys(col.metaInformation).length <= 0 || !col.metaInformation.noLineUp)) {
-              if(Object.keys(col.metaInformation).length > 0 && col.metaInformation.lineUpGroup){
-                  // if(col.metaInformation.lineUpGroup.endsWith(""))
-                  const split = col.metaInformation.lineUpGroup.split(":"); 
+              if(Object.keys(col.metaInformation).length > 0 && col.metaInformation.timeSeriesGroup){
+                  // if(col.metaInformation.timeSeriesGroup.endsWith(""))
+                  const split = col.metaInformation.timeSeriesGroup.split(":"); 
                   if(split.length <=1){ // if the string is separated with a colon, only the first part of the string is considered as the group. the second part of the string determines a sub value of this group
-                      if(Object.keys(row).includes(col.metaInformation.lineUpGroup)){
-                          row[col.metaInformation.lineUpGroup].push(element[i])
+                      if(Object.keys(row).includes(col.metaInformation.timeSeriesGroup)){
+                          row[col.metaInformation.timeSeriesGroup].push(element[i])
                       }else{
-                          row[col.metaInformation.lineUpGroup] = [element[i]]
-                          columns[col.metaInformation.lineUpGroup] = col;
-                          columns[col.metaInformation.lineUpGroup].metaInformation.listData = true;
-                          columns[col.metaInformation.lineUpGroup].metaInformation.range = col.metaInformation.globalRange; //TODO: iterate over all columns and derive global min/max 
-                          columns[col.metaInformation.lineUpGroup].metaInformation.colorMapping = col.metaInformation.colorMapping;
+                          row[col.metaInformation.timeSeriesGroup] = [element[i]]
+                          columns[col.metaInformation.timeSeriesGroup] = col;
+                          columns[col.metaInformation.timeSeriesGroup].metaInformation.listData = true;
+                          columns[col.metaInformation.timeSeriesGroup].metaInformation.range = col.metaInformation.globalRange; //TODO: iterate over all columns and derive global min/max 
+                          columns[col.metaInformation.timeSeriesGroup].metaInformation.colorMapping = col.metaInformation.colorMapping;
                       }
                   }else{
                       const group_name = split[0];
@@ -197,6 +197,12 @@ export const LineUpContext = connector(function ({
                           columns[group_name].metaInformation.globalMax = element[i];
                       }
                   }
+              }else if(Object.keys(col.metaInformation).length > 0 && col.metaInformation.lineup_meta_column){ // add meta column, that can be used by other columns
+                row[i] = element[i];
+                columns[i] = col;
+
+                row[col.metaInformation.lineup_meta_column] = element[i];
+                columns[col.metaInformation.lineup_meta_column] = {"metaInformation":{"hide":true}}
               }else{
                   row[i] = element[i];
                   columns[i] = col;
@@ -608,38 +614,39 @@ function buildLineup(cols, data, pointColorScale, channelColor) {
       const smiles_col = "Structure: " + i;
       smiles_structure_columns.push(smiles_col);
       builder.column(LineUpJS.buildColumn("mySmilesStructureColumn", i).label(smiles_col).renderer("mySmilesStructureRenderer", "mySmilesStructureRenderer").width(50).build([]));
+      // uncomment if you also want to show the smiles string, not just the structure
+      // builder.column(LineUpJS.buildStringColumn(i).width(50).custom("visible", show).color(base_color)); 
+    } else if(col.metaInformation.customLineChart){
+        // builder.column(LineUpJS.buildNumberColumn(i).label(i).asMap().renderer("myLineChartRenderer", "myLineChartRenderer").width(50).build([]));
+        builder.column(LineUpJS.buildColumn("myLineChartColumn", i).label(i).custom("min", col.metaInformation.globalMin).custom("max", col.metaInformation.globalMax).renderer("myLineChartRenderer", "myLineChartRenderer").width(150).build([]));
+        custom_chart_columns.push(i);
+    } else if(i === PrebuiltFeatures.ClusterLabel){
+        const clust_col = LineUpJS.buildCategoricalColumn(i, groupLabel_cat_color).custom("visible", show).width(70) // .asSet(',')
+        builder.column(clust_col);
+    } else if(col.metaInformation.listData){
+        // builder.column(LineUpJS.buildNumberColumn(i, [-10,10]).asArray().width(100));
+        let column_desc = deriveColumnDescriptions(data, {columns: [i]})[0]
+        if(col.metaInformation.range){
+            column_desc["domain"] = col.metaInformation.range;
+        }
 
-      builder.column(LineUpJS.buildStringColumn(i).width(50).custom("visible", show).color(base_color));
-  } else if(col.metaInformation.customLineChart){
-      // builder.column(LineUpJS.buildNumberColumn(i).label(i).asMap().renderer("myLineChartRenderer", "myLineChartRenderer").width(50).build([]));
-      builder.column(LineUpJS.buildColumn("myLineChartColumn", i).label(i).custom("min", col.metaInformation.globalMin).custom("max", col.metaInformation.globalMax).renderer("myLineChartRenderer", "myLineChartRenderer").width(150).build([]));
-      custom_chart_columns.push(i);
-  } else if(i === PrebuiltFeatures.ClusterLabel){
-      const clust_col = LineUpJS.buildCategoricalColumn(i, groupLabel_cat_color).custom("visible", show).width(70) // .asSet(',')
-      builder.column(clust_col);
-  } else if(col.metaInformation.listData){
-      // builder.column(LineUpJS.buildNumberColumn(i, [-10,10]).asArray().width(100));
-      let column_desc = deriveColumnDescriptions(data, {columns: [i]})[0]
-      if(col.metaInformation.range){
-          column_desc["domain"] = col.metaInformation.range;
-      }
-
-      if(col.metaInformation.colorMapping){
-          if(Array.isArray(col.metaInformation.colorMapping)){
-              column_desc["colorMapping"] = {
-                  "type": "custom",
-                  "entries": col.metaInformation.colorMapping.map((item, index) => {return {"color": item, "value": index/(col.metaInformation.colorMapping.length-1)}})
-              };
-          }else{
-              column_desc["colorMapping"] = col.metaInformation.colorMapping;
-          }
-      // column_desc["colorMapping"] = "interpolateBrBG";
-      }
-      builder.column(column_desc)
-  }
-  else{
-      builder.deriveColumns(i);
-  }
+        if(col.metaInformation.colorMapping){
+            if(Array.isArray(col.metaInformation.colorMapping)){
+                column_desc["colorMapping"] = {
+                    "type": "custom",
+                    "entries": col.metaInformation.colorMapping.map((item, index) => {return {"color": item, "value": index/(col.metaInformation.colorMapping.length-1)}})
+                };
+            }else{
+                column_desc["colorMapping"] = col.metaInformation.colorMapping;
+            }
+        // column_desc["colorMapping"] = "interpolateBrBG";
+        }
+        builder.column(column_desc)
+    } else if(col.metaInformation.hide){
+        // don't show the column if e.g. it is only meta_data
+    } else {
+        builder.deriveColumns(i);
+    }
 
     // else if (typeof col.featureType !== 'undefined') {
     //     switch (col.featureType) {
@@ -678,21 +685,21 @@ function buildLineup(cols, data, pointColorScale, channelColor) {
   // builder.deriveColumns([]);
 
   builder.column(LineUpJS.buildStringColumn("Annotations").editable().color(base_color))
-    builder.column(LineUpJS.buildStringColumn(UNIQUE_ID).width(50).color(base_color)); // we need this to be able to filter by all indices; this ID corresponds to the mesh index
+  builder.column(LineUpJS.buildStringColumn(UNIQUE_ID).width(50).color(base_color)); // we need this to be able to filter by all indices; this ID corresponds to the mesh index
 
-    builder.defaultRanking(true);
-    // builder.deriveColors();
-    builder.registerRenderer("mySmilesStructureRenderer", new MySmilesStructureRenderer());
-    builder.registerRenderer("myLineChartRenderer", new MyLineChartRenderer());
-    // builder.registerRenderer("myBarCellRenderer", new BarCellRenderer(true));
-    builder.registerColumnType("mySmilesStructureColumn", StructureImageColumn);
-    builder.registerColumnType("myLineChartColumn", TestColumn); 
-    builder.sidePanel(true, true); // collapse side panel by default
-    builder.livePreviews({
-        filter: false
-    });
-    builder.dynamicHeight(myDynamicHeight);
-    builder.animated(false);
+  builder.defaultRanking(true);
+  // builder.deriveColors();
+  builder.registerRenderer("mySmilesStructureRenderer", new MySmilesStructureRenderer());
+  builder.registerRenderer("myLineChartRenderer", new MyLineChartRenderer());
+  // builder.registerRenderer("myBarCellRenderer", new BarCellRenderer(true));
+  builder.registerColumnType("mySmilesStructureColumn", StructureImageColumn);
+  builder.registerColumnType("myLineChartColumn", TestColumn); 
+  builder.sidePanel(true, true); // collapse side panel by default
+  builder.livePreviews({
+      filter: false
+  });
+  builder.dynamicHeight(myDynamicHeight);
+  builder.animated(false);
 
   return builder;
 }
@@ -990,7 +997,8 @@ export class MySmilesStructureRenderer implements ICellRendererFactory {
           } else {
             n.innerHTML = x;
           }
-          n.alt = smiles;
+          n.title = smiles;
+          // n.alt = smiles;
         });
       },
     };
