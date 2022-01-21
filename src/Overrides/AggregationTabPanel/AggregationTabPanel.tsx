@@ -1,10 +1,9 @@
-import { TextField, Box, Select, MenuItem, FormControl, FormHelperText, Typography, Slider } from "@mui/material";
-// import { CategoryOptionsAPI, SelectFeatureComponent, useCancellablePromise } from "projection-space-explorer";
+import { TextField, Box, Select, MenuItem, FormControl, FormHelperText } from "@mui/material";
 import { connect, ConnectedProps } from "react-redux";
 import { AppState } from "../../State/Store";
-import { setAggregateColor } from "../../State/AggregateColorDuck";
 import React from "react";
-import * as d3 from 'd3v5';
+import { StepSlider } from "./StepSlider";
+import { ColorMapLegend } from "./ColorMapLegend";
 
 
 const mapStateToProps = (state: AppState) => ({
@@ -85,31 +84,6 @@ export const AggregationTabPanel = connector(
       }
     }, [poiDataset])
 
-    // add colormap legend
-    const gRef = React.useRef();
-    React.useEffect(() => {
-      if(legend != null){
-        const gElement = d3.select(gRef.current)
-        gElement.html(""); // clear g element
-        gElement.call(legend); // draw color legend
-      }
-      // const svgElement = d3.select(svgRef.current)
-      // var vDom = [0,100];
-      // var uDom = [0,1];
-
-      // var quantization = vsup.quantization().branching(3).layers(3).valueDomain(vDom).uncertaintyDomain(uDom);
-      // var scale = vsup.scale().quantize(quantization).range(d3.interpolateYlGnBu);
-      // var legend = vsup.legend.arcmapLegend(scale);
-      // legend
-      // //   .scale(scale)
-      //   .size(180)
-      //   .x(20)
-      //   .y(50)
-      //   .vtitle("Mean Prediction")
-      //   .utitle("Variance in Prediction");
-
-      // svgElement.append("g").call(legend)
-    }, [legend])
 
 
     // React.useEffect(() => {
@@ -194,102 +168,14 @@ export const AggregationTabPanel = connector(
           }
         </Box> */}
         
-        <Box paddingLeft={2} paddingTop={1} paddingRight={2}><svg style={{width:"100%", height:"300px"}}><g ref={gRef}></g></svg></Box>
-        <Box><StepSlider selectAttribute={selectAttribute}></StepSlider></Box>
+        <Box paddingLeft={2} paddingTop={1} paddingRight={2}><StepSlider selectAttribute={selectAttribute}></StepSlider></Box>
+        <Box paddingLeft={2} paddingTop={1} paddingRight={2}><ColorMapLegend selectAttribute={selectAttribute}></ColorMapLegend></Box>
       </div>
     );
   }
 );
 
-const mapStateToPropsSlider = (state: AppState) => ({
-  workspace: state.projections.workspace,
-  poiDataset: state.dataset
-});
-
-const mapDispatchToPropsSlider = (dispatch) => ({
-  setAggregateColor: values => dispatch(setAggregateColor(values)),
-});
-
-const sliderconnector = connect(mapStateToPropsSlider, mapDispatchToPropsSlider);
-
-type SliderPropsFromRedux = ConnectedProps<typeof sliderconnector>;
-
-type SliderProps = SliderPropsFromRedux & {
-  selectAttribute: {key:string, name:string, col_info:any}
-};
 
 
 
-const StepSlider = sliderconnector(({selectAttribute, setAggregateColor, workspace, poiDataset}: SliderProps) => {
-  if(selectAttribute == null || selectAttribute.key === "None" || selectAttribute.key == null){
-    return null;
-  }
-  
-  React.useEffect(() => {
-    // reset aggregate color to hide the aggregated dataset in the background
-    setAggregateColor(null)
-  // eslint-disable-next-line
-  }, [workspace, poiDataset]) // this is triggered during the embedding
-
-  
-  const stepChanged = (newVal) => {
-    setCurStep(newVal)
-  }
-  
-  const [curStep, setCurStep] = React.useState(0);
-  const [marks, setMarks] = React.useState([]);
-  
-
-  React.useEffect(() => {
-    let m;
-    if(selectAttribute.col_info){
-      const variables = Object.keys(selectAttribute.col_info);
-      let step_arr = Object.keys(selectAttribute.col_info[variables[0]].temporal_columns)
-      step_arr.sort()
-
-      m = step_arr.map((step, index) => {return {value: parseInt(step), label: step}})
-    }
-    setMarks(m)
-    setCurStep(m[m.length-1].value)
-  }, [selectAttribute])
-
-  React.useEffect(() => {
-    const timestep = curStep;
-    if(selectAttribute.col_info){
-      const variables_array = Object.keys(selectAttribute.col_info);
-      // TODO: users should be able to select which column is value and which is uncertainty
-      let value_col = selectAttribute.col_info[variables_array[0]]["temporal_columns"][timestep]
-      let cache_cols = Object.values(selectAttribute.col_info[variables_array[0]]["temporal_columns"])
-
-      let uncertainty_col = null;
-      if(variables_array.length >= 2){
-        uncertainty_col = selectAttribute.col_info[variables_array[1]]["temporal_columns"][timestep]
-        cache_cols = cache_cols.concat(Object.values(selectAttribute.col_info[variables_array[1]]["temporal_columns"]))
-      }
-      
-      setAggregateColor({"value_col": value_col, "uncertainty_col": uncertainty_col, "cache_cols": cache_cols});
-    }else{
-      setAggregateColor({"value_col": selectAttribute.key, "uncertainty_col": null, "cache_cols": null});
-    }
-    // eslint-disable-next-line
-  }, [curStep])
-
-  return (marks && marks.length > 0) && <div style={{
-      margin: '0px 16px',
-      padding: '0px 8px'
-  }}>
-      <Typography id="range-slider" gutterBottom>
-          Choose Step
-      </Typography>
-      <Slider
-          min={0}
-          max={marks.length-1}
-          value={curStep}
-          onChange={(_, newValue) => stepChanged(newValue)}
-          step={1}
-          marks={marks}
-          valueLabelDisplay="auto"
-      ></Slider>
-  </div>
-})
 

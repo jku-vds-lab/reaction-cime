@@ -194,6 +194,8 @@ def get_points_given_radius(filename, x, y, r):
     response.headers["Content-type"] = "text/csv"
     return response
 
+
+# deprecated
 @reaction_cime_api.route('/get_agg_csv/<filename>/<col_name>', methods=['GET'])
 def get_aggregated_dataset(filename, col_name):
 
@@ -211,41 +213,8 @@ def get_aggregated_dataset(filename, col_name):
 
     return csv_buffer.getvalue()
 
-# current_value_col_name = {}
-# current_uncertainty_col_name = {}
-# agg_dataset_cache = {}
-# def handle_agg_dataset_cache(filename, value_col_name, uncertainty_col_name, cache_cols):
-#     if filename not in agg_dataset_cache.keys():
-#         agg_dataset_cache[filename] = None
-#         current_value_col_name[filename] = None
-#         current_uncertainty_col_name[filename] = None
-
-#     # dataset is not cached and has to be loaded
-#     if current_value_col_name[filename] is None or current_value_col_name[filename] != value_col_name or agg_dataset_cache[filename] is None or current_uncertainty_col_name[filename] is None or current_uncertainty_col_name[filename] != value_col_name:
-#         cols = ["x", "y", value_col_name]
-#         if uncertainty_col_name is not None and uncertainty_col_name != "":
-#             cols.append(uncertainty_col_name)
-#         agg_domain = get_cime_dbo().get_dataframe_from_table(filename, columns=cols)
-#         agg_dataset_cache[filename] = agg_domain
-#         current_value_col_name[filename] = value_col_name
-#         current_uncertainty_col_name[filename] = uncertainty_col_name
-
-#     # return cached version of dataset
-#     return agg_dataset_cache[filename]
-
-# def reset_agg_dataset_cache(filename=None):
-#     global current_value_col_name, agg_dataset_cache, current_uncertainty_col_name
-#     if filename is None:
-#         current_value_col_name = {}
-#         current_uncertainty_col_name = {}
-#         agg_dataset_cache = {}
-#     else:
-#         current_value_col_name[filename] = None
-#         current_uncertainty_col_name[filename] = None
-#         agg_dataset_cache[filename] = None
 
 dataset_cache = {} # structure: {"filename": dataset} # if "retrieve_cols" are contained in dataset.columns then the dataset is returned, otherwise dataset with all "cache_cols" are loaded into the cache
-
 def handle_dataset_cache(filename, retrieve_cols=[], cache_cols=[]):
     if filename not in dataset_cache.keys():
         dataset_cache[filename] = None

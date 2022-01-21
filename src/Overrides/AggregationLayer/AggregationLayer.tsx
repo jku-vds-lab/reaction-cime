@@ -13,37 +13,70 @@ import * as vsup from "vsup";
 import * as d3 from 'd3v5';
 import { setAggregateColorMapLegend } from '../../State/AggregateSettingsDuck';
 
-// const retrieve_information_from_agg_dataset = (dataset: AggregateDataset, value_col: string, uncertainty_col: string, setAggregateColorMapLegend: any) => {
-//     if(!Object.keys(dataset.columns).includes(value_col)){
-//         return [null, null]
-//     }
-const retrieve_information_from_agg_dataset = (aggregateDataset: AggregateDataset, dataset: AggregateDataset, value_col: string, uncertainty_col: string, setAggregateColorMapLegend: any) => {
+
+const convert_to_rgb = (value: string | {r: number, g: number, b: number}):{r: number, g: number, b: number} => {
+    if(Object.keys(value).includes("r") && Object.keys(value).includes("g") && Object.keys(value).includes("b"))
+        return {"r": value["r"], "g": value["g"], "b": value["b"]};
+
+    value = value.toString()
+    if(value.startsWith("rgb")){
+        var rgb = value.replace("rgb(", "")
+        rgb = rgb.replace(")", "")
+        rgb = rgb.replace(" ", "")
+        var rgb_arr = rgb.split(",")
+        return {"r": parseInt(rgb_arr[0]), "g": parseInt(rgb_arr[1]), "b": parseInt(rgb_arr[2])}
+    }
+
+    if(value.startsWith("#")){
+        value = value.replace("#", "")
+        var hex = value.match(/.{1,2}/g);
+        return {"r": parseInt(hex[0], 16), "g": parseInt(hex[1], 16), "b": parseInt(hex[2], 16)}
+    }
+    
+    console.log("error:", "format unknown ->", value)
+    return {"r": 0, "g": 0, "b": 0};
+}
+
+const retrieve_information_from_agg_dataset = (aggregateDataset: AggregateDataset, dataset: AggregateDataset, value_col: string, uncertainty_col: string, setAggregateColorMapLegend: any, colorScale: String, useVSUP) => {
     if(!Object.keys(aggregateDataset.columns).includes(value_col)){
         return [null, null]
     }    
     var value_arr = dataset.vectors.map((row) => row[value_col]);
     var vDom = [aggregateDataset.columns[value_col].range.min, aggregateDataset.columns[value_col].range.max];
 
-    var scale, legend;
+    var scale, legend, quantization;
     if(aggregateDataset.columns[uncertainty_col] != null){
         var uncertainty_arr = dataset.vectors.map((row) => row[uncertainty_col]);
         var uDom = [aggregateDataset.columns[uncertainty_col].range.min, aggregateDataset.columns[uncertainty_col].range.max];
-        
-        var quantization = vsup.quantization().branching(2).layers(4).valueDomain(vDom).uncertaintyDomain(uDom);
-        
-        scale = vsup.scale().quantize(quantization).range(d3.interpolateYlGnBu);
-        
-        legend = vsup.legend.arcmapLegend(scale);
-        legend
-            .vtitle(value_col)
-            .utitle(uncertainty_col)
-            .size(180)
-            .x(20)
-            .y(50)
+
+        if(useVSUP){
+            quantization = vsup.quantization().branching(2).layers(4).valueDomain(vDom).uncertaintyDomain(uDom);
+            scale = vsup.scale().quantize(quantization).range(d3[colorScale]);
+            
+            legend = vsup.legend.arcmapLegend(scale);
+            legend
+                .vtitle(value_col)
+                .utitle(uncertainty_col)
+                .size(180)
+                .x(20)
+                .y(50)
+        }else{
+            quantization = vsup.squareQuantization(4).valueDomain(vDom).uncertaintyDomain(uDom);
+
+            scale = vsup.scale().quantize(quantization).range(d3[colorScale]);
+            
+            legend = vsup.legend.heatmapLegend(scale);
+            legend
+                .vtitle(value_col)
+                .utitle(uncertainty_col)
+                .size(180)
+                .x(20)
+                .y(50)
+        }
     }else{
         scale = d3.scaleQuantize()
             .domain(vDom)
-            .range(d3.quantize(d3.interpolateYlGnBu, 8));
+            .range(d3.quantize(d3[colorScale], 8));
 
         legend = vsup.legend.simpleLegend()
             .title(value_col)
@@ -59,7 +92,7 @@ const retrieve_information_from_agg_dataset = (aggregateDataset: AggregateDatase
     const p = d3.precisionFixed((vDom[1]-vDom[0])/8);
     if(p > 2){
         legend.format(".2")
-    }else{
+    }else if(p > 0){
         legend.format("." + p + "r");
     }
 
@@ -80,25 +113,20 @@ const retrieve_information_from_agg_dataset = (aggregateDataset: AggregateDatase
         if(value_arr[i] === undefined || isNaN(value_arr[i]) || value_arr[i] === ""){
             bgRGBA[4*i + 3] = 0;
         }else{
+
+            var color;
+            if(uncertainty_arr){
+                color = scale(value_arr[i],uncertainty_arr[i])
+            }else{
+                color = scale(value_arr[i], 0)
+            }
+            var rgb = convert_to_rgb(color)
+            
             // RGB from 0 to 255
             // var rgb = background_colorMapping.map(arr_pred[i]).rgb
-            // bgRGBA[4*i] = rgb.r;
-            // bgRGBA[4*i+1] = rgb.g;
-            // bgRGBA[4*i+2] = rgb.b;
-
-            var rgb;
-            if(uncertainty_arr){
-                rgb = scale(value_arr[i],uncertainty_arr[i])
-            }else{
-                rgb = scale(value_arr[i], 0)
-            }
-            rgb = rgb.replace("rgb(", "")
-            rgb = rgb.replace(")", "")
-            rgb = rgb.replace(" ", "")
-            rgb = rgb.split(",")
-            bgRGBA[4*i] = rgb[0];
-            bgRGBA[4*i+1] = rgb[1];
-            bgRGBA[4*i+2] = rgb[2];
+            bgRGBA[4*i] = rgb.r;
+            bgRGBA[4*i+1] = rgb.g;
+            bgRGBA[4*i+2] = rgb.b;
 
             // OPACITY
             bgRGBA[4*i + 3] = 255;
@@ -130,7 +158,9 @@ const retrieve_information_from_agg_dataset = (aggregateDataset: AggregateDatase
 const mapStateToProps = (state: AppState) => ({
     aggregateColor: state.aggregateColor,
     poiDataset: state.dataset,
-    viewTransform: state.viewTransform
+    viewTransform: state.viewTransform,
+    colorScale: state.aggregateSettings?.colorscale,
+    useVSUP: state.aggregateSettings?.useVSUP
 })
 const mapDispatchToProps = (dispatch: any) => ({
     // setAggregateDataset: dataset => dispatch(setAggregateDatasetAction(dataset)),
@@ -144,7 +174,7 @@ type AggregationLayerProps = PropsFromRedux & {
 }
 
 const loading_area = "global_loading_indicator_aggregation_ds";
-const AggregationLayer = connector(({ aggregateColor, poiDataset, viewTransform, setAggregateColorMapLegend }: AggregationLayerProps) => {
+const AggregationLayer = connector(({ aggregateColor, poiDataset, viewTransform, setAggregateColorMapLegend, colorScale, useVSUP }: AggregationLayerProps) => {
     if(poiDataset == null || poiDataset.info == null || aggregateColor == null || aggregateColor.value_col == null || aggregateColor.value_col === "None"){
         return null;
     }
@@ -215,12 +245,12 @@ const AggregationLayer = connector(({ aggregateColor, poiDataset, viewTransform,
         if(aggregateDataset && aggregateDataset.vectors){
             let sizes = [null, null];
             let textures = [null, null];
-            let [texture, size] = retrieve_information_from_agg_dataset(aggregateDataset, aggregateDataset, aggregateColor.value_col, aggregateColor.uncertainty_col, setAggregateColorMapLegend)
+            let [texture, size] = retrieve_information_from_agg_dataset(aggregateDataset, aggregateDataset, aggregateColor.value_col, aggregateColor.uncertainty_col, setAggregateColorMapLegend, colorScale, useVSUP)
             sizes[0] = size;
             textures[0] = texture;
 
             if(aggregateDatasetZoomed && aggregateDatasetZoomed.vectors){
-                let [texture, size] = retrieve_information_from_agg_dataset(aggregateDataset, aggregateDatasetZoomed, aggregateColor.value_col, aggregateColor.uncertainty_col, setAggregateColorMapLegend)
+                let [texture, size] = retrieve_information_from_agg_dataset(aggregateDataset, aggregateDatasetZoomed, aggregateColor.value_col, aggregateColor.uncertainty_col, setAggregateColorMapLegend, colorScale, useVSUP)
                 sizes[1] = size;
                 textures[1] = texture;
             }
@@ -231,7 +261,7 @@ const AggregationLayer = connector(({ aggregateColor, poiDataset, viewTransform,
             setTextures(null)
         }
     // eslint-disable-next-line
-    }, [aggregateDataset, aggregateDatasetZoomed])
+    }, [aggregateDataset, aggregateDatasetZoomed, colorScale, useVSUP])
 
 
     return <div>
