@@ -211,57 +211,78 @@ def get_aggregated_dataset(filename, col_name):
 
     return csv_buffer.getvalue()
 
-current_value_col_name = {}
-current_uncertainty_col_name = {}
-agg_dataset_cache = {}
-def handle_agg_dataset_cache(filename, value_col_name, uncertainty_col_name):
-    if filename not in agg_dataset_cache.keys():
-        agg_dataset_cache[filename] = None
-        current_value_col_name[filename] = None
-        current_uncertainty_col_name[filename] = None
+# current_value_col_name = {}
+# current_uncertainty_col_name = {}
+# agg_dataset_cache = {}
+# def handle_agg_dataset_cache(filename, value_col_name, uncertainty_col_name, cache_cols):
+#     if filename not in agg_dataset_cache.keys():
+#         agg_dataset_cache[filename] = None
+#         current_value_col_name[filename] = None
+#         current_uncertainty_col_name[filename] = None
+
+#     # dataset is not cached and has to be loaded
+#     if current_value_col_name[filename] is None or current_value_col_name[filename] != value_col_name or agg_dataset_cache[filename] is None or current_uncertainty_col_name[filename] is None or current_uncertainty_col_name[filename] != value_col_name:
+#         cols = ["x", "y", value_col_name]
+#         if uncertainty_col_name is not None and uncertainty_col_name != "":
+#             cols.append(uncertainty_col_name)
+#         agg_domain = get_cime_dbo().get_dataframe_from_table(filename, columns=cols)
+#         agg_dataset_cache[filename] = agg_domain
+#         current_value_col_name[filename] = value_col_name
+#         current_uncertainty_col_name[filename] = uncertainty_col_name
+
+#     # return cached version of dataset
+#     return agg_dataset_cache[filename]
+
+# def reset_agg_dataset_cache(filename=None):
+#     global current_value_col_name, agg_dataset_cache, current_uncertainty_col_name
+#     if filename is None:
+#         current_value_col_name = {}
+#         current_uncertainty_col_name = {}
+#         agg_dataset_cache = {}
+#     else:
+#         current_value_col_name[filename] = None
+#         current_uncertainty_col_name[filename] = None
+#         agg_dataset_cache[filename] = None
+
+dataset_cache = {} # structure: {"filename": dataset} # if "retrieve_cols" are contained in dataset.columns then the dataset is returned, otherwise dataset with all "cache_cols" are loaded into the cache
+
+def handle_dataset_cache(filename, retrieve_cols=[], cache_cols=[]):
+    if filename not in dataset_cache.keys():
+        dataset_cache[filename] = None
 
     # dataset is not cached and has to be loaded
-    if current_value_col_name[filename] is None or current_value_col_name[filename] != value_col_name or agg_dataset_cache[filename] is None or current_uncertainty_col_name[filename] is None or current_uncertainty_col_name[filename] != value_col_name:
-        cols = ["x", "y", value_col_name]
-        if uncertainty_col_name is not None and uncertainty_col_name != "":
-            cols.append(uncertainty_col_name)
-        agg_domain = get_cime_dbo().get_dataframe_from_table(filename, columns=cols)
-        agg_dataset_cache[filename] = agg_domain
-        current_value_col_name[filename] = value_col_name
-        current_uncertainty_col_name[filename] = uncertainty_col_name
-
-    # return cached version of dataset
-    return agg_dataset_cache[filename]
-
-def reset_agg_dataset_cache(filename=None):
-    global current_value_col_name, agg_dataset_cache, current_uncertainty_col_name
-    if filename is None:
-        current_value_col_name = {}
-        current_uncertainty_col_name = {}
-        agg_dataset_cache = {}
+    if dataset_cache[filename] is None or not set(retrieve_cols).issubset(set(dataset_cache[filename].columns)):
+        print("---dataset is not cached and has to be loaded to memory")
+        cols = list(set(cache_cols + retrieve_cols + ["x", "y"]))
+        dataset_cache[filename] = get_cime_dbo().get_dataframe_from_table(filename, columns=cols)
     else:
-        current_value_col_name[filename] = None
-        current_uncertainty_col_name[filename] = None
-        agg_dataset_cache[filename] = None
+        print("---dataset cached!")
+    # return cached version of dataset
+    return dataset_cache[filename]
 
+def reset_dataset_cache(filename=None):
+    global dataset_cache
+    if filename is None:
+        dataset_cache = {}
+    else:
+        dataset_cache[filename] = None
 
 @reaction_cime_api.route('/get_agg_csv_cached/<filename>', methods=['GET'])
 def get_aggregated_dataset_cached(filename):
-    value_col_name = request.args.get("value_col")
-    uncertainty_col_name = request.args.get("uncertainty_col")
-    range = {"x_min": float(request.args.get("x_min")), 
+    # value_col_name = request.args.get("value_col")
+    # uncertainty_col_name = request.args.get("uncertainty_col")
+    retrieve_cols = request.args.getlist("retrieve_cols")
+    cache_cols = request.args.getlist("cache_cols") # if value col or uncertainty col are not cached, we use this list of columns to prepare the new cached dataset
+    range = {"x_min": float(request.args.get("x_min")),
         "x_max": float(request.args.get("x_max")),
-        "y_min": float(request.args.get("y_min")), 
+        "y_min": float(request.args.get("y_min")),
         "y_max": float(request.args.get("y_max")),
         }
 
-    agg_domain = handle_agg_dataset_cache(filename, value_col_name, uncertainty_col_name)
+    agg_domain = handle_dataset_cache(filename, retrieve_cols, cache_cols)
     agg_domain = agg_domain[(agg_domain["x"] < range["x_max"]) * (agg_domain["x"] > range["x_min"]) * (agg_domain["y"] < range["y_max"]) * (agg_domain["y"] > range["y_min"])]
-    agg_df = aggregate_col(agg_domain, value_col_name, sample_size=200) # TODO: dynamic sample_size
-    print(uncertainty_col_name)
-    if uncertainty_col_name is not None and uncertainty_col_name != "":
-        agg_uncertainty_df = aggregate_col(agg_domain, uncertainty_col_name, sample_size=200) # TODO: dynamic sample_size
-        agg_df["uncertainty"] = agg_uncertainty_df["val"]
+
+    agg_df = aggregate_col(agg_domain, retrieve_cols, sample_size=200) # TODO: dynamic sample_size
 
     csv_buffer = StringIO()
     agg_df.to_csv(csv_buffer, index=False)
@@ -455,7 +476,7 @@ class ProjectionThread(threading.Thread):
             # update the coordinates in the dataset
             start_time = time.time()
             self.cime_dbo.update_row_bulk(self.filename, proj_df.index, {"x":proj_data[:,0], "y": proj_data[:,1]})
-            reset_agg_dataset_cache(self.filename) # reset cached data
+            reset_dataset_cache(self.filename) # reset cached data
             delta_time = time.time()-start_time
             print("--- took", time.strftime('%H:%M:%S', time.gmtime(delta_time)), "to update database")
             print("--- took %i min %f s to update database"%(delta_time/60, delta_time%60))

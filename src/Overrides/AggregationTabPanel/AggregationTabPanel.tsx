@@ -74,7 +74,6 @@ export const AggregationTabPanel = connector(
             // }
         });
 
-        console.log(select_columns)
         let cat_lst = Object.keys(select_columns).map(key => {
           return {key: key, name: key, col_info: select_columns[key]}
         });
@@ -248,8 +247,7 @@ const StepSlider = sliderconnector(({selectAttribute, setAggregateColor, workspa
       let step_arr = Object.keys(selectAttribute.col_info[variables[0]].temporal_columns)
       step_arr.sort()
 
-      m = step_arr.map((step, index) => {return {value: step, label: step}})
-      console.log(m)
+      m = step_arr.map((step, index) => {return {value: parseInt(step), label: step}})
     }
     setMarks(m)
     setCurStep(m[m.length-1].value)
@@ -261,22 +259,22 @@ const StepSlider = sliderconnector(({selectAttribute, setAggregateColor, workspa
       const variables_array = Object.keys(selectAttribute.col_info);
       // TODO: users should be able to select which column is value and which is uncertainty
       let value_col = selectAttribute.col_info[variables_array[0]]["temporal_columns"][timestep]
+      let cache_cols = Object.values(selectAttribute.col_info[variables_array[0]]["temporal_columns"])
+
       let uncertainty_col = null;
       if(variables_array.length >= 2){
         uncertainty_col = selectAttribute.col_info[variables_array[1]]["temporal_columns"][timestep]
+        cache_cols = cache_cols.concat(Object.values(selectAttribute.col_info[variables_array[1]]["temporal_columns"]))
       }
-      setAggregateColor({"value_col": value_col, "uncertainty_col": uncertainty_col});
+      
+      setAggregateColor({"value_col": value_col, "uncertainty_col": uncertainty_col, "cache_cols": cache_cols});
     }else{
-      setAggregateColor({"value_col": selectAttribute.key, "uncertainty_col": null});
+      setAggregateColor({"value_col": selectAttribute.key, "uncertainty_col": null, "cache_cols": null});
     }
     // eslint-disable-next-line
   }, [curStep])
 
-  
-  
-  
-
-  return marks && marks.length > 0 && <div style={{
+  return (marks && marks.length > 0) && <div style={{
       margin: '0px 16px',
       padding: '0px 8px'
   }}>
@@ -294,3 +292,4 @@ const StepSlider = sliderconnector(({selectAttribute, setAggregateColor, workspa
       ></Slider>
   </div>
 })
+

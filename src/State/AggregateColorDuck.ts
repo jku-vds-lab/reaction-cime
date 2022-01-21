@@ -3,9 +3,10 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit'
 interface AggregateColorState {
     value_col: string
     uncertainty_col: string
+    cache_cols: string[]
 }
 
-const initialState = { value_col: "None", uncertainty_col: "None" } as AggregateColorState
+const initialState = { value_col: "None", uncertainty_col: "None", cache_cols:null } as AggregateColorState
 
 const aggregateColorSlice = createSlice({
     name: 'aggregateColor',
@@ -15,6 +16,7 @@ const aggregateColorSlice = createSlice({
             reducer: (state, action: PayloadAction<AggregateColorState>) => {
                 state.value_col = action.payload.value_col
                 state.uncertainty_col = action.payload.uncertainty_col
+                state.cache_cols = action.payload.cache_cols
             },
             prepare: (values: AggregateColorState) => {
                 return {payload: values ?? initialState }

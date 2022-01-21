@@ -129,20 +129,25 @@ def get_grid_data(x, y, sample_size=200):
     
     return xi, yi, Xi, Yi
 
-def aggregate_col(df, value_col, sample_size=200):
+def aggregate_col(df, value_cols, sample_size=200):
+    from scipy.interpolate import griddata
     x = df["x"]
     y = df["y"]
-    z = df[value_col]
     
     xi, yi, Xi, Yi = get_grid_data(x, y, sample_size)
+
+    res_df = pd.DataFrame({"x": Xi.flatten(), "y": Yi.flatten()})
     
     # -----------------------
     # Interpolation on a grid
     # -----------------------
-    from scipy.interpolate import griddata
-    zi = griddata((x, y), z, (xi[None, :], yi[:, None]), method='linear')
+    for value_col in value_cols:
+        z = df[value_col]
+        zi = griddata((x, y), z, (xi[None, :], yi[:, None]), method='linear')
+
+        res_df[value_col] = zi.flatten()
     
-    return pd.DataFrame({"x": Xi.flatten(), "y": Yi.flatten(), "val": zi.flatten()})
+    return res_df
 
 
 # --- rescale and encode values
