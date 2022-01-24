@@ -242,6 +242,7 @@ def get_aggregated_dataset_cached(filename):
     # uncertainty_col_name = request.args.get("uncertainty_col")
     retrieve_cols = request.args.getlist("retrieve_cols")
     cache_cols = request.args.getlist("cache_cols") # if value col or uncertainty col are not cached, we use this list of columns to prepare the new cached dataset
+    sample_size = request.args.get("sample_size", default=200, type=int)
     range = {"x_min": float(request.args.get("x_min")),
         "x_max": float(request.args.get("x_max")),
         "y_min": float(request.args.get("y_min")),
@@ -251,7 +252,7 @@ def get_aggregated_dataset_cached(filename):
     agg_domain = handle_dataset_cache(filename, retrieve_cols, cache_cols)
     agg_domain = agg_domain[(agg_domain["x"] < range["x_max"]) * (agg_domain["x"] > range["x_min"]) * (agg_domain["y"] < range["y_max"]) * (agg_domain["y"] > range["y_min"])]
 
-    agg_df = aggregate_col(agg_domain, retrieve_cols, sample_size=200) # TODO: dynamic sample_size
+    agg_df = aggregate_col(agg_domain, retrieve_cols, sample_size=sample_size)
 
     csv_buffer = StringIO()
     agg_df.to_csv(csv_buffer, index=False)

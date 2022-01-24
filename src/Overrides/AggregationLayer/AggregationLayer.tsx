@@ -42,6 +42,8 @@ const retrieve_information_from_agg_dataset = (aggregateDataset: AggregateDatase
         return [null, null]
     }    
     var value_arr = dataset.vectors.map((row) => row[value_col]);
+
+    // visit https://github.com/uwdata/vsup for more info about VSUP vs bivariate colorscale encoding
     var vDom = [aggregateDataset.columns[value_col].range.min, aggregateDataset.columns[value_col].range.max];
 
     var scale, legend, quantization;
@@ -57,9 +59,9 @@ const retrieve_information_from_agg_dataset = (aggregateDataset: AggregateDatase
             legend
                 .vtitle(value_col)
                 .utitle(uncertainty_col)
-                .size(180)
-                .x(20)
-                .y(50)
+                // .size(180)
+                // .x(20)
+                // .y(50)
         }else{
             quantization = vsup.squareQuantization(4).valueDomain(vDom).uncertaintyDomain(uDom);
 
@@ -69,9 +71,9 @@ const retrieve_information_from_agg_dataset = (aggregateDataset: AggregateDatase
             legend
                 .vtitle(value_col)
                 .utitle(uncertainty_col)
-                .size(180)
-                .x(20)
-                .y(50)
+                // .size(180)
+                // .x(20)
+                // .y(50)
         }
     }else{
         scale = d3.scaleQuantize()
@@ -80,11 +82,11 @@ const retrieve_information_from_agg_dataset = (aggregateDataset: AggregateDatase
 
         legend = vsup.legend.simpleLegend()
             .title(value_col)
-            .height(20)
+            // .height(20)
             .scale(scale)
-            .size(235)
-            .x(10)
-            .y(5)
+            // .size(235)
+            // .x(10)
+            // .y(5)
     }
 
     // TODO: for extremely small values, we could add some scaling function that scales the values by some e-5 and add "e-5" to the label --> the ticks would then for example be "0.01" and the title "columnname e-5"
@@ -160,7 +162,8 @@ const mapStateToProps = (state: AppState) => ({
     poiDataset: state.dataset,
     viewTransform: state.viewTransform,
     colorScale: state.aggregateSettings?.colorscale,
-    useVSUP: state.aggregateSettings?.useVSUP
+    useVSUP: state.aggregateSettings?.useVSUP,
+    sampleSize: state.aggregateSettings?.sampleSize
 })
 const mapDispatchToProps = (dispatch: any) => ({
     // setAggregateDataset: dataset => dispatch(setAggregateDatasetAction(dataset)),
@@ -174,7 +177,7 @@ type AggregationLayerProps = PropsFromRedux & {
 }
 
 const loading_area = "global_loading_indicator_aggregation_ds";
-const AggregationLayer = connector(({ aggregateColor, poiDataset, viewTransform, setAggregateColorMapLegend, colorScale, useVSUP }: AggregationLayerProps) => {
+const AggregationLayer = connector(({ aggregateColor, poiDataset, viewTransform, setAggregateColorMapLegend, colorScale, useVSUP, sampleSize }: AggregationLayerProps) => {
     if(poiDataset == null || poiDataset.info == null || aggregateColor == null || aggregateColor.value_col == null || aggregateColor.value_col === "None"){
         return null;
     }
@@ -213,10 +216,10 @@ const AggregationLayer = connector(({ aggregateColor, poiDataset, viewTransform,
             // load zoomed version of the aggregate dataset
             ReactionCIMEBackendFromEnv.loadAggCSV((dataset) => {
                 setAggregateDatasetZoomed(new AggregateDataset(dataset))
-            }, poiDataset.info.path, aggregateColor.value_col, aggregateColor.uncertainty_col, aggregateColor.cache_cols, range, cancellablePromise, abort_controller, "None")
+            }, poiDataset.info.path, aggregateColor.value_col, aggregateColor.uncertainty_col, aggregateColor.cache_cols, sampleSize, range, cancellablePromise, abort_controller, "None")
 
         }, 500, {leading:false, trailing:true}) // leading: execute function at the beginning of the events; trailing: execute function at the end of the events; maxWait: maximum time the function is allowed to be delayed
-        ,[aggregateColor]
+        ,[aggregateColor, sampleSize]
     );
 
     React.useEffect(() => {
@@ -231,12 +234,12 @@ const AggregationLayer = connector(({ aggregateColor, poiDataset, viewTransform,
         // load the basic aggregateDataset with the high-level overview information
         ReactionCIMEBackendFromEnv.loadAggCSV((dataset) => {
             setAggregateDataset(new AggregateDataset(dataset))
-        }, poiDataset.info.path, aggregateColor.value_col, aggregateColor.uncertainty_col, aggregateColor.cache_cols, null, cancellablePromise, abort_controller, loading_area)
+        }, poiDataset.info.path, aggregateColor.value_col, aggregateColor.uncertainty_col, aggregateColor.cache_cols, sampleSize, null, cancellablePromise, abort_controller, loading_area)
 
         // reset the zoomed version of the dataset
         setAggregateDatasetZoomed(null)
     // eslint-disable-next-line
-    }, [aggregateColor, poiDataset.info.path])
+    }, [aggregateColor, poiDataset.info.path, sampleSize])
 
     
 

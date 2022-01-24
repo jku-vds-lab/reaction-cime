@@ -339,7 +339,7 @@ export class ReactionCIMEBackend {
   };
 
 
-  public loadAggCSV(finished: (dataset: any) => void, path:string, value_column:string, uncertainty_col:string, cache_cols:string[], range: {x: {min: number, max: number}, y: {min: number, max: number}}, cancellablePromise?: ReturnType<typeof useCancellablePromise>["cancellablePromise"], controller?: AbortController, loadingArea?:string) {
+  public loadAggCSV(finished: (dataset: any) => void, path:string, value_column:string, uncertainty_col:string, cache_cols:string[], sample_size:number, range: {x: {min: number, max: number}, y: {min: number, max: number}}, cancellablePromise?: ReturnType<typeof useCancellablePromise>["cancellablePromise"], controller?: AbortController, loadingArea?:string) {
     if(range == null){
       range = {x: {min: -1000, max: 1000}, y: {min: -1000, max: 1000}}
     }
@@ -363,11 +363,16 @@ export class ReactionCIMEBackend {
         }
       }
 
+      let sample_size_str = ""
+      if(sample_size != null){
+        sample_size_str = "&sample_size=" + sample_size
+      }
+
       let range_string = "&x_min=" + range.x.min + "&x_max=" + range.x.max + "&y_min=" + range.y.min + "&y_max="+range.y.max
 
       // request the server to return a csv file using the unique filename
       // const agg_path = ReactionCIMEBackendFromEnv.baseUrl + "/get_agg_csv/" + path + "/" + column + "?x_min=" + range.x.min + "&x_max=" + range.x.max + "&y_min=" + range.y.min + "&y_max="+range.y.max; // TODO: make dynamic
-      const agg_path = ReactionCIMEBackendFromEnv.baseUrl + "/get_agg_csv_cached/" + path + "?" + retrieve_cols + cache_cols_string + range_string; // TODO: make dynamic
+      const agg_path = ReactionCIMEBackendFromEnv.baseUrl + "/get_agg_csv_cached/" + path + "?" + retrieve_cols + cache_cols_string + sample_size_str + range_string; // TODO: make dynamic
       
       promise = cancellablePromise
         ? cancellablePromise(

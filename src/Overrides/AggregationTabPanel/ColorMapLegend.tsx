@@ -39,13 +39,34 @@ export const ColorMapLegend = connector(({legend, colorScale, setAggregateColorS
   
     // add colormap legend
     const gRef = React.useRef();
+    const svgRef = React.useRef();
     React.useEffect(() => {
-        if(legend != null && gRef.current){
+        
+        if(legend != null && gRef.current && svgRef.current){
+            const rel_width = 250;
+            legend.size(rel_width)
+
+            let padding_left, padding_top, padding_right, padding_bottom, rel_height;
+            if(legend.height == null){
+                rel_height = rel_width;
+                padding_left = rel_width*0.1;
+                padding_top = padding_left*2;
+                padding_right = padding_left*3;
+                padding_bottom = padding_left*3;
+            }else{
+                rel_height = legend.height();
+                padding_left = rel_width*0.05;
+                padding_top = 0;
+                padding_right = padding_left*2;
+                padding_bottom = rel_height*1.2;
+            }
+            
             const gElement = d3.select(gRef.current)
             gElement.html(""); // clear g element
             gElement.call(legend); // draw color legend
+            d3.select(svgRef.current).attr("viewBox", `-${padding_left} -${padding_top} ${rel_width+padding_right} ${rel_height+padding_bottom}`)
         }
-    }, [legend, gRef])
+    }, [legend, gRef, svgRef])
     
     return <>
         <InputLabel id="colorscale-select-label">Choose Colormap</InputLabel>
@@ -61,7 +82,7 @@ export const ColorMapLegend = connector(({legend, colorScale, setAggregateColorS
                 </MenuItem>)
             }
         </Select>
-        <svg onClick={()=> {toggleUseVSUP()}} style={{width:"100%", height:"300px", cursor:"pointer"}}><g ref={gRef}></g></svg>
+        <svg ref={svgRef} onClick={()=> {toggleUseVSUP()}} style={{cursor:"pointer"}}><g ref={gRef}></g></svg>
     </>
       
 })

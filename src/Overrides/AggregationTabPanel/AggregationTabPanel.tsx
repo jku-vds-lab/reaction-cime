@@ -4,11 +4,12 @@ import { AppState } from "../../State/Store";
 import React from "react";
 import { StepSlider } from "./StepSlider";
 import { ColorMapLegend } from "./ColorMapLegend";
+import "./AggregationTabPanel.scss";
+import { AdvancedAggregationSettings } from "./AdvancedAggregationSettings";
 
 
 const mapStateToProps = (state: AppState) => ({
   poiDataset: state.dataset,
-  legend: state.aggregateSettings?.legend
 });
 
 const mapDispatchToProps = (dispatch) => ({
@@ -24,7 +25,6 @@ type Props = PropsFromRedux & {};
 export const AggregationTabPanel = connector(
   ({
     poiDataset,
-    legend
   }: Props) => {
     
     // const categoryOptions = poiDataset?.categories;
@@ -167,7 +167,7 @@ export const AggregationTabPanel = connector(
               <div></div>
           }
         </Box> */}
-        
+        <Box paddingLeft={2} paddingTop={1} paddingRight={2}><AdvancedAggregationSettings></AdvancedAggregationSettings></Box>
         <Box paddingLeft={2} paddingTop={1} paddingRight={2}><StepSlider selectAttribute={selectAttribute}></StepSlider></Box>
         <Box paddingLeft={2} paddingTop={1} paddingRight={2}><ColorMapLegend selectAttribute={selectAttribute}></ColorMapLegend></Box>
       </div>
