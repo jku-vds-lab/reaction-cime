@@ -6,7 +6,7 @@ from rdkit import Chem
 from rdkit.Chem import Draw
 from io import BytesIO
 import base64
-from .helper_functions import preprocess_dataset, get_mcs, smiles_to_base64, aggregate_col, rescale_and_encode
+from .helper_functions import preprocess_dataset, get_mcs, smiles_to_base64, aggregate_by_col_interpolate, aggregate_by_col, rescale_and_encode
 import json
 
 _log = logging.getLogger(__name__)
@@ -206,7 +206,7 @@ def get_aggregated_dataset(filename, col_name):
         }
     filter = "x > {x_min} and x < {x_max} and y > {y_min} and y < {y_max}".format(**range)
     agg_domain = get_cime_dbo().get_dataframe_from_table_filter(filename, filter, columns=["x", "y", col_name])
-    agg_df = aggregate_col(agg_domain, col_name, sample_size=200) # TODO: dynamic sample_size
+    agg_df = aggregate_by_col_interpolate(agg_domain, col_name, sample_size=200) # TODO: dynamic sample_size
 
     csv_buffer = StringIO()
     agg_df.to_csv(csv_buffer, index=False)
@@ -252,7 +252,8 @@ def get_aggregated_dataset_cached(filename):
     agg_domain = handle_dataset_cache(filename, retrieve_cols, cache_cols)
     agg_domain = agg_domain[(agg_domain["x"] < range["x_max"]) * (agg_domain["x"] > range["x_min"]) * (agg_domain["y"] < range["y_max"]) * (agg_domain["y"] > range["y_min"])]
 
-    agg_df = aggregate_col(agg_domain, retrieve_cols, sample_size=sample_size)
+    agg_df = aggregate_by_col_interpolate(agg_domain, retrieve_cols, sample_size=sample_size)
+    # agg_df = aggregate_by_col(agg_domain, retrieve_cols, sample_size=sample_size)
 
     csv_buffer = StringIO()
     agg_df.to_csv(csv_buffer, index=False)

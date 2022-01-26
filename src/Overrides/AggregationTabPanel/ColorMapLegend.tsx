@@ -2,8 +2,8 @@ import React from "react";
 import { connect, ConnectedProps } from "react-redux";
 import { AppState } from "../../State/Store";
 import * as d3 from 'd3v5';
-import { InputLabel, MenuItem, Select } from "@mui/material";
-import { D3_CONTINUOUS_COLOR_SCALE_LIST, setAggregateColorScale, toggleUseVSUP } from "../../State/AggregateSettingsDuck";
+import { Button, InputLabel, MenuItem, Select } from "@mui/material";
+import { D3_CONTINUOUS_COLOR_SCALE_LIST, setAggregateColorScale, addValueFilter, removeValueFilter, toggleUseVSUP, clearValueFilter } from "../../State/AggregateSettingsDuck";
 
 const mapStateToProps = (state: AppState) => ({
     legend: state.aggregateSettings?.legend,
@@ -12,7 +12,10 @@ const mapStateToProps = (state: AppState) => ({
 
 const mapDispatchToProps = (dispatch) => ({
     setAggregateColorScale: value => dispatch(setAggregateColorScale(value)),
-    toggleUseVSUP: () => dispatch(toggleUseVSUP())
+    toggleUseVSUP: () => dispatch(toggleUseVSUP()),
+    addValueFilter: (value) => dispatch(addValueFilter(value)),
+    removeValueFilter: (value) => dispatch(removeValueFilter(value)),
+    clearValueFilter: () => dispatch(clearValueFilter()),
 });
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
@@ -25,11 +28,10 @@ type Props = PropsFromRedux & {
   
 
   
-export const ColorMapLegend = connector(({legend, colorScale, setAggregateColorScale, selectAttribute, toggleUseVSUP}: Props) => {
+export const ColorMapLegend = connector(({legend, colorScale, setAggregateColorScale, selectAttribute, toggleUseVSUP, addValueFilter, removeValueFilter, clearValueFilter }: Props) => {
     if(selectAttribute == null || selectAttribute.key === "None" || selectAttribute.key == null){
         return null;
     }
-    // console.log(Object.keys(d3)) // keys that start with "interpolate"
 
     const discrete_steps = [0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1]
 
@@ -40,6 +42,15 @@ export const ColorMapLegend = connector(({legend, colorScale, setAggregateColorS
     // add colormap legend
     const gRef = React.useRef();
     const svgRef = React.useRef();
+    const [colorSections, setColorSections] = React.useState([]);
+
+    const clearFilter = (color_sections) => {
+        clearValueFilter()
+        
+        color_sections.attr("stroke", null)
+        color_sections.attr("stroke-width", "0px")
+    }
+
     React.useEffect(() => {
         
         if(legend != null && gRef.current && svgRef.current){
@@ -64,7 +75,39 @@ export const ColorMapLegend = connector(({legend, colorScale, setAggregateColorS
             const gElement = d3.select(gRef.current)
             gElement.html(""); // clear g element
             gElement.call(legend); // draw color legend
-            d3.select(svgRef.current).attr("viewBox", `-${padding_left} -${padding_top} ${rel_width+padding_right} ${rel_height+padding_bottom}`)
+
+            const svgElement = d3.select(svgRef.current)
+            svgElement.attr("viewBox", `-${padding_left} -${padding_top} ${rel_width+padding_right} ${rel_height+padding_bottom}`)
+
+            // --- add interaction with legend
+            const legend_container = svgElement.select(".legend > g:last-child")
+            let color_sections = legend_container.selectAll("path")
+            if(color_sections.nodes().length <= 0){ // if there are no path elements, we look for rect elements
+                color_sections = gElement.selectAll("rect")
+            }
+            setColorSections(color_sections)
+            
+            color_sections
+            // .on("mouseover", (d, i) => {
+            //      //stroke="black" stroke-width="0.02px"
+            //     d3.select(color_sections.nodes()[i]).attr("stroke", "black")
+            // })
+            // .on("mouseout", (d, i) => {
+            //     d3.select(color_sections.nodes()[i]).attr("stroke", "none")
+            // })
+            .on("click", (d, i) => {
+                // color_sections.attr("stroke", "none")
+                const cur_node = d3.select(color_sections.nodes()[i])
+                if(cur_node.attr("stroke") == null){
+                    cur_node.attr("stroke", "#1f77b4")
+                    cur_node.attr("stroke-width", "3px")
+                    addValueFilter(cur_node.attr("fill"))
+                }else{
+                    cur_node.attr("stroke", null)
+                    cur_node.attr("stroke-width", "0px")
+                    removeValueFilter(cur_node.attr("fill"))
+                }
+           })
         }
     }, [legend, gRef, svgRef])
     
@@ -82,7 +125,10 @@ export const ColorMapLegend = connector(({legend, colorScale, setAggregateColorS
                 </MenuItem>)
             }
         </Select>
-        <svg ref={svgRef} onClick={()=> {toggleUseVSUP()}} style={{cursor:"pointer"}}><g ref={gRef}></g></svg>
+        <svg ref={svgRef} style={{cursor:"pointer"}}><g ref={gRef}></g></svg>
+        {legend?.height == null &&  // only the "simple" legend has a hight attribute
+        <Button variant="outlined" onClick={()=> {toggleUseVSUP()}}>Switch Encoding</Button>}
+        <Button variant="outlined" onClick={()=> {clearFilter(colorSections)}}>Clear Filter</Button>
     </>
       
 })

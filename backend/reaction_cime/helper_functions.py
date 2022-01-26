@@ -129,7 +129,7 @@ def get_grid_data(x, y, sample_size=200):
     
     return xi, yi, Xi, Yi
 
-def aggregate_col(df, value_cols, sample_size=200):
+def aggregate_by_col_interpolate(df, value_cols, sample_size=200):
     from scipy.interpolate import griddata
     x = df["x"]
     y = df["y"]
@@ -149,6 +149,34 @@ def aggregate_col(df, value_cols, sample_size=200):
     
     return res_df
 
+def aggregate_by_col(df, value_cols, sample_size=200):
+    x = df["x"]
+    y = df["y"]
+    sample_size=20
+    xi, yi, Xi, Yi = get_grid_data(x, y, sample_size) # (200,) (200,) (200, 200) (200, 200)
+    # delta gives difference between two steps i.e. stepsize
+    delta_x = (xi[1] - xi[0]) / 2
+    delta_y = (yi[1] - yi[0]) / 2
+
+    res_df = pd.DataFrame({"x": Xi.flatten(), "y": Yi.flatten()})
+    
+    for value_col in value_cols:
+        z = df[value_col]
+
+        zi = np.zeros((sample_size, sample_size)) # (200, 200)
+        for i in range(sample_size):
+            for j in range(sample_size):
+                window = (df["x"] >= (xi[i]-delta_x)) * (df["x"] < (xi[i] + delta_x)) * (df["y"] >= (yi[j]-delta_y)) * (df["y"] < (yi[j] + delta_y))
+                window_vals = z[window]
+                if len(window_vals) > 0:
+                    zi[i, j] = np.nanmax(window_vals)
+                else:
+                    zi[i, j] = np.nan
+
+        res_df[value_col] = zi.flatten()
+    
+    return res_df
+    
 
 # --- rescale and encode values
 def rescale_and_encode(proj_df, params, selected_feature_info):

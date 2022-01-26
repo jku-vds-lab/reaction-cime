@@ -36,57 +36,44 @@ const convert_to_rgb = (value: string | {r: number, g: number, b: number}):{r: n
     console.log("error:", "format unknown ->", value)
     return {"r": 0, "g": 0, "b": 0};
 }
-
-const retrieve_information_from_agg_dataset = (aggregateDataset: AggregateDataset, dataset: AggregateDataset, value_col: string, uncertainty_col: string, setAggregateColorMapLegend: any, colorScale: String, useVSUP) => {
+const retrieve_colorscale = (aggregateDataset: AggregateDataset, value_col: string, uncertainty_col: string, setAggregateColorMapLegend: any, aggregateSettings: any) => {
     if(!Object.keys(aggregateDataset.columns).includes(value_col)){
         return [null, null]
     }    
-    var value_arr = dataset.vectors.map((row) => row[value_col]);
 
     // visit https://github.com/uwdata/vsup for more info about VSUP vs bivariate colorscale encoding
     var vDom = [aggregateDataset.columns[value_col].range.min, aggregateDataset.columns[value_col].range.max];
 
     var scale, legend, quantization;
     if(aggregateDataset.columns[uncertainty_col] != null){
-        var uncertainty_arr = dataset.vectors.map((row) => row[uncertainty_col]);
         var uDom = [aggregateDataset.columns[uncertainty_col].range.min, aggregateDataset.columns[uncertainty_col].range.max];
 
-        if(useVSUP){
+        if(aggregateSettings?.useVSUP){
             quantization = vsup.quantization().branching(2).layers(4).valueDomain(vDom).uncertaintyDomain(uDom);
-            scale = vsup.scale().quantize(quantization).range(d3[colorScale]);
+            scale = vsup.scale().quantize(quantization).range(d3[aggregateSettings?.colorscale]);
             
             legend = vsup.legend.arcmapLegend(scale);
             legend
                 .vtitle(value_col)
                 .utitle(uncertainty_col)
-                // .size(180)
-                // .x(20)
-                // .y(50)
         }else{
             quantization = vsup.squareQuantization(4).valueDomain(vDom).uncertaintyDomain(uDom);
 
-            scale = vsup.scale().quantize(quantization).range(d3[colorScale]);
+            scale = vsup.scale().quantize(quantization).range(d3[aggregateSettings?.colorscale]);
             
             legend = vsup.legend.heatmapLegend(scale);
             legend
                 .vtitle(value_col)
                 .utitle(uncertainty_col)
-                // .size(180)
-                // .x(20)
-                // .y(50)
         }
     }else{
         scale = d3.scaleQuantize()
             .domain(vDom)
-            .range(d3.quantize(d3[colorScale], 8));
+            .range(d3.quantize(d3[aggregateSettings.colorscale], 8));
 
         legend = vsup.legend.simpleLegend()
             .title(value_col)
-            // .height(20)
             .scale(scale)
-            // .size(235)
-            // .x(10)
-            // .y(5)
     }
 
     // TODO: for extremely small values, we could add some scaling function that scales the values by some e-5 and add "e-5" to the label --> the ticks would then for example be "0.01" and the title "columnname e-5"
@@ -107,9 +94,18 @@ const retrieve_information_from_agg_dataset = (aggregateDataset: AggregateDatase
     //     },
     //     aggregateDataset.columns[value_col].range // needs to have the same range as the overview Dataset
     // );
+    return scale;
+}
 
+const retrieve_information_from_agg_dataset = (aggregateDataset: AggregateDataset, dataset: AggregateDataset, value_col: string, uncertainty_col: string, valueFilter: string[], scale: any) => {
+    if(!Object.keys(aggregateDataset.columns).includes(value_col)){
+        return [null, null]
+    }
+    if(aggregateDataset.columns[uncertainty_col] != null){
+        var uncertainty_arr = dataset.vectors.map((row) => row[uncertainty_col]);
+    }
 
-
+    var value_arr = dataset.vectors.map((row) => row[value_col]);
     var bgRGBA = new Uint8Array(value_arr.length * 4);
     for(var i=0; i < value_arr.length; i++){ // set opacity to 0 if value is not given
         if(value_arr[i] === undefined || isNaN(value_arr[i]) || value_arr[i] === ""){
@@ -122,16 +118,21 @@ const retrieve_information_from_agg_dataset = (aggregateDataset: AggregateDatase
             }else{
                 color = scale(value_arr[i], 0)
             }
-            var rgb = convert_to_rgb(color)
-            
-            // RGB from 0 to 255
-            // var rgb = background_colorMapping.map(arr_pred[i]).rgb
-            bgRGBA[4*i] = rgb.r;
-            bgRGBA[4*i+1] = rgb.g;
-            bgRGBA[4*i+2] = rgb.b;
 
-            // OPACITY
-            bgRGBA[4*i + 3] = 255;
+            if(valueFilter != null && valueFilter.length > 0 && !valueFilter.includes(color)){ // if there is a filter, and the current value is not within, we set it to transparent
+                bgRGBA[4*i + 3] = 0;
+            }else{
+                var rgb = convert_to_rgb(color)
+                
+                // RGB from 0 to 255
+                // var rgb = background_colorMapping.map(arr_pred[i]).rgb
+                bgRGBA[4*i] = rgb.r;
+                bgRGBA[4*i+1] = rgb.g;
+                bgRGBA[4*i+2] = rgb.b;
+    
+                // OPACITY
+                bgRGBA[4*i + 3] = 255;
+            }
         }
     }
     let bgDataTex = new THREE.DataTexture(bgRGBA, Math.sqrt(value_arr.length), Math.sqrt(value_arr.length), THREE.RGBAFormat);
@@ -161,9 +162,7 @@ const mapStateToProps = (state: AppState) => ({
     aggregateColor: state.aggregateColor,
     poiDataset: state.dataset,
     viewTransform: state.viewTransform,
-    colorScale: state.aggregateSettings?.colorscale,
-    useVSUP: state.aggregateSettings?.useVSUP,
-    sampleSize: state.aggregateSettings?.sampleSize
+    aggregateSettings: state.aggregateSettings,
 })
 const mapDispatchToProps = (dispatch: any) => ({
     // setAggregateDataset: dataset => dispatch(setAggregateDatasetAction(dataset)),
@@ -177,7 +176,7 @@ type AggregationLayerProps = PropsFromRedux & {
 }
 
 const loading_area = "global_loading_indicator_aggregation_ds";
-const AggregationLayer = connector(({ aggregateColor, poiDataset, viewTransform, setAggregateColorMapLegend, colorScale, useVSUP, sampleSize }: AggregationLayerProps) => {
+const AggregationLayer = connector(({ aggregateColor, poiDataset, viewTransform, setAggregateColorMapLegend, aggregateSettings }: AggregationLayerProps) => {
     if(poiDataset == null || poiDataset.info == null || aggregateColor == null || aggregateColor.value_col == null || aggregateColor.value_col === "None"){
         return null;
     }
@@ -216,10 +215,10 @@ const AggregationLayer = connector(({ aggregateColor, poiDataset, viewTransform,
             // load zoomed version of the aggregate dataset
             ReactionCIMEBackendFromEnv.loadAggCSV((dataset) => {
                 setAggregateDatasetZoomed(new AggregateDataset(dataset))
-            }, poiDataset.info.path, aggregateColor.value_col, aggregateColor.uncertainty_col, aggregateColor.cache_cols, sampleSize, range, cancellablePromise, abort_controller, "None")
+            }, poiDataset.info.path, aggregateColor.value_col, aggregateColor.uncertainty_col, aggregateColor.cache_cols, aggregateSettings?.sampleSize, range, cancellablePromise, abort_controller, "None")
 
         }, 500, {leading:false, trailing:true}) // leading: execute function at the beginning of the events; trailing: execute function at the end of the events; maxWait: maximum time the function is allowed to be delayed
-        ,[aggregateColor, sampleSize]
+        ,[aggregateColor, aggregateSettings?.sampleSize]
     );
 
     React.useEffect(() => {
@@ -234,26 +233,32 @@ const AggregationLayer = connector(({ aggregateColor, poiDataset, viewTransform,
         // load the basic aggregateDataset with the high-level overview information
         ReactionCIMEBackendFromEnv.loadAggCSV((dataset) => {
             setAggregateDataset(new AggregateDataset(dataset))
-        }, poiDataset.info.path, aggregateColor.value_col, aggregateColor.uncertainty_col, aggregateColor.cache_cols, sampleSize, null, cancellablePromise, abort_controller, loading_area)
+        }, poiDataset.info.path, aggregateColor.value_col, aggregateColor.uncertainty_col, aggregateColor.cache_cols, aggregateSettings?.sampleSize, null, cancellablePromise, abort_controller, loading_area)
 
         // reset the zoomed version of the dataset
         setAggregateDatasetZoomed(null)
     // eslint-disable-next-line
-    }, [aggregateColor, poiDataset.info.path, sampleSize])
+    }, [aggregateColor, poiDataset.info.path, aggregateSettings?.sampleSize])
 
     
+    const [colorscale, setColorScale] = React.useState(null);
+    React.useEffect(() => {
+        if(aggregateDataset && aggregateDataset.vectors){
+            const scale = retrieve_colorscale(aggregateDataset, aggregateColor.value_col, aggregateColor.uncertainty_col, setAggregateColorMapLegend, aggregateSettings)
+            setColorScale(() => scale)
+        }
+    }, [aggregateDataset, aggregateColor, aggregateSettings?.colorscale, aggregateSettings?.useVSUP])
 
     React.useEffect(() => {
-        
-        if(aggregateDataset && aggregateDataset.vectors){
+        if(colorscale != null && aggregateDataset && aggregateDataset.vectors){
             let sizes = [null, null];
             let textures = [null, null];
-            let [texture, size] = retrieve_information_from_agg_dataset(aggregateDataset, aggregateDataset, aggregateColor.value_col, aggregateColor.uncertainty_col, setAggregateColorMapLegend, colorScale, useVSUP)
+            let [texture, size] = retrieve_information_from_agg_dataset(aggregateDataset, aggregateDataset, aggregateColor.value_col, aggregateColor.uncertainty_col, aggregateSettings?.valueFilter, colorscale)
             sizes[0] = size;
             textures[0] = texture;
 
             if(aggregateDatasetZoomed && aggregateDatasetZoomed.vectors){
-                let [texture, size] = retrieve_information_from_agg_dataset(aggregateDataset, aggregateDatasetZoomed, aggregateColor.value_col, aggregateColor.uncertainty_col, setAggregateColorMapLegend, colorScale, useVSUP)
+                let [texture, size] = retrieve_information_from_agg_dataset(aggregateDataset, aggregateDatasetZoomed, aggregateColor.value_col, aggregateColor.uncertainty_col, aggregateSettings?.valueFilter, colorscale)
                 sizes[1] = size;
                 textures[1] = texture;
             }
@@ -264,7 +269,7 @@ const AggregationLayer = connector(({ aggregateColor, poiDataset, viewTransform,
             setTextures(null)
         }
     // eslint-disable-next-line
-    }, [aggregateDataset, aggregateDatasetZoomed, colorScale, useVSUP])
+    }, [colorscale, aggregateDatasetZoomed, aggregateSettings?.valueFilter])
 
 
     return <div>
