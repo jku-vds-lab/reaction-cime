@@ -6,7 +6,6 @@ import { filter } from "lodash";
 
 // const SET_DATA = "ducks/lineUpInput/SET_DATA"
 // const SET_COLUMNS = "ducks/lineUpInput/SET_COLUMNS"
-const SET_VISIBILITY = "ducks/lineUpInput/SET_VISIBILITY";
 const SET_DUMP = "ducks/lineUpInput/SET_DUMP";
 const SET_FILTER = "ducks/lineUpInput/SET_FILTER";
 const UPDATE_FILTER = "ducks/lineUpInput/UPDATE_FILTER";
@@ -23,10 +22,6 @@ const SET_UPDATE = "ducks/lineUpInput/SET_UPDATE";
 //     input: input
 // });
 
-export const setLineUpInput_visibility = (input) => ({
-  type: SET_VISIBILITY,
-  input: input,
-});
 
 export const setLineUpInput_dump = (input) => ({
   type: SET_DUMP,
@@ -56,7 +51,6 @@ export const setLineUpInput_update = (input) => ({
 const initialState: LineUpType = {
   // data: null,
   // columns: null,
-  show: false,
   dump: "",
   filter: null,
   previousfilter: null,
@@ -66,7 +60,6 @@ const initialState: LineUpType = {
 export type LineUpType = {
   // data: Vect[],
   // columns: [],
-  show: boolean;
   dump: string;
   filter: object;
   previousfilter: object;
@@ -80,8 +73,6 @@ const lineUpInput = (state = initialState, action): LineUpType => {
     //     return {...state, data: action.input}
     // case SET_COLUMNS:
     //     return {...state, columns: action.input}
-    case SET_VISIBILITY:
-      return { ...state, show: action.input };
     case SET_DUMP:
       return { ...state, dump: action.input };
     case SET_FILTER:

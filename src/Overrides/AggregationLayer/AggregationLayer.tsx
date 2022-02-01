@@ -9,9 +9,7 @@ import { AggregateDataset } from '../AggregationTabPanel/AggregateDataset'
 import { LoadingIndicatorDialog } from '../Dataset/DatasetTabPanel';
 import { GLHeatmap } from './GLHeatmap'
 import * as _ from "lodash";
-import * as vsup from "vsup";
-import * as d3 from 'd3v5';
-import { setAggregateColorMapLegend } from '../../State/AggregateSettingsDuck';
+import { setUncertaintyRange, setValueRange } from '../../State/AggregateSettingsDuck';
 
 
 const convert_to_rgb = (value: string | {r: number, g: number, b: number}):{r: number, g: number, b: number} => {
@@ -36,71 +34,8 @@ const convert_to_rgb = (value: string | {r: number, g: number, b: number}):{r: n
     console.log("error:", "format unknown ->", value)
     return {"r": 0, "g": 0, "b": 0};
 }
-const retrieve_colorscale = (aggregateDataset: AggregateDataset, value_col: string, uncertainty_col: string, setAggregateColorMapLegend: any, aggregateSettings: any) => {
-    if(!Object.keys(aggregateDataset.columns).includes(value_col)){
-        return [null, null]
-    }    
-
-    // visit https://github.com/uwdata/vsup for more info about VSUP vs bivariate colorscale encoding
-    var vDom = [aggregateDataset.columns[value_col].range.min, aggregateDataset.columns[value_col].range.max];
-
-    var scale, legend, quantization;
-    if(aggregateDataset.columns[uncertainty_col] != null){
-        var uDom = [aggregateDataset.columns[uncertainty_col].range.min, aggregateDataset.columns[uncertainty_col].range.max];
-
-        if(aggregateSettings?.useVSUP){
-            quantization = vsup.quantization().branching(2).layers(4).valueDomain(vDom).uncertaintyDomain(uDom);
-            scale = vsup.scale().quantize(quantization).range(d3[aggregateSettings?.colorscale]);
-            
-            legend = vsup.legend.arcmapLegend(scale);
-            legend
-                .vtitle(value_col)
-                .utitle(uncertainty_col)
-        }else{
-            quantization = vsup.squareQuantization(4).valueDomain(vDom).uncertaintyDomain(uDom);
-
-            scale = vsup.scale().quantize(quantization).range(d3[aggregateSettings?.colorscale]);
-            
-            legend = vsup.legend.heatmapLegend(scale);
-            legend
-                .vtitle(value_col)
-                .utitle(uncertainty_col)
-        }
-    }else{
-        scale = d3.scaleQuantize()
-            .domain(vDom)
-            .range(d3.quantize(d3[aggregateSettings.colorscale], 8));
-
-        legend = vsup.legend.simpleLegend()
-            .title(value_col)
-            .scale(scale)
-    }
-
-    // TODO: for extremely small values, we could add some scaling function that scales the values by some e-5 and add "e-5" to the label --> the ticks would then for example be "0.01" and the title "columnname e-5"
-    // automatically obtain a suitable precision value
-    const p = d3.precisionFixed((vDom[1]-vDom[0])/8);
-    if(p > 2){
-        legend.format(".2")
-    }else if(p > 0){
-        legend.format("." + p + "r");
-    }
-
-    setAggregateColorMapLegend(legend)
-
-    // let background_colorMapping = new ContinuousMapping(
-    //     {
-    //         palette: [new SchemeColor('#fefefe'), new SchemeColor('#111111')],
-    //         type: 'sequential'
-    //     },
-    //     aggregateDataset.columns[value_col].range // needs to have the same range as the overview Dataset
-    // );
-    return scale;
-}
-
 const retrieve_information_from_agg_dataset = (aggregateDataset: AggregateDataset, dataset: AggregateDataset, value_col: string, uncertainty_col: string, valueFilter: string[], scale: any) => {
-    if(!Object.keys(aggregateDataset.columns).includes(value_col)){
-        return [null, null]
-    }
+    
     if(aggregateDataset.columns[uncertainty_col] != null){
         var uncertainty_arr = dataset.vectors.map((row) => row[uncertainty_col]);
     }
@@ -159,14 +94,14 @@ const retrieve_information_from_agg_dataset = (aggregateDataset: AggregateDatase
 }
 
 const mapStateToProps = (state: AppState) => ({
-    aggregateColor: state.aggregateColor,
+    aggregateColor: state.aggregateSettings?.aggregateColor,
     poiDataset: state.dataset,
     viewTransform: state.viewTransform,
     aggregateSettings: state.aggregateSettings,
 })
 const mapDispatchToProps = (dispatch: any) => ({
-    // setAggregateDataset: dataset => dispatch(setAggregateDatasetAction(dataset)),
-    setAggregateColorMapLegend: (legend) => dispatch(setAggregateColorMapLegend(legend)),
+    setValueRange: (range) => dispatch(setValueRange(range)),
+    setUncertaintyRange: (range) => dispatch(setUncertaintyRange(range)),
 })
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
@@ -176,7 +111,7 @@ type AggregationLayerProps = PropsFromRedux & {
 }
 
 const loading_area = "global_loading_indicator_aggregation_ds";
-const AggregationLayer = connector(({ aggregateColor, poiDataset, viewTransform, setAggregateColorMapLegend, aggregateSettings }: AggregationLayerProps) => {
+const AggregationLayer = connector(({ aggregateColor, poiDataset, viewTransform, aggregateSettings, setValueRange, setUncertaintyRange }: AggregationLayerProps) => {
     if(poiDataset == null || poiDataset.info == null || aggregateColor == null || aggregateColor.value_col == null || aggregateColor.value_col === "None"){
         return null;
     }
@@ -222,12 +157,6 @@ const AggregationLayer = connector(({ aggregateColor, poiDataset, viewTransform,
     );
 
     React.useEffect(() => {
-        if(aggregateDataset != null) // only start loading, if we already have a base dataset
-            debouncedLoadAggDataset(viewTransform)
-    // eslint-disable-next-line
-    }, [viewTransform])
-
-    React.useEffect(() => {
         // setAggregateDataset(null)
         let abort_controller = new AbortController(); //TODO: reiterate where AbortController needs to be instantiated --> can it be moved inside the loadAggCSV function?
         // load the basic aggregateDataset with the high-level overview information
@@ -237,40 +166,59 @@ const AggregationLayer = connector(({ aggregateColor, poiDataset, viewTransform,
 
         // reset the zoomed version of the dataset
         setAggregateDatasetZoomed(null)
-    // eslint-disable-next-line
+        // eslint-disable-next-line
     }, [aggregateColor, poiDataset.info.path, aggregateSettings?.sampleSize])
+    
+
+    React.useEffect(() => {
+        if(aggregateDataset != null) // only start loading, if we already have a base dataset
+            debouncedLoadAggDataset(viewTransform)
+        // eslint-disable-next-line
+    }, [aggregateDataset, viewTransform])
 
     
-    const [colorscale, setColorScale] = React.useState(null);
     React.useEffect(() => {
-        if(aggregateDataset && aggregateDataset.vectors){
-            const scale = retrieve_colorscale(aggregateDataset, aggregateColor.value_col, aggregateColor.uncertainty_col, setAggregateColorMapLegend, aggregateSettings)
-            setColorScale(() => scale)
-        }
-    }, [aggregateDataset, aggregateColor, aggregateSettings?.colorscale, aggregateSettings?.useVSUP])
-
-    React.useEffect(() => {
-        if(colorscale != null && aggregateDataset && aggregateDataset.vectors){
-            let sizes = [null, null];
-            let textures = [null, null];
-            let [texture, size] = retrieve_information_from_agg_dataset(aggregateDataset, aggregateDataset, aggregateColor.value_col, aggregateColor.uncertainty_col, aggregateSettings?.valueFilter, colorscale)
-            sizes[0] = size;
-            textures[0] = texture;
-
-            if(aggregateDatasetZoomed && aggregateDatasetZoomed.vectors){
-                let [texture, size] = retrieve_information_from_agg_dataset(aggregateDataset, aggregateDatasetZoomed, aggregateColor.value_col, aggregateColor.uncertainty_col, aggregateSettings?.valueFilter, colorscale)
-                sizes[1] = size;
-                textures[1] = texture;
+        if(aggregateDataset && aggregateDataset.vectors && aggregateSettings?.deriveRange){
+            if(Object.keys(aggregateDataset.columns).includes(aggregateColor.value_col)){
+                setValueRange(aggregateDataset.columns[aggregateColor.value_col].range)
+            
+                if(aggregateDataset.columns[aggregateColor.uncertainty_col] != null){
+                    setUncertaintyRange(aggregateDataset.columns[aggregateColor.uncertainty_col].range)
+                }
             }
-            setSizes(sizes);
-            setTextures(textures);
-        }else{
-            setSizes(null);
-            setTextures(null)
         }
-    // eslint-disable-next-line
-    }, [colorscale, aggregateDatasetZoomed, aggregateSettings?.valueFilter])
+        // aggregateColor --> aggregateColor has direct influence on aggregateDataset through "setAggregateDataset" in the useEffect above
+        // eslint-disable-next-line
+    }, [aggregateDataset, aggregateSettings?.deriveRange])
 
+    React.useEffect(() => {
+        if(aggregateSettings.scale_obj != null){
+            if(aggregateDataset && aggregateDataset.vectors){
+                if(Object.keys(aggregateDataset.columns).includes(aggregateColor.value_col)){
+                    
+                    let sizes = [null, null];
+                    let textures = [null, null];
+                    let [texture, size] = retrieve_information_from_agg_dataset(aggregateDataset, aggregateDataset, aggregateColor.value_col, aggregateColor.uncertainty_col, aggregateSettings?.valueFilter, aggregateSettings.scale_obj)
+                    sizes[0] = size;
+                    textures[0] = texture;
+        
+                    if(aggregateDatasetZoomed && aggregateDatasetZoomed.vectors){
+                        let [texture, size] = retrieve_information_from_agg_dataset(aggregateDataset, aggregateDatasetZoomed, aggregateColor.value_col, aggregateColor.uncertainty_col, aggregateSettings?.valueFilter, aggregateSettings.scale_obj)
+                        sizes[1] = size;
+                        textures[1] = texture;
+                    }
+                    setSizes(sizes);
+                    setTextures(textures);
+                }
+            }else{
+                setSizes(null);
+                setTextures(null)
+            }
+        }
+        
+        // scale_obj is directly dependent on uncertainty_col and value_col
+        // eslint-disable-next-line
+    }, [aggregateSettings?.scale_obj, aggregateDataset, aggregateDatasetZoomed, aggregateSettings?.valueFilter])
 
     return <div>
     <LoadingIndicatorDialog

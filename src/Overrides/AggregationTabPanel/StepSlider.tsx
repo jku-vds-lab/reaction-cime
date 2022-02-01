@@ -1,7 +1,7 @@
 import { Slider, Typography } from "@mui/material";
 import React from "react";
 import { connect, ConnectedProps } from "react-redux";
-import { setAggregateColor } from "../../State/AggregateColorDuck";
+import { setAggregateColor } from "../../State/AggregateSettingsDuck";
 import { AppState } from "../../State/Store";
 
 const mapStateToPropsSlider = (state: AppState) => ({
@@ -59,20 +59,20 @@ export const StepSlider = sliderconnector(({selectAttribute, setAggregateColor, 
     React.useEffect(() => {
         const timestep = curStep;
         if(selectAttribute.col_info){
-        const variables_array = Object.keys(selectAttribute.col_info);
-        // TODO: users should be able to select which column is value and which is uncertainty
-        let value_col = selectAttribute.col_info[variables_array[0]]["temporal_columns"][timestep]
-        let cache_cols = Object.values(selectAttribute.col_info[variables_array[0]]["temporal_columns"])
+            const variables_array = Object.keys(selectAttribute.col_info);
+            // TODO: users should be able to select which column is value and which is uncertainty
+            let value_col = selectAttribute.col_info[variables_array[0]]["temporal_columns"][timestep]
+            let cache_cols = Object.values(selectAttribute.col_info[variables_array[0]]["temporal_columns"])
 
-        let uncertainty_col = null;
-        if(variables_array.length >= 2){
-            uncertainty_col = selectAttribute.col_info[variables_array[1]]["temporal_columns"][timestep]
-            cache_cols = cache_cols.concat(Object.values(selectAttribute.col_info[variables_array[1]]["temporal_columns"]))
-        }
+            let uncertainty_col = null;
+            if(variables_array.length >= 2){
+                uncertainty_col = selectAttribute.col_info[variables_array[1]]["temporal_columns"][timestep]
+                cache_cols = cache_cols.concat(Object.values(selectAttribute.col_info[variables_array[1]]["temporal_columns"]))
+            }
         
-        setAggregateColor({"value_col": value_col, "uncertainty_col": uncertainty_col, "cache_cols": cache_cols});
+            setAggregateColor({"value_col": value_col, "uncertainty_col": uncertainty_col, "cache_cols": cache_cols});
         }else{
-        setAggregateColor({"value_col": selectAttribute.key, "uncertainty_col": null, "cache_cols": null});
+            setAggregateColor({"value_col": selectAttribute.key, "uncertainty_col": null, "cache_cols": null});
         }
         // eslint-disable-next-line
     }, [curStep, selectAttribute])

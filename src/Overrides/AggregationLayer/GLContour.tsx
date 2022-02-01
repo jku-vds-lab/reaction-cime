@@ -21,22 +21,12 @@ type Props = PropsFromRedux & {
     /**
      * THREE texture
      */
-    textures: [THREE.Texture]
+    lines: [THREE.Mesh]
     
-
-    /**
-     * World coordinate size
-     */
-    sizes: [{
-        x: number
-        y: number
-        width: number
-        height: number
-    }]
 }
 
 
-export const GLHeatmap = connector(({ viewTransform, textures, sizes }: Props) => {
+export const GLContour = connector(({ viewTransform, lines }: Props) => {
     const ref = React.useRef<any>()
 
     const [renderer] = useState(() => new THREE.WebGLRenderer({
@@ -52,25 +42,17 @@ export const GLHeatmap = connector(({ viewTransform, textures, sizes }: Props) =
     }, [])
 
     useEffect(() => {
-        scene.clear(); // clears the scene // .remove(...scene.children)
-        for(let i in textures){
-            const texture = textures[i]
-            const size = sizes[i]
+        scene.clear(); // clears the scene //.remove(...scene.children)//
+        for(let i in lines){
+            const line = lines[i]
             
-            if(texture != null && size != null){
-                var groundMaterial = new THREE.MeshBasicMaterial({ map: texture, side: THREE.DoubleSide, transparent: true }); 
-                var mesh = new THREE.Mesh(new THREE.PlaneBufferGeometry(size.width, size.height), groundMaterial);
-                mesh.position.x = size.x;
-                mesh.position.y = size.y;
-                mesh.position.z = 0.0;
-                // mesh.name="background" // could remove by name
-    
-                scene.add(mesh);
+            if(lines != null){
+                scene.add(line);
             }
         }
         setRerender(rerender+1)
         // eslint-disable-next-line
-    }, [textures, sizes])
+    }, [lines])
 
 
     useEffect(() => {

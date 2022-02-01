@@ -1,13 +1,18 @@
 import React from "react";
 import { connect, ConnectedProps } from "react-redux";
 import { AppState } from "../../State/Store";
-import * as d3 from 'd3v5';
 import { Button, InputLabel, MenuItem, Select } from "@mui/material";
-import { D3_CONTINUOUS_COLOR_SCALE_LIST, setAggregateColorScale, addValueFilter, removeValueFilter, toggleUseVSUP, clearValueFilter } from "../../State/AggregateSettingsDuck";
+import { D3_CONTINUOUS_COLOR_SCALE_LIST, setAggregateColorScale, addValueFilter, removeValueFilter, toggleUseVSUP, clearValueFilter, setAggregateColorMapScale } from "../../State/AggregateSettingsDuck";
+import * as vsup from "vsup";
+import * as d3 from 'd3v5';
 
 const mapStateToProps = (state: AppState) => ({
-    legend: state.aggregateSettings?.legend,
-    colorScale: state.aggregateSettings?.colorscale
+    colorScale: state.aggregateSettings?.colorscale,
+    useVSUP: state.aggregateSettings?.useVSUP,
+    aggregateColor: state.aggregateSettings?.aggregateColor,
+    valueFilter: state.aggregateSettings?.valueFilter,
+    valueRange: state.aggregateSettings?.valueRange,
+    uncertaintyRange: state.aggregateSettings?.uncertaintyRange,
 });
 
 const mapDispatchToProps = (dispatch) => ({
@@ -16,6 +21,7 @@ const mapDispatchToProps = (dispatch) => ({
     addValueFilter: (value) => dispatch(addValueFilter(value)),
     removeValueFilter: (value) => dispatch(removeValueFilter(value)),
     clearValueFilter: () => dispatch(clearValueFilter()),
+    setAggregateColorMapScale: (scale) => dispatch(setAggregateColorMapScale(scale)),
 });
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
@@ -25,10 +31,10 @@ type PropsFromRedux = ConnectedProps<typeof connector>;
 type Props = PropsFromRedux & {
     selectAttribute: {key:string, name:string, col_info:any}
 };
-  
 
-  
-export const ColorMapLegend = connector(({legend, colorScale, setAggregateColorScale, selectAttribute, toggleUseVSUP, addValueFilter, removeValueFilter, clearValueFilter }: Props) => {
+
+
+export const ColorMapLegend = connector(({colorScale, setAggregateColorScale, selectAttribute, toggleUseVSUP, addValueFilter, removeValueFilter, clearValueFilter, aggregateColor, useVSUP, valueFilter, valueRange, uncertaintyRange, setAggregateColorMapScale }: Props) => {
     if(selectAttribute == null || selectAttribute.key === "None" || selectAttribute.key == null){
         return null;
     }
@@ -43,6 +49,7 @@ export const ColorMapLegend = connector(({legend, colorScale, setAggregateColorS
     const gRef = React.useRef();
     const svgRef = React.useRef();
     const [colorSections, setColorSections] = React.useState([]);
+    const [legend, setLegend] = React.useState(null);
 
     const clearFilter = (color_sections) => {
         clearValueFilter()
@@ -51,8 +58,53 @@ export const ColorMapLegend = connector(({legend, colorScale, setAggregateColorS
         color_sections.attr("stroke-width", "0px")
     }
 
+
     React.useEffect(() => {
-        
+        if(valueRange != null){
+            // visit https://github.com/uwdata/vsup for more info about VSUP vs bivariate colorscale encoding
+            var vDom = [valueRange.min, valueRange.max];
+            let colLegend, scale, quantization;
+
+            // simple encoding
+            if(uncertaintyRange == null){
+                scale = d3.scaleQuantize()
+                    .domain(vDom)
+                    .range(d3.quantize(d3[colorScale], 8));
+                vDom = scale.domain()
+                colLegend = vsup.legend.simpleLegend(scale).title(aggregateColor.value_col)
+            }else{ // bivariate encoding
+                const uDom = [uncertaintyRange.min, uncertaintyRange.max];
+                if(useVSUP){
+                    quantization = vsup.quantization().branching(2).layers(4).valueDomain(vDom).uncertaintyDomain(uDom);
+                    scale = vsup.scale().quantize(quantization).range(d3[colorScale]);
+                    colLegend = vsup.legend.arcmapLegend(scale);
+                }else{
+                    quantization = vsup.squareQuantization(4).valueDomain(vDom).uncertaintyDomain(uDom);
+                    scale = vsup.scale().quantize(quantization).range(d3[colorScale]);
+                    colLegend = vsup.legend.heatmapLegend(scale);
+                }
+                colLegend
+                    .vtitle(aggregateColor.value_col)
+                    .utitle(aggregateColor.uncertainty_col)
+                    
+            }
+            
+            // TODO: for extremely small values, we could add some scaling function that scales the values by some e-5 and add "e-5" to the label --> the ticks would then for example be "0.01" and the title "columnname e-5"
+            // automatically obtain a suitable precision value
+            const p = d3.precisionFixed((vDom[1]-vDom[0])/8);
+            if(p > 2){
+                colLegend.format(".2")
+            }else if(p > 0){
+                colLegend.format("." + p + "r");
+            }
+            
+            setLegend(() => colLegend)
+            setAggregateColorMapScale(scale)
+        }
+        // eslint-disable-next-line
+    }, [useVSUP, valueRange, uncertaintyRange, colorScale, aggregateColor])
+
+    React.useEffect(() => {
         if(legend != null && gRef.current && svgRef.current){
             const rel_width = 250;
             legend.size(rel_width)
@@ -86,29 +138,39 @@ export const ColorMapLegend = connector(({legend, colorScale, setAggregateColorS
                 color_sections = gElement.selectAll("rect")
             }
             setColorSections(color_sections)
+
             
             color_sections
-            // .on("mouseover", (d, i) => {
-            //      //stroke="black" stroke-width="0.02px"
-            //     d3.select(color_sections.nodes()[i]).attr("stroke", "black")
-            // })
-            // .on("mouseout", (d, i) => {
-            //     d3.select(color_sections.nodes()[i]).attr("stroke", "none")
-            // })
-            .on("click", (d, i) => {
-                // color_sections.attr("stroke", "none")
-                const cur_node = d3.select(color_sections.nodes()[i])
-                if(cur_node.attr("stroke") == null){
-                    cur_node.attr("stroke", "#1f77b4")
-                    cur_node.attr("stroke-width", "3px")
-                    addValueFilter(cur_node.attr("fill"))
-                }else{
-                    cur_node.attr("stroke", null)
-                    cur_node.attr("stroke-width", "0px")
-                    removeValueFilter(cur_node.attr("fill"))
-                }
-           })
+            .on("mouseover", (d, i) => {
+                // TODO: add hover interaction --> highlight areas in background somehow (e.g. have a component that draws a border around the selected areas)
+                legend_container.select(".hover_clone").remove();
+                const hover_el = d3.select(color_sections.nodes()[i]).clone();
+                hover_el.attr("class", "hover_clone");
+                hover_el.attr("fill", "#1f77b4");
+                
+                // remove temporary hover element when we leave it
+                hover_el.on("mouseout", () => {
+                    hover_el.remove()
+                })
+
+                // when clicking, we want to select the underlying section
+                hover_el.on("click", () => {
+                    // color_sections.attr("stroke", "none")
+                    const cur_node = d3.select(color_sections.nodes()[i])
+                    if(cur_node.attr("stroke") == null){
+                        cur_node.attr("stroke", "#1f77b4")
+                        cur_node.attr("stroke-width", "3px")
+                        addValueFilter(cur_node.attr("fill"))
+                    }else{
+                        cur_node.attr("stroke", null)
+                        cur_node.attr("stroke-width", "0px")
+                        removeValueFilter(cur_node.attr("fill"))
+                    }
+               })
+            })
+            
         }
+    // eslint-disable-next-line
     }, [legend, gRef, svgRef])
     
     return <>
@@ -127,8 +189,10 @@ export const ColorMapLegend = connector(({legend, colorScale, setAggregateColorS
         </Select>
         <svg ref={svgRef} style={{cursor:"pointer"}}><g ref={gRef}></g></svg>
         {legend?.height == null &&  // only the "simple" legend has a hight attribute
-        <Button variant="outlined" onClick={()=> {toggleUseVSUP()}}>Switch Encoding</Button>}
-        <Button variant="outlined" onClick={()=> {clearFilter(colorSections)}}>Clear Filter</Button>
+            <Button variant="outlined" onClick={()=> {toggleUseVSUP()}}>Switch Encoding</Button>
+        }
+        {(valueFilter != null && valueFilter.length > 0) && <Button variant="outlined" onClick={()=> {clearFilter(colorSections)}}>Clear Filter</Button>}
+        
     </>
       
 })

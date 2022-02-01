@@ -15,7 +15,7 @@ import { connect, ConnectedProps } from "react-redux";
 import { UploadedFiles } from "./UploadedFiles";
 import { useState } from "react";
 import { BackendCSVLoader } from "./BackendCSVLoader";
-import { setAggregateColor } from "../../State/AggregateColorDuck";
+import { setAggregateColor } from "../../State/AggregateSettingsDuck";
   
   export const LoadingIndicatorView = (props) => {
     const { promiseInProgress } = usePromiseTracker({ area: props.area });
@@ -77,7 +77,7 @@ import { setAggregateColor } from "../../State/AggregateColorDuck";
     const [refreshUploadedFiles, setRefreshUploadedFiles] = useState(0);
 
     const intermediateOnDataSelected = (dataset) => {
-      setAggregateColor({key: "None", name: "None"});
+      setAggregateColor(null);
       onDataSelected(dataset);
     }
   

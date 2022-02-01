@@ -136,40 +136,9 @@ export const AggregationTabPanel = connector(
         </FormControl>
           }
         </Box>
-        {/* <Box paddingLeft={2} paddingTop={1} paddingRight={2}>
-          {
-            //TODO: check, if it makes sense to also include categorical values, or if it is ok to only use numerical values (like for "size")
-            categoryOptions != null &&
-            CategoryOptionsAPI.hasCategory(categoryOptions, "size") ? (
-              <SelectFeatureComponent
-                column_info={poiDataset?.columns}
-                label={"color"}
-                default_val={aggregateColor}
-                categoryOptions={CategoryOptionsAPI.getCategory(
-                  categoryOptions,
-                  "size"
-                )}
-                onChange={(newValue) => {
-                  var attribute = null;
-                  if (newValue && newValue !== "") {
-                    attribute = CategoryOptionsAPI.getCategory(
-                      categoryOptions,
-                      "size"
-                    ).attributes.filter((a) => a.key === newValue)[0];
-                  }
-                  if (attribute === null || attribute === undefined) {
-                    attribute = { key: "None", name: "None" };
-                  }
-                  setAggregateColor(attribute);
-
-              }}></SelectFeatureComponent>)
-              :
-              <div></div>
-          }
-        </Box> */}
-        <Box paddingLeft={2} paddingTop={1} paddingRight={2}><AdvancedAggregationSettings></AdvancedAggregationSettings></Box>
         <Box paddingLeft={2} paddingTop={1} paddingRight={2}><StepSlider selectAttribute={selectAttribute}></StepSlider></Box>
         <Box paddingLeft={2} paddingTop={1} paddingRight={2}><ColorMapLegend selectAttribute={selectAttribute}></ColorMapLegend></Box>
+        <Box paddingLeft={2} paddingTop={1} paddingRight={2}><AdvancedAggregationSettings selectAttribute={selectAttribute}></AdvancedAggregationSettings></Box>
       </div>
     );
   }

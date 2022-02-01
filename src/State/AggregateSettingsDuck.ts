@@ -2,8 +2,8 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit'
 
 // console.log(Object.keys(d3)) // could also use keys of d3.js that start with "interpolate"
 export const D3_CONTINUOUS_COLOR_SCALE_LIST = [
-    "interpolateViridis",
     "interpolateCividis",
+    "interpolateViridis",
     "interpolateYlGnBu",
     "interpolateYlOrBr",
     "interpolateMagma",
@@ -17,24 +17,61 @@ export const D3_CONTINUOUS_COLOR_SCALE_LIST = [
     "interpolateTurbo",
 ]
 
+type AggregateColorType = {
+    value_col: string,
+    uncertainty_col: string,
+    cache_cols: string[]
+}
+
+const initialAggregateColor = { value_col: "None", uncertainty_col: "None", cache_cols: null } as AggregateColorType
+
 
 export interface AggregateSettingsState {
-    legend: any
+    aggregateColor: AggregateColorType
+    scale_obj: any
+    deriveRange: boolean
+    valueRange: {min: number, max: number}
+    uncertaintyRange: {min: number, max: number}
     colorscale: string
     useVSUP: boolean
     sampleSize: number
     valueFilter: string[] // contains colorvalue of which values to show; if empty, all are shown;
 }
 
-const initialState = { legend: null, colorscale: D3_CONTINUOUS_COLOR_SCALE_LIST[0], useVSUP: true, sampleSize: 200, valueFilter: [] } as AggregateSettingsState
+const initialState = { aggregateColor: initialAggregateColor, scale_obj: null, valueRange: null, uncertaintyRange: null, deriveRange: true, colorscale: D3_CONTINUOUS_COLOR_SCALE_LIST[0], useVSUP: true, sampleSize: 200, valueFilter: [] } as AggregateSettingsState
 
 const aggregateSettingsSlice = createSlice({
     name: 'aggregateSettings',
     initialState,
     reducers:{
-        setAggregateColorMapLegend(state, action: PayloadAction<any>) {
+        setAggregateColor: {
+            reducer: (state, action: PayloadAction<AggregateColorType>) => {
+                state.scale_obj = null;
+                state.valueFilter = [];
+
+                state.aggregateColor.value_col = action.payload.value_col
+                state.aggregateColor.uncertainty_col = action.payload.uncertainty_col
+                state.aggregateColor.cache_cols = action.payload.cache_cols
+            },
+            prepare: (values: AggregateColorType) => {
+                return {payload: values ?? initialAggregateColor }
+            }
+        },
+        setAggregateColorMapScale(state, action: PayloadAction<any>) {
             state.valueFilter = []
-            state.legend = action.payload
+            state.scale_obj = action.payload
+        },
+        setValueRange(state, action:PayloadAction<{min: number, max: number}>){
+            state.valueRange = action.payload
+        },
+        setUncertaintyRange(state, action:PayloadAction<{min: number, max: number}>){
+            state.uncertaintyRange = action.payload
+        },
+        toggleDeriveRange(state){
+            state.deriveRange = !state.deriveRange
+        },
+        setDeriveRange(state, action: PayloadAction<boolean>){
+            state.deriveRange = action.payload
         },
         setAggregateColorScale(state, action: PayloadAction<string>) {
             state.valueFilter = []
@@ -62,5 +99,5 @@ const aggregateSettingsSlice = createSlice({
     }
 })
 
-export const { setAggregateColorMapLegend, setAggregateColorScale, toggleUseVSUP, setSampleSize, addValueFilter, removeValueFilter, clearValueFilter } = aggregateSettingsSlice.actions
+export const { setAggregateColor, setAggregateColorMapScale, setValueRange, setUncertaintyRange, toggleDeriveRange, setDeriveRange, setAggregateColorScale, toggleUseVSUP, setSampleSize, addValueFilter, removeValueFilter, clearValueFilter } = aggregateSettingsSlice.actions
 export default aggregateSettingsSlice.reducer

@@ -35,6 +35,10 @@ module.exports = function override(config, env) {
       loader: 'worker-loader',
       options: { inline: "no-fallback" }
     })
+    config.module.rules.push({
+        test: /\.svg$/,
+        use: ['@svgr/webpack'],
+    })
 
   return config;
 }

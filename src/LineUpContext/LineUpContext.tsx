@@ -127,6 +127,7 @@ export const LineUpContext = connector(function ({
   setHoverstate,
   detailView,
 }: Props) {
+  
   // In case we have no input, dont render at all
   if (!lineUpInput || !lineUpInput_data || !detailView.open) {
     //splitRef?.current?.setSizes([100, 0])

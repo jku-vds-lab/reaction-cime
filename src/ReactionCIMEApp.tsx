@@ -14,6 +14,7 @@ import { AggregationLayer } from "./Overrides/AggregationLayer/AggregationLayer"
 import { DatasetTabPanel } from "./Overrides/Dataset/DatasetTabPanel";
 import { RemoteEmbeddingController } from "./Overrides/Embeddings/RemoteEmbeddingController";
 import { ReactionCIMEBackendFromEnv } from "./Backend/ReactionCIMEBackend";
+import { ReactionCIMEIcons } from "./Utility/ReactionCIMEIcons";
 
 export const DEMO = false;
 
@@ -77,7 +78,7 @@ export const ReactionCIMEApp = () => {
           tab: AggregationTabPanel,
           title: "Aggregate",
           description: "Aggregated Dataset that should be shown in the background",
-          icon: PSEIcons.Dataset,
+          icon: PSEIcons.Dataset//ReactionCIMEIcons.Aggregate//() => <img style={} src={ReactionCIMEIcons.Aggregate} alt={"Aggregated Dataset that should be shown in the background"}/>,//<object type="image/svg+xml" data={ReactionCIMEIcons.Aggregate}>Aggregated Dataset that should be shown in the background</object>//<img src={ReactionCIMEIcons.Aggregate} alt={"Aggregated Dataset that should be shown in the background"}/>,
         },
         {
           name: "lineup",
@@ -91,7 +92,7 @@ export const ReactionCIMEApp = () => {
       layers: [
         {
           order: -1,
-          component: () => <AggregationLayer></AggregationLayer>
+          component: () => <AggregationLayer></AggregationLayer>//<AggregationLayer></AggregationLayer> //<AggregationContourLayer></AggregationContourLayer>//
         }
        ]
     }}

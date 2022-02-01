@@ -326,7 +326,6 @@ export class TestColumn extends MapColumn<number[]> {
 
   getLabels(row: IDataRow) {
     const v = this.getRawValue(row);
-    console.log(v)
     return v.map(({key, value}) => ({key, value: this.getFormatedLabelArray(value)}));
   }
 

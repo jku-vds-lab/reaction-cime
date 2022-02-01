@@ -173,7 +173,7 @@ def aggregate_by_col(df, value_cols, sample_size=200):
                 else:
                     zi[i, j] = np.nan
 
-        res_df[value_col] = zi.flatten()
+        res_df[value_col] = zi.T.flatten()
     
     return res_df
     

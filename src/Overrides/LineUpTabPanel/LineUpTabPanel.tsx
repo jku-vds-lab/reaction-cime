@@ -4,11 +4,11 @@ import { connect, ConnectedProps } from "react-redux";
 import GetAppIcon from "@mui/icons-material/GetApp";
 import {
   setLineUpInput_filter,
-  setLineUpInput_visibility,
 } from "../../State/LineUpInputDuck";
 import { AppState } from "../../State/Store";
 import React from "react";
 import { downloadImpl } from '../../Utility/Utils'
+import { setDetailVisibility } from "projection-space-explorer";
 
 const mapStateToProps = (state: AppState) => ({
   dataset: state.dataset,
@@ -17,8 +17,7 @@ const mapStateToProps = (state: AppState) => ({
 });
 
 const mapDispatchToProps = (dispatch) => ({
-  setLineUpInput_visibility: (value) =>
-    dispatch(setLineUpInput_visibility(value)),
+  setDetailVisibility: (value) => dispatch(setDetailVisibility(value)),
   setLineUpInput_filter: (value) => dispatch(setLineUpInput_filter(value)),
 });
 
@@ -32,7 +31,7 @@ type Props = PropsFromRedux & {
 
 export const LineUpTabPanel = connector(
   ({
-    setLineUpInput_visibility,
+    setDetailVisibility,
     setLineUpInput_filter,
     lineUpInput,
     dataset,
@@ -42,7 +41,7 @@ export const LineUpTabPanel = connector(
     // const handleChange = (_, value) => {};
 
     const onLoad = (filter) => {
-      setLineUpInput_visibility(true);
+      setDetailVisibility(true);
       setLineUpInput_filter(filter);
 
       const curr_sizes = splitRef.current.split.getSizes();
