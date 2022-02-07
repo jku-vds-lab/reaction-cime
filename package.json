@@ -36,6 +36,7 @@
     "projection-space-explorer": "git+https://github.com/jku-vds-lab/projection-space-explorer.git#develop-cime",
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
+    "react-inlinesvg": "^2.3.0",
     "react-loader-spinner": "^4.0.0",
     "react-promise-tracker": "^2.1.0",
     "react-redux": "^7.2.6",

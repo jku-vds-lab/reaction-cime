@@ -1,9 +1,6 @@
-import ReactionCIMEAggregate from '../assets/aggregationIcon.svg'
+import ReactionCIMEAggregateIcon from '../assets/aggregationIcon.svg'
+import SVG from 'react-inlinesvg';
 
-
-/**
- * Makes the inlined base64 icons accessible in apps that use PSE as a library.
- */
 export const ReactionCIMEIcons = {
-    Aggregate: ReactionCIMEAggregate,
+    Aggregate: () => <SVG src={ReactionCIMEAggregateIcon} /> //TODO: change icon
 }

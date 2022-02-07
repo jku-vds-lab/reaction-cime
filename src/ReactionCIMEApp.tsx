@@ -27,7 +27,6 @@ export const ReactionCIMEApp = () => {
   const [context] = useState(
     new API<AppState>(null, createRootReducer(CIMEReducers))
   );
-
   // context.store.dispatch(setDatasetEntriesAction(DATASETCONFIG))
   
 //   <MenuItem onClick={() => {
@@ -78,7 +77,7 @@ export const ReactionCIMEApp = () => {
           tab: AggregationTabPanel,
           title: "Aggregate",
           description: "Aggregated Dataset that should be shown in the background",
-          icon: PSEIcons.Dataset//ReactionCIMEIcons.Aggregate//() => <img style={} src={ReactionCIMEIcons.Aggregate} alt={"Aggregated Dataset that should be shown in the background"}/>,//<object type="image/svg+xml" data={ReactionCIMEIcons.Aggregate}>Aggregated Dataset that should be shown in the background</object>//<img src={ReactionCIMEIcons.Aggregate} alt={"Aggregated Dataset that should be shown in the background"}/>,
+          icon: ReactionCIMEIcons.Aggregate
         },
         {
           name: "lineup",
