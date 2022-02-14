@@ -28,7 +28,7 @@ __pycache__/
 # Datasets
 /public/datasets
 /backend/reaction_cime/temp-files
-/temp-files
+/temp-files/*
 
 # TODO: Remove
-build
+# build

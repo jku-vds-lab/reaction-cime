@@ -17,12 +17,12 @@ ENV FLASK_ENV development
 
 # copy the pre-built front-end --> comment for development because we mount the volume anyway
 # CONSTANTS
-COPY build/ /app/build/jku-vds-lab/reaction-cime
+# COPY build/ /app/build/jku-vds-lab/reaction-cime
 
 
 # copy everything from temp-files folder that includes the database --> comment for development because we mount the volume anyway
 # CONSTANTS
-COPY temp-files/ /app/temp-files/
+# COPY temp-files/ /app/temp-files/
 
 
 
