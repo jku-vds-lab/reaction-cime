@@ -24,9 +24,6 @@ const mapStateToPropsSlider = (state: AppState) => ({
   
   
 export const StepSlider = sliderconnector(({selectAttribute, setAggregateColor, workspace, poiDataset}: SliderProps) => {
-    if(selectAttribute == null || selectAttribute.key === "None" || selectAttribute.key == null){
-        return null;
-    }
 
     React.useEffect(() => {
         // reset aggregate color to hide the aggregated dataset in the background
@@ -46,11 +43,11 @@ export const StepSlider = sliderconnector(({selectAttribute, setAggregateColor, 
     React.useEffect(() => {
         let m;
         if(selectAttribute.col_info){
-        const variables = Object.keys(selectAttribute.col_info);
-        let step_arr = Object.keys(selectAttribute.col_info[variables[0]].temporal_columns)
-        step_arr.sort()
+            const variables = Object.keys(selectAttribute.col_info);
+            let step_arr = Object.keys(selectAttribute.col_info[variables[0]].temporal_columns)
+            step_arr.sort()
 
-        m = step_arr.map((step, index) => {return {value: parseInt(step), label: step}})
+            m = step_arr.map((step, index) => {return {value: parseInt(step), label: step}})
         }
         setMarks(m)
         // setCurStep(m[m.length-1].value)
@@ -77,7 +74,7 @@ export const StepSlider = sliderconnector(({selectAttribute, setAggregateColor, 
         // eslint-disable-next-line
     }, [curStep, selectAttribute])
 
-    return (marks && marks.length > 0) && <>
+    return <>{(marks && marks.length > 0) && <>
         <Typography id="range-slider" gutterBottom>
             Choose Step
         </Typography>
@@ -90,6 +87,7 @@ export const StepSlider = sliderconnector(({selectAttribute, setAggregateColor, 
             marks={marks}
             valueLabelDisplay="auto"
         ></Slider>
+    </>}
     </>
 })
   

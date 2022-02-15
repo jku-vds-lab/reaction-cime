@@ -168,6 +168,10 @@ export const ColorMapLegend = connector(({colorScale, setAggregateColorScale, se
                     }
                })
             })
+
+            svgElement.on("mouseout", () => {
+                legend_container.select(".hover_clone").remove();
+            });
             
         }
     // eslint-disable-next-line
