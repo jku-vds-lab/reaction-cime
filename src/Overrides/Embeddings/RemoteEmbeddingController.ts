@@ -1,4 +1,4 @@
-import { Dataset, EmbeddingController, IBaseProjection } from "projection-space-explorer";
+import { Dataset, EmbeddingController, IProjection } from "projection-space-explorer";
 import remoteWorker from "./remote.worker";
 
 export class RemoteEmbeddingController extends EmbeddingController {
@@ -11,7 +11,7 @@ export class RemoteEmbeddingController extends EmbeddingController {
         this.embedding_method = embedding_method
     }
     
-    init(dataset: Dataset, selection: any, params: any, workspace: IBaseProjection) {
+    init(dataset: Dataset, selection: any, params: any, workspace: IProjection) {
         const selected_feature_info = {}
         selection.forEach(feature => {
             if(feature.checked){
@@ -24,11 +24,10 @@ export class RemoteEmbeddingController extends EmbeddingController {
             }
         });
         params["embedding_method"] = this.embedding_method;
-
         this.worker = new remoteWorker()
         this.worker.postMessage({
             messageType: 'init',
-            init_coordinates: workspace.map((v, i) => {
+            init_coordinates: workspace.positions.map((v, i) => {
                 return {x: v.x, y: v.y}
             }),
             path: dataset.info.path,

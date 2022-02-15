@@ -355,7 +355,7 @@ class ProjectionThread(threading.Thread):
 
             self.msg = "load dataset..."
             self.proj_df = self.cime_dbo.get_dataframe_from_table(self.filename, columns=list(self.selected_feature_info.keys()))
-
+            
             self.msg = "seeding..."
             # handle custom initialization of coordinates
             initialization = None

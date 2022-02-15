@@ -124,7 +124,11 @@ class ReactionCIMEDBO():
     def get_dataframe_from_table(self, table_name, columns=None):
         if columns is not None and "id" not in columns:
             columns.append("id")
-        return pd.read_sql(table_name, self.db.engine, index_col="id", columns=columns)
+        df = pd.read_sql(table_name, self.db.engine, index_col="id", columns=columns)
+        if(columns is not None):
+            columns.remove("id")
+            df = df[columns]
+        return df
 
     def get_dataframe_from_table_complete_filter(self, table_name, filter):
         """
