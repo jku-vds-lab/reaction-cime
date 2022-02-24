@@ -1,5 +1,13 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
 
+export enum AggregationMethod {
+    MIN = "min",
+    MAX = "max",
+    MEDIAN = "median",
+    MEAN = "mean"
+}
+
+
 // console.log(Object.keys(d3)) // could also use keys of d3.js that start with "interpolate"
 export const D3_CONTINUOUS_COLOR_SCALE_LIST = [
     "interpolateCividis",
@@ -32,13 +40,15 @@ export interface AggregateSettingsState {
     deriveRange: boolean
     valueRange: {min: number, max: number}
     uncertaintyRange: {min: number, max: number}
+    variableIndex: {valueVariableIndex: number, uncertaintyVariableIndex: number}
+    aggregationMethod: {valueAggregationMethod: string, uncertaintyAggregationMethod: string}
     colorscale: string
     useVSUP: boolean
     sampleSize: number
     valueFilter: string[] // contains colorvalue of which values to show; if empty, all are shown;
 }
 
-const initialState = { aggregateColor: initialAggregateColor, scale_obj: null, valueRange: null, uncertaintyRange: null, deriveRange: true, colorscale: D3_CONTINUOUS_COLOR_SCALE_LIST[0], useVSUP: true, sampleSize: 200, valueFilter: [] } as AggregateSettingsState
+const initialState = { aggregateColor: initialAggregateColor, scale_obj: null, valueRange: null, uncertaintyRange: null, deriveRange: true, colorscale: D3_CONTINUOUS_COLOR_SCALE_LIST[0], useVSUP: true, sampleSize: 200, valueFilter: [], variableIndex: {valueVariableIndex: 0, uncertaintyVariableIndex: 0}, aggregationMethod: {valueAggregationMethod: AggregationMethod.MAX, uncertaintyAggregationMethod: AggregationMethod.MIN} } as AggregateSettingsState
 
 const aggregateSettingsSlice = createSlice({
     name: 'aggregateSettings',
@@ -95,9 +105,17 @@ const aggregateSettingsSlice = createSlice({
         },
         clearValueFilter(state){
             state.valueFilter = []
-        }
+        },
+        setVariableIndex(state, action: PayloadAction<{valueVariableIndex: number, uncertaintyVariableIndex: number}>){
+            state.variableIndex = action.payload
+        },
+        setAggregationMethod(state, action: PayloadAction<{valueAggregationMethod: string, uncertaintyAggregationMethod: string}>){
+            state.aggregationMethod = action.payload
+        },
     }
 })
 
-export const { setAggregateColor, setAggregateColorMapScale, setValueRange, setUncertaintyRange, toggleDeriveRange, setDeriveRange, setAggregateColorScale, toggleUseVSUP, setSampleSize, addValueFilter, removeValueFilter, clearValueFilter } = aggregateSettingsSlice.actions
+export const { setAggregateColor, setAggregateColorMapScale, setValueRange, setUncertaintyRange, 
+    toggleDeriveRange, setDeriveRange, setAggregateColorScale, toggleUseVSUP, setSampleSize, addValueFilter, 
+    removeValueFilter, clearValueFilter, setVariableIndex, setAggregationMethod } = aggregateSettingsSlice.actions
 export default aggregateSettingsSlice.reducer

@@ -1,9 +1,10 @@
 import React from "react";
 import { connect, ConnectedProps } from "react-redux";
 import { AppState } from "../../State/Store";
-import { Button, Checkbox, FormControlLabel, TextField } from "@mui/material";
-import { setDeriveRange, setSampleSize, setUncertaintyRange, setValueRange, toggleDeriveRange } from "../../State/AggregateSettingsDuck";
+import { Button, Checkbox, FormControlLabel, TextField, Grid, Radio, FormControl, InputLabel, Select, MenuItem } from "@mui/material";
+import { AggregationMethod, setAggregationMethod, setDeriveRange, setSampleSize, setUncertaintyRange, setValueRange, setVariableIndex, toggleDeriveRange } from "../../State/AggregateSettingsDuck";
 import { MinMaxNumberInput } from "../../Utility/MinMaxNumberInput";
+import { Box } from "@mui/system";
 
 const mapStateToProps = (state: AppState) => ({
     sampleSize: state.aggregateSettings?.sampleSize,
@@ -11,6 +12,8 @@ const mapStateToProps = (state: AppState) => ({
     valueRange: state.aggregateSettings?.valueRange,
     uncertaintyRange: state.aggregateSettings?.uncertaintyRange,
     deriveRange: state.aggregateSettings?.deriveRange,
+    variableIndex: state.aggregateSettings?.variableIndex,
+    aggregationMethod: state.aggregateSettings?.aggregationMethod
 });
 
 const mapDispatchToProps = (dispatch) => ({
@@ -19,6 +22,8 @@ const mapDispatchToProps = (dispatch) => ({
     setUncertaintyRange: (range) => dispatch(setUncertaintyRange(range)),
     toggleDeriveRange: () => dispatch(toggleDeriveRange()),
     setDeriveRange: (value) => dispatch(setDeriveRange(value)),
+    setVariableIndex: (value) => dispatch(setVariableIndex(value)),
+    setAggregationMethod: (value) => dispatch(setAggregationMethod(value)),
 });
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
@@ -26,12 +31,15 @@ const connector = connect(mapStateToProps, mapDispatchToProps);
 type PropsFromRedux = ConnectedProps<typeof connector>;
 
 type Props = PropsFromRedux & {
-    selectAttribute
+    selectAttribute,
+    selectAttributeInfo
 };
   
 
   
-export const AdvancedAggregationSettings = connector(({sampleSize, setSampleSize, selectAttribute, aggregateColor, valueRange, uncertaintyRange, setValueRange, setUncertaintyRange, deriveRange, toggleDeriveRange, setDeriveRange}: Props) => {
+export const AdvancedAggregationSettings = connector(({sampleSize, setSampleSize, selectAttribute, aggregateColor, 
+            valueRange, uncertaintyRange, setValueRange, setUncertaintyRange, deriveRange, toggleDeriveRange, 
+            setDeriveRange, selectAttributeInfo, setVariableIndex, setAggregationMethod, variableIndex, aggregationMethod}: Props) => {
     if(selectAttribute == null || selectAttribute.key === "None" || selectAttribute.key == null){
         return null;
     }
@@ -58,6 +66,19 @@ export const AdvancedAggregationSettings = connector(({sampleSize, setSampleSize
     }, [selectAttribute])
 
 
+    React.useEffect(()=>{
+        if(selectAttributeInfo){
+            // initialize valueIndices when attributionInfo changes
+            const variables_array = Object.keys(selectAttributeInfo);
+            if(variables_array.length == 1){
+                setVariableIndex({valueVariableIndex: 0, uncertaintyVariableIndex: 0})
+            }else if(variables_array.length > 1){
+                setVariableIndex({valueVariableIndex: 0, uncertaintyVariableIndex: 1})
+            }
+        }
+
+    }, [selectAttributeInfo])
+
 
     // TODO: should we give a user input for sample size? the benefits are not so big (would be a maximum of 300 due to browser memory issues, now it is set to 200)
     // if we decide to include it: remove "false" flag; also make sure that cache is cleared and that the background is updated when sample size is changed 
@@ -82,6 +103,65 @@ export const AdvancedAggregationSettings = connector(({sampleSize, setSampleSize
         }
         {(uncertaintyRange != null && !deriveRange) && 
             <MinMaxNumberInput title={`Customize Range for ` + aggregateColor.uncertainty_col} target={"uncertainty"} range={uncertaintyRange} setRange={setUncertaintyRange}></MinMaxNumberInput>
+        }
+
+        {selectAttributeInfo && 
+            <Box sx={{ flexGrow: 1 }}>
+                <>
+                    <Grid container columns={{ xs: 3 }}>
+                        <Grid item xs={1}></Grid>
+                        <Grid item xs={1}>value</Grid>
+                        <Grid item xs={1}>uncertainty</Grid>
+                    </Grid>
+                {Object.keys(selectAttributeInfo).map((value, index) => (
+                    <Grid container columns={{ xs: 3 }} key={value}>
+                        <Grid item xs={1}>{value}</Grid>
+                        <Grid item xs={1}><Radio onChange={
+                            (event) => {
+                                if(event.target.checked){
+                                    setVariableIndex({valueVariableIndex: index, uncertaintyVariableIndex: variableIndex.uncertaintyVariableIndex})
+                                }
+                            }} checked={index === variableIndex.valueVariableIndex} /></Grid>
+                        <Grid item xs={1}><Radio onChange={
+                            (event) => {
+                                if(event.target.checked){
+                                    setVariableIndex({valueVariableIndex: variableIndex.valueVariableIndex, uncertaintyVariableIndex: index})
+                                }
+                            }} checked={index === variableIndex.uncertaintyVariableIndex} /></Grid>
+                    </Grid>
+                ))}
+                <Grid container columns={{ xs: 3 }}>
+                    <Grid item xs={1}></Grid>
+                    <Grid item xs={1}>
+                        <FormControl>
+                            <InputLabel id="selectValueAggregation">VAgg</InputLabel>
+                            <Select
+                                labelId="selectValueAggregation"
+                                value={aggregationMethod.valueAggregationMethod}
+                                label="Value Aggregation"
+                                onChange={(event)=>{setAggregationMethod({valueAggregationMethod: event.target.value, uncertaintyAggregationMethod: aggregationMethod.uncertaintyAggregationMethod})}}
+                            >
+                                {Object.values(AggregationMethod).map((value) => <MenuItem value={value} key={value}>{value}</MenuItem>)}
+                            </Select>
+                        </FormControl>
+                    </Grid>
+                    <Grid item xs={1}>
+                        
+                    <FormControl>
+                            <InputLabel id="selectUncertaintyAggregation">UAgg</InputLabel>
+                            <Select
+                                labelId="selectUncertaintyAggregation"
+                                value={aggregationMethod.uncertaintyAggregationMethod}
+                                label="Uncertainty Aggregation"
+                                onChange={(event)=>{setAggregationMethod({valueAggregationMethod: aggregationMethod.valueAggregationMethod, uncertaintyAggregationMethod: event.target.value})}}
+                            >
+                                {Object.values(AggregationMethod).map((value) => <MenuItem value={value} key={value}>{value}</MenuItem>)}
+                            </Select>
+                        </FormControl>
+                    </Grid>
+                </Grid>
+                </>
+            </Box>
         }
     </>
       

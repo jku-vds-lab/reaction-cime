@@ -339,9 +339,57 @@ export class ReactionCIMEBackend {
   };
 
 
+  public loadHexAgg(finished: (dataset: any) => void, path:string, value_column:string, uncertainty_col:string, cache_cols:string[], sample_size:number, aggregationMethod:any, cancellablePromise?: ReturnType<typeof useCancellablePromise>["cancellablePromise"], controller?: AbortController, loadingArea?:string){
+    
+    let retrieve_cols = "retrieve_cols=" + value_column
+    retrieve_cols += "&aggregation_methods=" + aggregationMethod.valueAggregationMethod
+    if(uncertainty_col !== "None" && uncertainty_col != null){
+      retrieve_cols += "&retrieve_cols=" + uncertainty_col
+      retrieve_cols += "&aggregation_methods=" + aggregationMethod.uncertaintyAggregationMethod
+    }
+
+    let cache_cols_string = ""
+    if(cache_cols != null){
+      for (const key in cache_cols) {
+        const col = cache_cols[key]
+        cache_cols_string += "&cache_cols=" + col
+      }
+    }
+
+    let sample_size_str = ""
+    if(sample_size != null){
+      sample_size_str = "&sample_size=" + sample_size
+    }
+
+    
+
+    const agg_path = ReactionCIMEBackendFromEnv.baseUrl + "/get_hex_agg/" + path + "?" + retrieve_cols + cache_cols_string + sample_size_str;
+    
+    let promise = cancellablePromise
+      ? cancellablePromise(
+          d3v5.csv(agg_path, {...ReactionCIMEBackendFromEnv.fetchParams, signal: controller?.signal,}), controller
+        ) : d3v5.csv(agg_path, {...ReactionCIMEBackendFromEnv.fetchParams, signal: controller?.signal,});
+    
+    trackPromise(
+      promise
+        .then((vectors) => {
+            if(vectors.length <= 0){
+                console.log("aggregation dataset is empty");
+                alert("aggregation dataset is empty")
+            }else{
+                finished(vectors)
+            }
+        })
+        .catch((error) => {
+          console.log(error);
+        }),
+      loadingArea
+    )
+  }
+
   public loadAggCSV(finished: (dataset: any) => void, path:string, value_column:string, uncertainty_col:string, cache_cols:string[], sample_size:number, range: {x: {min: number, max: number}, y: {min: number, max: number}}, cancellablePromise?: ReturnType<typeof useCancellablePromise>["cancellablePromise"], controller?: AbortController, loadingArea?:string) {
     if(range == null){
-      range = {x: {min: -1000, max: 1000}, y: {min: -1000, max: 1000}}
+      range = {x: {min: -10000, max: 10000}, y: {min: -10000, max: 10000}}
     }
 
     const cached_data = this.handleAggregationCache(path, value_column, uncertainty_col, range);

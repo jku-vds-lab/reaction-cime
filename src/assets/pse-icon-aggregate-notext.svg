@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="60" height="60" version="1.1" viewBox="0 0 15.875 15.875" xmlns="http://www.w3.org/2000/svg" xmlns:cc="http://creativecommons.org/ns#" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+ <metadata>
+  <rdf:RDF>
+   <cc:Work rdf:about="">
+    <dc:format>image/svg+xml</dc:format>
+    <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+    <dc:title/>
+   </cc:Work>
+  </rdf:RDF>
+ </metadata>
+ <g transform="translate(-1.727 .44746)">
+  <g fill="#8ac9e1" stroke-linecap="round" stroke-linejoin="round" stroke-width=".265">
+   <circle cx="6.3659" cy="9.6109" r=".63765"/>
+   <circle cx="6.3669" cy="5.3692" r=".63765"/>
+   <circle transform="rotate(-60)" cx="-3.3038" cy="11.378" r=".63765"/>
+   <circle transform="rotate(-60)" cx="-3.3046" cy="7.1381" r=".63765"/>
+   <circle transform="rotate(240)" cx="-9.6702" cy="3.8875" r=".63765"/>
+   <circle transform="rotate(240)" cx="-9.6704" cy="-.35294" r=".63765"/>
+   <circle cx="6.3659" cy="7.4901" r=".63765"/>
+  </g>
+  <path d="m12.857 4.5744c-0.05896-8.44e-5 -0.1163 0.016888-0.17312 0.04961l-2.2087 1.2754-5.17e-4 5.167e-4c-0.13549 0.088322-0.18139 0.20984-0.18139 0.31471v2.5508c1.75e-4 0.12983 0.06948 0.24975 0.1819 0.31471l2.2082 1.2754c0.1234 0.06821 0.24999 0.06563 0.36277 5.17e-4l2.2092-1.2754c0.11242-0.06496 0.18173-0.18487 0.1819-0.31471v-2.5508c0-0.13285-0.06669-0.24595-0.20102-0.3235l-2.1927-1.2661c-0.06607-0.034297-0.12744-0.051075-0.18655-0.05116zm0.0093 0.78394 1.48 0.85629-5.17e-4 5.167e-4 0.36381 0.20981v0.41962l5.16e-4 -5.167e-4v1.7095l-5.16e-4 5.167e-4v0.00103l-1.8443 1.0645-1.8449-1.0645v-2.1301l0.73898-0.42633z" fill="#007dad" shape-rendering="auto" style="font-feature-settings:normal;font-variant-alternates:normal;font-variant-caps:normal;font-variant-east-asian:normal;font-variant-ligatures:normal;font-variant-numeric:normal;font-variant-position:normal;font-variation-settings:normal;inline-size:0;isolation:auto;mix-blend-mode:normal;shape-margin:0;shape-padding:0;text-decoration-color:#000000;text-decoration-line:none;text-decoration-style:solid;text-indent:0;text-orientation:mixed;text-transform:none;white-space:normal"/>
+  <path d="m12.866 6.1719 0.9149 0.52933-3.27e-4 3.272e-4 0.22489 0.1297v0.25939l3.27e-4 -3.271e-4v1.0567l-3.27e-4 3.271e-4v6.379e-4l-1.1401 0.65806-1.1404-0.65806v-1.3168l0.45681-0.26355z" fill="#8ac9e1" shape-rendering="auto" style="font-feature-settings:normal;font-variant-alternates:normal;font-variant-caps:normal;font-variant-east-asian:normal;font-variant-ligatures:normal;font-variant-numeric:normal;font-variant-position:normal;font-variation-settings:normal;inline-size:0;isolation:auto;mix-blend-mode:normal;shape-margin:0;shape-padding:0;text-decoration-color:#000000;text-decoration-line:none;text-decoration-style:solid;text-indent:0;text-orientation:mixed;text-transform:none;white-space:normal"/>
+ </g>
+</svg>

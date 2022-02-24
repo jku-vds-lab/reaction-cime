@@ -6,7 +6,8 @@ import { AppState } from "../../State/Store";
 
 const mapStateToPropsSlider = (state: AppState) => ({
     workspace: state.projections.workspace,
-    poiDataset: state.dataset
+    poiDataset: state.dataset,
+    variableIndex: state.aggregateSettings?.variableIndex,
   });
   
   const mapDispatchToPropsSlider = (dispatch) => ({
@@ -18,12 +19,13 @@ const mapStateToPropsSlider = (state: AppState) => ({
   type SliderPropsFromRedux = ConnectedProps<typeof sliderconnector>;
   
   type SliderProps = SliderPropsFromRedux & {
-    selectAttribute: {key:string, name:string, col_info:any}
+    selectAttribute: {key:string, name:string}
+    selectAttributeInfo: any
   };
   
   
   
-export const StepSlider = sliderconnector(({selectAttribute, setAggregateColor, workspace, poiDataset}: SliderProps) => {
+export const StepSlider = sliderconnector(({selectAttribute, setAggregateColor, workspace, poiDataset, selectAttributeInfo, variableIndex}: SliderProps) => {
 
     React.useEffect(() => {
         // reset aggregate color to hide the aggregated dataset in the background
@@ -42,9 +44,9 @@ export const StepSlider = sliderconnector(({selectAttribute, setAggregateColor, 
 
     React.useEffect(() => {
         let m;
-        if(selectAttribute.col_info){
-            const variables = Object.keys(selectAttribute.col_info);
-            let step_arr = Object.keys(selectAttribute.col_info[variables[0]].temporal_columns)
+        if(selectAttributeInfo){
+            const variables = Object.keys(selectAttributeInfo);
+            let step_arr = Object.keys(selectAttributeInfo[variables[0]].temporal_columns)
             step_arr.sort()
 
             m = step_arr.map((step, index) => {return {value: parseInt(step), label: step}})
@@ -55,16 +57,15 @@ export const StepSlider = sliderconnector(({selectAttribute, setAggregateColor, 
 
     React.useEffect(() => {
         const timestep = curStep;
-        if(selectAttribute.col_info){
-            const variables_array = Object.keys(selectAttribute.col_info);
-            // TODO: users should be able to select which column is value and which is uncertainty
-            let value_col = selectAttribute.col_info[variables_array[0]]["temporal_columns"][timestep]
-            let cache_cols = Object.values(selectAttribute.col_info[variables_array[0]]["temporal_columns"])
+        if(selectAttributeInfo && variableIndex){
+            const variables_array = Object.keys(selectAttributeInfo);
+            let value_col = selectAttributeInfo[variables_array[variableIndex.valueVariableIndex]]["temporal_columns"][timestep]
+            let cache_cols = Object.values(selectAttributeInfo[variables_array[variableIndex.valueVariableIndex]]["temporal_columns"])
 
             let uncertainty_col = null;
-            if(variables_array.length >= 2){
-                uncertainty_col = selectAttribute.col_info[variables_array[1]]["temporal_columns"][timestep]
-                cache_cols = cache_cols.concat(Object.values(selectAttribute.col_info[variables_array[1]]["temporal_columns"]))
+            if(variableIndex.valueVariableIndex !== variableIndex.uncertaintyVariableIndex){
+                uncertainty_col = selectAttributeInfo[variables_array[variableIndex.uncertaintyVariableIndex]]["temporal_columns"][timestep]
+                cache_cols = cache_cols.concat(Object.values(selectAttributeInfo[variables_array[variableIndex.uncertaintyVariableIndex]]["temporal_columns"]))
             }
         
             setAggregateColor({"value_col": value_col, "uncertainty_col": uncertainty_col, "cache_cols": cache_cols});
@@ -72,7 +73,7 @@ export const StepSlider = sliderconnector(({selectAttribute, setAggregateColor, 
             setAggregateColor({"value_col": selectAttribute.key, "uncertainty_col": null, "cache_cols": null});
         }
         // eslint-disable-next-line
-    }, [curStep, selectAttribute])
+    }, [curStep, selectAttribute, variableIndex])
 
     return <>{(marks && marks.length > 0) && <>
         <Typography id="range-slider" gutterBottom>

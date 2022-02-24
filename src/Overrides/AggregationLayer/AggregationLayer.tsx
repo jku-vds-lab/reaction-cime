@@ -5,35 +5,14 @@ import { connect, ConnectedProps } from "react-redux";
 import * as THREE from 'three'
 import { ReactionCIMEBackendFromEnv } from '../../Backend/ReactionCIMEBackend';
 import { AppState } from '../../State/Store';
-import { AggregateDataset } from '../AggregationTabPanel/AggregateDataset'
+import { AggregateDataset } from './AggregateDataset'
 import { LoadingIndicatorDialog } from '../Dataset/DatasetTabPanel';
 import { GLHeatmap } from './GLHeatmap'
 import * as _ from "lodash";
 import { setUncertaintyRange, setValueRange } from '../../State/AggregateSettingsDuck';
+import { convert_to_rgb } from '../../Utility/Utils';
 
 
-const convert_to_rgb = (value: string | {r: number, g: number, b: number}):{r: number, g: number, b: number} => {
-    if(Object.keys(value).includes("r") && Object.keys(value).includes("g") && Object.keys(value).includes("b"))
-        return {"r": value["r"], "g": value["g"], "b": value["b"]};
-
-    value = value.toString()
-    if(value.startsWith("rgb")){
-        var rgb = value.replace("rgb(", "")
-        rgb = rgb.replace(")", "")
-        rgb = rgb.replace(" ", "")
-        var rgb_arr = rgb.split(",")
-        return {"r": parseInt(rgb_arr[0]), "g": parseInt(rgb_arr[1]), "b": parseInt(rgb_arr[2])}
-    }
-
-    if(value.startsWith("#")){
-        value = value.replace("#", "")
-        var hex = value.match(/.{1,2}/g);
-        return {"r": parseInt(hex[0], 16), "g": parseInt(hex[1], 16), "b": parseInt(hex[2], 16)}
-    }
-    
-    console.log("error:", "format unknown ->", value)
-    return {"r": 0, "g": 0, "b": 0};
-}
 const retrieve_information_from_agg_dataset = (aggregateDataset: AggregateDataset, dataset: AggregateDataset, value_col: string, uncertainty_col: string, valueFilter: string[], scale: any) => {
     
     if(aggregateDataset.columns[uncertainty_col] != null){
@@ -184,6 +163,8 @@ const AggregationLayer = connector(({ aggregateColor, poiDataset, viewTransform,
             
                 if(aggregateDataset.columns[aggregateColor.uncertainty_col] != null){
                     setUncertaintyRange(aggregateDataset.columns[aggregateColor.uncertainty_col].range)
+                }else{
+                    setUncertaintyRange(null)
                 }
             }
         }

@@ -1,3 +1,40 @@
+import { ReactionCIMEBackendFromEnv } from "../Backend/ReactionCIMEBackend";
+
+/**
+ * This is merely a helper function to decompose the code into smaller individual segments.
+ * It is used to handle the changing background selection prop, which might, e.g., be triggered when a user clicks the k-nearest neighbor option in the context menu.
+ * Specifically, it checks whether the parameters are correct, and if so, sends a query to the db to fetch the k-nearest entires to the click, with k being defined by a textfield.
+ * The response triggers the download of a csv with these entries.
+ * Afterwards, the background selection is reset, to make sure other prop updates do not trigger this db query and download.
+ * @param {any} coords - The prop that holds x and y coordinates of the clicks
+ * @returns {void} - no return value
+ */
+export function handleBackgroundSelectionDownload(coords: any, filename: string) {
+    // if input for checking k-nearest neighbors (x,y coordinates and k) are not undefined
+    if (
+        typeof coords?.x !== "undefined" &&
+        typeof coords?.y !== "undefined" &&
+        (document.getElementById("knn-textfield") as HTMLInputElement)?.value !==
+        "undefined"
+    ) {
+        let k = +(document.getElementById("knn-textfield") as HTMLInputElement)
+        ?.value;
+        // if input k is neither integer nor below 1
+        if (k < 1 || k % 1 !== 0) {
+        // warn user
+        alert("Invalid input for k-nearest neighbors.");
+        } else {
+        // otherwise send request to db and download response in browser
+        ReactionCIMEBackendFromEnv.getkNearestData(
+            filename,
+            coords?.x,
+            coords?.y,
+            (document.getElementById("knn-textfield") as HTMLInputElement)?.value
+        );
+        }
+    }
+}
+
 
 
 /**
@@ -18,3 +55,28 @@ export const downloadImpl = (data: string, name: string, mimetype: string) => {
     tempLink.click();
     // TODO give created element a unique id and remove it again
   };
+
+
+
+export const convert_to_rgb = (value: string | {r: number, g: number, b: number}):{r: number, g: number, b: number} => {
+    if(Object.keys(value).includes("r") && Object.keys(value).includes("g") && Object.keys(value).includes("b"))
+        return {"r": value["r"], "g": value["g"], "b": value["b"]};
+
+    value = value.toString()
+    if(value.startsWith("rgb")){
+        var rgb = value.replace("rgb(", "")
+        rgb = rgb.replace(")", "")
+        rgb = rgb.replace(" ", "")
+        var rgb_arr = rgb.split(",")
+        return {"r": parseInt(rgb_arr[0]), "g": parseInt(rgb_arr[1]), "b": parseInt(rgb_arr[2])}
+    }
+
+    if(value.startsWith("#")){
+        value = value.replace("#", "")
+        var hex = value.match(/.{1,2}/g);
+        return {"r": parseInt(hex[0], 16), "g": parseInt(hex[1], 16), "b": parseInt(hex[2], 16)}
+    }
+    
+    console.log("error:", "format unknown ->", value)
+    return {"r": 0, "g": 0, "b": 0};
+}

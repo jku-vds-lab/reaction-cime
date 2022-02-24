@@ -29,10 +29,14 @@ export const AggregationTabPanel = connector(
     
     // const categoryOptions = poiDataset?.categories;
     const [categoryOptions, setCategoryOptions] = React.useState(null)
-    const [selectAttribute, setSelectAttribute] = React.useState({key:"None", name:"None", col_info:null})
+    const [selectColumns, setSelectColumns] = React.useState(null)
+    const [selectAttribute, setSelectAttribute] = React.useState({key:"None", name:"None"})
+    const [selectAttributeInfo, setSelectAttributeInfo] = React.useState(null)
 
 
     React.useEffect(() => {
+      setSelectAttribute({key:"None", name:"None"}) // reset selection to None
+      setSelectAttributeInfo(null)
 
       let select_columns = {};
       if(poiDataset != null && poiDataset.columns != null){
@@ -72,13 +76,14 @@ export const AggregationTabPanel = connector(
             //     columns[i] = col;
             // }
         });
+        setSelectColumns(select_columns)
 
         let cat_lst = Object.keys(select_columns).map(key => {
-          return {key: key, name: key, col_info: select_columns[key]}
+          return {key: key, name: key}
         });
 
         cat_lst.sort((valA, valB) => valA.name.localeCompare(valB.name))
-        cat_lst.splice(0,0,{key: "None", name: "None", col_info:null})
+        cat_lst.splice(0,0,{key: "None", name: "None"})
         setCategoryOptions(cat_lst)
 
       }
@@ -125,10 +130,12 @@ export const AggregationTabPanel = connector(
                 onChange={(event) => {
                   let attribute = categoryOptions.filter(opt => opt.key === event.target.value)[0]
                   if(attribute == null){
-                    attribute = {key: "None", name: "None", col_info: null}
+                    attribute = {key: "None", name: "None"}
                   }
                   
                   setSelectAttribute(attribute)
+                  if(selectColumns != null && Object.keys(selectColumns).includes(attribute.key))
+                  setSelectAttributeInfo(selectColumns[attribute.key])
                 }}
               >
               {categoryOptions.map(opt => { return <MenuItem key={opt.key} value={opt.key}>{opt.name}</MenuItem>})}
@@ -136,9 +143,9 @@ export const AggregationTabPanel = connector(
         </FormControl>
           }
         </Box>
-        <Box paddingLeft={2} paddingTop={1} paddingRight={2}><StepSlider selectAttribute={selectAttribute}></StepSlider></Box>
+        <Box paddingLeft={2} paddingTop={1} paddingRight={2}><StepSlider selectAttribute={selectAttribute} selectAttributeInfo={selectAttributeInfo}></StepSlider></Box>
         <Box paddingLeft={2} paddingTop={1} paddingRight={2}><ColorMapLegend selectAttribute={selectAttribute}></ColorMapLegend></Box>
-        <Box paddingLeft={2} paddingTop={1} paddingRight={2}><AdvancedAggregationSettings selectAttribute={selectAttribute}></AdvancedAggregationSettings></Box>
+        <Box paddingLeft={2} paddingTop={1} paddingRight={2}><AdvancedAggregationSettings selectAttribute={selectAttribute} selectAttributeInfo={selectAttributeInfo}></AdvancedAggregationSettings></Box>
       </div>
     );
   }

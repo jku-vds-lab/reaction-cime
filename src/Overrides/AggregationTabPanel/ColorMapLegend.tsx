@@ -29,7 +29,7 @@ const connector = connect(mapStateToProps, mapDispatchToProps);
 type PropsFromRedux = ConnectedProps<typeof connector>;
 
 type Props = PropsFromRedux & {
-    selectAttribute: {key:string, name:string, col_info:any}
+    selectAttribute: {key:string, name:string}
 };
 
 
@@ -169,9 +169,9 @@ export const ColorMapLegend = connector(({colorScale, setAggregateColorScale, se
                })
             })
 
-            svgElement.on("mouseout", () => {
-                legend_container.select(".hover_clone").remove();
-            });
+            // svgElement.on("mouseout", () => {
+                // legend_container.select(".hover_clone").remove();
+            // });
             
         }
     // eslint-disable-next-line

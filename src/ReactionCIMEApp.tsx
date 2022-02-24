@@ -10,11 +10,14 @@ import { LineUpContext } from "./LineUpContext";
 import { LineUpTabPanel } from "./Overrides/LineUpTabPanel";
 import { AppState, CIMEReducers } from "./State/Store";
 import { AggregationTabPanel } from "./Overrides/AggregationTabPanel";
-import { AggregationLayer } from "./Overrides/AggregationLayer/AggregationLayer";
 import { DatasetTabPanel } from "./Overrides/Dataset/DatasetTabPanel";
 import { RemoteEmbeddingController } from "./Overrides/Embeddings/RemoteEmbeddingController";
-import { ReactionCIMEBackendFromEnv } from "./Backend/ReactionCIMEBackend";
 import { ReactionCIMEIcons } from "./Utility/ReactionCIMEIcons";
+import { HexAggregationLayer } from "./Overrides/AggregationLayer/HexAggregationLayer";
+import { AggregationLayer } from "./Overrides/AggregationLayer/AggregationLayer";
+import { handleBackgroundSelectionDownload } from "./Utility/Utils";
+import { setMouseMove } from "./State/MouseInteractionHooksDuck";
+import { connect, ConnectedProps, useDispatch } from "react-redux";
 
 export const DEMO = false;
 
@@ -28,21 +31,32 @@ export const ReactionCIMEApp = () => {
     new API<AppState>(null, createRootReducer(CIMEReducers))
   );
   // context.store.dispatch(setDatasetEntriesAction(DATASETCONFIG))
+  // context.store.getState().dataset...
+  // context.store.dispatch(setMouseMove(coords))...
   
-//   <MenuItem onClick={() => {
-//     var coords = CameraTransformations.screenToWorld(
-//       {
-//         x: this.mouseController.currentMousePosition.x,
-//         y: this.mouseController.currentMousePosition.y,
-//       },
-//       this.createTransform()
-//     );
-//     console.log('Pressed "Download k-Nearest" option from context-menu with coords :>> ', coords);
-//     this.props.setCimeBackgroundSelection(coords);
-//     handleClose()
-// }}>Download k-Nearest</MenuItem>
+  return <PSEContextProvider context={context}><ApplicationWrapper></ApplicationWrapper></PSEContextProvider>
 
-  return <PSEContextProvider context={context}><Application
+}
+
+const mapStateToProps = (state: AppState) => ({
+  dataset_path: state.dataset?.info?.path,
+});
+
+const mapDispatchToProps = (dispatch) => ({
+  setMouseMoveFn: (value) => dispatch(setMouseMove(value)),
+});
+
+const connector = connect(mapStateToProps, mapDispatchToProps);
+
+type PropsFromRedux = ConnectedProps<typeof connector>;
+
+type Props = PropsFromRedux & {
+};
+
+const ApplicationWrapper = connector(({ setMouseMoveFn, dataset_path }: Props) => {
+  
+
+  return <Application
     config={{
       preselect: {
         initOnMount: false, // should default dataset be loaded? could specify url to default // TODO: define a default dataset that is already uploaded (e.g. domain.csv)
@@ -52,22 +66,26 @@ export const ReactionCIMEApp = () => {
     features={{
       embeddings: [
         // {id:"umap", name:"UMAP", settings: DEFAULT_UMAP_SETTINGS},
-        {id:"umapRemote", name:"UMAP Remote", settings: {nneighbors:true}, embController: new RemoteEmbeddingController("umap")},
-        {id:"tsneRemote", name:"t-SNE Remote", settings: {perplexity:true}, embController: new RemoteEmbeddingController("tsne")},
-        {id:"pcaRemote", name:"PCA Remote", settings: {}, embController: new RemoteEmbeddingController("pca")}
+        {id:"umapRemote", name:"UMAP", settings: {nneighbors:true}, embController: new RemoteEmbeddingController("umap")},
+        {id:"tsneRemote", name:"t-SNE", settings: {perplexity:true}, embController: new RemoteEmbeddingController("tsne")},
+        {id:"pcaRemote", name:"PCA", settings: {}, embController: new RemoteEmbeddingController("pca")},
+        {id:"rmOverlap", name:"Overlap Removal", settings: {hideSettings:true}, embController: new RemoteEmbeddingController("rmOverlap")}, //TODO: implement overplot removal in backend; tell PSE to not show any settings
       ],
     }}
     overrideComponents={{
+      mouseInteractionHooks: {
+        "mousemove": (coords, event_used) => {setMouseMoveFn({x: coords.x, y: coords.y, event_used: event_used})}
+      },
       datasetTab: DatasetTabPanel,
       appBar: () => <div></div>,
       contextMenuItems: [{key:"getkNN", title:"Download k-Nearest", function:(coords) => {
-        handleBackgroundSelectionDownload(coords, context.store.getState().dataset?.info?.path)
+        handleBackgroundSelectionDownload(coords, dataset_path)
       }}],
       detailViews: [
         {
           name: "lineup",
           //@ts-ignore
-          view: LineUpContext
+          view: <LineUpContext key={"lineup"}></LineUpContext>
         },
       ],
       tabs: [
@@ -91,46 +109,10 @@ export const ReactionCIMEApp = () => {
       layers: [
         {
           order: -1,
-          component: () => <AggregationLayer></AggregationLayer>//<AggregationLayer></AggregationLayer> //<AggregationContourLayer></AggregationContourLayer>//
+          component: () => <HexAggregationLayer></HexAggregationLayer>//<HexAggregationLayer></HexAggregationLayer>//<AggregationLayer></AggregationLayer> //<AggregationContourLayer></AggregationContourLayer>//
         }
        ]
     }}
-  /></PSEContextProvider>
+  />
+})
 
-}
-
-// TODO: refactor the following function into ReactionCIME backend. it does not have to be here...
-/**
- * This is merely a helper function to decompose the code into smaller individual segments.
- * It is used to handle the changing background selection prop, which might, e.g., be triggered when a user clicks the k-nearest neighbor option in the context menu.
- * Specifically, it checks whether the parameters are correct, and if so, sends a query to the db to fetch the k-nearest entires to the click, with k being defined by a textfield.
- * The response triggers the download of a csv with these entries.
- * Afterwards, the background selection is reset, to make sure other prop updates do not trigger this db query and download.
- * @param {any} coords - The prop that holds x and y coordinates of the clicks
- * @returns {void} - no return value
- */
- function handleBackgroundSelectionDownload(coords: any, filename: string) {
-  // if input for checking k-nearest neighbors (x,y coordinates and k) are not undefined
-  if (
-    typeof coords?.x !== "undefined" &&
-    typeof coords?.y !== "undefined" &&
-    (document.getElementById("knn-textfield") as HTMLInputElement)?.value !==
-      "undefined"
-  ) {
-    let k = +(document.getElementById("knn-textfield") as HTMLInputElement)
-      ?.value;
-    // if input k is neither integer nor below 1
-    if (k < 1 || k % 1 !== 0) {
-      // warn user
-      alert("Invalid input for k-nearest neighbors.");
-    } else {
-      // otherwise send request to db and download response in browser
-      ReactionCIMEBackendFromEnv.getkNearestData(
-        filename,
-        coords?.x,
-        coords?.y,
-        (document.getElementById("knn-textfield") as HTMLInputElement)?.value
-      );
-    }
-  }
-}

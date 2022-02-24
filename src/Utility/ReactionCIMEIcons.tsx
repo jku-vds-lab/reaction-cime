@@ -1,4 +1,4 @@
-import ReactionCIMEAggregateIcon from '../assets/aggregationIcon.svg'
+import ReactionCIMEAggregateIcon from '../assets/pse-icon-aggregate.svg'
 import SVG from 'react-inlinesvg';
 
 export const ReactionCIMEIcons = {

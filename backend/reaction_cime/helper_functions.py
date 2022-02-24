@@ -149,10 +149,93 @@ def aggregate_by_col_interpolate(df, value_cols, sample_size=200):
     
     return res_df
 
-def aggregate_by_col(df, value_cols, sample_size=200):
+# test if point is inside hexagon adapted from http://www.playchilla.com/how-to-check-if-a-point-is-inside-a-hexagon
+def isInsideHex(points_x, points_y, hex_x, hex_y, radius, circ_radius):
+    points_q2x = abs(points_x-hex_x) # transform the test point locally and to quadrant 2
+    points_q2y = abs(points_y-hex_y) # transform the test point locally and to quadrant 2
+    window = (points_q2x <= circ_radius) * (points_q2y <= radius) # bounding test (since q2 is in quadrant 2 only 2 tests are needed)
+    # if (points_q2x > circ_radius) or (points_q2y > radius): 
+    #     return False
+    window *= (radius*circ_radius - radius*points_q2x - circ_radius/2*points_q2y) >= 0 # finally the dot product can be reduced to this due to the hexagon symmetry
+    return window 
+
+
+np_agg_methods_dict = {
+    "min": np.nanmin,
+    "max": np.nanmax,
+    "mean": np.nanmean,
+    "median": np.nanmedian,
+}
+
+def create_hex(df, hex_x, hex_y, radius, circ_radius, value_cols, aggregation_methods):
+    window = isInsideHex(df["x"], df["y"], hex_x, hex_y, radius, circ_radius)
+    window_df = df[window]
+    if len(window_df) > 0:
+        res = {"x": hex_x, "y": hex_y, "circ_radius": circ_radius}
+        for i in range(len(value_cols)):
+            value_col = value_cols[i]
+            aggregation_method = aggregation_methods[i]
+            
+            res[value_col] = np_agg_methods_dict[aggregation_method](window_df[value_col])
+        return res, window
+    else:
+        return None, window
+
+def hex_aggregate_by_col(df, value_cols, aggregation_methods, sample_size=20):
     x = df["x"]
     y = df["y"]
-    sample_size=20
+
+    x_min = x.min()
+    x_max = x.max()
+    x_delta = x_max-x_min
+    y_min = y.min()
+    y_max = y.max()
+    y_delta = y_max-y_min
+    delta = max(x_delta, y_delta)
+
+    radius = delta/sample_size/2 # distance from center to "flat" side -> r https://www-formula.com/geometry/circle-inscribed/radius-circle-inscribed-regular-hexagon
+    circ_radius = 2*radius/(3**(1/2))#((3*hex_radius*hex_radius)/4)**(1/2) # distance from center to corner (circumcircle radius); also length of one side in the hexagon -> a https://www-formula.com/geometry/radius-circumcircle/radius-circumcircle-regular-hexagon
+
+    hexes = []
+
+    test_points_used = np.zeros((len(df),))
+
+    # make sure that each point is contained
+    x_min -= circ_radius
+    x_max += circ_radius
+    y_min -= circ_radius
+    y_max += circ_radius
+
+    # even rows of hexes
+    range_x = np.arange(x_min, x_max, circ_radius*3)
+    range_y = np.arange(y_min, y_max, radius*2)
+    for i in range_x:
+        for j in range_y:
+            hex, window = create_hex(df, i, j, radius, circ_radius, value_cols, aggregation_methods)
+            test_points_used += window
+            if hex is not None:
+                hexes.append(hex)
+
+    # odd rows of hexes
+    range_x = np.arange(x_min-1.5*circ_radius, x_max+1.5*circ_radius, circ_radius*3)
+    range_y = np.arange(y_min-radius, y_max+radius, radius*2)
+    for i in range_x:
+        for j in range_y:
+            hex, window = create_hex(df, i, j, radius, circ_radius, value_cols, aggregation_methods)
+            test_points_used += window
+            if hex is not None:
+                hexes.append(hex)
+    
+    # ---check that each point is used exactly once
+    # print(test_points_used.min(), test_points_used.max()) # min and max have to be 1
+    if (test_points_used-1).sum() != 0:
+        print("--- attention! there is sth wrong with the point assignment of the hexagons (it might be that points are used several times, or points are not used at all) ---")
+    wrong_points = df[test_points_used != 1] # TODO: remove debugging at some point
+    return pd.DataFrame(hexes), wrong_points
+
+def aggregate_by_col(df, value_cols, sample_size=20):
+    x = df["x"]
+    y = df["y"]
     xi, yi, Xi, Yi = get_grid_data(x, y, sample_size) # (200,) (200,) (200, 200) (200, 200)
     # delta gives difference between two steps i.e. stepsize
     delta_x = (xi[1] - xi[0]) / 2

@@ -590,7 +590,8 @@ const base_color = "#c1c1c1";
 function buildLineup(cols, data, pointColorScale, channelColor) {
   // console.log(channelColor) //TODO: update lineup colorscale, if sth changes; TODO: do this for all columns, not just groupLabel
   let groupLabel_cat_color;
-  if (channelColor.key === PrebuiltFeatures.ClusterLabel) {
+  if (channelColor?.key === PrebuiltFeatures.ClusterLabel) {
+    // TODO: update colormapping code; does not work since colormapping of PSE changed...
     let groupLabel_mapping = new DiscreteMapping(
       pointColorScale,
       new ShallowSet(
