@@ -14,10 +14,9 @@ import { DatasetTabPanel } from "./Overrides/Dataset/DatasetTabPanel";
 import { RemoteEmbeddingController } from "./Overrides/Embeddings/RemoteEmbeddingController";
 import { ReactionCIMEIcons } from "./Utility/ReactionCIMEIcons";
 import { HexAggregationLayer } from "./Overrides/AggregationLayer/HexAggregationLayer";
-import { AggregationLayer } from "./Overrides/AggregationLayer/AggregationLayer";
 import { handleBackgroundSelectionDownload } from "./Utility/Utils";
 import { setMouseMove } from "./State/MouseInteractionHooksDuck";
-import { connect, ConnectedProps, useDispatch } from "react-redux";
+import { connect, ConnectedProps } from "react-redux";
 
 export const DEMO = false;
 

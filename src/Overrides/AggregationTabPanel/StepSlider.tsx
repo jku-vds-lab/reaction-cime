@@ -5,8 +5,6 @@ import { setAggregateColor } from "../../State/AggregateSettingsDuck";
 import { AppState } from "../../State/Store";
 
 const mapStateToPropsSlider = (state: AppState) => ({
-    workspace: state.projections.workspace,
-    poiDataset: state.dataset,
     variableIndex: state.aggregateSettings?.variableIndex,
   });
   
@@ -25,13 +23,7 @@ const mapStateToPropsSlider = (state: AppState) => ({
   
   
   
-export const StepSlider = sliderconnector(({selectAttribute, setAggregateColor, workspace, poiDataset, selectAttributeInfo, variableIndex}: SliderProps) => {
-
-    React.useEffect(() => {
-        // reset aggregate color to hide the aggregated dataset in the background
-        setAggregateColor(null)
-    // eslint-disable-next-line
-    }, [workspace, poiDataset]) // this is triggered during the embedding
+export const StepSlider = sliderconnector(({selectAttribute, setAggregateColor, selectAttributeInfo, variableIndex}: SliderProps) => {
 
 
     const stepChanged = (newVal) => {
@@ -53,7 +45,7 @@ export const StepSlider = sliderconnector(({selectAttribute, setAggregateColor, 
         }
         setMarks(m)
         // setCurStep(m[m.length-1].value)
-    }, [selectAttribute])
+    }, [selectAttribute, selectAttributeInfo])
 
     React.useEffect(() => {
         const timestep = curStep;

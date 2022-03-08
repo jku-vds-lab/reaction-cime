@@ -271,7 +271,7 @@ def get_hexagonal_aggregation(filename):
     agg_domain = handle_dataset_cache(filename, retrieve_cols, cache_cols)
     agg_df, wrong_points = hex_aggregate_by_col(agg_domain, retrieve_cols, aggregation_methods, sample_size=sample_size)
 
-    wrong_df = wrong_points[["x", "y"] + retrieve_cols]
+    wrong_df = wrong_points[list(set(retrieve_cols + ["x", "y"]))]
     wrong_df["hex"] = False
 
     agg_df["hex"] = True

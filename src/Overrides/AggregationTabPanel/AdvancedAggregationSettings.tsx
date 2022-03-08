@@ -70,13 +70,13 @@ export const AdvancedAggregationSettings = connector(({sampleSize, setSampleSize
         if(selectAttributeInfo){
             // initialize valueIndices when attributionInfo changes
             const variables_array = Object.keys(selectAttributeInfo);
-            if(variables_array.length == 1){
+            if(variables_array.length === 1){
                 setVariableIndex({valueVariableIndex: 0, uncertaintyVariableIndex: 0})
             }else if(variables_array.length > 1){
                 setVariableIndex({valueVariableIndex: 0, uncertaintyVariableIndex: 1})
             }
         }
-
+    // eslint-disable-next-line
     }, [selectAttributeInfo])
 
 
@@ -105,7 +105,7 @@ export const AdvancedAggregationSettings = connector(({sampleSize, setSampleSize
             <MinMaxNumberInput title={`Customize Range for ` + aggregateColor.uncertainty_col} target={"uncertainty"} range={uncertaintyRange} setRange={setUncertaintyRange}></MinMaxNumberInput>
         }
 
-        {selectAttributeInfo && 
+        {selectAttributeInfo != null ? 
             <Box sx={{ flexGrow: 1 }}>
                 <>
                     <Grid container columns={{ xs: 3 }}>
@@ -134,7 +134,7 @@ export const AdvancedAggregationSettings = connector(({sampleSize, setSampleSize
                     <Grid item xs={1}></Grid>
                     <Grid item xs={1}>
                         <FormControl>
-                            <InputLabel id="selectValueAggregation">VAgg</InputLabel>
+                            <InputLabel id="selectValueAggregation">Agg</InputLabel>
                             <Select
                                 labelId="selectValueAggregation"
                                 value={aggregationMethod.valueAggregationMethod}
@@ -148,7 +148,7 @@ export const AdvancedAggregationSettings = connector(({sampleSize, setSampleSize
                     <Grid item xs={1}>
                         
                     <FormControl>
-                            <InputLabel id="selectUncertaintyAggregation">UAgg</InputLabel>
+                            <InputLabel id="selectUncertaintyAggregation">Agg</InputLabel>
                             <Select
                                 labelId="selectUncertaintyAggregation"
                                 value={aggregationMethod.uncertaintyAggregationMethod}
@@ -161,6 +161,19 @@ export const AdvancedAggregationSettings = connector(({sampleSize, setSampleSize
                     </Grid>
                 </Grid>
                 </>
+            </Box>:
+            <Box>
+                <FormControl>
+                    <InputLabel id="selectValueAggregation">Agg</InputLabel>
+                    <Select
+                        labelId="selectValueAggregation"
+                        value={aggregationMethod.valueAggregationMethod}
+                        label="Value Aggregation"
+                        onChange={(event)=>{setAggregationMethod({valueAggregationMethod: event.target.value, uncertaintyAggregationMethod: aggregationMethod.uncertaintyAggregationMethod})}}
+                    >
+                        {Object.values(AggregationMethod).map((value) => <MenuItem value={value} key={value}>{value}</MenuItem>)}
+                    </Select>
+                </FormControl>
             </Box>
         }
     </>

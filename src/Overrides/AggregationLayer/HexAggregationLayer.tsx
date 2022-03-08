@@ -18,13 +18,13 @@ const createHexagons = (dataset: AggregateDataset, value_col: string, uncertaint
     dataset.vectors.forEach((row) => {
         if(row["hex"] === "False"){
             console.log("wrong point")
-            let material = new THREE.MeshBasicMaterial({ color: 0x000000, side: THREE.DoubleSide })
-            var geometry = new THREE.CircleGeometry(1, 100)
-            var object = new THREE.Mesh(geometry, material)
-            object.position.x = row.x
-            object.position.y = row.y
+            let materialWrong = new THREE.MeshBasicMaterial({ color: 0x000000, side: THREE.DoubleSide })
+            var geometryWrong = new THREE.CircleGeometry(1, 100)
+            var objectWrong = new THREE.Mesh(geometryWrong, materialWrong)
+            objectWrong.position.x = row.x
+            objectWrong.position.y = row.y
 
-            hexagons.push(object)
+            hexagons.push(objectWrong)
         }else{
             if(row[value_col] === undefined || isNaN(row[value_col]) || row[value_col] === ""){
 
@@ -84,6 +84,7 @@ type AggregationLayerProps = PropsFromRedux & {
 
 const loading_area = "global_loading_indicator_aggregation_ds";
 export const HexAggregationLayer = connector(({ aggregateColor, poiDataset, viewTransform, setValueRange, setUncertaintyRange, aggregateSettings, mouseMove }: AggregationLayerProps) => {
+    
     if(poiDataset == null || poiDataset.info == null || aggregateColor == null || aggregateColor.value_col == null || aggregateColor.value_col === "None"){
         return null;
     }
@@ -102,7 +103,7 @@ export const HexAggregationLayer = connector(({ aggregateColor, poiDataset, view
         ReactionCIMEBackendFromEnv.loadHexAgg((dataset) => {
             setAggregateDataset(new AggregateDataset(dataset))
         }, poiDataset.info.path, aggregateColor.value_col, aggregateColor.uncertainty_col, aggregateColor.cache_cols, aggregateSettings?.sampleSize, aggregateSettings?.aggregationMethod, cancellablePromise, abort_controller, loading_area)
-
+    // eslint-disable-next-line
     }, [aggregateColor, poiDataset.info.path, aggregateSettings?.sampleSize, aggregateSettings?.aggregationMethod])
 
 
@@ -136,6 +137,8 @@ export const HexAggregationLayer = connector(({ aggregateColor, poiDataset, view
             }
         }
         
+        // aggregateColor --> aggregateColor has direct influence on aggregateDataset through "setAggregateDataset" in the useEffect above
+        // eslint-disable-next-line
     }, [aggregateSettings?.scale_obj, aggregateDataset, aggregateSettings?.valueFilter])
 
 
@@ -174,6 +177,8 @@ export const HexAggregationLayer = connector(({ aggregateColor, poiDataset, view
         }else{
             setHoverElement(null)
         }
+        
+        // eslint-disable-next-line
     }, [aggregateDataset, mouseMove])
 
     return <div>

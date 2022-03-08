@@ -6,10 +6,12 @@ import { StepSlider } from "./StepSlider";
 import { ColorMapLegend } from "./ColorMapLegend";
 import "./AggregationTabPanel.scss";
 import { AdvancedAggregationSettings } from "./AdvancedAggregationSettings";
+import { SelectFeatureComponent } from "projection-space-explorer";
 
 
 const mapStateToProps = (state: AppState) => ({
   poiDataset: state.dataset,
+  workspace: state.projections.workspace,
 });
 
 const mapDispatchToProps = (dispatch) => ({
@@ -22,16 +24,21 @@ type PropsFromRedux = ConnectedProps<typeof connector>;
 type Props = PropsFromRedux & {};
 
 
-export const AggregationTabPanel = connector(
-  ({
-    poiDataset,
-  }: Props) => {
+export const AggregationTabPanel = connector(({poiDataset, workspace}: Props) => {
     
     // const categoryOptions = poiDataset?.categories;
     const [categoryOptions, setCategoryOptions] = React.useState(null)
     const [selectColumns, setSelectColumns] = React.useState(null)
     const [selectAttribute, setSelectAttribute] = React.useState({key:"None", name:"None"})
     const [selectAttributeInfo, setSelectAttributeInfo] = React.useState(null)
+    const [columnInfo, setColumnInfo] = React.useState(null)
+    
+    React.useEffect(() => {
+      // reset aggregate color to hide the aggregated dataset in the background
+      setSelectAttribute({key:"None", name:"None"}) // reset selection to None
+      setSelectAttributeInfo(null)
+    // eslint-disable-next-line
+    }, [workspace, poiDataset]) // this is triggered during the embedding
 
 
     React.useEffect(() => {
@@ -39,6 +46,7 @@ export const AggregationTabPanel = connector(
       setSelectAttributeInfo(null)
 
       let select_columns = {};
+      let new_column_info = {...poiDataset?.columns};
       if(poiDataset != null && poiDataset.columns != null){
         Object.keys(poiDataset.columns).forEach(key => {
           let col = poiDataset.columns[key];
@@ -69,13 +77,16 @@ export const AggregationTabPanel = connector(
                   select_columns[group_name] = {}
                   select_columns[group_name][var_name] = {"temporal_columns": temp_cols} 
                 }
+
+                new_column_info[group_name] = {featureLabel: "Timeseries", distinct: undefined, featureType: undefined, isNumeric: undefined, metaInformation:undefined, project: undefined, range: undefined}
                 
             }
-            // else{
-            //     row[i] = element[i];
-            //     columns[i] = col;
-            // }
+            else if(col.metaInformation.real_column && col.isNumeric && !["x", "y"].includes(key)){ // we only want numeric features that exist in the real dataset and are not coordinates
+              select_columns[key] = null
+            }
         });
+
+        setColumnInfo(new_column_info) // add columninfo for new timeseries columns
         setSelectColumns(select_columns)
 
         let cat_lst = Object.keys(select_columns).map(key => {
@@ -83,21 +94,11 @@ export const AggregationTabPanel = connector(
         });
 
         cat_lst.sort((valA, valB) => valA.name.localeCompare(valB.name))
-        cat_lst.splice(0,0,{key: "None", name: "None"})
+        // cat_lst.splice(0,0,{key: "None", name: "None"})
         setCategoryOptions(cat_lst)
 
       }
     }, [poiDataset])
-
-
-
-    // React.useEffect(() => {
-    //   if(poiDataset !== null && poiDataset.columns !== null){
-    //     var catOpt = Object.keys(poiDataset.columns).map(key => {return {"key": key, "name": key};});
-    //     setCategoryOptions({"attributes": catOpt});
-    //   }
-    // }, [poiDataset?.columns]);
-    // console.log('AggregationTabPanel cimeBackgroundSelection:', cimeBackgroundSelection)
 
 
     return (
@@ -120,27 +121,43 @@ export const AggregationTabPanel = connector(
           {
             //TODO: check, if it makes sense to also include categorical values, or if it is ok to only use numerical values (like for "size")
             categoryOptions != null && 
-            <FormControl style={{ width: '100%' }}>
-              <FormHelperText>Color by</FormHelperText>
-              <Select 
-              // fullWidth
-                displayEmpty
-                size='small'
-                value={selectAttribute?.key}
-                onChange={(event) => {
-                  let attribute = categoryOptions.filter(opt => opt.key === event.target.value)[0]
-                  if(attribute == null){
-                    attribute = {key: "None", name: "None"}
-                  }
+        //     <FormControl style={{ width: '100%' }}>
+        //       <FormHelperText>Color by</FormHelperText>
+        //       <Select 
+        //       // fullWidth
+        //         displayEmpty
+        //         size='small'
+        //         value={selectAttribute?.key}
+        //         onChange={(event) => {
+        //           let attribute = categoryOptions.filter(opt => opt.key === event.target.value)[0]
+        //           if(attribute == null){
+        //             attribute = {key: "None", name: "None"}
+        //           }
                   
-                  setSelectAttribute(attribute)
-                  if(selectColumns != null && Object.keys(selectColumns).includes(attribute.key))
-                  setSelectAttributeInfo(selectColumns[attribute.key])
-                }}
-              >
-              {categoryOptions.map(opt => { return <MenuItem key={opt.key} value={opt.key}>{opt.name}</MenuItem>})}
-            </Select>
-        </FormControl>
+        //           setSelectAttribute(attribute)
+        //           if(selectColumns != null && Object.keys(selectColumns).includes(attribute.key))
+        //           setSelectAttributeInfo(selectColumns[attribute.key])
+        //         }}
+        //       >
+        //       {categoryOptions.map(opt => { return <MenuItem key={opt.key} value={opt.key}>{opt.name}</MenuItem>})}
+        //     </Select>
+        // </FormControl>
+        <SelectFeatureComponent
+          column_info={columnInfo}
+          label="color"
+          default_val={selectAttribute}
+          categoryOptions={{attributes: categoryOptions}}
+          onChange={(newValue) => {
+            let attribute = categoryOptions.filter(opt => opt.key === newValue)[0]
+            if(attribute == null){
+              attribute = {key: "None", name: "None"}
+            }
+            
+            setSelectAttribute(attribute)
+            if(selectColumns != null && Object.keys(selectColumns).includes(attribute.key))
+            setSelectAttributeInfo(selectColumns[attribute.key])
+          }}
+      />
           }
         </Box>
         <Box paddingLeft={2} paddingTop={1} paddingRight={2}><StepSlider selectAttribute={selectAttribute} selectAttributeInfo={selectAttributeInfo}></StepSlider></Box>

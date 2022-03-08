@@ -2,10 +2,16 @@
 
 # ---------------- preprocess dataset --------------------
 
+
 def preprocess_dataset(domain):
+
+    # calculates the error between measurement and prediction
+    error_col = domain.apply(lambda x: np.nan if x['experimentCycle'] < 0 else abs(x['yield'] - x['pred_mean_%i'%x['experimentCycle']]), axis=1)
+    index = list(domain.columns).index("yield")
 
     new_cols = generate_rename_list(domain)
     domain.columns = new_cols
+    domain.insert(loc=index+1, column='error{"project":false,"paco":false,"real_column":false}', value=error_col)
 
     return domain
 
@@ -113,7 +119,7 @@ def generate_rename_list(domain):
             else:
                 modifier = '"project":false,"paco":true'
 
-        new_cols.append('%s{%s}'%(col_name, modifier))
+        new_cols.append('%s{"real_column":true,%s}'%(col_name, modifier)) # "real_column" indicates that the column is actually in the dataset and was not derived
     
     return new_cols
 

@@ -65,6 +65,7 @@ export const GLHexagons = connector(({ viewTransform, hexagons, hoverElement }: 
             scene.add(hoverElement);
         }
         setRerender(rerender+1)
+        // eslint-disable-next-line
     }, [hoverElement])
 
 
