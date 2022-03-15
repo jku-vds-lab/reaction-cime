@@ -23,11 +23,11 @@ type Props = PropsFromRedux & {
      */
     hexagons: [THREE.Mesh]
     hoverElement: THREE.Mesh
-    
+    selectElement: THREE.Mesh
 }
 
 
-export const GLHexagons = connector(({ viewTransform, hexagons, hoverElement }: Props) => {
+export const GLHexagons = connector(({ viewTransform, hexagons, hoverElement, selectElement }: Props) => {
     const ref = React.useRef<any>()
 
     const [renderer] = useState(() => new THREE.WebGLRenderer({
@@ -67,6 +67,18 @@ export const GLHexagons = connector(({ viewTransform, hexagons, hoverElement }: 
         setRerender(rerender+1)
         // eslint-disable-next-line
     }, [hoverElement])
+
+    useEffect(() => {
+        var selectedObject = scene.getObjectByName("selectElement");
+        scene.remove(selectedObject);
+
+        if(selectElement != null){
+            selectElement.name = "selectElement";
+            scene.add(selectElement);
+        }
+        setRerender(rerender+1)
+        // eslint-disable-next-line
+    }, [selectElement])
 
 
     useEffect(() => {

@@ -5,13 +5,15 @@ import aggregateSettings from "./AggregateSettingsDuck";
 // import cimeBackgroundSelection from "projection-space-explorer/dist/components/Ducks/CimeBackgroundSelectionDuck";
 import lineUpInput from "./LineUpInputDuck";
 import { mouseInteractionHooks } from "./MouseInteractionHooksDuck";
+import { selection } from "./SelectionDuck";
 
 export const CIMEReducers = {
   lineUpInput: lineUpInput,
   // cimeBackgroundSelection: cimeBackgroundSelection,
   // dataset: Dataset,
   aggregateSettings: aggregateSettings,
-  mouseInteractionHooks: mouseInteractionHooks
+  mouseInteractionHooks: mouseInteractionHooks,
+  selection: selection,
 };
 
 const combined = combineReducers(CIMEReducers);

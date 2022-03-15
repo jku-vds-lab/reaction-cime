@@ -5,6 +5,7 @@ import {
   Application,
   createRootReducer,
   PSEIcons,
+  PluginRegistry,
 } from "projection-space-explorer";
 import { LineUpContext } from "./LineUpContext";
 import { LineUpTabPanel } from "./Overrides/LineUpTabPanel";
@@ -15,12 +16,13 @@ import { RemoteEmbeddingController } from "./Overrides/Embeddings/RemoteEmbeddin
 import { ReactionCIMEIcons } from "./Utility/ReactionCIMEIcons";
 import { HexAggregationLayer } from "./Overrides/AggregationLayer/HexAggregationLayer";
 import { handleBackgroundSelectionDownload } from "./Utility/Utils";
-import { setMouseMove } from "./State/MouseInteractionHooksDuck";
+import { setMouseClick, setMouseMove } from "./State/MouseInteractionHooksDuck";
 import { connect, ConnectedProps } from "react-redux";
+import { ReactionsPlugin } from "./Overrides/Details/ReactionsPlugin";
 
 export const DEMO = false;
 
-// PluginRegistry.getInstance().registerPlugin(new ChemPlugin());
+PluginRegistry.getInstance().registerPlugin(new ReactionsPlugin());
 
 
 export const ReactionCIMEApp = () => {
@@ -43,6 +45,7 @@ const mapStateToProps = (state: AppState) => ({
 
 const mapDispatchToProps = (dispatch) => ({
   setMouseMoveFn: (value) => dispatch(setMouseMove(value)),
+  setMouseClickFn: (value) => dispatch(setMouseClick(value)),
 });
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
@@ -52,7 +55,7 @@ type PropsFromRedux = ConnectedProps<typeof connector>;
 type Props = PropsFromRedux & {
 };
 
-const ApplicationWrapper = connector(({ setMouseMoveFn, dataset_path }: Props) => {
+const ApplicationWrapper = connector(({ setMouseMoveFn, dataset_path, setMouseClickFn }: Props) => {
   
 
   return <Application
@@ -73,7 +76,10 @@ const ApplicationWrapper = connector(({ setMouseMoveFn, dataset_path }: Props) =
     }}
     overrideComponents={{
       mouseInteractionHooks: {
-        "mousemove": (coords, event_used) => {setMouseMoveFn({x: coords.x, y: coords.y, event_used: event_used})}
+        "mousemove": (coords, event_used) => {setMouseMoveFn({x: coords.x, y: coords.y, event_used: event_used})},
+        // "mousedown": (coords) => {setMouseDownFn({x: coords.x, y: coords.y})},
+        // "mouseup": (coords) => {setMouseUpFn({x: coords.x, y: coords.y})},
+        "mouseclick": (coords, event_used, button) => { setMouseClickFn({x: coords.x, y: coords.y, event_used: event_used, button: button})} 
       },
       datasetTab: DatasetTabPanel,
       appBar: () => <div></div>,

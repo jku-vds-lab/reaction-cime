@@ -281,6 +281,18 @@ export class ReactionCIMEBackend {
     return promise;
   };
 
+  public loadValueRange = async(filename:string, col_name:string) => {
+    return fetch(this.baseUrl + "/get_value_range/" + filename + "/" + col_name, {
+      method: "GET",
+    })
+    .then(this.handleErrors)
+    .then((response) => response.json())
+    .then(this.handleJSONErrors)
+    .catch((error) => {
+      console.log(error);
+    })
+  }
+
 
 
   protected agg_dataset_cache:[{x: {min: number, max: number}, y: {min: number, max: number}, data: any}] = null;
@@ -339,37 +351,47 @@ export class ReactionCIMEBackend {
   };
 
 
-  public loadHexAgg(finished: (dataset: any) => void, path:string, value_column:string, uncertainty_col:string, cache_cols:string[], sample_size:number, aggregationMethod:any, cancellablePromise?: ReturnType<typeof useCancellablePromise>["cancellablePromise"], controller?: AbortController, loadingArea?:string){
+  public loadHexAgg(finished: (dataset: any) => void, path:string, value_column:string, uncertainty_col:string, cache_cols:string[], sample_size:number, aggregationMethod:any, range:{x: {min: number, max: number}, y: {min: number, max: number}}, cancellablePromise?: ReturnType<typeof useCancellablePromise>["cancellablePromise"], controller?: AbortController, loadingArea?:string){
     
-    let retrieve_cols = "retrieve_cols=" + value_column
-    retrieve_cols += "&aggregation_methods=" + aggregationMethod.valueAggregationMethod
-    if(uncertainty_col !== "None" && uncertainty_col != null){
-      retrieve_cols += "&retrieve_cols=" + uncertainty_col
-      retrieve_cols += "&aggregation_methods=" + aggregationMethod.uncertaintyAggregationMethod
-    }
-
-    let cache_cols_string = ""
-    if(cache_cols != null){
-      for (const key in cache_cols) {
-        const col = cache_cols[key]
-        cache_cols_string += "&cache_cols=" + col
+    const cached_data = this.handleAggregationCache(path, value_column, uncertainty_col, range);
+    let promise = null;
+    if (cached_data) {
+      promise = this.async_cache(cached_data.data);
+    }else{
+      let retrieve_cols = "retrieve_cols=" + value_column
+      retrieve_cols += "&aggregation_methods=" + aggregationMethod.valueAggregationMethod
+      if(uncertainty_col !== "None" && uncertainty_col != null){
+        retrieve_cols += "&retrieve_cols=" + uncertainty_col
+        retrieve_cols += "&aggregation_methods=" + aggregationMethod.uncertaintyAggregationMethod
       }
+
+      let cache_cols_string = ""
+      if(cache_cols != null){
+        for (const key in cache_cols) {
+          const col = cache_cols[key]
+          cache_cols_string += "&cache_cols=" + col
+        }
+      }
+
+      let sample_size_str = ""
+      if(sample_size != null){
+        sample_size_str = "&sample_size=" + sample_size
+      }
+
+
+      if(range == null){
+        range = {x: {min: -10000, max: 10000}, y: {min: -10000, max: 10000}}
+      }
+      let range_string = "&x_min=" + range.x.min + "&x_max=" + range.x.max + "&y_min=" + range.y.min + "&y_max="+range.y.max
+
+
+      const agg_path = ReactionCIMEBackendFromEnv.baseUrl + "/get_hex_agg/" + path + "?" + retrieve_cols + cache_cols_string + sample_size_str + range_string;
+      
+      promise = cancellablePromise
+        ? cancellablePromise(
+            d3v5.csv(agg_path, {...ReactionCIMEBackendFromEnv.fetchParams, signal: controller?.signal,}), controller
+          ) : d3v5.csv(agg_path, {...ReactionCIMEBackendFromEnv.fetchParams, signal: controller?.signal,});
     }
-
-    let sample_size_str = ""
-    if(sample_size != null){
-      sample_size_str = "&sample_size=" + sample_size
-    }
-
-    
-
-    const agg_path = ReactionCIMEBackendFromEnv.baseUrl + "/get_hex_agg/" + path + "?" + retrieve_cols + cache_cols_string + sample_size_str;
-    
-    let promise = cancellablePromise
-      ? cancellablePromise(
-          d3v5.csv(agg_path, {...ReactionCIMEBackendFromEnv.fetchParams, signal: controller?.signal,}), controller
-        ) : d3v5.csv(agg_path, {...ReactionCIMEBackendFromEnv.fetchParams, signal: controller?.signal,});
-    
     trackPromise(
       promise
         .then((vectors) => {
@@ -377,7 +399,10 @@ export class ReactionCIMEBackend {
                 console.log("aggregation dataset is empty");
                 alert("aggregation dataset is empty")
             }else{
-                finished(vectors)
+              if(cached_data == null){
+                this.cache_agg_data(range, vectors);
+              }
+              finished(vectors)
             }
         })
         .catch((error) => {

@@ -1,5 +1,8 @@
 import { ReactionCIMEBackendFromEnv } from "../Backend/ReactionCIMEBackend";
 
+export const PSE_BLUE = "#1f77b4"
+
+
 /**
  * This is merely a helper function to decompose the code into smaller individual segments.
  * It is used to handle the changing background selection prop, which might, e.g., be triggered when a user clicks the k-nearest neighbor option in the context menu.

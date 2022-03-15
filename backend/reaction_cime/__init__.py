@@ -117,7 +117,7 @@ class ReactionCIMEDBO():
         self.save_dataframe(df, "temp")
         for key in update_dict_list.keys():
             # self.db.session.execute("update %s join temp using(id) set %s.%s = temp.%s"%(table_name,table_name, key, key))
-            self.db.session.execute("update %s set %s = (SELECT %s from temp where id = %s.id)"%(table_name, key, key, table_name))
+            self.db.session.execute('update "%s" set "%s" = (SELECT "%s" from temp where id = "%s".id)'%(table_name, key, key, table_name))
 
         self.db.session.commit()
 
@@ -149,7 +149,7 @@ class ReactionCIMEDBO():
         pandas.Dataframe
             A pandas dataframe containing the query result from the database
         """
-        sql_stmt = "SELECT * FROM " + table_name + " " + filter
+        sql_stmt = 'SELECT * FROM "' + table_name + '" ' + filter
         return pd.read_sql(sql_stmt, self.db.engine, index_col="id")
 
     def get_dataframe_from_table_filter(self, table_name, filter, columns=None):
@@ -179,17 +179,20 @@ class ReactionCIMEDBO():
         if columns is not None:
             select_cols = "id"
             for col in columns:
-                select_cols += ", " + col
+                select_cols += f', "{col}"'
 
-        sql_stmt = "SELECT " + select_cols + " FROM " + table_name + " WHERE " + filter
-        print(sql_stmt)
+        sql_stmt = 'SELECT ' + select_cols + ' FROM "' + table_name + '" WHERE ' + filter
         return pd.read_sql(sql_stmt, self.db.engine, index_col="id")
 
     def get_filter_mask(self, table_name, filter):
-        sql_stmt = "SELECT id, CASE WHEN " + filter + " THEN true ELSE false END as mask FROM " + table_name
+        sql_stmt = 'SELECT id, CASE WHEN ' + filter + ' THEN true ELSE false END as mask FROM "' + table_name + '"'
         mask = pd.read_sql(sql_stmt, self.db.engine, index_col="id")
         mask["mask"] = mask["mask"].astype("bool")
         return mask
+
+    def get_value_range_from_table(self, table_name, col_name):
+        sql_stmt = f'SELECT min("{col_name}") as min, max("{col_name}") as max FROM "{table_name}"'
+        return pd.read_sql(sql_stmt, self.db.engine)
 
     def drop_table(self, table_name):
         base = declarative_base()

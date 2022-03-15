@@ -55,7 +55,7 @@ export const StepSlider = sliderconnector(({selectAttribute, setAggregateColor, 
             let cache_cols = Object.values(selectAttributeInfo[variables_array[variableIndex.valueVariableIndex]]["temporal_columns"])
 
             let uncertainty_col = null;
-            if(variableIndex.valueVariableIndex !== variableIndex.uncertaintyVariableIndex){
+            if(variableIndex.valueVariableIndex !== variableIndex.uncertaintyVariableIndex && variables_array[variableIndex.uncertaintyVariableIndex] != null){
                 uncertainty_col = selectAttributeInfo[variables_array[variableIndex.uncertaintyVariableIndex]]["temporal_columns"][timestep]
                 cache_cols = cache_cols.concat(Object.values(selectAttributeInfo[variables_array[variableIndex.uncertaintyVariableIndex]]["temporal_columns"]))
             }

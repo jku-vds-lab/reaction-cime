@@ -187,15 +187,22 @@ def create_hex(df, hex_x, hex_y, radius, circ_radius, value_cols, aggregation_me
     else:
         return None, window
 
-def hex_aggregate_by_col(df, value_cols, aggregation_methods, sample_size=20):
+def hex_aggregate_by_col(df, value_cols, aggregation_methods, range=None, sample_size=20):
     x = df["x"]
     y = df["y"]
 
-    x_min = x.min()
-    x_max = x.max()
+    if range is None: # set range to be the maximum and minimum of the available dataset points
+        x_min = x.min()
+        x_max = x.max()
+        y_min = y.min()
+        y_max = y.max()
+    else: # set the range to be a custom range (e.g. if you zoom out, the number of hexagons should get smaller and smaller wrt screen space)
+        x_min = range["x_min"]
+        x_max = range["x_max"]
+        y_min = range["y_min"]
+        y_max = range["y_max"]
+
     x_delta = x_max-x_min
-    y_min = y.min()
-    y_max = y.max()
     y_delta = y_max-y_min
     delta = max(x_delta, y_delta)
 

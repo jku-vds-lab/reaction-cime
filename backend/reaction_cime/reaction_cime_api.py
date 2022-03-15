@@ -267,9 +267,16 @@ def get_hexagonal_aggregation(filename):
     aggregation_methods = request.args.getlist("aggregation_methods")
     cache_cols = request.args.getlist("cache_cols") # if value col or uncertainty col are not cached, we use this list of columns to prepare the new cached dataset
     sample_size = 20#request.args.get("sample_size", default=20, type=int)
+    range = {"x_min": float(request.args.get("x_min")),
+        "x_max": float(request.args.get("x_max")),
+        "y_min": float(request.args.get("y_min")),
+        "y_max": float(request.args.get("y_max")),
+        }
     
     agg_domain = handle_dataset_cache(filename, retrieve_cols, cache_cols)
-    agg_df, wrong_points = hex_aggregate_by_col(agg_domain, retrieve_cols, aggregation_methods, sample_size=sample_size)
+    agg_domain = agg_domain[(agg_domain["x"] < range["x_max"]) * (agg_domain["x"] > range["x_min"]) * (agg_domain["y"] < range["y_max"]) * (agg_domain["y"] > range["y_min"])]
+
+    agg_df, wrong_points = hex_aggregate_by_col(agg_domain, retrieve_cols, aggregation_methods, range=None, sample_size=sample_size) # TODO: what works better: range set to the boundaries of the dataset, or range set to the boundaries of the screen i.e. range=range
 
     wrong_df = wrong_points[list(set(retrieve_cols + ["x", "y"]))]
     wrong_df["hex"] = False
@@ -282,6 +289,12 @@ def get_hexagonal_aggregation(filename):
     agg_df.to_csv(csv_buffer, index=False)
 
     return csv_buffer.getvalue()
+
+
+@reaction_cime_api.route('/get_value_range/<filename>/<col_name>', methods=['GET'])
+def get_value_range(filename, col_name):
+    range = get_cime_dbo().get_value_range_from_table(filename, col_name).iloc[0]
+    return {"min": float(range["min"]), "max": float(range["max"])}
 
 
 from openTSNE import TSNE

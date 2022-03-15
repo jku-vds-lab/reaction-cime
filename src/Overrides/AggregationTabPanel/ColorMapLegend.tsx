@@ -5,6 +5,7 @@ import { Button, InputLabel, MenuItem, Select } from "@mui/material";
 import { D3_CONTINUOUS_COLOR_SCALE_LIST, setAggregateColorScale, addValueFilter, removeValueFilter, toggleUseVSUP, clearValueFilter, setAggregateColorMapScale } from "../../State/AggregateSettingsDuck";
 import * as vsup from "vsup";
 import * as d3 from 'd3v5';
+import { PSE_BLUE } from "../../Utility/Utils";
 
 const mapStateToProps = (state: AppState) => ({
     colorScale: state.aggregateSettings?.colorscale,
@@ -146,7 +147,7 @@ export const ColorMapLegend = connector(({colorScale, setAggregateColorScale, se
                 legend_container.select(".hover_clone").remove();
                 const hover_el = d3.select(color_sections.nodes()[i]).clone();
                 hover_el.attr("class", "hover_clone");
-                hover_el.attr("fill", "#1f77b4");
+                hover_el.attr("fill", PSE_BLUE);
                 
                 // remove temporary hover element when we leave it
                 hover_el.on("mouseout", () => {
@@ -158,7 +159,7 @@ export const ColorMapLegend = connector(({colorScale, setAggregateColorScale, se
                     // color_sections.attr("stroke", "none")
                     const cur_node = d3.select(color_sections.nodes()[i])
                     if(cur_node.attr("stroke") == null){
-                        cur_node.attr("stroke", "#1f77b4")
+                        cur_node.attr("stroke", PSE_BLUE)
                         cur_node.attr("stroke-width", "3px")
                         addValueFilter(cur_node.attr("fill"))
                     }else{
