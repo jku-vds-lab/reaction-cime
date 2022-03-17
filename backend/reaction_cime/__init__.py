@@ -194,6 +194,10 @@ class ReactionCIMEDBO():
         sql_stmt = f'SELECT min("{col_name}") as min, max("{col_name}") as max FROM "{table_name}"'
         return pd.read_sql(sql_stmt, self.db.engine)
 
+    def get_category_count(self, table_name, col_name):
+        sql_stmt = f'SELECT "{col_name}", COUNT(*) as count FROM "{table_name}" GROUP BY "{col_name}"'
+        return pd.read_sql(sql_stmt, self.db.engine)
+
     def drop_table(self, table_name):
         print("--------drop_table")
         # base = declarative_base()

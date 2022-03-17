@@ -297,6 +297,23 @@ def get_value_range(filename, col_name):
     return {"min": float(range["min"]), "max": float(range["max"])}
 
 
+@reaction_cime_api.route('/get_category_count/<filename>/<col_name>', methods=["GET"])
+def get_category_count(filename, col_name):
+    cat_count = get_cime_dbo().get_category_count(filename, col_name)
+    return json.dumps(cat_count.to_dict('records')).encode('utf-8')
+
+@reaction_cime_api.route('/get_density/<filename>/<col_name>', methods=["GET"])
+def get_density(filename, col_name):
+    data = get_cime_dbo().get_dataframe_from_table(filename, columns=[col_name])[col_name]
+
+    from scipy.stats import gaussian_kde
+    density = gaussian_kde(data)
+    x_vals = np.linspace(min(data), max(data), 100)
+    y_vals = density(x_vals)
+
+    return {"x_vals": list(x_vals), "y_vals": list(y_vals)}
+
+
 from openTSNE import TSNE
 import umap
 from sklearn.decomposition import PCA
