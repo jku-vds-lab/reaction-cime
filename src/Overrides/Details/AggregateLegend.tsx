@@ -1,11 +1,32 @@
 import { Table, TableBody, TableCell, TableHead, TableRow } from "@mui/material";
 import { makeStyles } from "@mui/styles";
-import { DefaultLegend, IVector } from "projection-space-explorer";
+import { Dataset, DefaultLegend, IVector } from "projection-space-explorer";
 import { connect, ConnectedProps } from "react-redux";
+import { ReactionCIMEBackendFromEnv } from "../../Backend/ReactionCIMEBackend";
 import { AppState } from "../../State/Store";
 
 
-function genRows(vectors, aggregation, legendAttributes, dataset) {
+function genRows(aggregateSelection, aggregation, legendAttributes, dataset: Dataset) {
+    // here is the code to retrieve the data for certain columns...
+    ReactionCIMEBackendFromEnv.loadCategoryCount(dataset.info.path, "base_SMILES_index").then((data) => {
+        console.log("count per category of base_SMILES_index for all datapoints")
+        console.log(data)
+    })
+
+    ReactionCIMEBackendFromEnv.loadCategoryCountOfHex(dataset.info.path, "base_SMILES_index", aggregateSelection.x, aggregateSelection.y, aggregateSelection.circ_radius).then((data) => {
+        console.log("count per category of base_SMILES_index for selected hexagon")
+        console.log(data)
+    })
+
+    ReactionCIMEBackendFromEnv.loadDensity(dataset.info.path, "pred_mean_0").then((data) => {
+        console.log("density data of pred_mean_0 for all datapoints")
+        console.log(data)
+    })
+
+    ReactionCIMEBackendFromEnv.loadDensityOfHex(dataset.info.path, "pred_mean_0", aggregateSelection.x, aggregateSelection.y, aggregateSelection.circ_radius).then((data) => {
+        console.log("density data of pred_mean_0 for selected hexagon")
+        console.log(data)
+    })
     return [];
 }
 

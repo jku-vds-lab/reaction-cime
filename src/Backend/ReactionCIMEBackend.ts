@@ -293,6 +293,54 @@ export class ReactionCIMEBackend {
     })
   }
 
+  public loadCategoryCount = async(filename:string, col_name:string) => {
+    return fetch(this.baseUrl + "/get_category_count/" + filename + "/" + col_name, {
+      method: "GET",
+    })
+    .then(this.handleErrors)
+    .then((response) => response.json())
+    .then(this.handleJSONErrors)
+    .catch((error) => {
+      console.log(error);
+    })
+  }
+
+  public loadCategoryCountOfHex = async(filename:string, col_name:string, x:number, y:number, circ_radius:number) => {
+    return fetch(this.baseUrl + "/get_category_count_of_hex/" + filename + "/" + col_name + "?x=" + x + "&y=" + y + "&circ_radius=" + circ_radius, {
+      method: "GET",
+    })
+    .then(this.handleErrors)
+    .then((response) => response.json())
+    .then(this.handleJSONErrors)
+    .catch((error) => {
+      console.log(error);
+    })
+  }
+
+  public loadDensity = async(filename:string, col_name:string) => {
+    return fetch(this.baseUrl + "/get_density/" + filename + "/" + col_name, {
+      method: "GET",
+    })
+    .then(this.handleErrors)
+    .then((response) => response.json())
+    .then(this.handleJSONErrors)
+    .catch((error) => {
+      console.log(error);
+    })
+  }
+
+  public loadDensityOfHex = async(filename:string, col_name:string, x:number, y:number, circ_radius:number) => {
+    return fetch(this.baseUrl + "/get_density_of_hex/" + filename + "/" + col_name + "?x=" + x + "&y=" + y + "&circ_radius=" + circ_radius, {
+      method: "GET",
+    })
+    .then(this.handleErrors)
+    .then((response) => response.json())
+    .then(this.handleJSONErrors)
+    .catch((error) => {
+      console.log(error);
+    })
+  }
+
 
 
   protected agg_dataset_cache:[{x: {min: number, max: number}, y: {min: number, max: number}, data: any}] = null;

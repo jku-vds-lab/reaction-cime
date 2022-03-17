@@ -187,6 +187,12 @@ def create_hex(df, hex_x, hex_y, radius, circ_radius, value_cols, aggregation_me
     else:
         return None, window
 
+def radius_to_circ_radius(radius):
+    return 2*radius/(3**(1/2))
+
+def circ_radius_to_radius(circ_radius):
+    return (3**(1/2))*circ_radius/2
+
 def hex_aggregate_by_col(df, value_cols, aggregation_methods, range=None, sample_size=20):
     x = df["x"]
     y = df["y"]
@@ -207,7 +213,7 @@ def hex_aggregate_by_col(df, value_cols, aggregation_methods, range=None, sample
     delta = max(x_delta, y_delta)
 
     radius = delta/sample_size/2 # distance from center to "flat" side -> r https://www-formula.com/geometry/circle-inscribed/radius-circle-inscribed-regular-hexagon
-    circ_radius = 2*radius/(3**(1/2))#((3*hex_radius*hex_radius)/4)**(1/2) # distance from center to corner (circumcircle radius); also length of one side in the hexagon -> a https://www-formula.com/geometry/radius-circumcircle/radius-circumcircle-regular-hexagon
+    circ_radius = radius_to_circ_radius(radius)#((3*hex_radius*hex_radius)/4)**(1/2) # distance from center to corner (circumcircle radius); also length of one side in the hexagon -> a https://www-formula.com/geometry/radius-circumcircle/radius-circumcircle-regular-hexagon
 
     hexes = []
 

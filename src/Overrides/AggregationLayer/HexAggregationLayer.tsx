@@ -253,6 +253,7 @@ const debouncedLoadAggDataset = React.useCallback(
                             object.position.y = row.y
                             object.position.z = -1
                             setSelectElement(object)
+                            console.log(row)
                             setCurrentAggregateSelectionFn(row)
                         }
                         return;

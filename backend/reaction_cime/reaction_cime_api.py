@@ -6,7 +6,8 @@ from rdkit import Chem
 from rdkit.Chem import Draw
 from io import BytesIO
 import base64
-from .helper_functions import preprocess_dataset, get_mcs, smiles_to_base64, aggregate_by_col_interpolate, aggregate_by_col, rescale_and_encode, hex_aggregate_by_col
+from .helper_functions import (circ_radius_to_radius, preprocess_dataset, get_mcs, smiles_to_base64, aggregate_by_col_interpolate, 
+                                aggregate_by_col, rescale_and_encode, hex_aggregate_by_col, isInsideHex, circ_radius_to_radius)
 import json
 
 _log = logging.getLogger(__name__)
@@ -297,14 +298,48 @@ def get_value_range(filename, col_name):
     return {"min": float(range["min"]), "max": float(range["max"])}
 
 
+# TODO: cache dataframe if necessary
+# cache all columns that are selected to be shown in the summary view
 @reaction_cime_api.route('/get_category_count/<filename>/<col_name>', methods=["GET"])
 def get_category_count(filename, col_name):
     cat_count = get_cime_dbo().get_category_count(filename, col_name)
     return json.dumps(cat_count.to_dict('records')).encode('utf-8')
 
+@reaction_cime_api.route('/get_category_count_of_hex/<filename>/<col_name>', methods=["GET"])
+def get_category_count_of_hex(filename, col_name):
+    hex_x = float(request.args.get("x"))
+    hex_y = float(request.args.get("y"))
+    hex_circ_radius = float(request.args.get("circ_radius"))
+
+    df = get_cime_dbo().get_dataframe_from_table(filename, columns=["x", "y", col_name])
+    
+    window = isInsideHex(df["x"], df["y"], hex_x=hex_x, hex_y=hex_y, radius=circ_radius_to_radius(hex_circ_radius), circ_radius=hex_circ_radius)
+    df = df[window][[col_name]]
+    df["count"] = 0 # dummy column, such that it can be aggregated by count
+    cat_count = df.groupby(col_name, as_index=False).count()
+    return json.dumps(cat_count.to_dict('records')).encode('utf-8')
+
 @reaction_cime_api.route('/get_density/<filename>/<col_name>', methods=["GET"])
 def get_density(filename, col_name):
     data = get_cime_dbo().get_dataframe_from_table(filename, columns=[col_name])[col_name]
+
+    from scipy.stats import gaussian_kde
+    density = gaussian_kde(data)
+    x_vals = np.linspace(min(data), max(data), 100)
+    y_vals = density(x_vals)
+
+    return {"x_vals": list(x_vals), "y_vals": list(y_vals)}
+
+@reaction_cime_api.route('/get_density_of_hex/<filename>/<col_name>', methods=["GET"])
+def get_density_of_hex(filename, col_name):
+    hex_x = float(request.args.get("x"))
+    hex_y = float(request.args.get("y"))
+    hex_circ_radius = float(request.args.get("circ_radius"))
+
+    df = get_cime_dbo().get_dataframe_from_table(filename, columns=["x", "y", col_name])
+    
+    window = isInsideHex(df["x"], df["y"], hex_x=hex_x, hex_y=hex_y, radius=circ_radius_to_radius(hex_circ_radius), circ_radius=hex_circ_radius)
+    data = df[window][col_name]
 
     from scipy.stats import gaussian_kde
     density = gaussian_kde(data)
