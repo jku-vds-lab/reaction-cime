@@ -1,7 +1,7 @@
 import React from "react";
 import { connect, ConnectedProps } from "react-redux";
 import { AppState } from "../../State/Store";
-import { Button, Checkbox, FormControlLabel, TextField, Grid, Radio, FormControl, InputLabel, Select, MenuItem } from "@mui/material";
+import { Button, Checkbox, FormControlLabel, TextField, Grid, Radio, FormControl, InputLabel, Select, MenuItem, Typography } from "@mui/material";
 import { AggregationMethod, setAggregationMethod, setDeriveRange, setSampleSize, setUncertaintyRange, setValueRange, setVariableIndex, toggleDeriveRange } from "../../State/AggregateSettingsDuck";
 import { MinMaxNumberInput } from "../../Utility/MinMaxNumberInput";
 import { Box } from "@mui/system";
@@ -96,17 +96,21 @@ export const AdvancedAggregationSettings = connector(({sampleSize, setSampleSize
             />
             <Button onClick={() => {setSampleSize(tempSampleSize)}}>Apply Settings</Button>
         </>}
-        <FormControlLabel control={<Checkbox checked={deriveRange} onChange={()=>{toggleDeriveRange()}} title={"Derive Range from Data"}></Checkbox>} label="Derive Range from Data" />
+
+        <Box paddingTop={1}>
+            <FormControlLabel control={<Checkbox checked={deriveRange} onChange={()=>{toggleDeriveRange()}} title={"Derive Range from Data"}></Checkbox>} label="Derive Range from Data" />
+            
+            {(valueRange != null && !deriveRange) && 
+                <MinMaxNumberInput title={`Customize Range for ` + aggregateColor.value_col} target={"value"} range={valueRange} setRange={setValueRange}></MinMaxNumberInput>
+            }
+            {(uncertaintyRange != null && !deriveRange) && 
+                <MinMaxNumberInput title={`Customize Range for ` + aggregateColor.uncertainty_col} target={"uncertainty"} range={uncertaintyRange} setRange={setUncertaintyRange}></MinMaxNumberInput>
+            }
+        </Box>
         
-        {(valueRange != null && !deriveRange) && 
-            <MinMaxNumberInput title={`Customize Range for ` + aggregateColor.value_col} target={"value"} range={valueRange} setRange={setValueRange}></MinMaxNumberInput>
-        }
-        {(uncertaintyRange != null && !deriveRange) && 
-            <MinMaxNumberInput title={`Customize Range for ` + aggregateColor.uncertainty_col} target={"uncertainty"} range={uncertaintyRange} setRange={setUncertaintyRange}></MinMaxNumberInput>
-        }
 
         {selectAttributeInfo != null ? 
-            <Box sx={{ flexGrow: 1 }}>
+            <Box paddingTop={1} sx={{ flexGrow: 1 }}>
                 <>
                     <Grid container columns={{ xs: 3 }}>
                         <Grid item xs={1}></Grid>
@@ -162,7 +166,8 @@ export const AdvancedAggregationSettings = connector(({sampleSize, setSampleSize
                 </Grid>
                 </>
             </Box>:
-            <Box>
+            <Box paddingTop={1}>
+                <Typography variant="subtitle2" gutterBottom>Select value aggregation function</Typography>
                 <FormControl>
                     <InputLabel id="selectValueAggregation">Agg</InputLabel>
                     <Select

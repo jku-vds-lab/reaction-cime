@@ -1,6 +1,7 @@
 import { CoralLegend, DefaultLegend, IVector } from "projection-space-explorer";
 import { connect, ConnectedProps } from "react-redux";
 import { AppState } from "../../State/Store";
+import { AggregateLegend } from "./AggregateLegend";
 
 const mapStateToProps = (state: AppState) => ({
     aggregateSelection: state.selection?.currentAggregateSelection,
@@ -21,7 +22,7 @@ export const ReactionLegend = connector(({ aggregate, selection, aggregateSelect
         return <CoralLegend selection={selection} aggregate={aggregate} />;
     }
     else if(aggregateSelection != null){
-        return <div>hi</div>
+        return <AggregateLegend aggregate={aggregate} aggregateSelection={aggregateSelection}></AggregateLegend>
     }else{
         return <DefaultLegend></DefaultLegend>
     }

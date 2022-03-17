@@ -6,7 +6,7 @@ import os
 import logging
 import pandas as pd
 from sqlalchemy import MetaData, Table
-from sqlalchemy.ext.declarative import declarative_base
+# from sqlalchemy.ext.declarative import declarative_base
 
 
 def create_app():
@@ -195,11 +195,17 @@ class ReactionCIMEDBO():
         return pd.read_sql(sql_stmt, self.db.engine)
 
     def drop_table(self, table_name):
-        base = declarative_base()
+        print("--------drop_table")
+        # base = declarative_base()
+        self.metadata.reflect(only=[table_name])
         table = self.metadata.tables.get(table_name)
+        # print(base)
+        print(table)
+        # print(base.metadata.tables)
         if table is not None:
             logging.info(f'Deleting {table_name} table')
-            base.metadata.drop_all(self.db.engine, [table], checkfirst=True)
+            # base.metadata.drop_all(self.db.engine, [table], checkfirst=True)
+            self.metadata.drop_all(self.db.engine, [table], checkfirst=True)
             return True
             # return table.drop(self.db.engine, checkfirst=True)
         return False
