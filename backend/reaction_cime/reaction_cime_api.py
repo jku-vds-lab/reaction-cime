@@ -216,15 +216,19 @@ def get_aggregated_dataset(filename, col_name):
 
 
 dataset_cache = {} # structure: {"filename": dataset} # if "retrieve_cols" are contained in dataset.columns then the dataset is returned, otherwise dataset with all "cache_cols" are loaded into the cache
-def handle_dataset_cache(filename, retrieve_cols=[], cache_cols=[]):
+def handle_dataset_cache(filename, cols=[]):
     if filename not in dataset_cache.keys():
         dataset_cache[filename] = None
 
+    all_cols = list(set(cols + ["x", "y"]))
     # dataset is not cached and has to be loaded
-    if dataset_cache[filename] is None or not set(retrieve_cols).issubset(set(dataset_cache[filename].columns)):
+    if dataset_cache[filename] is None or not set(all_cols).issubset(set(dataset_cache[filename].columns)):
         print("---dataset is not cached and has to be loaded to memory")
-        cols = list(set(cache_cols + retrieve_cols + ["x", "y"]))
-        dataset_cache[filename] = get_cime_dbo().get_dataframe_from_table(filename, columns=cols)
+        print(all_cols)
+        if(dataset_cache[filename] is not None): # add currently cached columns again to cache
+            all_cols = list(set(all_cols + list(dataset_cache[filename].columns)))
+        print(all_cols)
+        dataset_cache[filename] = get_cime_dbo().get_dataframe_from_table(filename, columns=all_cols)
     else:
         print("---dataset cached!")
     # return cached version of dataset
@@ -236,6 +240,13 @@ def reset_dataset_cache(filename=None):
         dataset_cache = {}
     else:
         dataset_cache[filename] = None
+
+
+@reaction_cime_api.route('/update_cache/<filename>', methods=['GET'])
+def update_dataset_cache(filename):
+    cache_cols = request.args.getlist("cache_cols")
+    handle_dataset_cache(filename, cache_cols)
+    return {"msg": "ok"}
 
 @reaction_cime_api.route('/get_agg_csv_cached/<filename>', methods=['GET'])
 def get_aggregated_dataset_cached(filename):
@@ -250,7 +261,7 @@ def get_aggregated_dataset_cached(filename):
         "y_max": float(request.args.get("y_max")),
         }
 
-    agg_domain = handle_dataset_cache(filename, retrieve_cols, cache_cols)
+    agg_domain = handle_dataset_cache(filename, retrieve_cols + cache_cols)
     agg_domain = agg_domain[(agg_domain["x"] < range["x_max"]) * (agg_domain["x"] > range["x_min"]) * (agg_domain["y"] < range["y_max"]) * (agg_domain["y"] > range["y_min"])]
 
     agg_df = aggregate_by_col_interpolate(agg_domain, retrieve_cols, sample_size=sample_size)
@@ -274,7 +285,7 @@ def get_hexagonal_aggregation(filename):
         "y_max": float(request.args.get("y_max")),
         }
     
-    agg_domain = handle_dataset_cache(filename, retrieve_cols, cache_cols)
+    agg_domain = handle_dataset_cache(filename, retrieve_cols + cache_cols)
     agg_domain = agg_domain[(agg_domain["x"] < range["x_max"]) * (agg_domain["x"] > range["x_min"]) * (agg_domain["y"] < range["y_max"]) * (agg_domain["y"] > range["y_min"])]
 
     agg_df, wrong_points = hex_aggregate_by_col(agg_domain, retrieve_cols, aggregation_methods, range=None, sample_size=sample_size) # TODO: what works better: range set to the boundaries of the dataset, or range set to the boundaries of the screen i.e. range=range
@@ -298,11 +309,14 @@ def get_value_range(filename, col_name):
     return {"min": float(range["min"]), "max": float(range["max"])}
 
 
-# TODO: cache dataframe if necessary
-# cache all columns that are selected to be shown in the summary view
 @reaction_cime_api.route('/get_category_count/<filename>/<col_name>', methods=["GET"])
 def get_category_count(filename, col_name):
-    cat_count = get_cime_dbo().get_category_count(filename, col_name)
+    # cat_count = get_cime_dbo().get_category_count(filename, col_name)
+    # return json.dumps(cat_count.to_dict('records')).encode('utf-8')
+    df = handle_dataset_cache(filename, [col_name])
+    df = df[[col_name]]
+    df["count"] = 0 # dummy column, such that it can be aggregated by count
+    cat_count = df.groupby(col_name, as_index=False).count()
     return json.dumps(cat_count.to_dict('records')).encode('utf-8')
 
 @reaction_cime_api.route('/get_category_count_of_hex/<filename>/<col_name>', methods=["GET"])
@@ -311,7 +325,8 @@ def get_category_count_of_hex(filename, col_name):
     hex_y = float(request.args.get("y"))
     hex_circ_radius = float(request.args.get("circ_radius"))
 
-    df = get_cime_dbo().get_dataframe_from_table(filename, columns=["x", "y", col_name])
+    # df = get_cime_dbo().get_dataframe_from_table(filename, columns=["x", "y", col_name])
+    df = handle_dataset_cache(filename, ["x", "y", col_name])
     
     window = isInsideHex(df["x"], df["y"], hex_x=hex_x, hex_y=hex_y, radius=circ_radius_to_radius(hex_circ_radius), circ_radius=hex_circ_radius)
     df = df[window][[col_name]]
@@ -321,7 +336,8 @@ def get_category_count_of_hex(filename, col_name):
 
 @reaction_cime_api.route('/get_density/<filename>/<col_name>', methods=["GET"])
 def get_density(filename, col_name):
-    data = get_cime_dbo().get_dataframe_from_table(filename, columns=[col_name])[col_name]
+    # data = get_cime_dbo().get_dataframe_from_table(filename, columns=[col_name])[col_name]
+    data = handle_dataset_cache(filename, [col_name])[col_name]
 
     from scipy.stats import gaussian_kde
     density = gaussian_kde(data)
@@ -336,7 +352,8 @@ def get_density_of_hex(filename, col_name):
     hex_y = float(request.args.get("y"))
     hex_circ_radius = float(request.args.get("circ_radius"))
 
-    df = get_cime_dbo().get_dataframe_from_table(filename, columns=["x", "y", col_name])
+    # df = get_cime_dbo().get_dataframe_from_table(filename, columns=["x", "y", col_name])
+    df = handle_dataset_cache(filename, ["x", "y", col_name])
     
     window = isInsideHex(df["x"], df["y"], hex_x=hex_x, hex_y=hex_y, radius=circ_radius_to_radius(hex_circ_radius), circ_radius=hex_circ_radius)
     data = df[window][col_name]

@@ -293,6 +293,25 @@ export class ReactionCIMEBackend {
     })
   }
 
+  public updateBackendCache = async(filename:string, cache_cols:string[]) => {
+    let cache_cols_string = ""
+      if(cache_cols != null){
+        for (const key in cache_cols) {
+          const col = cache_cols[key]
+          cache_cols_string += "&cache_cols=" + col
+        }
+      }
+    return fetch(this.baseUrl + "/update_cache/" + filename + "?dummy=1" + cache_cols_string, {
+      method: "GET",
+    })
+    .then(this.handleErrors)
+    .then((response) => response.json())
+    .then(this.handleJSONErrors)
+    .catch((error) => {
+      console.log(error);
+    })
+  }
+
   public loadCategoryCount = async(filename:string, col_name:string) => {
     return fetch(this.baseUrl + "/get_category_count/" + filename + "/" + col_name, {
       method: "GET",

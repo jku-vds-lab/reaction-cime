@@ -57,6 +57,7 @@ const useStyles = makeStyles({
 
 export const AggregateLegend = connector(({ aggregate, aggregateSelection, legendAttributes, dataset }: Props) => {
     const classes = useStyles();
+    // const rows = []
     const rows = genRows(aggregateSelection, aggregate, legendAttributes, dataset);
 
     return <div style={{ width: '100%', maxHeight: '100%', overflowY: 'scroll' }}>

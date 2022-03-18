@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   PSEContextProvider,
   API,
@@ -19,6 +19,7 @@ import { handleBackgroundSelectionDownload } from "./Utility/Utils";
 import { setMouseClick, setMouseMove } from "./State/MouseInteractionHooksDuck";
 import { connect, ConnectedProps } from "react-redux";
 import { ReactionsPlugin } from "./Overrides/Details/ReactionsPlugin";
+import { ReactionCIMEBackendFromEnv } from "./Backend/ReactionCIMEBackend";
 
 export const DEMO = false;
 
@@ -41,6 +42,7 @@ export const ReactionCIMEApp = () => {
 
 const mapStateToProps = (state: AppState) => ({
   dataset_path: state.dataset?.info?.path,
+  legendAttributes: state.genericFingerprintAttributes,
 });
 
 const mapDispatchToProps = (dispatch) => ({
@@ -55,8 +57,16 @@ type PropsFromRedux = ConnectedProps<typeof connector>;
 type Props = PropsFromRedux & {
 };
 
-const ApplicationWrapper = connector(({ setMouseMoveFn, dataset_path, setMouseClickFn }: Props) => {
-  
+const ApplicationWrapper = connector(({ setMouseMoveFn, dataset_path, setMouseClickFn, legendAttributes }: Props) => {
+  useEffect(() => {
+    if(legendAttributes != null){
+      // update cache in backend, when legendAttributes are changed
+      const cols = legendAttributes.filter((item) => item.show).map((item) => item.feature)
+      if(cols.length > 0){
+        ReactionCIMEBackendFromEnv.updateBackendCache(dataset_path, cols)
+      }
+    }
+  }, [legendAttributes])
 
   return <Application
     config={{
