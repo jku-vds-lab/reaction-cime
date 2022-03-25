@@ -526,17 +526,7 @@ export const LineUpContext = connector(function ({
   }, [lineUpInput.lineup, lineUpInput.filter]);
 
   //https://github.com/lineupjs/lineup_app/blob/master/src/export.ts
-  return false ? (
-    <MyWindowPortal
-      onClose={() => {
-        lineUpInput.lineup?.destroy();
-        setLineUpInput_visibility(false);
-      }}
-    >
-      <div ref={lineup_ref} id="lineup_view"></div>
-    </MyWindowPortal>
-  ) : (
-    <div className="LineUpParent">
+  return <div className="LineUpParent">
       <div style={{
           clear: 'both',
           position: 'absolute',
@@ -547,7 +537,6 @@ export const LineUpContext = connector(function ({
           padding: 0
       }} ref={lineup_ref} id="lineup_view"></div>
     </div>
-  );
 });
 
 const WIDTH_HEIGHT_RATIO = 2;

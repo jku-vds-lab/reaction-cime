@@ -17,6 +17,7 @@ def create_app():
 
     basedir = os.path.abspath(os.path.dirname(__file__))
     temp_dir = os.path.join(basedir, '../../temp-files/')
+    app.config["tempdir"] = temp_dir
     if not os.path.exists(temp_dir):
         os.makedirs(temp_dir)
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + temp_dir + 'app.sqlite' #'sqlite://' + app.config['REACTION_CIME_FILES_DIRECTORY'] + "//app.sqlite"

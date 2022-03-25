@@ -6,8 +6,8 @@
 def preprocess_dataset(domain):
 
     # calculates the error between measurement and prediction
-    error_col = domain.apply(lambda x: np.nan if x['experimentCycle'] < 0 else abs(x['yield'] - x['pred_mean_%i'%x['experimentCycle']]), axis=1)
-    index = list(domain.columns).index("yield")
+    error_col = domain.apply(lambda x: np.nan if x[cycle_column] < 0 else abs(x[target_column] - x['pred_mean_%i'%x[cycle_column]]), axis=1)
+    index = list(domain.columns).index(target_column)
 
     new_cols = generate_rename_list(domain)
     domain.columns = new_cols
@@ -53,7 +53,7 @@ def get_time_series_modifier(col, modifier, global_ranges):
     # -- column is a tuple time series feature
     if len([ele for ele in time_series_tuples if ele in col]) > 0:
         timeSeriesGroup = ":".join(split_name) # for pred_mean and pred_var we need to add a colon because lineup uses the colon to find time series with 2 variables
-        modifier += '"paco":true,' # show column in parallel coordinates
+        modifier += '"paco":false,' # show column in parallel coordinates
     else: 
         timeSeriesGroup = "_".join(split_name)
 
@@ -77,7 +77,8 @@ def get_time_series_modifier(col, modifier, global_ranges):
 
     return modifier
 
-
+target_column = "yield"
+cycle_column = "experimentCycle"
 time_series_tuples = ["pred"]
 time_series_cols_diverging = ["shap"]
 smiles_modifier = "smiles"
@@ -101,11 +102,11 @@ def generate_rename_list(domain):
             modifier = '"project":true,"imgSmiles":true,"featureLabel":"smiles","paco":true'
         elif col in experiment_parameters:
             modifier = '"project":true,"featureLabel":"exp_parameters","paco":true'
-        elif col == "yield":
+        elif col == target_column:
             # col ends with _value bzw _step in lineup -> it belongs to a lineup time series
             # TODO: make this dynamic
             modifier = '"project":false,"paco":true,"lineup_meta_column":"pred_value"' # signal lineup that it should add a meta_column with this label, that gives information for other columns
-        elif col == "experimentCycle":
+        elif col == cycle_column:
             # col ends with _value bzw _step in lineup -> it belongs to a lineup time series
             # TODO: make this dynamic
             modifier = '"project":false,"paco":false,"lineup_meta_column":"pred_step"' # signal lineup that it should add a meta_column with this label, that gives information for other columns
@@ -117,7 +118,7 @@ def generate_rename_list(domain):
 
             # -- column does not have any special meaning
             else:
-                modifier = '"project":false,"paco":true'
+                modifier = '"project":false,"paco":false'
 
         new_cols.append('%s{"real_column":true,%s}'%(col_name, modifier)) # "real_column" indicates that the column is actually in the dataset and was not derived
     

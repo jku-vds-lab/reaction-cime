@@ -20,6 +20,7 @@ import { setMouseClick, setMouseMove } from "./State/MouseInteractionHooksDuck";
 import { connect, ConnectedProps } from "react-redux";
 import { ReactionsPlugin } from "./Overrides/Details/ReactionsPlugin";
 import { ReactionCIMEBackendFromEnv } from "./Backend/ReactionCIMEBackend";
+import { PacoContext } from "./PacoContext/PacoContext";
 
 export const DEMO = false;
 
@@ -96,10 +97,15 @@ const ApplicationWrapper = connector(({ setMouseMoveFn, dataset_path, setMouseCl
       contextMenuItems: [{key:"getkNN", title:"Download k-Nearest", function:(coords) => {
         handleBackgroundSelectionDownload(coords, dataset_path)
       }}],
-      detailViews: [
+      detailViews: [ //TODO: switch between the two
+        {
+          name: "paco",
+          // @ts-ignore
+          view: <PacoContext key={"paco"}></PacoContext>
+        },
         {
           name: "lineup",
-          //@ts-ignore
+          // @ts-ignore
           view: <LineUpContext key={"lineup"}></LineUpContext>
         },
       ],

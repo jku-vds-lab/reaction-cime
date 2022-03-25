@@ -19,7 +19,7 @@ def hello():
     return "Hello World"
 
 
-# --------- server management --------- 
+# region --------------- server management --------------- 
 from flask import render_template
 @reaction_cime_api.route("/")
 def index():
@@ -29,12 +29,13 @@ def index():
 def index_2():
     return render_template('jku-vds-lab/reaction-cime/index.html')
 
-
 # @reaction_cime_api.route('/favicon.ico')
 # def favicon():
 #     return render_template('jku-vds-lab/reaction-cime/favicon.ico')
 
-# --------------- database ------------------
+# endregion
+
+# region --------------- database ---------------
 
 @reaction_cime_api.route('/get_uploaded_files_list', methods=['GET'])
 def get_uploaded_files_list():
@@ -52,8 +53,45 @@ def delete_uploaded_file(filename):
 def get_cime_dbo():
     return current_app.config['REACTION_CIME_DBO']
 
+# endregion
 
-# --------------- process dataset ------------------
+# region --------------- caching ---------------
+dataset_cache = {} # structure: {"filename": dataset} # if "retrieve_cols" are contained in dataset.columns then the dataset is returned, otherwise dataset with all "cache_cols" are loaded into the cache
+def handle_dataset_cache(filename, cols=[]):
+    if filename not in dataset_cache.keys():
+        dataset_cache[filename] = None
+
+    all_cols = list(set(cols + ["x", "y"]))
+    # dataset is not cached and has to be loaded
+    if dataset_cache[filename] is None or not set(all_cols).issubset(set(dataset_cache[filename].columns)):
+        print("---dataset is not cached and has to be loaded to memory")
+        print(all_cols)
+        if(dataset_cache[filename] is not None): # add currently cached columns again to cache
+            all_cols = list(set(all_cols + list(dataset_cache[filename].columns)))
+        print(all_cols)
+        dataset_cache[filename] = get_cime_dbo().get_dataframe_from_table(filename, columns=all_cols)
+    else:
+        print("---dataset cached!")
+    # return cached version of dataset
+    return dataset_cache[filename]
+
+def reset_dataset_cache(filename=None):
+    global dataset_cache
+    if filename is None:
+        dataset_cache = {}
+    else:
+        dataset_cache[filename] = None
+
+
+@reaction_cime_api.route('/update_cache/<filename>', methods=['GET'])
+def update_dataset_cache(filename):
+    cache_cols = request.args.getlist("cache_cols")
+    handle_dataset_cache(filename, cache_cols)
+    return {"msg": "ok"}
+
+# endregion
+
+# region --------------- process dataset ------------------
 import os
 import time
 import numpy as np
@@ -91,6 +129,9 @@ def upload_csv():
         filename = "%s%i"%(filename, time.time())
 
     get_cime_dbo().save_dataframe(df, filename)
+
+    # create default constraints file
+    save_poi_constraints(filename)
     
     delta_time = time.time()-start_time
     print("--- took", time.strftime('%H:%M:%S', time.gmtime(delta_time)), "to upload file %s"%filename)
@@ -101,7 +142,67 @@ def upload_csv():
         "id": filename
     }
 
+# endregion
 
+# region --------------- Points of Interest ------------------
+
+def save_poi_constraints(filename, constraints=[{"col": "yield", "operator": "BETWEEN", "val1": 0, "val2": 100}]):
+    constraints = pd.DataFrame(constraints)
+    constraints.to_csv(f'{current_app.config["tempdir"]}{filename}_constraints.csv', index=False)
+
+def load_poi_constraints(filename):
+    path = f'{current_app.config["tempdir"]}{filename}_constraints.csv'
+    if not os.path.exists(path): # if there is no constraints file yet, create a default one
+        save_poi_constraints(filename)
+
+    df_constraints = pd.read_csv(path)
+    return df_constraints
+
+
+@reaction_cime_api.route('/update_poi_constraints', methods=['OPTIONS', 'POST'])
+def update_poi_constraints():
+    if request.method == 'POST':
+        filename = request.form.get("filename")
+        constraints = json.loads(request.form.get("constraints"))
+        constraints_df = pd.DataFrame(constraints)
+
+        if "col" in constraints_df.columns and "operator" in constraints_df.columns and "val1" in constraints_df.columns and "val2" in constraints_df.columns:
+            save_poi_constraints(filename, constraints_df)
+            return {"msg": "ok"}
+
+        return {"error": "wrong format; constraints must be of form [{'col': columnname, 'operator': 'BETWEEN'|'EQUALS', 'val1': firstValue, 'val2': secondValue}]"}
+    else:
+        return {}
+
+@reaction_cime_api.route('/get_poi_constraints/<filename>', methods=['GET'])
+def get_poi_constraints(filename):
+    constraint_df = load_poi_constraints(filename)
+    print(json.dumps(constraint_df.to_dict('records')).encode('utf-8'))
+    return json.dumps(constraint_df.to_dict('records')).encode('utf-8')
+
+def map_constraint_operator(row):
+    if row.operator == "BETWEEN":
+        return f'"{row.col}" BETWEEN {row.val1} AND {row.val2}'
+    if row.operator == "EQUALS":
+        return f'"{row.col}"="{row.val1}"'
+    return ''
+
+def get_poi_constraints_filter(filename):
+    df_constraints = load_poi_constraints(filename)
+
+    cols = list(set(df_constraints["col"]))
+    col_filters = []
+    for col in cols:
+        df_constraints_col = df_constraints[df_constraints["col"] == col]
+        
+        # concatenate constraints of a single column with OR
+        col_filter = " OR ".join(df_constraints_col.apply(map_constraint_operator, axis=1).tolist())
+        col_filters.append(f'({col_filter})')
+
+    # concatenate constraints of different columns with AND
+    filter_string = " AND ".join(col_filters)
+
+    return filter_string
 
 import pandas as pd
 from io import StringIO
@@ -111,8 +212,8 @@ def get_points_of_interest(filename):
     # domain = get_cime_dbo().get_dataframe_from_table(filename)
 
     poi_domain = get_poi_df_from_db(filename, get_cime_dbo())
-
-    poi_domain = preprocess_dataset(poi_domain)
+    if len(poi_domain) > 0:
+        poi_domain = preprocess_dataset(poi_domain)
 
     csv_buffer = StringIO()
     poi_domain.to_csv(csv_buffer, index=False)
@@ -124,12 +225,31 @@ def get_points_of_interest(filename):
 def get_poi_df_from_db(filename, cime_dbo):
     # TODO: make dynamic, by which feature we want to filter (e.g. user could change the settings in the front-end maybe with parallel coordinates?)
     # example code for distance filter
-    poi_domain = cime_dbo.get_dataframe_from_table_filter(filename, "yield > 0")
+    poi_domain = cime_dbo.get_dataframe_from_table_filter(filename, get_poi_constraints_filter(filename))
     return poi_domain
 
 def get_poi_mask(filename, cime_dbo):
-    mask = cime_dbo.get_filter_mask(filename, "yield > 0")
+    mask = cime_dbo.get_filter_mask(filename, get_poi_constraints_filter(filename))
     return mask
+
+# endregion
+
+# region --------------- Parallel Coordinates ------------------
+
+@reaction_cime_api.route('/get_csv_by_columns/<filename>', methods=['GET'])
+def get_csv_by_columns(filename):
+    columns = request.args.getlist("cols")
+    domain = handle_dataset_cache(filename, columns)
+    domain = domain[columns]
+
+    csv_buffer = StringIO()
+    domain.to_csv(csv_buffer, index=False)
+
+    return csv_buffer.getvalue()
+
+# endregion
+
+# region --------------- nearest neighbors ------------------
 
 @reaction_cime_api.route('/get_k_nearest_from_csv/<filename>/<x>/<y>/<k>', methods=['GET'])
 def get_k_nearest_points(filename, x, y, k):
@@ -195,6 +315,9 @@ def get_points_given_radius(filename, x, y, r):
     response.headers["Content-type"] = "text/csv"
     return response
 
+# endregion
+
+# region --------------- aggregate dataset ------------------
 
 # deprecated
 @reaction_cime_api.route('/get_agg_csv/<filename>/<col_name>', methods=['GET'])
@@ -214,39 +337,6 @@ def get_aggregated_dataset(filename, col_name):
 
     return csv_buffer.getvalue()
 
-
-dataset_cache = {} # structure: {"filename": dataset} # if "retrieve_cols" are contained in dataset.columns then the dataset is returned, otherwise dataset with all "cache_cols" are loaded into the cache
-def handle_dataset_cache(filename, cols=[]):
-    if filename not in dataset_cache.keys():
-        dataset_cache[filename] = None
-
-    all_cols = list(set(cols + ["x", "y"]))
-    # dataset is not cached and has to be loaded
-    if dataset_cache[filename] is None or not set(all_cols).issubset(set(dataset_cache[filename].columns)):
-        print("---dataset is not cached and has to be loaded to memory")
-        print(all_cols)
-        if(dataset_cache[filename] is not None): # add currently cached columns again to cache
-            all_cols = list(set(all_cols + list(dataset_cache[filename].columns)))
-        print(all_cols)
-        dataset_cache[filename] = get_cime_dbo().get_dataframe_from_table(filename, columns=all_cols)
-    else:
-        print("---dataset cached!")
-    # return cached version of dataset
-    return dataset_cache[filename]
-
-def reset_dataset_cache(filename=None):
-    global dataset_cache
-    if filename is None:
-        dataset_cache = {}
-    else:
-        dataset_cache[filename] = None
-
-
-@reaction_cime_api.route('/update_cache/<filename>', methods=['GET'])
-def update_dataset_cache(filename):
-    cache_cols = request.args.getlist("cache_cols")
-    handle_dataset_cache(filename, cache_cols)
-    return {"msg": "ok"}
 
 @reaction_cime_api.route('/get_agg_csv_cached/<filename>', methods=['GET'])
 def get_aggregated_dataset_cached(filename):
@@ -365,6 +455,9 @@ def get_density_of_hex(filename, col_name):
 
     return {"x_vals": list(x_vals), "y_vals": list(y_vals)}
 
+# endregion
+
+# region --------------- projection ------------------
 
 from openTSNE import TSNE
 import umap
@@ -641,9 +734,9 @@ def project_dataset_async():
     
 
 
+# endregion
 
-
-# --------------- chem specific ------------------- 
+# region --------------- chem specific ------------------- 
 
 @reaction_cime_api.route('/get_mol_img', methods=['OPTIONS', 'POST'])
 def smiles_to_img_post():
@@ -702,3 +795,4 @@ def smiles_list_to_substructure_count():
     else:
         return {}
 
+# endregion

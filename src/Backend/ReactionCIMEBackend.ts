@@ -131,12 +131,14 @@ export class ReactionCIMEBackend {
     let my_fetch;
     if (controller) {
       my_fetch = fetch(this.baseUrl + "/get_common_mol_img", {
+        ...this.fetchParams,
         method: "POST",
         body: formData,
         signal: controller?.signal,
       });
     } else {
       my_fetch = fetch(this.baseUrl + "/get_common_mol_img", {
+        ...this.fetchParams,
         method: "POST",
         body: formData,
       });
@@ -157,6 +159,7 @@ export class ReactionCIMEBackend {
     formData.append("smiles_list", smiles_list);
     formData.append("filter_smiles", filter);
     return fetch(this.baseUrl + "/get_substructure_count", {
+      ...this.fetchParams,
       method: "POST",
       body: formData,
     })
@@ -188,6 +191,7 @@ export class ReactionCIMEBackend {
     formData.append("allow_single_cluster", allow_single_cluster);
     formData.append("X", X);
     return fetch(this.baseUrl + "/segmentation", {
+      ...this.fetchParams,
       method: "POST",
       body: formData,
     })
@@ -240,6 +244,7 @@ export class ReactionCIMEBackend {
     formData.append("params", JSON.stringify(params));
     formData.append("selected_feature_info", JSON.stringify(selected_feature_info));
     return fetch(this.baseUrl + "/project_dataset_async", {
+      ...this.fetchParams,
       method: "POST",
       body: formData,
       signal: controller?.signal,
@@ -283,6 +288,7 @@ export class ReactionCIMEBackend {
 
   public loadValueRange = async(filename:string, col_name:string) => {
     return fetch(this.baseUrl + "/get_value_range/" + filename + "/" + col_name, {
+      ...this.fetchParams,
       method: "GET",
     })
     .then(this.handleErrors)
@@ -302,6 +308,7 @@ export class ReactionCIMEBackend {
         }
       }
     return fetch(this.baseUrl + "/update_cache/" + filename + "?dummy=1" + cache_cols_string, {
+      ...this.fetchParams,
       method: "GET",
     })
     .then(this.handleErrors)
@@ -314,6 +321,7 @@ export class ReactionCIMEBackend {
 
   public loadCategoryCount = async(filename:string, col_name:string) => {
     return fetch(this.baseUrl + "/get_category_count/" + filename + "/" + col_name, {
+      ...this.fetchParams,
       method: "GET",
     })
     .then(this.handleErrors)
@@ -326,6 +334,7 @@ export class ReactionCIMEBackend {
 
   public loadCategoryCountOfHex = async(filename:string, col_name:string, x:number, y:number, circ_radius:number) => {
     return fetch(this.baseUrl + "/get_category_count_of_hex/" + filename + "/" + col_name + "?x=" + x + "&y=" + y + "&circ_radius=" + circ_radius, {
+      ...this.fetchParams,
       method: "GET",
     })
     .then(this.handleErrors)
@@ -338,6 +347,7 @@ export class ReactionCIMEBackend {
 
   public loadDensity = async(filename:string, col_name:string) => {
     return fetch(this.baseUrl + "/get_density/" + filename + "/" + col_name, {
+      ...this.fetchParams,
       method: "GET",
     })
     .then(this.handleErrors)
@@ -350,6 +360,7 @@ export class ReactionCIMEBackend {
 
   public loadDensityOfHex = async(filename:string, col_name:string, x:number, y:number, circ_radius:number) => {
     return fetch(this.baseUrl + "/get_density_of_hex/" + filename + "/" + col_name + "?x=" + x + "&y=" + y + "&circ_radius=" + circ_radius, {
+      ...this.fetchParams,
       method: "GET",
     })
     .then(this.handleErrors)
@@ -537,6 +548,69 @@ export class ReactionCIMEBackend {
         }),
       loadingArea
     );
+  }
+
+  public loadPacoCSV(finished: (dataset: any) => void, filename:string, cols:string[], cancellablePromise?: ReturnType<typeof useCancellablePromise>["cancellablePromise"], controller?: AbortController, loadingArea?:string){
+    let cols_string = "?dummy=0";
+    for(let i in cols){
+      const col = cols[i];
+      cols_string += "&cols=" + col;
+    }
+    
+    const path = ReactionCIMEBackendFromEnv.baseUrl + "/get_csv_by_columns/" + filename + cols_string;
+
+    const promise = cancellablePromise
+        ? cancellablePromise(
+            d3v5.csv(path, {...ReactionCIMEBackendFromEnv.fetchParams, signal: controller?.signal,}), controller
+          ) : d3v5.csv(path, {...ReactionCIMEBackendFromEnv.fetchParams, signal: controller?.signal,});
+    
+    trackPromise(
+      promise
+        .then((vectors) => {
+            if(vectors.length <= 0){
+                console.log("dataset is empty");
+                alert("dataset is empty")
+            }else{
+                finished(vectors)
+            }
+        })
+        .catch((error) => {
+          console.log(error);
+        }),
+      loadingArea
+    );
+      
+  }
+
+  public loadPOIConstraints = async(filename: string) => {
+    return fetch(this.baseUrl + "/get_poi_constraints/" + filename, {
+      ...this.fetchParams,
+      method: "GET",
+    })
+    .then(this.handleErrors)
+    .then((response) => response.json())
+    .then(this.handleJSONErrors)
+    .catch((error) => {
+      console.log(error);
+    })
+  }
+
+  public updatePOIConstraints = async(filename: string, constraints: any[]) => {
+    console.log(constraints)
+    const formData = new FormData();
+    formData.append("constraints", JSON.stringify(constraints));
+    formData.append("filename", filename)
+    return fetch(this.baseUrl + "/update_poi_constraints", {
+      ...this.fetchParams,
+      method: "POST",
+      body: formData,
+    })
+    .then(this.handleErrors)
+    .then((response) => response.json())
+    .then(this.handleJSONErrors)
+    .catch((error) => {
+      console.log(error);
+    })
   }
 }
 

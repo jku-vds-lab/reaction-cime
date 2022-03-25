@@ -1,10 +1,14 @@
-.LineUpParent {
+.PacoParent .gl-canvas-context{
+  opacity: 0.3 !important;
+}
+
+.PacoParent {
   width: 100%;
   height: 100%;
   position: relative;
 }
 
-#lineup_view {
+#paco_view {
   // font-size: 0.8rem;
   // font-family: "Roboto", "Helvetica", "Arial", sans-serif;
   font-family: "Roboto", "Helvetica", sans-serif;
@@ -13,7 +17,7 @@
   letter-spacing: 0.00938em;
 }
 
-#lineup_view .lu-label {
+#paco_view .lu-label {
   font-weight: 400;
 }
 // .svg-container {
