@@ -13,9 +13,10 @@ import Loader from "react-loader-spinner";
 import { AppState } from "../../State/Store";
 import { connect, ConnectedProps } from "react-redux";
 import { UploadedFiles } from "./UploadedFiles";
-import { useState } from "react";
+import React, { useState } from "react";
 import { BackendCSVLoader } from "./BackendCSVLoader";
 import { setAggregateColor } from "../../State/AggregateSettingsDuck";
+import { setTriggerUpdate } from "../../State/HandleDatasetDuck";
   
   export const LoadingIndicatorView = (props) => {
     const { promiseInProgress } = usePromiseTracker({ area: props.area });
@@ -61,6 +62,7 @@ import { setAggregateColor } from "../../State/AggregateSettingsDuck";
   
   const mapDispatchToProps = (dispatch) => ({
     setAggregateColor: value => dispatch(setAggregateColor(value)),
+    setTriggerUpdate: value => dispatch(setTriggerUpdate(value)),
   });
   
   const connector = connect(mapStateToProps, mapDispatchToProps);
@@ -71,7 +73,7 @@ import { setAggregateColor } from "../../State/AggregateSettingsDuck";
     onDataSelected
   };
 
-  export const DatasetTabPanel = connector(({onDataSelected, setAggregateColor}: Props) => {
+  export const DatasetTabPanel = connector(({onDataSelected, setAggregateColor, setTriggerUpdate}: Props) => {
     const { cancellablePromise, cancelPromises } = useCancellablePromise();
     let abort_controller = new AbortController();
     const [refreshUploadedFiles, setRefreshUploadedFiles] = useState(0);
@@ -80,6 +82,22 @@ import { setAggregateColor } from "../../State/AggregateSettingsDuck";
       setAggregateColor(null);
       onDataSelected(dataset);
     }
+
+    const triggerUpdate = (entry) => {
+      new BackendCSVLoader().resolvePath(
+        entry,
+        (dataset) => {
+          intermediateOnDataSelected(dataset);
+        },
+        cancellablePromise,
+        null,
+        abort_controller
+      );
+    }
+
+    React.useEffect(() => {
+      setTriggerUpdate(triggerUpdate)
+    }, [])
   
     return (
       <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
@@ -106,16 +124,7 @@ import { setAggregateColor } from "../../State/AggregateSettingsDuck";
 
       <UploadedFiles
         onChange={(entry) => {
-          // setEntry(entry);
-          new BackendCSVLoader().resolvePath(
-            entry,
-            (dataset) => {
-              intermediateOnDataSelected(dataset);
-            },
-            cancellablePromise,
-            null,
-            abort_controller
-        );
+          triggerUpdate(entry)
         }}
         refresh={refreshUploadedFiles}
       />

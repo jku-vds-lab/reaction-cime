@@ -1,6 +1,7 @@
 import { RootState } from "projection-space-explorer";
 import { combineReducers } from "redux";
 import aggregateSettings from "./AggregateSettingsDuck";
+import { handleDataset } from "./HandleDatasetDuck";
 // import Dataset from "projection-space-explorer/dist/components/Ducks/DatasetDuck";
 // import cimeBackgroundSelection from "projection-space-explorer/dist/components/Ducks/CimeBackgroundSelectionDuck";
 import lineUpInput from "./LineUpInputDuck";
@@ -14,6 +15,7 @@ export const CIMEReducers = {
   aggregateSettings: aggregateSettings,
   mouseInteractionHooks: mouseInteractionHooks,
   selection: selection,
+  handleDataset: handleDataset,
 };
 
 const combined = combineReducers(CIMEReducers);

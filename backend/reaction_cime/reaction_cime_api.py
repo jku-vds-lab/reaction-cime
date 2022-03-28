@@ -1,3 +1,4 @@
+from ast import operator
 import pickle
 from flask import Blueprint, request, current_app, abort, jsonify, Response, stream_with_context
 import logging
@@ -167,7 +168,14 @@ def update_poi_constraints():
         constraints_df = pd.DataFrame(constraints)
 
         if "col" in constraints_df.columns and "operator" in constraints_df.columns and "val1" in constraints_df.columns and "val2" in constraints_df.columns:
+            poi_count = get_cime_dbo().get_filter_mask(filename, get_poi_constraints_filter(filename, constraints_df))["mask"].sum() # check if constraints are limited enough
+            if poi_count > 10000:
+                return {"error": "too many Points of Interest selected; filter could not be applied"}
             save_poi_constraints(filename, constraints_df)
+            return {"msg": "ok"}
+
+        if len(constraints_df) <= 0:
+            save_poi_constraints(filename, pd.DataFrame(columns=["col", "operator", "val1", "val2"]))
             return {"msg": "ok"}
 
         return {"error": "wrong format; constraints must be of form [{'col': columnname, 'operator': 'BETWEEN'|'EQUALS', 'val1': firstValue, 'val2': secondValue}]"}
@@ -187,8 +195,9 @@ def map_constraint_operator(row):
         return f'"{row.col}"="{row.val1}"'
     return ''
 
-def get_poi_constraints_filter(filename):
-    df_constraints = load_poi_constraints(filename)
+def get_poi_constraints_filter(filename, df_constraints=None):
+    if df_constraints is None:
+        df_constraints = load_poi_constraints(filename)
 
     cols = list(set(df_constraints["col"]))
     col_filters = []
@@ -212,6 +221,7 @@ def get_points_of_interest(filename):
     # domain = get_cime_dbo().get_dataframe_from_table(filename)
 
     poi_domain = get_poi_df_from_db(filename, get_cime_dbo())
+    
     if len(poi_domain) > 0:
         poi_domain = preprocess_dataset(poi_domain)
 
@@ -231,6 +241,11 @@ def get_poi_df_from_db(filename, cime_dbo):
 def get_poi_mask(filename, cime_dbo):
     mask = cime_dbo.get_filter_mask(filename, get_poi_constraints_filter(filename))
     return mask
+
+@reaction_cime_api.route('/download_poi_constraints/<filename>', methods=['GET'])
+def download_poi_constraints(filename):
+    path = f'{current_app.config["tempdir"]}{filename}_constraints.csv'
+    return send_file(path, as_attachment=True)
 
 # endregion
 

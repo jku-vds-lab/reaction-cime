@@ -596,7 +596,6 @@ export class ReactionCIMEBackend {
   }
 
   public updatePOIConstraints = async(filename: string, constraints: any[]) => {
-    console.log(constraints)
     const formData = new FormData();
     formData.append("constraints", JSON.stringify(constraints));
     formData.append("filename", filename)
@@ -612,6 +611,27 @@ export class ReactionCIMEBackend {
       console.log(error);
     })
   }
+
+  public downloadPOIConstraints = async(filename: string) => {
+    let path = this.baseUrl + "/download_poi_constraints/" + filename;
+    // window.location.href = path;
+    window.open(path);
+  }
+
+  public uploadPOIConstraints = async(filename: string, file) => {
+    const contents = await file.text()
+    const data = d3v5.csvParse(contents);
+    return ReactionCIMEBackendFromEnv.updatePOIConstraints(filename, data)
+    // var reader = new FileReader();
+
+    // reader.onload = function(e) {
+    //   var contents = e.target.result;
+    //   var data = d3v5.csvParse(contents);
+    //   return ReactionCIMEBackendFromEnv.updatePOIConstraints(filename, data)
+    // };
+
+    // reader.readAsText(file);
+  };
 }
 
 

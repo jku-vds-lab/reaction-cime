@@ -24,16 +24,16 @@ export function handleBackgroundSelectionDownload(coords: any, filename: string)
         ?.value;
         // if input k is neither integer nor below 1
         if (k < 1 || k % 1 !== 0) {
-        // warn user
-        alert("Invalid input for k-nearest neighbors.");
+            // warn user
+            alert("Invalid input for k-nearest neighbors.");
         } else {
-        // otherwise send request to db and download response in browser
-        ReactionCIMEBackendFromEnv.getkNearestData(
-            filename,
-            coords?.x,
-            coords?.y,
-            (document.getElementById("knn-textfield") as HTMLInputElement)?.value
-        );
+            // otherwise send request to db and download response in browser
+            ReactionCIMEBackendFromEnv.getkNearestData(
+                filename,
+                coords?.x,
+                coords?.y,
+                (document.getElementById("knn-textfield") as HTMLInputElement)?.value
+            );
         }
     }
 }

@@ -3,20 +3,25 @@ import { connect, ConnectedProps } from "react-redux";
 import { AppState } from "../State/Store";
 import "./PacoContext.scss";
 import Plotly from 'plotly.js-dist'
-import * as d3v5 from "d3v5";
-import { Button } from "@mui/material";
+import { Box, Button, IconButton, Tooltip, Typography } from "@mui/material";
 import { ReactionCIMEBackendFromEnv } from "../Backend/ReactionCIMEBackend";
 import { useCancellablePromise } from "projection-space-explorer";
 import { LoadingIndicatorView } from "../Overrides/Dataset/DatasetTabPanel";
+import FileDownloadIcon from '@mui/icons-material/FileDownload';
+import UpdateIcon from '@mui/icons-material/Update';
+import FileUploadIcon from '@mui/icons-material/FileUpload';
+import SettingsIcon from '@mui/icons-material/Settings';
+// @ts-ignore
+import { AttributeSelectionTable } from 'projection-space-explorer';
 
 
 
  const mapStateToProps = (state: AppState) => ({
-    dataset: state.dataset
+    dataset: state.dataset,
+    triggerDatasetUpdate: state.handleDataset?.triggerUpdate
   });
   
   const mapDispatchToProps = (dispatch) => ({
-    // setCurrentAggregation: (samples: number[]) => dispatch(selectVectors(samples)),
   });
   
   const connector = connect(mapStateToProps, mapDispatchToProps);
@@ -27,17 +32,23 @@ import { LoadingIndicatorView } from "../Overrides/Dataset/DatasetTabPanel";
   };
   
 const loading_area = "loading_indicator_paco";
-export const PacoContext = connector(function ({dataset}: Props) {
+export const PacoContext = connector(function ({dataset, triggerDatasetUpdate}: Props) {
     if(dataset == null || dataset.columns == null)
         return null;
 
     let paco_ref = React.useRef<any>();
+    let fileInput = React.useRef<any>();
     const { cancellablePromise, cancelPromises } = useCancellablePromise();
 
     // TODO: add user input to select, which columns to show
-    const [pacoShowColumns, setPacoShowColumns] = React.useState(Object.keys(dataset.columns).filter((col) => dataset.columns[col].metaInformation.paco));
+    // const [pacoShowColumns, setPacoShowColumns] = React.useState(Object.keys(dataset.columns).filter((col) => dataset.columns[col].metaInformation.paco));
+    const [pacoAttributes, setPacoAttributes] = React.useState(Object.keys(dataset.columns).map((col) => {
+        return {feature: col, show: dataset.columns[col].metaInformation.paco};
+    }));
+    const [totalDataPoints, setTotalDataPoints] = React.useState(-1)
 
     const updateBackendConstraints = (dimensions) => {
+
         const constraint_dimensions = dimensions.filter((dim) => dim.constraintrange != null && dim.constraintrange.length > 0)
         let all_constraints = []
         for(const i in constraint_dimensions){
@@ -65,16 +76,52 @@ export const PacoContext = connector(function ({dataset}: Props) {
             }
         }
 
-        ReactionCIMEBackendFromEnv.updatePOIConstraints(dataset.info.path, all_constraints).then((res) => console.log(res))
+        ReactionCIMEBackendFromEnv.updatePOIConstraints(dataset.info.path, all_constraints).then((res) => {
+            if(res.msg === "ok" && triggerDatasetUpdate != null){
+                triggerDatasetUpdate({
+                    display: dataset.info.path,
+                    path: dataset.info.path,
+                    type: dataset.info.type,
+                    uploaded: true
+                })
+            }
+        })
+        
+    }
 
+    const downloadConstraints = () => {
+        ReactionCIMEBackendFromEnv.downloadPOIConstraints(dataset.info.path);
+    }
+    const uploadConstraints = (files) => {
+        if (files == null || files.length <= 0) {
+            return;
+        }
+        var file = files[0];
+        var fileName = file.name as string;
+
+        if (fileName.endsWith("csv")) {
+            ReactionCIMEBackendFromEnv.uploadPOIConstraints(dataset.info.path, file).then((res) => {
+                if(res.msg === "ok" && triggerDatasetUpdate != null){
+                    triggerDatasetUpdate({
+                        display: dataset.info.path,
+                        path: dataset.info.path,
+                        type: dataset.info.type,
+                        uploaded: true
+                    })
+                }
+            })
+        }
     }
 
     React.useEffect(()=> {
+        const pacoShowColumns = pacoAttributes.filter((col) => col.show);
         if(pacoShowColumns.length > 0){
             cancelPromises();
             let abort_controller = new AbortController(); //TODO: reiterate where AbortController needs to be instantiated --> can it be moved inside the loadPacoCSV function?
             ReactionCIMEBackendFromEnv.loadPOIConstraints(dataset.info.path).then((constraints) => {
                 ReactionCIMEBackendFromEnv.loadPacoCSV((rows) => {
+                    setTotalDataPoints(rows.length)
+
                     function unpack(rows, key) {
                         return rows.map(function(row) {
                             let val = row[key];
@@ -154,6 +201,9 @@ export const PacoContext = connector(function ({dataset}: Props) {
                     };
     
                     var layout = {
+                        padding: {
+                            top: 0
+                        }
                         // width: 1500,
                         // height: 800, 
                         // hovermode: 'closest'
@@ -165,19 +215,53 @@ export const PacoContext = connector(function ({dataset}: Props) {
     
                     Plotly.newPlot(paco_ref.current, [paco], layout, config);
     
-                }, dataset.info.path, pacoShowColumns, cancellablePromise, abort_controller, loading_area)
+                }, dataset.info.path, pacoShowColumns.map((col) => col.feature), cancellablePromise, abort_controller, loading_area)
             })
             
         }
         
         
-    }, [dataset])
+    }, [dataset, pacoAttributes])
   
     return <div className="PacoParent">
-        <Button onClick={() => {updateBackendConstraints(paco_ref.current.data[0].dimensions)}}>Update POIs</Button>
-      <div style={{}} ref={paco_ref}></div>
-      <LoadingIndicatorView 
-        area={loading_area}
-      />
+        <Box style={{clear: "both"}} paddingLeft={2} paddingTop={1} paddingRight={2}>
+            <Box style={{float: "left"}} paddingTop={1}>
+                <AttributeSelectionTable attributes={pacoAttributes} setAttributes={setPacoAttributes} btnFullWidth={false}><SettingsIcon/>&nbsp;Choose Attributes</AttributeSelectionTable>
+            </Box>
+            <Box style={{float: "right"}}>
+                <Typography color="textSecondary" variant="body2">Currently showing {dataset.vectors.length} out of {totalDataPoints} items</Typography>
+                <Tooltip title="Update Points of Interest">
+                    <Button style={{paddingRight: 25}} variant="outlined" aria-label="Update Points of Interest" onClick={() => {updateBackendConstraints(paco_ref.current.data[0].dimensions)}}>
+                        <UpdateIcon />&nbsp;Update POIs
+                    </Button>
+                </Tooltip>
+                <Tooltip title="Export POI constraints">
+                    <IconButton color="primary" aria-label="Export POI constraints" onClick={() => {downloadConstraints()}}>
+                        <FileDownloadIcon />
+                    </IconButton>
+                </Tooltip>
+                <input
+                        style={{ display: 'none' }}
+                        accept={".csv"}
+                        ref={fileInput}
+                        // multiple
+                        type="file"
+                        onChange={(e) => {
+                        uploadConstraints(e.target.files);
+                        }}
+                    />
+                <Tooltip title="Import POI constraints">
+                    <IconButton color="primary" aria-label="Import POI constraints" onClick={() => fileInput.current.click()}>
+                        <FileUploadIcon />
+                    </IconButton>
+                </Tooltip>
+            </Box>
+        </Box>
+        <Box style={{clear: "both"}} paddingLeft={2} paddingTop={1} paddingRight={2}>
+            <div style={{}} ref={paco_ref}></div>
+        </Box>
+        <LoadingIndicatorView 
+            area={loading_area}
+        />
     </div>
   })

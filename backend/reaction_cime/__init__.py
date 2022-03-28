@@ -182,7 +182,9 @@ class ReactionCIMEDBO():
             for col in columns:
                 select_cols += f', "{col}"'
 
-        sql_stmt = 'SELECT ' + select_cols + ' FROM "' + table_name + '" WHERE ' + filter
+        sql_stmt = 'SELECT ' + select_cols + ' FROM "' + table_name  + '"'
+        if filter is not None and filter != "":
+            sql_stmt += ' WHERE ' + filter
         return pd.read_sql(sql_stmt, self.db.engine, index_col="id")
 
     def get_filter_mask(self, table_name, filter):
