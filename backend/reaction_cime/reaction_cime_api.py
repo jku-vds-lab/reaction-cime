@@ -185,7 +185,6 @@ def update_poi_constraints():
 @reaction_cime_api.route('/get_poi_constraints/<filename>', methods=['GET'])
 def get_poi_constraints(filename):
     constraint_df = load_poi_constraints(filename)
-    print(json.dumps(constraint_df.to_dict('records')).encode('utf-8'))
     return json.dumps(constraint_df.to_dict('records')).encode('utf-8')
 
 def map_constraint_operator(row):
@@ -413,6 +412,11 @@ def get_value_range(filename, col_name):
     range = get_cime_dbo().get_value_range_from_table(filename, col_name).iloc[0]
     return {"min": float(range["min"]), "max": float(range["max"])}
 
+@reaction_cime_api.route('/get_category_values/<filename>/<col_name>', methods=["GET"])
+def get_category_values(filename, col_name):
+    df = handle_dataset_cache(filename, [col_name])
+    distinct_vals = list(set(df[col_name]))
+    return {"values": distinct_vals}
 
 @reaction_cime_api.route('/get_category_count/<filename>/<col_name>', methods=["GET"])
 def get_category_count(filename, col_name):

@@ -9,12 +9,12 @@ import { SelectFeatureComponent } from "projection-space-explorer";
 import { ReactionCIMEBackendFromEnv } from "../../Backend/ReactionCIMEBackend";
 import { FilterSettings } from "./FilterSettings";
 import FileUploadIcon from '@mui/icons-material/FileUpload';
-import FilterAltIcon from '@mui/icons-material/FilterAlt';
 
 
 
 const mapStateToProps = (state: AppState) => ({
   dataset: state.dataset,
+  triggerDatasetUpdate: state.handleDataset?.triggerUpdate
 });
 
 const mapDispatchToProps = (dispatch) => ({
@@ -27,16 +27,18 @@ type PropsFromRedux = ConnectedProps<typeof connector>;
 type Props = PropsFromRedux & {
 };
 
-export const FilterTabPanel = connector(({dataset}: Props) => {
+export const FilterTabPanel = connector(({dataset, triggerDatasetUpdate}: Props) => {
 
   // const [constraintsMap, setConstraintsMap] = React.useState({});
   const [constraints, setConstraints] = React.useState([]);
   const [constraintCols, setConstraintCols] = React.useState([]);
+  let fileInput = React.useRef<any>();
 
   
   React.useEffect(()=> {
     if(dataset != null){
       ReactionCIMEBackendFromEnv.loadPOIConstraints(dataset.info.path).then((res_constraints) => {
+        console.log(res_constraints)
         const con_cols = [...new Set(res_constraints.map((con) => con.col))];
 
         setConstraintCols(con_cols)
@@ -87,6 +89,7 @@ export const FilterTabPanel = connector(({dataset}: Props) => {
       </Box>
       <Box paddingTop={1} paddingRight={2}>
           <FilterSettings 
+            triggerDatasetUpdate={triggerDatasetUpdate}
             dataset={dataset}
             constraintCols={constraintCols}
             constraints={constraints}
@@ -100,17 +103,6 @@ export const FilterTabPanel = connector(({dataset}: Props) => {
             }}
           ></FilterSettings>
       </Box>
-      <Box paddingLeft={2} paddingTop={1} paddingRight={2}>
-        <Button
-          fullWidth
-          variant="outlined"
-          onClick={() => {
-          }}
-        >
-          <FilterAltIcon />
-          &nbsp;Apply Filter
-        </Button>
-      </Box>
 
       <Box paddingLeft={2} paddingTop={1} paddingRight={2}>
         <Grid container>
@@ -119,7 +111,7 @@ export const FilterTabPanel = connector(({dataset}: Props) => {
               fullWidth
               variant="outlined"
               onClick={() => {
-                console.log("TODO: export filter")
+                downloadConstraints(dataset.info.path)
               }}
             >
               <GetAppIcon />
@@ -128,11 +120,21 @@ export const FilterTabPanel = connector(({dataset}: Props) => {
           </Grid>
 
           <Grid item xs={6} paddingLeft={1}>
+            <input
+                style={{ display: 'none' }}
+                accept={".csv"}
+                ref={fileInput}
+                // multiple
+                type="file"
+                onChange={(e) => {
+                  uploadConstraints(e.target.files, dataset, triggerDatasetUpdate);
+                }}
+            />
             <Button
               fullWidth
               variant="outlined"
               onClick={() => {
-                console.log("TODO: import filter")
+                fileInput.current.click()
               }}
             >
               <FileUploadIcon />
@@ -144,3 +146,28 @@ export const FilterTabPanel = connector(({dataset}: Props) => {
     </div>
   );
 });
+
+
+const downloadConstraints = (path) => {
+  ReactionCIMEBackendFromEnv.downloadPOIConstraints(path);
+}
+const uploadConstraints = (files, dataset, triggerDatasetUpdate) => {
+  if (files == null || files.length <= 0) {
+      return;
+  }
+  var file = files[0];
+  var fileName = file.name as string;
+
+  if (fileName.endsWith("csv")) {
+      ReactionCIMEBackendFromEnv.uploadPOIConstraints(dataset.info.path, file).then((res) => {
+          if(res.msg === "ok" && triggerDatasetUpdate != null){
+              triggerDatasetUpdate({
+                  display: dataset.info.path,
+                  path: dataset.info.path,
+                  type: dataset.info.type,
+                  uploaded: true
+              })
+          }
+      })
+  }
+}

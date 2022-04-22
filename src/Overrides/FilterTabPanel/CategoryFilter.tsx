@@ -1,9 +1,10 @@
-import { Box, Grid, IconButton, Tooltip, Typography } from "@mui/material";
+import { Grid, IconButton, ToggleButton, Tooltip, Typography } from "@mui/material";
 import React from "react";
 import DeleteIcon from '@mui/icons-material/Delete';
 import { ReactionCIMEBackendFromEnv } from "../../Backend/ReactionCIMEBackend";
 import { Dataset } from "projection-space-explorer";
 import * as d3v5 from "d3v5";
+import { map_smiles_to_shortname } from "../../Utility/Utils";
 
 
 type Props = {
@@ -16,13 +17,14 @@ type Props = {
 
 export const CategoryFilter = ({col, value, setValue, remove, dataset}:Props) => {
 
-    React.useEffect(()=> {
+    const [catValues, setCatValues] = React.useState([])
 
-    }, [])
+    React.useEffect(()=> {
+        ReactionCIMEBackendFromEnv.loadCategoryValues(dataset.info.path, col).then((result) => {
+            setCatValues(result.values)
+        })
+    }, [col]);
     
-    const handleChange = (event, newValue) => {
-        setValue(newValue);
-    };
     return (
         <Grid container paddingTop={0}>
             <Grid item xs={3} textAlign={"right"}>
@@ -31,11 +33,28 @@ export const CategoryFilter = ({col, value, setValue, remove, dataset}:Props) =>
                 </Tooltip>
             </Grid>
             <Grid item xs={9}>
-                <Typography id={"filter_"+col} marginBottom={"-5px"}>
+                <Typography id={"filter_"+col} marginBottom={"0px"}>
                     {col}
                 </Typography>
                 <div>
-                    TODO
+                    {catValues.map((val) => {
+                        return <Tooltip title={val} key={val}>
+                            <ToggleButton
+                            // fullWidth
+                            color="primary"
+                            value={val}
+                            selected={value.includes(val)} 
+                            onChange={() => {
+                                if(value.includes(val)){ // if previously checked, remove from list
+                                    setValue([...new Set(value.filter((v) => v !== val))])
+                                }else{ // if previously unchecked, add to list
+                                    setValue([...new Set([...value, val])])
+                                }
+                            }}>&nbsp;{
+                                dataset.columns[col].metaInformation.imgSmiles ? map_smiles_to_shortname(val) : val
+                            }&nbsp;</ToggleButton>
+                        </Tooltip>
+                    })}
                 </div>
             </Grid>
         </Grid>

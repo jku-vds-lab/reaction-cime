@@ -1,19 +1,23 @@
-import { Box } from "@mui/material";
+import { Box, Button } from "@mui/material";
 import { Dataset } from "projection-space-explorer";
 import React from "react";
 import { ReactionCIMEBackendFromEnv } from "../../Backend/ReactionCIMEBackend";
 import { CategoryFilter } from "./CategoryFilter";
 import { RangeFilter } from "./RangeFilter";
+import FilterAltIcon from '@mui/icons-material/FilterAlt';
+
+
 
 type Props = {
     dataset: Dataset,
     removeFilter: (col) => void,
     // constraintsMap: {}
     constraintCols: string[],
-    constraints: {col:string, operator:string, val1:string, val2:string}[]
+    constraints: {col:string, operator:string, val1:string, val2:string}[],
+    triggerDatasetUpdate
 };
 
-export const FilterSettings = ({dataset, removeFilter, constraintCols, constraints}:Props) => {
+export const FilterSettings = ({dataset, removeFilter, constraintCols, constraints, triggerDatasetUpdate}:Props) => {
 
     const [filterValues, setFilterValues] = React.useState({});
 
@@ -33,7 +37,7 @@ export const FilterSettings = ({dataset, removeFilter, constraintCols, constrain
                             const con = constraints[i];
                             if(con.operator === "BETWEEN"){ // if there are several between operators, we choose the minimal minimum and the maximal maximum, because we can only handle one range
                                 if(between[0] == null || between[1] == null){
-                                    between = [con.val1, con.val2]
+                                    between = [parseFloat(con.val1), parseFloat(con.val2)]
                                 }else{
                                     between[0] = Math.min(parseFloat(con.val1), between[0])
                                     between[1] = Math.max(parseFloat(con.val2), between[1])
@@ -113,7 +117,7 @@ export const FilterSettings = ({dataset, removeFilter, constraintCols, constrain
 
     // }, [constraintsMap])
 
-    return <Box paddingTop={2} paddingRight={2}>
+    return <div><Box paddingTop={2} paddingRight={2}>
         {Object.keys(filterValues).map((key) => {
             const value = filterValues[key]
 
@@ -133,4 +137,50 @@ export const FilterSettings = ({dataset, removeFilter, constraintCols, constrain
         })}
         
         </Box>
+        
+        <Box paddingLeft={2} paddingTop={1}>
+            <Button
+                fullWidth
+                variant="outlined"
+                onClick={() => {
+                    updateBackendConstraints(filterValues, dataset, triggerDatasetUpdate)
+                }}
+            >
+            <FilterAltIcon />
+            &nbsp;Apply Filter
+            </Button>
+        </Box>
+        </div>
+}
+
+
+const updateBackendConstraints = (dimensions, dataset, triggerDatasetUpdate) => {
+    const constraint_dimensions = dimensions;
+    let all_constraints = []
+    for(const i in constraint_dimensions){
+        const const_dimension = constraint_dimensions[i];
+        if(const_dimension.isNum){
+            let constraint_object = { col: i, operator: "BETWEEN", val1: const_dimension.val[0], val2: const_dimension.val[1] };
+            all_constraints.push(constraint_object);
+        }else{
+            let constraintarray = const_dimension.val;
+            for(const j in constraintarray){
+                let constraint_object = { col: i, operator: "EQUALS", val1: constraintarray[j], val2: constraintarray[j] };
+                all_constraints.push(constraint_object);
+            }
+        
+        }
+    }
+    
+    ReactionCIMEBackendFromEnv.updatePOIConstraints(dataset.info.path, all_constraints).then((res) => {
+        if(res.msg === "ok" && triggerDatasetUpdate != null){
+            triggerDatasetUpdate({
+                display: dataset.info.path,
+                path: dataset.info.path,
+                type: dataset.info.type,
+                uploaded: true
+            })
+        }
+    })
+    
 }

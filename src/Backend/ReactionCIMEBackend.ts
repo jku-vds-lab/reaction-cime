@@ -298,6 +298,19 @@ export class ReactionCIMEBackend {
       console.log(error);
     })
   }
+  
+  public loadCategoryValues = async(filename:string, col_name:string) => {
+    return fetch(this.baseUrl + "/get_category_values/" + filename + "/" + col_name, {
+      ...this.fetchParams,
+      method: "GET",
+    })
+    .then(this.handleErrors)
+    .then((response) => response.json())
+    .then(this.handleJSONErrors)
+    .catch((error) => {
+      console.log(error);
+    })
+  }
 
   public updateBackendCache = async(filename:string, cache_cols:string[]) => {
     let cache_cols_string = ""
