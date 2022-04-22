@@ -1,16 +1,17 @@
 import React from "react";
 import { connect, ConnectedProps } from "react-redux";
 import { AppState } from "../State/Store";
-import "./PacoContext.scss";
-import Plotly from 'plotly.js-dist'
 import { Box, Button, IconButton, Tooltip } from "@mui/material";
 import { AttributeSelectionTable, selectVectors } from "projection-space-explorer";
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import RotateLeftIcon from '@mui/icons-material/RotateLeft';
 import FileUploadIcon from '@mui/icons-material/FileUpload';
 import SettingsIcon from '@mui/icons-material/Settings';
-import { downloadImpl, map_shortname_to_smiles, map_smiles_to_shortname } from "../Utility/Utils";
+import { downloadImpl } from "../Utility/Utils";
 import * as d3v5 from "d3v5";
+
+import 'parcoord-es/dist/parcoords.css';
+import ParCoords from 'parcoord-es';
 
 function unpack(col, rows, key) {
     return rows.map(function(row) {
@@ -54,10 +55,6 @@ function get_processed_info(constraints, col, values, key){
         }
     }
 
-    if(col.metaInformation.imgSmiles){
-        return {ticktext: distinct.map((val) => map_smiles_to_shortname(val as string)), values: num_values, tickvals: [...new Set(num_values)], constraintrange: constraintrange};
-    }
-
     return {ticktext: distinct, values: num_values, tickvals: [...new Set(num_values)], constraintrange: constraintrange};
 }
 
@@ -93,11 +90,7 @@ const downloadConstraints = (dimensions, columns) => {
                 const lower = Math.ceil(constraint[0])
                 const upper = Math.floor(constraint[1])
                 for (var n = lower; n <= upper; n++) { // iterate over all real valued indices and add them to the constraints
-                    let val = const_dimension.ticktext[n];
-                    if(columns[const_dimension.label].metaInformation.imgSmiles){
-                        val = map_shortname_to_smiles(val);
-                    }
-                    let constraint_object = { col: const_dimension.label, operator: "EQUALS", val1: val, val2: val }
+                    let constraint_object = { col: const_dimension.label, operator: "EQUALS", val1: const_dimension.ticktext[n], val2: const_dimension.ticktext[n] }
                     all_constraints.push(constraint_object)
                 }
             }
@@ -136,7 +129,7 @@ const uploadConstraints = (files, setConstraints) => {
   };
   
 export const PacoContext = connector(function ({dataset}: Props) {
-    if(dataset == null || dataset.columns == null)
+    if(dataset == null || dataset.columns == null || dataset.vectors == null)
         return null;
 
     let paco_ref = React.useRef<any>();
@@ -151,67 +144,25 @@ export const PacoContext = connector(function ({dataset}: Props) {
         const pacoShowColumns = pacoAttributes.filter((col) => col.show).map((value) => value.feature);
         if(pacoShowColumns.length > 0){
             const cols = pacoShowColumns;
-            let dimensions = cols.map((v, i) => {
-                const values = unpack(dataset.columns[v], dataset.vectors, v)
-                const processed_info = get_processed_info(pacoConstraints, dataset.columns[v], values, v);
-                return {
-                    values: processed_info.values,
-                    label: v,
-                    // multiselect: false,
-                    constraintrange: processed_info.constraintrange,
-                    // range: [Math.min(...values), Math.max(...values)],
-                    tickvals: processed_info.tickvals,
-                    ticktext: processed_info.ticktext,
-                    // tickformat: ..., // https://plotly.com/javascript/reference/parcoords/#parcoords-dimensions-items-dimension-tickformat
-                    // visible: true, //TODO: set to false, if, for example, datatype not recognized
-                }
-            });
-
-            // dimensions.push({ values: dataset.vectors.map((v) => v.__meta__.meshIndex), label: UNIQUE_ID, constraintrange: undefined, tickvals: [], ticktext: []})
-
-            // var color = unpack(rows, 'yield');
-            var paco = {
-                type: 'parcoords',
-                line: {
-                    showscale: true,
-                    reversescale: true,
-                    // colorscale: 'YlOrRd',
-                    // cmin: -4000,
-                    // cmid: 0,
-                    // cmax: -100,
-                    // color: color,
-                },
-            
-                dimensions: dimensions
-            };
-
-            var layout = {
-                padding: {
-                    top: 0
-                }
-                // width: 1500,
-                // height: 800, 
-                // hovermode: 'closest'
-            }
-
-            var config = {
-                responsive: true,
-                displayModeBar: false
-            }
-
-            Plotly.newPlot(paco_ref.current, [paco], layout, config);
-
-            paco_ref.current.on("plotly_restyle", (data) => {
-                // TODO: implement filter or selection interaction
-                console.log(data)
-            });
-
-            const ticks = d3v5.select(paco_ref.current).selectAll(".tick text")
-            console.log(ticks)
-            ticks.on("mouseenter", (d) => {
-                console.log("tick")
-                console.log(d)
-            })
+        //     const data = dataset.vectors.map((row) => {
+        //         // TODO: filter out columns that should not be shown
+        //         return row
+        //     });
+            const data = dataset.vectors;
+            // const data = [{axis1: 5, axis2: 9, axis3: 4}, {axis1: 6, axis2: 1, axis3: 2}]
+            var parcoords = ParCoords()(paco_ref.current);
+            parcoords
+                .mode("queue") // mode: "queue" --> for large dataset such that everything is still responsive during rendering
+                .data(data)
+                // .alpha(0.3)
+                // .color(color)
+                // .axisDots(0.2) // not working?
+                // .hideAxis(["yield"])
+                // .composite("darker")
+                .render()
+                .shadows()
+                .reorderable()
+                .brushMode("1D-axes");  // enable brushing
         }
     }, [dataset, pacoAttributes, pacoConstraints])
   

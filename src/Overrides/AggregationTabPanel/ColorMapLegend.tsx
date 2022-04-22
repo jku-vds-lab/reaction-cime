@@ -30,13 +30,13 @@ const connector = connect(mapStateToProps, mapDispatchToProps);
 type PropsFromRedux = ConnectedProps<typeof connector>;
 
 type Props = PropsFromRedux & {
-    selectAttribute: {key:string, name:string}
+    selectAttribute: string
 };
 
 
 
 export const ColorMapLegend = connector(({colorScale, setAggregateColorScale, selectAttribute, toggleUseVSUP, addValueFilter, removeValueFilter, clearValueFilter, aggregateColor, useVSUP, valueFilter, valueRange, uncertaintyRange, setAggregateColorMapScale }: Props) => {
-    if(selectAttribute == null || selectAttribute.key === "None" || selectAttribute.key == null){
+    if(selectAttribute == null || selectAttribute === "None"){
         return null;
     }
 

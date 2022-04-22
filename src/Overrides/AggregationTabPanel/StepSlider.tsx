@@ -17,8 +17,8 @@ const mapStateToPropsSlider = (state: AppState) => ({
   type SliderPropsFromRedux = ConnectedProps<typeof sliderconnector>;
   
   type SliderProps = SliderPropsFromRedux & {
-    selectAttribute: {key:string, name:string}
-    selectAttributeInfo: any
+    selectAttribute: string
+    selectAttributeInfo
   };
   
   
@@ -62,7 +62,7 @@ export const StepSlider = sliderconnector(({selectAttribute, setAggregateColor, 
         
             setAggregateColor({"value_col": value_col, "uncertainty_col": uncertainty_col, "cache_cols": cache_cols});
         }else{
-            setAggregateColor({"value_col": selectAttribute.key, "uncertainty_col": null, "cache_cols": null});
+            setAggregateColor({"value_col": selectAttribute, "uncertainty_col": null, "cache_cols": null});
         }
         // eslint-disable-next-line
     }, [curStep, selectAttribute, variableIndex])

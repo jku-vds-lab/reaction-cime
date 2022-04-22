@@ -1,7 +1,38 @@
 import { ReactionCIMEBackendFromEnv } from "../Backend/ReactionCIMEBackend";
+import * as d3v5 from "d3v5";
 
 export const PSE_BLUE = "#1f77b4"
 
+
+export function save_smiles_lookup_table(files:FileList){
+    if (files == null || files.length <= 0) {
+        return;
+    }
+    var file = files[0];
+
+    const fileReader = new FileReader()
+    fileReader.onload = (e) => {
+        localStorage.setItem("smiles_lookup", e.target.result.toString());
+        alert("Successfuly uploaded")
+    }
+    fileReader.readAsBinaryString(file)
+}
+
+export function map_smiles_to_shortname(smiles:string):string {
+    const smiles_lookup_str = localStorage.getItem("smiles_lookup");
+    if(smiles_lookup_str == null)
+        return smiles
+    const smiles_lookup = d3v5.csvParse(smiles_lookup_str) as Array<{smiles:string, shortname:string}>;
+    return smiles_lookup.find((pair) => pair.smiles === smiles)?.shortname;
+}
+
+export function map_shortname_to_smiles(shortname:string):string {
+    const smiles_lookup_str = localStorage.getItem("smiles_lookup");
+    if(smiles_lookup_str == null)
+        return shortname
+    const smiles_lookup = d3v5.csvParse(smiles_lookup_str) as Array<{smiles:string, shortname:string}>;
+    return smiles_lookup.find((pair) => pair.shortname === shortname)?.smiles;
+}
 
 /**
  * This is merely a helper function to decompose the code into smaller individual segments.

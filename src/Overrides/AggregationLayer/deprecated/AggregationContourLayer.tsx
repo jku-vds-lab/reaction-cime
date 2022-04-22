@@ -125,7 +125,7 @@ const createContours = (dataset, value_col, scale) => {
 const mapStateToProps = (state: AppState) => ({
     aggregateColor: state.aggregateSettings?.aggregateColor,
     poiDataset: state.dataset,
-    viewTransform: state.viewTransform,
+    viewTransform: state.multiples.multiples.entities[state.multiples.multiples.ids[0]]?.attributes.viewTransform,
     aggregateSettings: state.aggregateSettings,
 })
 const mapDispatchToProps = (dispatch: any) => ({

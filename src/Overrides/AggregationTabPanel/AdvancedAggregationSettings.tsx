@@ -31,7 +31,7 @@ const connector = connect(mapStateToProps, mapDispatchToProps);
 type PropsFromRedux = ConnectedProps<typeof connector>;
 
 type Props = PropsFromRedux & {
-    selectAttribute,
+    selectAttribute:string,
     selectAttributeInfo
 };
   
@@ -40,7 +40,7 @@ type Props = PropsFromRedux & {
 export const AdvancedAggregationSettings = connector(({sampleSize, setSampleSize, selectAttribute, aggregateColor, 
             valueRange, uncertaintyRange, setValueRange, setUncertaintyRange, deriveRange, toggleDeriveRange, 
             setDeriveRange, selectAttributeInfo, setVariableIndex, setAggregationMethod, variableIndex, aggregationMethod}: Props) => {
-    if(selectAttribute == null || selectAttribute.key === "None" || selectAttribute.key == null){
+    if(selectAttribute == null || selectAttribute === "None"){
         return null;
     }
 

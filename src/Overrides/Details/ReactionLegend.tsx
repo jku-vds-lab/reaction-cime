@@ -1,3 +1,4 @@
+// @ts-ignore
 import { CoralLegend, DefaultLegend, IVector } from "projection-space-explorer";
 import { connect, ConnectedProps } from "react-redux";
 import { AppState } from "../../State/Store";

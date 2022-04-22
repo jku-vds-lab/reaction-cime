@@ -28,10 +28,8 @@ import {
   AStorytelling,
   DiscreteMapping,
   EXCLUDED_COLUMNS,
-  MyWindowPortal,
   PrebuiltFeatures,
   selectVectors,
-  setDetailVisibility,
   setHoverState,
   ShallowSet,
 } from "projection-space-explorer";
@@ -52,8 +50,8 @@ const mapStateToProps = (state: AppState) => ({
   lineUpInput_columns: state.dataset?.columns,
   currentAggregation: state.currentAggregation,
   activeStory: AStorytelling.getActive(state.stories),
-  pointColorScale: state.pointColorScale,
-  channelColor: state.channelColor,
+  pointColorScale: state.multiples.multiples.entities[state.multiples.multiples.ids[0]]?.attributes.pointColorScale,
+  channelColor: state.multiples.multiples.entities[state.multiples.multiples.ids[0]]?.attributes.channelColor,
   detailView: state.detailView,
   // splitRef: state.splitRef
   //hoverState: state.hoverState
@@ -65,10 +63,7 @@ const mapStateToProps = (state: AppState) => ({
  * @param dispatch The generic dispatch function declared in redux
  */
 const mapDispatchToProps = (dispatch) => ({
-  setCurrentAggregation: (samples: number[]) =>
-    dispatch(selectVectors(samples)),
-  setLineUpInput_visibility: (visibility) =>
-    dispatch(setDetailVisibility(visibility)),
+  setCurrentAggregation: (samples: number[]) => dispatch(selectVectors(samples)),
   setLineUpInput_lineup: (input) => dispatch(setLineUpInput_lineup(input)),
   setHoverstate: (state, updater) => dispatch(setHoverState(state, updater)),
 });
@@ -107,7 +102,7 @@ function arrayEquals(a, b) {
 
 // let lineup = null;
 const UPDATER = "lineup";
-const UNIQUE_ID = "unique_ID";
+export const UNIQUE_ID = "unique_ID";
 
 /**
  * Our component definition, by declaring our props with 'Props' we have static types for each of our property
@@ -120,7 +115,6 @@ export const LineUpContext = connector(function ({
   channelColor,
   setCurrentAggregation,
   setLineUpInput_lineup,
-  setLineUpInput_visibility,
   onFilter,
   activeStory,
   pointColorScale,

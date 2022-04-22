@@ -1,6 +1,6 @@
 import { Table, TableBody, TableCell, TableHead, TableRow } from "@mui/material";
 import { makeStyles } from "@mui/styles";
-import { Dataset, DefaultLegend, IVector } from "projection-space-explorer";
+import { Dataset } from "projection-space-explorer";
 import { connect, ConnectedProps } from "react-redux";
 import { ReactionCIMEBackendFromEnv } from "../../Backend/ReactionCIMEBackend";
 import { AppState } from "../../State/Store";

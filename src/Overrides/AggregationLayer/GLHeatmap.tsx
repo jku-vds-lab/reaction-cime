@@ -6,7 +6,7 @@ import { connect, ConnectedProps } from "react-redux";
 
 
 const mapStateToProps = (state: RootState) => ({
-    viewTransform: state.viewTransform
+    viewTransform: state.multiples.multiples.entities[state.multiples.multiples.ids[0]]?.attributes.viewTransform
 })
 
 const mapDispatchToProps = (dispatch: any) => ({

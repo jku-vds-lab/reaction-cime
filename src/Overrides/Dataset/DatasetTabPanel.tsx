@@ -4,6 +4,7 @@ import {
     Dialog,
     DialogActions,
     DialogContent,
+    Tooltip,
     Typography,
   } from "@mui/material";
 import { useCancellablePromise } from "projection-space-explorer";
@@ -17,7 +18,9 @@ import React, { useState } from "react";
 import { BackendCSVLoader } from "./BackendCSVLoader";
 import { setAggregateColor } from "../../State/AggregateSettingsDuck";
 import { setTriggerUpdate } from "../../State/HandleDatasetDuck";
-  
+import { save_smiles_lookup_table } from "../../Utility/Utils";
+import ManageSearchIcon from '@mui/icons-material/ManageSearch';
+
   export const LoadingIndicatorView = (props) => {
     const { promiseInProgress } = usePromiseTracker({ area: props.area });
     
@@ -77,6 +80,7 @@ import { setTriggerUpdate } from "../../State/HandleDatasetDuck";
     const { cancellablePromise, cancelPromises } = useCancellablePromise();
     let abort_controller = new AbortController();
     const [refreshUploadedFiles, setRefreshUploadedFiles] = useState(0);
+    let lookupFileInput = React.useRef<any>();
 
     const intermediateOnDataSelected = (dataset) => {
       setAggregateColor(null);
@@ -135,6 +139,23 @@ import { setTriggerUpdate } from "../../State/HandleDatasetDuck";
         }}
         area={"global_loading_indicator"}
       />
+      <input
+          style={{ display: 'none' }}
+          accept={".csv"}
+          ref={lookupFileInput}
+          type="file"
+          onChange={(e) => {
+            save_smiles_lookup_table(e.target.files);
+          }}
+      />
+      <Box paddingLeft={2} paddingTop={2} paddingRight={2}>
+        <Tooltip title={'Select a lookup table for shortnames of molecules. It has to be a csv-file with the columns "smiles" and "shortname".'}>
+          <Button fullWidth variant="outlined" aria-label="Define lookup table for shortnames of SMILES" color="primary" onClick={() => lookupFileInput.current.click()}>
+            <ManageSearchIcon />&nbsp;Define lookup table
+          </Button>
+        </Tooltip>
+      </Box>
+
       </div>
     );
   });

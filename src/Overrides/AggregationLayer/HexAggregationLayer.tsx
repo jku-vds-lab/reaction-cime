@@ -1,4 +1,3 @@
-
 import { useCancellablePromise } from 'projection-space-explorer'
 import * as React from 'react'
 import { connect, ConnectedProps } from "react-redux";
@@ -12,6 +11,7 @@ import { GLHexagons } from './GLHexagons';
 import * as _ from "lodash";
 import { PSE_BLUE } from '../../Utility/Utils';
 import { setCurrentAggregateSelection } from '../../State/SelectionDuck';
+import { EntityId } from '@reduxjs/toolkit';
 
 
 const createHexagons = (dataset: AggregateDataset, value_col: string, uncertainty_col: string, scale_obj:any, valueFilter: string[]) => {
@@ -78,7 +78,8 @@ function isOutsideBoundingBox(position, dataset, threshold){
 const mapStateToProps = (state: AppState) => ({
     aggregateColor: state.aggregateSettings?.aggregateColor,
     poiDataset: state.dataset,
-    viewTransform: state.viewTransform,
+    smallMultiples: state.multiples.multiples.entities,
+    // viewTransform: state.multiples.multiples.entities[state.multiples.multiples.ids[0]]?.attributes.viewTransform,
     aggregateSettings: state.aggregateSettings,
     mouseMove: state.mouseInteractionHooks?.mousemove,
     mouseClick: state.mouseInteractionHooks?.mouseclick,
@@ -93,14 +94,17 @@ const connector = connect(mapStateToProps, mapDispatchToProps);
 type PropsFromRedux = ConnectedProps<typeof connector>;
 
 type AggregationLayerProps = PropsFromRedux & {
+    multipleId: EntityId
 }
 
 const loading_area = "global_loading_indicator_aggregation_ds";
-export const HexAggregationLayer = connector(({ setCurrentAggregateSelectionFn, aggregateColor, poiDataset, viewTransform, setValueRange, setUncertaintyRange, aggregateSettings, mouseMove, mouseClick }: AggregationLayerProps) => {
+export const HexAggregationLayer = connector(({ setCurrentAggregateSelectionFn, aggregateColor, poiDataset, smallMultiples, setValueRange, setUncertaintyRange, aggregateSettings, mouseMove, mouseClick, multipleId }: AggregationLayerProps) => {
     
     if(poiDataset == null || poiDataset.info == null || aggregateColor == null || aggregateColor.value_col == null || aggregateColor.value_col === "None"){
         return null;
     }
+
+    const viewTransform = smallMultiples[multipleId].attributes.viewTransform;
 
     const [hexagons, setHexagons] = React.useState(null)
     const [hoverElement, setHoverElement] = React.useState(null)

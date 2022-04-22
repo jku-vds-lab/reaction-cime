@@ -6,12 +6,13 @@ import { StepSlider } from "./StepSlider";
 import { ColorMapLegend } from "./ColorMapLegend";
 import "./AggregationTabPanel.scss";
 import { AdvancedAggregationSettings } from "./AdvancedAggregationSettings";
+// @ts-ignore
 import { SelectFeatureComponent } from "projection-space-explorer";
 
 
 const mapStateToProps = (state: AppState) => ({
   poiDataset: state.dataset,
-  workspace: state.projections.workspace,
+  workspace: state.multiples.multiples.entities[state.multiples.multiples.ids[0]]?.attributes.workspace,
 });
 
 const mapDispatchToProps = (dispatch) => ({
@@ -29,20 +30,20 @@ export const AggregationTabPanel = connector(({poiDataset, workspace}: Props) =>
     // const categoryOptions = poiDataset?.categories;
     const [categoryOptions, setCategoryOptions] = React.useState(null)
     const [selectColumns, setSelectColumns] = React.useState(null)
-    const [selectAttribute, setSelectAttribute] = React.useState({key:"None", name:"None"})
+    const [selectAttribute, setSelectAttribute] = React.useState("None")
     const [selectAttributeInfo, setSelectAttributeInfo] = React.useState(null)
     const [columnInfo, setColumnInfo] = React.useState(null)
     
     React.useEffect(() => {
       // reset aggregate color to hide the aggregated dataset in the background
-      setSelectAttribute({key:"None", name:"None"}) // reset selection to None
+      setSelectAttribute("None") // reset selection to None
       setSelectAttributeInfo(null)
     // eslint-disable-next-line
     }, [workspace, poiDataset]) // this is triggered during the embedding
 
 
     React.useEffect(() => {
-      setSelectAttribute({key:"None", name:"None"}) // reset selection to None
+      setSelectAttribute("None") // reset selection to None
       setSelectAttributeInfo(null)
 
       let select_columns = {};
@@ -89,11 +90,12 @@ export const AggregationTabPanel = connector(({poiDataset, workspace}: Props) =>
         setColumnInfo(new_column_info) // add columninfo for new timeseries columns
         setSelectColumns(select_columns)
 
-        let cat_lst = Object.keys(select_columns).map(key => {
-          return {key: key, name: key}
-        });
-
-        cat_lst.sort((valA, valB) => valA.name.localeCompare(valB.name))
+        // let cat_lst = Object.keys(select_columns).map(key => {
+        //   return {key: key, name: key}
+        // });
+        let cat_lst = Object.keys(select_columns)
+        cat_lst.sort()
+        // cat_lst.sort((valA, valB) => valA.name.localeCompare(valB.name))
         // cat_lst.splice(0,0,{key: "None", name: "None"})
         setCategoryOptions(cat_lst)
 
@@ -146,16 +148,17 @@ export const AggregationTabPanel = connector(({poiDataset, workspace}: Props) =>
           column_info={columnInfo}
           label="color"
           default_val={selectAttribute}
-          categoryOptions={{attributes: categoryOptions}}
+          categoryOptions={categoryOptions}
           onChange={(newValue) => {
-            let attribute = categoryOptions.filter(opt => opt.key === newValue)[0]
+            console.log(newValue)
+            let attribute = newValue //categoryOptions.filter(opt => opt.key === newValue)[0]
             if(attribute == null){
-              attribute = {key: "None", name: "None"}
+              attribute = "None" //{key: "None", name: "None"}
             }
             
             setSelectAttribute(attribute)
-            if(selectColumns != null && Object.keys(selectColumns).includes(attribute.key))
-            setSelectAttributeInfo(selectColumns[attribute.key])
+            if(selectColumns != null && Object.keys(selectColumns).includes(attribute))
+              setSelectAttributeInfo(selectColumns[attribute])
           }}
       />
           }

@@ -21,6 +21,7 @@ import { connect, ConnectedProps } from "react-redux";
 import { ReactionsPlugin } from "./Overrides/Details/ReactionsPlugin";
 import { ReactionCIMEBackendFromEnv } from "./Backend/ReactionCIMEBackend";
 import { PacoContext } from "./PacoContext/PacoContext";
+import { FilterTabPanel } from "./Overrides/FilterTabPanel/FilterTabPanel";
 
 export const DEMO = false;
 
@@ -86,11 +87,9 @@ const ApplicationWrapper = connector(({ setMouseMoveFn, dataset_path, setMouseCl
       ],
     }}
     overrideComponents={{
-      mouseInteractionHooks: {
-        "mousemove": (coords, event_used) => {setMouseMoveFn({x: coords.x, y: coords.y, event_used: event_used})},
-        // "mousedown": (coords) => {setMouseDownFn({x: coords.x, y: coords.y})},
-        // "mouseup": (coords) => {setMouseUpFn({x: coords.x, y: coords.y})},
-        "mouseclick": (coords, event_used, button) => { setMouseClickFn({x: coords.x, y: coords.y, event_used: event_used, button: button})} 
+      mouseInteractionCallbacks: {
+        onmousemove: (coords, event_used) => {setMouseMoveFn({x: coords.x, y: coords.y, event_used: event_used})},
+        onmouseclick: (coords, event_used, button) => { setMouseClickFn({x: coords.x, y: coords.y, event_used: event_used, button: button})} 
       },
       datasetTab: DatasetTabPanel,
       appBar: () => <div></div>,
@@ -111,8 +110,14 @@ const ApplicationWrapper = connector(({ setMouseMoveFn, dataset_path, setMouseCl
       ],
       tabs: [
         {
+          name: "filterDS",
+          tab: FilterTabPanel,
+          title: "Filter",
+          description: "Filter subset of dataset that should be shown in the main visualization views",
+          icon: ReactionCIMEIcons.Filter
+        },
+        {
           name: "aggregatDS",
-          //@ts-ignore
           tab: AggregationTabPanel,
           title: "Aggregate",
           description: "Aggregated Dataset that should be shown in the background",
@@ -120,7 +125,6 @@ const ApplicationWrapper = connector(({ setMouseMoveFn, dataset_path, setMouseCl
         },
         {
           name: "lineup",
-          //@ts-ignore
           tab: LineUpTabPanel,
           title: "LineUp Integration",
           description: "Settings for LineUp Integration",
@@ -130,7 +134,7 @@ const ApplicationWrapper = connector(({ setMouseMoveFn, dataset_path, setMouseCl
       layers: [
         {
           order: -1,
-          component: () => <HexAggregationLayer></HexAggregationLayer>//<HexAggregationLayer></HexAggregationLayer>//<AggregationLayer></AggregationLayer> //<AggregationContourLayer></AggregationContourLayer>//
+          component: HexAggregationLayer
         }
        ]
     }}

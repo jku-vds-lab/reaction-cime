@@ -75,7 +75,7 @@ const retrieve_information_from_agg_dataset = (aggregateDataset: AggregateDatase
 const mapStateToProps = (state: AppState) => ({
     aggregateColor: state.aggregateSettings?.aggregateColor,
     poiDataset: state.dataset,
-    viewTransform: state.viewTransform,
+    viewTransform: state.multiples.multiples.entities[state.multiples.multiples.ids[0]]?.attributes.viewTransform,
     aggregateSettings: state.aggregateSettings,
 })
 const mapDispatchToProps = (dispatch: any) => ({
