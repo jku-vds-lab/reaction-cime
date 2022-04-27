@@ -140,12 +140,19 @@ def upload_csv():
 
     return {
         "filename": fileUpload.filename,
-        "id": filename
+        "id": filename,
     }
+
+@reaction_cime_api.route('/get_no_datapoints/<filename>', methods=['GET'])
+def get_no_datapoints(filename):
+    count = get_cime_dbo().get_no_points_from_table(filename)["count"][0]
+    return {"no_datapoints": int(count)}
 
 # endregion
 
 # region --------------- Points of Interest ------------------
+
+MAX_POINTS = 500 # 10000
 
 def save_poi_constraints(filename, constraints=[{"col": "yield", "operator": "BETWEEN", "val1": 0, "val2": 100}]):
     constraints = pd.DataFrame(constraints)
@@ -169,9 +176,9 @@ def update_poi_constraints():
 
         if "col" in constraints_df.columns and "operator" in constraints_df.columns and "val1" in constraints_df.columns and "val2" in constraints_df.columns:
             poi_count = get_cime_dbo().get_filter_mask(filename, get_poi_constraints_filter(filename, constraints_df))["mask"].sum() # check if constraints are limited enough
-            if poi_count > 10000:
-                return {"error": "too many Points of Interest selected; filter could not be applied"}
             save_poi_constraints(filename, constraints_df)
+            if poi_count > MAX_POINTS:
+                return {"msg": "Too many experiments within the selected filter. Only a subset of the data will be shown."}
             return {"msg": "ok"}
 
         if len(constraints_df) <= 0:
@@ -232,9 +239,7 @@ def get_points_of_interest(filename):
 
 
 def get_poi_df_from_db(filename, cime_dbo):
-    # TODO: make dynamic, by which feature we want to filter (e.g. user could change the settings in the front-end maybe with parallel coordinates?)
-    # example code for distance filter
-    poi_domain = cime_dbo.get_dataframe_from_table_filter(filename, get_poi_constraints_filter(filename))
+    poi_domain = cime_dbo.get_dataframe_from_table_filter(filename, get_poi_constraints_filter(filename), max_datapoints=MAX_POINTS)
     return poi_domain
 
 def get_poi_mask(filename, cime_dbo):

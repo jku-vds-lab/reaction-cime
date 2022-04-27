@@ -153,7 +153,7 @@ class ReactionCIMEDBO():
         sql_stmt = 'SELECT * FROM "' + table_name + '" ' + filter
         return pd.read_sql(sql_stmt, self.db.engine, index_col="id")
 
-    def get_dataframe_from_table_filter(self, table_name, filter, columns=None):
+    def get_dataframe_from_table_filter(self, table_name, filter, columns=None, max_datapoints=-1):
         """
         Routes an SQL query including the filter on the given table_name and returns a corresponding pandas dataframe.
         The database in use is fixed as self.db.engine
@@ -170,6 +170,8 @@ class ReactionCIMEDBO():
         columns:
             The columns to perform a select on (SELECT columns FROM)
 
+        max_datapoints:
+            if > 0: take a random subsample of the dataset, if there are more than max_datapoints included after the filter
 
         Returns
         ----------
@@ -185,6 +187,13 @@ class ReactionCIMEDBO():
         sql_stmt = 'SELECT ' + select_cols + ' FROM "' + table_name  + '"'
         if filter is not None and filter != "":
             sql_stmt += ' WHERE ' + filter
+            if max_datapoints > 0:
+                datapoint_count = self.get_filter_mask(table_name, filter)["mask"].sum()
+                if datapoint_count > max_datapoints:
+                    # https://www.sqlitetutorial.net/sqlite-functions/sqlite-random/
+                    print(max_datapoints/datapoint_count*100)
+                    sql_stmt += f' AND abs(RANDOM()%100) < {max_datapoints/datapoint_count*100}' # add random selection filter based on the ratio between maximum allowed datapoints and NO datapoints that would be selected without sampling
+                    
         return pd.read_sql(sql_stmt, self.db.engine, index_col="id")
 
     def get_filter_mask(self, table_name, filter):
@@ -199,6 +208,10 @@ class ReactionCIMEDBO():
 
     def get_category_count(self, table_name, col_name):
         sql_stmt = f'SELECT "{col_name}", COUNT(*) as count FROM "{table_name}" GROUP BY "{col_name}"'
+        return pd.read_sql(sql_stmt, self.db.engine)
+
+    def get_no_points_from_table(self, table_name):
+        sql_stmt = f'SELECT COUNT(*) as count FROM "{table_name}"'
         return pd.read_sql(sql_stmt, self.db.engine)
 
     def drop_table(self, table_name):

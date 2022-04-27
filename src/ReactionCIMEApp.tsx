@@ -6,10 +6,12 @@ import {
   createRootReducer,
   PSEIcons,
   PluginRegistry,
+  setItemLabel,
+  ViewActions
 } from "projection-space-explorer";
 import { LineUpContext } from "./LineUpContext";
 import { LineUpTabPanel } from "./Overrides/LineUpTabPanel";
-import { AppState, CIMEReducers } from "./State/Store";
+import { AppState, CIME4RViewActions, CIMEReducers } from "./State/Store";
 import { AggregationTabPanel } from "./Overrides/AggregationTabPanel";
 import { DatasetTabPanel } from "./Overrides/Dataset/DatasetTabPanel";
 import { RemoteEmbeddingController } from "./Overrides/Embeddings/RemoteEmbeddingController";
@@ -34,9 +36,9 @@ export const ReactionCIMEApp = () => {
   const [context] = useState(
     new API<AppState>(null, createRootReducer(CIMEReducers))
   );
+  context.store.dispatch(setItemLabel({label: "experiment", label_plural: "experiments"}))
   // context.store.dispatch(setDatasetEntriesAction(DATASETCONFIG))
   // context.store.getState().dataset...
-  // context.store.dispatch(setMouseMove(coords))...
   
   return <PSEContextProvider context={context}><ApplicationWrapper></ApplicationWrapper></PSEContextProvider>
 
@@ -45,11 +47,13 @@ export const ReactionCIMEApp = () => {
 const mapStateToProps = (state: AppState) => ({
   dataset_path: state.dataset?.info?.path,
   legendAttributes: state.genericFingerprintAttributes,
+  globalLabels: state.globalLabels,
 });
 
 const mapDispatchToProps = (dispatch) => ({
   setMouseMoveFn: (value) => dispatch(setMouseMove(value)),
   setMouseClickFn: (value) => dispatch(setMouseClick(value)),
+  resetViews: () => dispatch(CIME4RViewActions.resetViews()),
 });
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
@@ -59,7 +63,15 @@ type PropsFromRedux = ConnectedProps<typeof connector>;
 type Props = PropsFromRedux & {
 };
 
-const ApplicationWrapper = connector(({ setMouseMoveFn, dataset_path, setMouseClickFn, legendAttributes }: Props) => {
+const ApplicationWrapper = connector(({ setMouseMoveFn, dataset_path, setMouseClickFn, legendAttributes, globalLabels, resetViews }: Props) => {
+  
+
+  const start_projection = (msg: string) => {
+    if(msg === "init"){
+      resetViews()
+    }
+  }
+
   useEffect(() => {
     if(legendAttributes != null){
       // update cache in backend, when legendAttributes are changed
@@ -80,10 +92,10 @@ const ApplicationWrapper = connector(({ setMouseMoveFn, dataset_path, setMouseCl
     features={{
       embeddings: [
         // {id:"umap", name:"UMAP", settings: DEFAULT_UMAP_SETTINGS},
-        {id:"umapRemote", name:"UMAP", settings: {nneighbors:true}, embController: new RemoteEmbeddingController("umap")},
-        {id:"tsneRemote", name:"t-SNE", settings: {perplexity:true}, embController: new RemoteEmbeddingController("tsne")},
-        {id:"pcaRemote", name:"PCA", settings: {}, embController: new RemoteEmbeddingController("pca")},
-        {id:"rmOverlap", name:"Overlap Removal", settings: {hideSettings:true}, embController: new RemoteEmbeddingController("rmOverlap")}, //TODO: implement overplot removal in backend; tell PSE to not show any settings
+        {id:"umapRemote", name:"UMAP", settings: {nneighbors:true}, embController: new RemoteEmbeddingController("umap", start_projection)},
+        {id:"tsneRemote", name:"t-SNE", settings: {perplexity:true}, embController: new RemoteEmbeddingController("tsne", start_projection)},
+        {id:"pcaRemote", name:"PCA", settings: {}, embController: new RemoteEmbeddingController("pca", start_projection)},
+        {id:"rmOverlap", name:"Overlap Removal", settings: {hideSettings:true}, embController: new RemoteEmbeddingController("rmOverlap", start_projection)}, //TODO: implement overplot removal in backend; tell PSE to not show any settings
       ],
     }}
     overrideComponents={{
@@ -93,9 +105,14 @@ const ApplicationWrapper = connector(({ setMouseMoveFn, dataset_path, setMouseCl
       },
       datasetTab: DatasetTabPanel,
       appBar: () => <div></div>,
-      contextMenuItems: [{key:"getkNN", title:"Download k-Nearest", function:(coords) => {
-        handleBackgroundSelectionDownload(coords, dataset_path)
-      }}],
+      contextMenuItems: [
+        {key:"getkNN", title:"Download k-Nearest", function:(coords) => {
+          handleBackgroundSelectionDownload(coords, dataset_path)
+        }},
+        {key:"addRegion", title:`Show ${globalLabels.itemLabel} in this region`, function:(coords) => {
+          handleBackgroundSelectionDownload(coords, dataset_path)
+        }}
+      ],
       detailViews: [ //TODO: switch between the two
         {
           name: "paco",

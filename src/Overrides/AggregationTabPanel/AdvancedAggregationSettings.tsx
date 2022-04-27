@@ -2,22 +2,17 @@ import React from "react";
 import { connect, ConnectedProps } from "react-redux";
 import { AppState } from "../../State/Store";
 import { Button, Checkbox, FormControlLabel, TextField, Grid, Radio, FormControl, InputLabel, Select, MenuItem, Typography } from "@mui/material";
-import { AggregationMethod, setAggregationMethod, setDeriveRange, setSampleSize, setUncertaintyRange, setValueRange, setVariableIndex, toggleDeriveRange } from "../../State/AggregateSettingsDuck";
+import { AggregationMethod, setAggregationMethod, setDeriveRange, setUncertaintyRange, setValueRange, setVariableIndex, toggleDeriveRange } from "../../State/AggregateSettingsDuck";
 import { MinMaxNumberInput } from "../../Utility/MinMaxNumberInput";
 import { Box } from "@mui/system";
 
 const mapStateToProps = (state: AppState) => ({
-    sampleSize: state.aggregateSettings?.sampleSize,
-    aggregateColor: state.aggregateSettings?.aggregateColor,
-    valueRange: state.aggregateSettings?.valueRange,
-    uncertaintyRange: state.aggregateSettings?.uncertaintyRange,
-    deriveRange: state.aggregateSettings?.deriveRange,
-    variableIndex: state.aggregateSettings?.variableIndex,
-    aggregationMethod: state.aggregateSettings?.aggregationMethod
+    aggregateSettings: state.multiples.multiples.entities[state.multiples.active]?.attributes.aggregateSettings,
+    selectAttribute: state.multiples.multiples.entities[state.multiples.active]?.attributes.aggregateSettings?.selectAttribute,
+    selectAttributeInfo: state.multiples.multiples.entities[state.multiples.active]?.attributes.aggregateSettings?.selectAttributeInfo,
 });
 
 const mapDispatchToProps = (dispatch) => ({
-    setSampleSize: value => dispatch(setSampleSize(value)),
     setValueRange: (range) => dispatch(setValueRange(range)),
     setUncertaintyRange: (range) => dispatch(setUncertaintyRange(range)),
     toggleDeriveRange: () => dispatch(toggleDeriveRange()),
@@ -31,31 +26,16 @@ const connector = connect(mapStateToProps, mapDispatchToProps);
 type PropsFromRedux = ConnectedProps<typeof connector>;
 
 type Props = PropsFromRedux & {
-    selectAttribute:string,
-    selectAttributeInfo
 };
   
 
   
-export const AdvancedAggregationSettings = connector(({sampleSize, setSampleSize, selectAttribute, aggregateColor, 
-            valueRange, uncertaintyRange, setValueRange, setUncertaintyRange, deriveRange, toggleDeriveRange, 
-            setDeriveRange, selectAttributeInfo, setVariableIndex, setAggregationMethod, variableIndex, aggregationMethod}: Props) => {
+export const AdvancedAggregationSettings = connector(({ selectAttribute, setValueRange, setUncertaintyRange, toggleDeriveRange, 
+            setDeriveRange, selectAttributeInfo, setVariableIndex, setAggregationMethod, aggregateSettings}: Props) => {
     if(selectAttribute == null || selectAttribute === "None"){
         return null;
     }
-
-    const [tempSampleSize, setTempSampleSize] = React.useState(sampleSize);
-
-    React.useEffect(() => {
-        setTempSampleSize(sampleSize)
-    }, [sampleSize])
     
-    const handleChange = (event) => {
-        let val = event.target.value
-        val = val > 300 ? 300 : val
-        val = val < 5 ? 5 : val
-        setTempSampleSize(val);
-    };
 
     React.useEffect(() => {
         setValueRange(null)
@@ -83,28 +63,14 @@ export const AdvancedAggregationSettings = connector(({sampleSize, setSampleSize
     // TODO: should we give a user input for sample size? the benefits are not so big (would be a maximum of 300 due to browser memory issues, now it is set to 200)
     // if we decide to include it: remove "false" flag; also make sure that cache is cleared and that the background is updated when sample size is changed 
     return <>
-        {false && <> 
-            <TextField
-            id="sample-size"
-            label="Sample Size"
-            type="number"
-            value={tempSampleSize}
-            InputLabelProps={{
-                shrink: true,
-            }}
-            onChange={handleChange}
-            />
-            <Button onClick={() => {setSampleSize(tempSampleSize)}}>Apply Settings</Button>
-        </>}
-
         <Box paddingTop={1}>
-            <FormControlLabel control={<Checkbox checked={deriveRange} onChange={()=>{toggleDeriveRange()}} title={"Derive Range from Data"}></Checkbox>} label="Derive Range from Data" />
+            <FormControlLabel control={<Checkbox checked={aggregateSettings.advancedSettings.deriveRange} onChange={()=>{toggleDeriveRange()}} title={"Derive Range from Data"}></Checkbox>} label="Derive Range from Data" />
             
-            {(valueRange != null && !deriveRange) && 
-                <MinMaxNumberInput title={`Customize Range for ` + aggregateColor.value_col} target={"value"} range={valueRange} setRange={setValueRange}></MinMaxNumberInput>
+            {(aggregateSettings.advancedSettings.valueRange != null && !aggregateSettings.advancedSettings.deriveRange) && 
+                <MinMaxNumberInput title={`Customize Range for ` + aggregateSettings.colormapSettings.aggregateColor.value_col} target={"value"} range={aggregateSettings.advancedSettings.valueRange} setRange={setValueRange}></MinMaxNumberInput>
             }
-            {(uncertaintyRange != null && !deriveRange) && 
-                <MinMaxNumberInput title={`Customize Range for ` + aggregateColor.uncertainty_col} target={"uncertainty"} range={uncertaintyRange} setRange={setUncertaintyRange}></MinMaxNumberInput>
+            {(aggregateSettings.advancedSettings.uncertaintyRange != null && !aggregateSettings.advancedSettings.deriveRange) && 
+                <MinMaxNumberInput title={`Customize Range for ` + aggregateSettings.colormapSettings.aggregateColor.uncertainty_col} target={"uncertainty"} range={aggregateSettings.advancedSettings.uncertaintyRange} setRange={setUncertaintyRange}></MinMaxNumberInput>
             }
         </Box>
         
@@ -123,15 +89,15 @@ export const AdvancedAggregationSettings = connector(({sampleSize, setSampleSize
                         <Grid item xs={1}><Radio onChange={
                             (event) => {
                                 if(event.target.checked){
-                                    setVariableIndex({valueVariableIndex: index, uncertaintyVariableIndex: variableIndex.uncertaintyVariableIndex})
+                                    setVariableIndex({valueVariableIndex: index, uncertaintyVariableIndex: aggregateSettings.advancedSettings.variableIndex.uncertaintyVariableIndex})
                                 }
-                            }} checked={index === variableIndex.valueVariableIndex} /></Grid>
+                            }} checked={index === aggregateSettings.advancedSettings.variableIndex.valueVariableIndex} /></Grid>
                         <Grid item xs={1}><Radio onChange={
                             (event) => {
                                 if(event.target.checked){
-                                    setVariableIndex({valueVariableIndex: variableIndex.valueVariableIndex, uncertaintyVariableIndex: index})
+                                    setVariableIndex({valueVariableIndex: aggregateSettings.advancedSettings.variableIndex.valueVariableIndex, uncertaintyVariableIndex: index})
                                 }
-                            }} checked={index === variableIndex.uncertaintyVariableIndex} /></Grid>
+                            }} checked={index === aggregateSettings.advancedSettings.variableIndex.uncertaintyVariableIndex} /></Grid>
                     </Grid>
                 ))}
                 <Grid container columns={{ xs: 3 }}>
@@ -141,9 +107,9 @@ export const AdvancedAggregationSettings = connector(({sampleSize, setSampleSize
                             <InputLabel id="selectValueAggregation">Agg</InputLabel>
                             <Select
                                 labelId="selectValueAggregation"
-                                value={aggregationMethod.valueAggregationMethod}
+                                value={aggregateSettings.advancedSettings.aggregationMethod.valueAggregationMethod}
                                 label="Value Aggregation"
-                                onChange={(event)=>{setAggregationMethod({valueAggregationMethod: event.target.value, uncertaintyAggregationMethod: aggregationMethod.uncertaintyAggregationMethod})}}
+                                onChange={(event)=>{setAggregationMethod({valueAggregationMethod: event.target.value, uncertaintyAggregationMethod: aggregateSettings.advancedSettings.aggregationMethod.uncertaintyAggregationMethod})}}
                             >
                                 {Object.values(AggregationMethod).map((value) => <MenuItem value={value} key={value}>{value}</MenuItem>)}
                             </Select>
@@ -155,9 +121,9 @@ export const AdvancedAggregationSettings = connector(({sampleSize, setSampleSize
                             <InputLabel id="selectUncertaintyAggregation">Agg</InputLabel>
                             <Select
                                 labelId="selectUncertaintyAggregation"
-                                value={aggregationMethod.uncertaintyAggregationMethod}
+                                value={aggregateSettings.advancedSettings.aggregationMethod.uncertaintyAggregationMethod}
                                 label="Uncertainty Aggregation"
-                                onChange={(event)=>{setAggregationMethod({valueAggregationMethod: aggregationMethod.valueAggregationMethod, uncertaintyAggregationMethod: event.target.value})}}
+                                onChange={(event)=>{setAggregationMethod({valueAggregationMethod: aggregateSettings.advancedSettings.aggregationMethod.valueAggregationMethod, uncertaintyAggregationMethod: event.target.value})}}
                             >
                                 {Object.values(AggregationMethod).map((value) => <MenuItem value={value} key={value}>{value}</MenuItem>)}
                             </Select>
@@ -172,9 +138,9 @@ export const AdvancedAggregationSettings = connector(({sampleSize, setSampleSize
                     <InputLabel id="selectValueAggregation">Agg</InputLabel>
                     <Select
                         labelId="selectValueAggregation"
-                        value={aggregationMethod.valueAggregationMethod}
+                        value={aggregateSettings.advancedSettings.aggregationMethod.valueAggregationMethod}
                         label="Value Aggregation"
-                        onChange={(event)=>{setAggregationMethod({valueAggregationMethod: event.target.value, uncertaintyAggregationMethod: aggregationMethod.uncertaintyAggregationMethod})}}
+                        onChange={(event)=>{setAggregationMethod({valueAggregationMethod: event.target.value, uncertaintyAggregationMethod: aggregateSettings.advancedSettings.aggregationMethod.uncertaintyAggregationMethod})}}
                     >
                         {Object.values(AggregationMethod).map((value) => <MenuItem value={value} key={value}>{value}</MenuItem>)}
                     </Select>

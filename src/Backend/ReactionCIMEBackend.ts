@@ -286,6 +286,19 @@ export class ReactionCIMEBackend {
     return promise;
   };
 
+  public loadNODatapoints = async(filename:string) => {
+    return fetch(this.baseUrl + "/get_no_datapoints/" + filename, {
+      ...this.fetchParams,
+      method: "GET",
+    })
+    .then(this.handleErrors)
+    .then((response) => response.json())
+    .then(this.handleJSONErrors)
+    .catch((error) => {
+      console.log(error);
+    })
+  }
+
   public loadValueRange = async(filename:string, col_name:string) => {
     return fetch(this.baseUrl + "/get_value_range/" + filename + "/" + col_name, {
       ...this.fetchParams,

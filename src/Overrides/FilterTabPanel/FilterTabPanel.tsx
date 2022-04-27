@@ -9,6 +9,7 @@ import { SelectFeatureComponent } from "projection-space-explorer";
 import { ReactionCIMEBackendFromEnv } from "../../Backend/ReactionCIMEBackend";
 import { FilterSettings } from "./FilterSettings";
 import FileUploadIcon from '@mui/icons-material/FileUpload';
+import { NOItemsInfo } from "../../Utility/NOItemsInfo";
 
 
 
@@ -33,36 +34,28 @@ export const FilterTabPanel = connector(({dataset, triggerDatasetUpdate}: Props)
   const [constraints, setConstraints] = React.useState([]);
   const [constraintCols, setConstraintCols] = React.useState([]);
   let fileInput = React.useRef<any>();
+  const [totalDataPoints, setTotalDataPoints] = React.useState(-1)
 
   
   React.useEffect(()=> {
     if(dataset != null){
       ReactionCIMEBackendFromEnv.loadPOIConstraints(dataset.info.path).then((res_constraints) => {
-        console.log(res_constraints)
         const con_cols = [...new Set(res_constraints.map((con) => con.col))];
 
         setConstraintCols(con_cols)
         setConstraints(res_constraints)
-        // let tempConstraintsMap = {}
-        // for (const i in constraints) {
-        //   const constraint = constraints[i];
-        //   if(Object.keys(tempConstraintsMap).includes(constraint.col)){
-        //     tempConstraintsMap[constraint.col].push({operator: constraint.operator, val1: constraint.val1, val2: constraint.val2})
-        //   }else{
-        //     tempConstraintsMap[constraint.col] = [{operator: constraint.operator, val1: constraint.val1, val2: constraint.val2}]
-        //   }
-        // }
-        // setConstraintsMap(()=> tempConstraintsMap)
       })
     }
   }, [dataset])
 
-  return (
+  return (dataset &&
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
       <Box paddingLeft={2} paddingTop={1} paddingRight={2}>
         <Typography variant="subtitle2" gutterBottom>
           Filter Settings
         </Typography>
+        {/* TODO: always show info about NO items */}
+        <NOItemsInfo variant="filterOutOfTotal"></NOItemsInfo> 
       </Box>
       <Box paddingLeft={2} paddingTop={1} paddingRight={2}>
         {dataset && <SelectFeatureComponent
@@ -74,15 +67,6 @@ export const FilterTabPanel = connector(({dataset, triggerDatasetUpdate}: Props)
           onChange={(newValue) => {
             if(Object.keys(dataset.columns).includes(newValue)){
               setConstraintCols([...constraintCols, newValue]);
-              // if(dataset.columns[newValue].isNumeric){
-              //   let tempConstraintsMap = {...constraintsMap}
-              //   tempConstraintsMap[newValue] = [{operator: "BETWEEN", val1: undefined, val2: undefined}] // defaults to min and max
-              //   setConstraintsMap(tempConstraintsMap)
-              // }else{
-              //     let tempConstraintsMap = {...constraintsMap}
-              //     tempConstraintsMap[newValue] = []
-              //     setConstraintsMap(tempConstraintsMap)
-              // }
             }
           }}
         />}
@@ -93,13 +77,8 @@ export const FilterTabPanel = connector(({dataset, triggerDatasetUpdate}: Props)
             dataset={dataset}
             constraintCols={constraintCols}
             constraints={constraints}
-            // constraintsMap={constraintsMap}
             removeFilter={(col) => {
-              
               setConstraintCols(constraintCols.filter((con) => con !== col))
-              // let tempConstraintsMap = {...constraintsMap}
-              // delete tempConstraintsMap[col];
-              // setConstraintsMap(tempConstraintsMap)
             }}
           ></FilterSettings>
       </Box>

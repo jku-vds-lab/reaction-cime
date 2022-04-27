@@ -76,11 +76,13 @@ function isOutsideBoundingBox(position, dataset, threshold){
     
 
 const mapStateToProps = (state: AppState) => ({
-    aggregateColor: state.aggregateSettings?.aggregateColor,
+    // aggregateColor: state.aggregateSettings?.aggregateColor,
+    // aggregateColor: state.multiples.multiples.entities[state.multiples.multiples.ids[0]]?.attributes.aggregateSettings?.aggregateColor,
     poiDataset: state.dataset,
     smallMultiples: state.multiples.multiples.entities,
     // viewTransform: state.multiples.multiples.entities[state.multiples.multiples.ids[0]]?.attributes.viewTransform,
-    aggregateSettings: state.aggregateSettings,
+    // aggregateSettings: state.aggregateSettings,
+    // aggregateSettings: state.multiples.multiples.entities[state.multiples.multiples.ids[0]]?.attributes.aggregateSettings,
     mouseMove: state.mouseInteractionHooks?.mousemove,
     mouseClick: state.mouseInteractionHooks?.mouseclick,
 })
@@ -98,13 +100,14 @@ type AggregationLayerProps = PropsFromRedux & {
 }
 
 const loading_area = "global_loading_indicator_aggregation_ds";
-export const HexAggregationLayer = connector(({ setCurrentAggregateSelectionFn, aggregateColor, poiDataset, smallMultiples, setValueRange, setUncertaintyRange, aggregateSettings, mouseMove, mouseClick, multipleId }: AggregationLayerProps) => {
-    
+export const HexAggregationLayer = connector(({ setCurrentAggregateSelectionFn, poiDataset, smallMultiples, setValueRange, setUncertaintyRange, mouseMove, mouseClick, multipleId }: AggregationLayerProps) => {
+    const aggregateSettings = smallMultiples[multipleId].attributes.aggregateSettings;
+    const aggregateColor = aggregateSettings?.colormapSettings.aggregateColor;
+    const viewTransform = smallMultiples[multipleId].attributes.viewTransform;
+
     if(poiDataset == null || poiDataset.info == null || aggregateColor == null || aggregateColor.value_col == null || aggregateColor.value_col === "None"){
         return null;
     }
-
-    const viewTransform = smallMultiples[multipleId].attributes.viewTransform;
 
     const [hexagons, setHexagons] = React.useState(null)
     const [hoverElement, setHoverElement] = React.useState(null)
@@ -132,14 +135,14 @@ export const HexAggregationLayer = connector(({ setCurrentAggregateSelectionFn, 
     
 
     React.useEffect(() => {
-        if(aggregateSettings?.deriveRange){
+        if(aggregateSettings?.advancedSettings.deriveRange){
             if(datasetValueRange != null){
                 setValueRange(datasetValueRange)
                 setUncertaintyRange(datasetUncertaintyRange)
             }
         }
         // eslint-disable-next-line
-    }, [datasetValueRange, datasetUncertaintyRange, aggregateSettings?.deriveRange])
+    }, [datasetValueRange, datasetUncertaintyRange, aggregateSettings?.advancedSettings.deriveRange])
     
     // eslint-disable-next-line react-hooks/exhaustive-deps
 const debouncedLoadAggDataset = React.useCallback(
@@ -164,10 +167,10 @@ const debouncedLoadAggDataset = React.useCallback(
         range.y.min = range.y.min - Math.abs(range.y.min/2)
         range.y.max = range.y.max + Math.abs(range.y.max/2)
 
-        // load the basic aggregateDataset with the high-level overview information
+        // load the aggregateDataset 
         ReactionCIMEBackendFromEnv.loadHexAgg((dataset) => {
             setAggregateDataset(new AggregateDataset(dataset))
-        }, poiDataset.info.path, aggregateColor.value_col, aggregateColor.uncertainty_col, aggregateColor.cache_cols, aggregateSettings?.sampleSize, aggregateSettings?.aggregationMethod, range, cancellablePromise, abort_controller, loading_area)
+        }, poiDataset.info.path, aggregateColor.value_col, aggregateColor.uncertainty_col, aggregateColor.cache_cols, 0, aggregateSettings?.advancedSettings.aggregationMethod, range, cancellablePromise, abort_controller, loading_area)
         
     }, 500, {leading:false, trailing:true}) // leading: execute function at the beginning of the events; trailing: execute function at the end of the events; maxWait: maximum time the function is allowed to be delayed
     ,[poiDataset?.info?.path, aggregateColor, aggregateSettings]
@@ -177,15 +180,15 @@ const debouncedLoadAggDataset = React.useCallback(
         // setAggregateDataset(null)
         debouncedLoadAggDataset(viewTransform)
     // eslint-disable-next-line
-    }, [aggregateColor, poiDataset.info.path, aggregateSettings?.sampleSize, aggregateSettings?.aggregationMethod, viewTransform])
+    }, [aggregateColor, poiDataset.info.path, aggregateSettings?.advancedSettings.aggregationMethod, viewTransform])
     
 
     React.useEffect(() => {
-        if(aggregateSettings?.scale_obj != null){
+        if(aggregateSettings?.colormapSettings.scale_obj != null){
             if(aggregateDataset && aggregateDataset.vectors){
                 if(Object.keys(aggregateDataset.columns).includes(aggregateColor.value_col)){
                     
-                    let hexs = createHexagons(aggregateDataset, aggregateColor.value_col, aggregateColor.uncertainty_col, aggregateSettings?.scale_obj, aggregateSettings?.valueFilter) // "pred_var_9"
+                    let hexs = createHexagons(aggregateDataset, aggregateColor.value_col, aggregateColor.uncertainty_col, aggregateSettings?.colormapSettings.scale_obj, aggregateSettings?.colormapSettings.valueFilter) // "pred_var_9"
                     setHexagons(hexs);
                 }
             }else{
@@ -195,7 +198,7 @@ const debouncedLoadAggDataset = React.useCallback(
         
         // aggregateColor --> aggregateColor has direct influence on aggregateDataset through "setAggregateDataset" in the useEffect above
         // eslint-disable-next-line
-    }, [aggregateSettings?.scale_obj, aggregateDataset, aggregateSettings?.valueFilter])
+    }, [aggregateSettings?.colormapSettings.scale_obj, aggregateDataset, aggregateSettings?.colormapSettings.valueFilter])
 
 
     React.useEffect(() => {
@@ -267,6 +270,9 @@ const debouncedLoadAggDataset = React.useCallback(
                     setCurrentAggregateSelectionFn(null)
                 }
             }
+        }else{
+            setSelectElement(null)
+            setCurrentAggregateSelectionFn(null)
         }
         
     }, [aggregateDataset, mouseClick, setCurrentAggregateSelectionFn])
@@ -283,6 +289,7 @@ const debouncedLoadAggDataset = React.useCallback(
             hexagons={hexagons}
             hoverElement={hoverElement}
             selectElement={selectElement}
+            multipleId={multipleId}
         ></GLHexagons>}
     </div>
     

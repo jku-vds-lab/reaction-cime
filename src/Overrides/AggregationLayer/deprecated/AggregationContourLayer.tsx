@@ -123,10 +123,12 @@ const createContours = (dataset, value_col, scale) => {
 }
 
 const mapStateToProps = (state: AppState) => ({
-    aggregateColor: state.aggregateSettings?.aggregateColor,
+    // aggregateColor: state.aggregateSettings?.aggregateColor,
+    aggregateColor: state.multiples.multiples.entities[state.multiples.multiples.ids[0]]?.attributes.aggregateSettings?.colormapSettings.aggregateColor,
     poiDataset: state.dataset,
     viewTransform: state.multiples.multiples.entities[state.multiples.multiples.ids[0]]?.attributes.viewTransform,
-    aggregateSettings: state.aggregateSettings,
+    // aggregateSettings: state.aggregateSettings,
+    aggregateSettings: state.multiples.multiples.entities[state.multiples.multiples.ids[0]]?.attributes.aggregateSettings,
 })
 const mapDispatchToProps = (dispatch: any) => ({
     // setAggregateDataset: dataset => dispatch(setAggregateDatasetAction(dataset)),
@@ -158,25 +160,25 @@ export const AggregationContourLayer = connector(({ aggregateColor, poiDataset, 
         // load the basic aggregateDataset with the high-level overview information
         ReactionCIMEBackendFromEnv.loadAggCSV((dataset) => {
             setAggregateDataset(new AggregateDataset(dataset))
-        }, poiDataset.info.path, aggregateColor.value_col, aggregateColor.uncertainty_col, aggregateColor.cache_cols, aggregateSettings?.sampleSize, null, cancellablePromise, abort_controller, loading_area)
+        }, poiDataset.info.path, aggregateColor.value_col, aggregateColor.uncertainty_col, aggregateColor.cache_cols, 0, null, cancellablePromise, abort_controller, loading_area)
 
-    }, [aggregateColor, poiDataset.info.path, aggregateSettings?.sampleSize])
+    }, [aggregateColor, poiDataset.info.path])
 
     
     React.useEffect(() => {
         if(aggregateDataset && aggregateDataset.vectors){
             retrieve_colorscale(aggregateDataset, aggregateColor.value_col, aggregateColor.uncertainty_col, setAggregateColorMapScale, aggregateSettings) // "pred_var_9"
         }
-    }, [aggregateDataset, aggregateColor, aggregateSettings?.colorscale, aggregateSettings?.useVSUP])
+    }, [aggregateDataset, aggregateColor, aggregateSettings?.colormapSettings.colorscale, aggregateSettings?.colormapSettings.useVSUP])
 
     React.useEffect(() => {
-        if(aggregateSettings?.scale_obj != null && aggregateDataset && aggregateDataset.vectors){
-            let lines = createContours(aggregateDataset, aggregateColor.value_col, aggregateSettings?.scale_obj) // "pred_var_9"
+        if(aggregateSettings?.colormapSettings.scale_obj != null && aggregateDataset && aggregateDataset.vectors){
+            let lines = createContours(aggregateDataset, aggregateColor.value_col, aggregateSettings?.colormapSettings.scale_obj) // "pred_var_9"
             setLines(lines);
         }else{
             setLines(null);
         }
-    }, [aggregateSettings?.scale_obj, aggregateSettings?.valueFilter])
+    }, [aggregateSettings?.colormapSettings.scale_obj, aggregateSettings?.colormapSettings.valueFilter])
 
 
     return <div>

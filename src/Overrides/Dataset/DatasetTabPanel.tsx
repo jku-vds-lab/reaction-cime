@@ -11,7 +11,7 @@ import { useCancellablePromise } from "projection-space-explorer";
 import { usePromiseTracker } from "react-promise-tracker";
 import { DatasetDrop } from "./DatasetDrop";
 import Loader from "react-loader-spinner";
-import { AppState } from "../../State/Store";
+import { AppState, CIME4RViewActions } from "../../State/Store";
 import { connect, ConnectedProps } from "react-redux";
 import { UploadedFiles } from "./UploadedFiles";
 import React, { useState } from "react";
@@ -66,6 +66,7 @@ import ManageSearchIcon from '@mui/icons-material/ManageSearch';
   const mapDispatchToProps = (dispatch) => ({
     setAggregateColor: value => dispatch(setAggregateColor(value)),
     setTriggerUpdate: value => dispatch(setTriggerUpdate(value)),
+    resetViews: () => dispatch(CIME4RViewActions.resetViews()),
   });
   
   const connector = connect(mapStateToProps, mapDispatchToProps);
@@ -76,14 +77,15 @@ import ManageSearchIcon from '@mui/icons-material/ManageSearch';
     onDataSelected
   };
 
-  export const DatasetTabPanel = connector(({onDataSelected, setAggregateColor, setTriggerUpdate}: Props) => {
+  export const DatasetTabPanel = connector(({onDataSelected, resetViews, setTriggerUpdate}: Props) => {
     const { cancellablePromise, cancelPromises } = useCancellablePromise();
     let abort_controller = new AbortController();
     const [refreshUploadedFiles, setRefreshUploadedFiles] = useState(0);
     let lookupFileInput = React.useRef<any>();
 
     const intermediateOnDataSelected = (dataset) => {
-      setAggregateColor(null);
+      // setAggregateColor(null);
+      resetViews();
       onDataSelected(dataset);
     }
 

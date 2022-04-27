@@ -1,5 +1,5 @@
-import { TextField, Box } from "@mui/material";
-import { connect, ConnectedProps } from "react-redux";
+import { TextField, Box, Typography } from "@mui/material";
+import { connect, ConnectedProps, useSelector } from "react-redux";
 import { AppState } from "../../State/Store";
 import React from "react";
 import { StepSlider } from "./StepSlider";
@@ -7,15 +7,19 @@ import { ColorMapLegend } from "./ColorMapLegend";
 import "./AggregationTabPanel.scss";
 import { AdvancedAggregationSettings } from "./AdvancedAggregationSettings";
 // @ts-ignore
-import { SelectFeatureComponent } from "projection-space-explorer";
+import { SelectFeatureComponent, ViewSelector } from "projection-space-explorer";
+import { setSelectAttribute } from "../../State/AggregateSettingsDuck";
+import { NOItemsInfo } from "../../Utility/NOItemsInfo";
 
 
 const mapStateToProps = (state: AppState) => ({
   poiDataset: state.dataset,
-  workspace: state.multiples.multiples.entities[state.multiples.multiples.ids[0]]?.attributes.workspace,
+  selectAttribute: state.multiples.multiples.entities[state.multiples.active]?.attributes.aggregateSettings?.selectAttribute,
+  globalLabels: state.globalLabels,
 });
 
 const mapDispatchToProps = (dispatch) => ({
+  setSelectAttribute: (name:string, info:{}) => dispatch(setSelectAttribute({attribute_name: name, attribute_info: info}))
 });
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
@@ -25,26 +29,18 @@ type PropsFromRedux = ConnectedProps<typeof connector>;
 type Props = PropsFromRedux & {};
 
 
-export const AggregationTabPanel = connector(({poiDataset, workspace}: Props) => {
-    
+export const AggregationTabPanel = connector(({poiDataset, selectAttribute, setSelectAttribute}: Props) => {
+  
     // const categoryOptions = poiDataset?.categories;
     const [categoryOptions, setCategoryOptions] = React.useState(null)
     const [selectColumns, setSelectColumns] = React.useState(null)
-    const [selectAttribute, setSelectAttribute] = React.useState("None")
-    const [selectAttributeInfo, setSelectAttributeInfo] = React.useState(null)
+    // const [selectAttribute, setSelectAttribute] = React.useState(null)
+    // const [selectAttributeInfo, setSelectAttributeInfo] = React.useState(null)
     const [columnInfo, setColumnInfo] = React.useState(null)
-    
-    React.useEffect(() => {
-      // reset aggregate color to hide the aggregated dataset in the background
-      setSelectAttribute("None") // reset selection to None
-      setSelectAttributeInfo(null)
-    // eslint-disable-next-line
-    }, [workspace, poiDataset]) // this is triggered during the embedding
-
 
     React.useEffect(() => {
-      setSelectAttribute("None") // reset selection to None
-      setSelectAttributeInfo(null)
+      // setSelectAttribute(null) // reset selection to None
+      // setSelectAttributeInfo(null)
 
       let select_columns = {};
       let new_column_info = {...poiDataset?.columns};
@@ -106,6 +102,9 @@ export const AggregationTabPanel = connector(({poiDataset, workspace}: Props) =>
     return (
       <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
         <Box paddingLeft={2} paddingTop={1} paddingRight={2}>
+          {<NOItemsInfo variant={"all"}></NOItemsInfo>}
+        </Box>
+        <Box paddingLeft={2} paddingTop={1} paddingRight={2}>
           {
             <TextField
               id="knn-textfield"
@@ -156,16 +155,20 @@ export const AggregationTabPanel = connector(({poiDataset, workspace}: Props) =>
               attribute = "None" //{key: "None", name: "None"}
             }
             
-            setSelectAttribute(attribute)
-            if(selectColumns != null && Object.keys(selectColumns).includes(attribute))
-              setSelectAttributeInfo(selectColumns[attribute])
+            // setSelectAttribute(attribute)
+            if(selectColumns != null && Object.keys(selectColumns).includes(attribute)){
+              setSelectAttribute(attribute, selectColumns[attribute])
+              // setSelectAttributeInfo(selectColumns[attribute])
+            }else{
+              setSelectAttribute(attribute, null)
+            }
           }}
-      />
+        />
           }
         </Box>
-        <Box paddingLeft={2} paddingTop={1} paddingRight={2}><StepSlider selectAttribute={selectAttribute} selectAttributeInfo={selectAttributeInfo}></StepSlider></Box>
-        <Box paddingLeft={2} paddingTop={1} paddingRight={2}><ColorMapLegend selectAttribute={selectAttribute}></ColorMapLegend></Box>
-        <Box paddingLeft={2} paddingTop={1} paddingRight={2}><AdvancedAggregationSettings selectAttribute={selectAttribute} selectAttributeInfo={selectAttributeInfo}></AdvancedAggregationSettings></Box>
+        <Box paddingLeft={2} paddingTop={1} paddingRight={2}><StepSlider></StepSlider></Box>
+        <Box paddingLeft={2} paddingTop={1} paddingRight={2}><ColorMapLegend></ColorMapLegend></Box>
+        <Box paddingLeft={2} paddingTop={1} paddingRight={2}><AdvancedAggregationSettings></AdvancedAggregationSettings></Box>
       </div>
     );
   }

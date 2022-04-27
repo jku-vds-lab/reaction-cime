@@ -8,12 +8,9 @@ import * as d3 from 'd3v5';
 import { PSE_BLUE } from "../../Utility/Utils";
 
 const mapStateToProps = (state: AppState) => ({
-    colorScale: state.aggregateSettings?.colorscale,
-    useVSUP: state.aggregateSettings?.useVSUP,
-    aggregateColor: state.aggregateSettings?.aggregateColor,
-    valueFilter: state.aggregateSettings?.valueFilter,
-    valueRange: state.aggregateSettings?.valueRange,
-    uncertaintyRange: state.aggregateSettings?.uncertaintyRange,
+    aggregateSettings: state.multiples.multiples.entities[state.multiples.active]?.attributes.aggregateSettings,
+    selectAttribute: state.multiples.multiples.entities[state.multiples.active]?.attributes.aggregateSettings?.selectAttribute,
+    activeId: state.multiples.active
 });
 
 const mapDispatchToProps = (dispatch) => ({
@@ -30,12 +27,11 @@ const connector = connect(mapStateToProps, mapDispatchToProps);
 type PropsFromRedux = ConnectedProps<typeof connector>;
 
 type Props = PropsFromRedux & {
-    selectAttribute: string
 };
 
 
 
-export const ColorMapLegend = connector(({colorScale, setAggregateColorScale, selectAttribute, toggleUseVSUP, addValueFilter, removeValueFilter, clearValueFilter, aggregateColor, useVSUP, valueFilter, valueRange, uncertaintyRange, setAggregateColorMapScale }: Props) => {
+export const ColorMapLegend = connector(({setAggregateColorScale, selectAttribute, toggleUseVSUP, addValueFilter, removeValueFilter, clearValueFilter, aggregateSettings, setAggregateColorMapScale, activeId }: Props) => {
     if(selectAttribute == null || selectAttribute === "None"){
         return null;
     }
@@ -61,32 +57,32 @@ export const ColorMapLegend = connector(({colorScale, setAggregateColorScale, se
 
 
     React.useEffect(() => {
-        if(valueRange != null){
+        if(aggregateSettings.advancedSettings.valueRange != null){
             // visit https://github.com/uwdata/vsup for more info about VSUP vs bivariate colorscale encoding
-            var vDom = [valueRange.min, valueRange.max];
+            var vDom = [aggregateSettings.advancedSettings.valueRange.min, aggregateSettings.advancedSettings.valueRange.max];
             let colLegend, scale, quantization;
 
             // simple encoding
-            if(uncertaintyRange == null){
+            if(aggregateSettings.advancedSettings.uncertaintyRange == null){
                 scale = d3.scaleQuantize()
                     .domain(vDom)
-                    .range(d3.quantize(d3[colorScale], 8));
+                    .range(d3.quantize(d3[aggregateSettings.colormapSettings.colorscale], 8));
                 vDom = scale.domain()
-                colLegend = vsup.legend.simpleLegend(scale).title(aggregateColor.value_col)
+                colLegend = vsup.legend.simpleLegend(scale).title(aggregateSettings.colormapSettings.aggregateColor.value_col)
             }else{ // bivariate encoding
-                const uDom = [uncertaintyRange.min, uncertaintyRange.max];
-                if(useVSUP){
+                const uDom = [aggregateSettings.advancedSettings.uncertaintyRange.min, aggregateSettings.advancedSettings.uncertaintyRange.max];
+                if(aggregateSettings.colormapSettings.useVSUP){
                     quantization = vsup.quantization().branching(2).layers(4).valueDomain(vDom).uncertaintyDomain(uDom);
-                    scale = vsup.scale().quantize(quantization).range(d3[colorScale]);
+                    scale = vsup.scale().quantize(quantization).range(d3[aggregateSettings.colormapSettings.colorscale]);
                     colLegend = vsup.legend.arcmapLegend(scale);
                 }else{
                     quantization = vsup.squareQuantization(4).valueDomain(vDom).uncertaintyDomain(uDom);
-                    scale = vsup.scale().quantize(quantization).range(d3[colorScale]);
+                    scale = vsup.scale().quantize(quantization).range(d3[aggregateSettings.colormapSettings.colorscale]);
                     colLegend = vsup.legend.heatmapLegend(scale);
                 }
                 colLegend
-                    .vtitle(aggregateColor.value_col)
-                    .utitle(aggregateColor.uncertainty_col)
+                    .vtitle(aggregateSettings.colormapSettings.aggregateColor.value_col)
+                    .utitle(aggregateSettings.colormapSettings.aggregateColor.uncertainty_col)
                     
             }
             
@@ -103,7 +99,7 @@ export const ColorMapLegend = connector(({colorScale, setAggregateColorScale, se
             setAggregateColorMapScale(scale)
         }
         // eslint-disable-next-line
-    }, [useVSUP, valueRange, uncertaintyRange, colorScale, aggregateColor])
+    }, [aggregateSettings.colormapSettings.useVSUP, aggregateSettings.advancedSettings.valueRange, aggregateSettings.advancedSettings.uncertaintyRange, aggregateSettings.colormapSettings.colorscale, aggregateSettings.colormapSettings.aggregateColor])
 
     React.useEffect(() => {
         if(legend != null && gRef.current && svgRef.current){
@@ -179,11 +175,11 @@ export const ColorMapLegend = connector(({colorScale, setAggregateColorScale, se
     }, [legend, gRef, svgRef])
     
     return <>
-        <InputLabel id="colorscale-select-label">Choose Colormap</InputLabel>
+        <InputLabel id={"colorscale-select-label"}>Choose Colormap</InputLabel>
         <Select
-          labelId="colorscale-select-label"
-          id="colorscale-select"
-          value={colorScale}
+          labelId={"colorscale-select-label"}
+          id={"colorscale-select"}
+          value={aggregateSettings.colormapSettings.colorscale}
           onChange={handleChange}
         >
             {D3_CONTINUOUS_COLOR_SCALE_LIST.map((colorscale) => 
@@ -196,7 +192,7 @@ export const ColorMapLegend = connector(({colorScale, setAggregateColorScale, se
         {legend?.height == null &&  // only the "simple" legend has a hight attribute
             <Button variant="outlined" onClick={()=> {toggleUseVSUP()}}>Switch Encoding</Button>
         }
-        {(valueFilter != null && valueFilter.length > 0) && <Button variant="outlined" onClick={()=> {clearFilter(colorSections)}}>Clear Filter</Button>}
+        {(aggregateSettings.colormapSettings.valueFilter != null && aggregateSettings.colormapSettings.valueFilter.length > 0) && <Button variant="outlined" onClick={()=> {clearFilter(colorSections)}}>Clear Filter</Button>}
         
     </>
       

@@ -11,7 +11,6 @@ import FilterAltIcon from '@mui/icons-material/FilterAlt';
 type Props = {
     dataset: Dataset,
     removeFilter: (col) => void,
-    // constraintsMap: {}
     constraintCols: string[],
     constraints: {col:string, operator:string, val1:string, val2:string}[],
     triggerDatasetUpdate
@@ -85,37 +84,7 @@ export const FilterSettings = ({dataset, removeFilter, constraintCols, constrain
             setFilterValues(tempFilterValues);
         }
     }, [constraintCols])
-
-    // React.useEffect(()=> {
-    //     Object.keys(constraintsMap).map((key) => {
-    //         const constraints = constraintsMap[key];
-    //         let between;
-    //         let equals = [];
-    //         for(let i in constraints){
-    //             const con = constraints[i];
-    //             if(con.operator === "BETWEEN"){ // if there are several between operators, we choose the minimal minimum and the maximal maximum, because we can only handle one range
-    //                 if(between == null){
-    //                     between = [con.val1, con.val2]
-    //                 }else{
-    //                     between[0] = Math.min(con.val1, between[0])
-    //                     between[1] = Math.max(con.val2, between[1])
-    //                 }
-                    
-    //             }else if(con.operator === "EQUALS"){
-    //                 equals.push(con.val1)
-    //             }
-    //         }
-    //         let tempFilterValues = {...filterValues};
-    //         if(between != null){
-    //             tempFilterValues[key] = {isNum: true, val: between}
-    //         }else{
-    //             tempFilterValues[key] = {isNum: false, val: equals}
-    //         }
-    //         setFilterValues(tempFilterValues);
-    //         return null;
-    //     })
-
-    // }, [constraintsMap])
+    
 
     return <div><Box paddingTop={2} paddingRight={2}>
         {Object.keys(filterValues).map((key) => {
@@ -168,12 +137,14 @@ const updateBackendConstraints = (dimensions, dataset, triggerDatasetUpdate) => 
                 let constraint_object = { col: i, operator: "EQUALS", val1: constraintarray[j], val2: constraintarray[j] };
                 all_constraints.push(constraint_object);
             }
-        
         }
     }
     
     ReactionCIMEBackendFromEnv.updatePOIConstraints(dataset.info.path, all_constraints).then((res) => {
-        if(res.msg === "ok" && triggerDatasetUpdate != null){
+        if(res.msg !== "ok"){
+            alert(res.msg)
+        }
+        if(triggerDatasetUpdate != null){
             triggerDatasetUpdate({
                 display: dataset.info.path,
                 path: dataset.info.path,

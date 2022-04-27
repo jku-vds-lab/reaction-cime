@@ -1,15 +1,19 @@
 import { Slider, Typography } from "@mui/material";
 import React from "react";
 import { connect, ConnectedProps } from "react-redux";
-import { setAggregateColor } from "../../State/AggregateSettingsDuck";
+import { setAggregateColor, setCurStep } from "../../State/AggregateSettingsDuck";
 import { AppState } from "../../State/Store";
 
 const mapStateToPropsSlider = (state: AppState) => ({
-    variableIndex: state.aggregateSettings?.variableIndex,
+    variableIndex: state.multiples.multiples.entities[state.multiples.active]?.attributes.aggregateSettings?.advancedSettings.variableIndex,
+    selectAttribute: state.multiples.multiples.entities[state.multiples.active]?.attributes.aggregateSettings?.selectAttribute,
+    selectAttributeInfo: state.multiples.multiples.entities[state.multiples.active]?.attributes.aggregateSettings?.selectAttributeInfo,
+    curStep: state.multiples.multiples.entities[state.multiples.active]?.attributes.aggregateSettings?.stepperSettings.curStep,
   });
   
   const mapDispatchToPropsSlider = (dispatch) => ({
     setAggregateColor: values => dispatch(setAggregateColor(values)),
+    setCurStep: values => dispatch(setCurStep(values)),
   });
   
   const sliderconnector = connect(mapStateToPropsSlider, mapDispatchToPropsSlider);
@@ -17,20 +21,16 @@ const mapStateToPropsSlider = (state: AppState) => ({
   type SliderPropsFromRedux = ConnectedProps<typeof sliderconnector>;
   
   type SliderProps = SliderPropsFromRedux & {
-    selectAttribute: string
-    selectAttributeInfo
   };
   
   
   
-export const StepSlider = sliderconnector(({selectAttribute, setAggregateColor, selectAttributeInfo, variableIndex}: SliderProps) => {
-
-
+export const StepSlider = sliderconnector(({selectAttribute, setAggregateColor, selectAttributeInfo, variableIndex, curStep, setCurStep}: SliderProps) => {
+    
     const stepChanged = (newVal) => {
         setCurStep(newVal)
     }
 
-    const [curStep, setCurStep] = React.useState(0);
     const [marks, setMarks] = React.useState([]);
 
 
@@ -68,7 +68,7 @@ export const StepSlider = sliderconnector(({selectAttribute, setAggregateColor, 
     }, [curStep, selectAttribute, variableIndex])
 
     return <>{(marks && marks.length > 0) && <>
-        <Typography id="range-slider" gutterBottom>
+        <Typography id={"range-slider"} gutterBottom>
             Choose Step
         </Typography>
         <Slider

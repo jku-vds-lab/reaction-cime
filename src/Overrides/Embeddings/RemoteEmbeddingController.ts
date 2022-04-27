@@ -3,15 +3,19 @@ import remoteWorker from "./remote.worker";
 
 export class RemoteEmbeddingController extends EmbeddingController {
     targetBounds: any;
-    private embedding_method:String;
+    private embedding_method: String;
+    private callback_fn?: (msg: string) => void
 
-    constructor(embedding_method:String){ 
+    constructor(embedding_method: String, callback_fn?: (msg: string) => void){ 
         // embedding_methods currently implemented in the backend: "umap", "tsne", "pca"; it defaults to "pca"
         super()
-        this.embedding_method = embedding_method
+        this.embedding_method = embedding_method;
+        this.callback_fn = callback_fn;
     }
     
     init(dataset: Dataset, selection: any, params: any, workspace: IProjection) {
+        if(this.callback_fn)
+            this.callback_fn("init")
         const selected_feature_info = {}
         selection.forEach(feature => {
             if(feature.checked){

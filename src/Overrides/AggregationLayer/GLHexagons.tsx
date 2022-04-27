@@ -3,10 +3,11 @@ import React, { useState } from "react";
 import { useEffect } from "react";
 import * as THREE from 'three';
 import { connect, ConnectedProps } from "react-redux";
+import { EntityId } from '@reduxjs/toolkit';
 
 
 const mapStateToProps = (state: RootState) => ({
-    viewTransform: state.multiples.multiples.entities[state.multiples.multiples.ids[0]]?.attributes.viewTransform
+    smallMultiples: state.multiples.multiples.entities,
 })
 
 const mapDispatchToProps = (dispatch: any) => ({
@@ -24,10 +25,14 @@ type Props = PropsFromRedux & {
     hexagons: [THREE.Mesh]
     hoverElement: THREE.Mesh
     selectElement: THREE.Mesh
+    multipleId: EntityId
 }
 
 
-export const GLHexagons = connector(({ viewTransform, hexagons, hoverElement, selectElement }: Props) => {
+export const GLHexagons = connector(({ smallMultiples, hexagons, hoverElement, selectElement, multipleId }: Props) => {
+    const viewTransform = smallMultiples[multipleId].attributes.viewTransform;
+    console.log("my multipleId:", multipleId)
+    console.log("my viewTransform:", viewTransform)
     const ref = React.useRef<any>()
 
     const [renderer] = useState(() => new THREE.WebGLRenderer({

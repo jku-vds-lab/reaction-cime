@@ -3,14 +3,14 @@ import { useCancellablePromise } from 'projection-space-explorer'
 import * as React from 'react'
 import { connect, ConnectedProps } from "react-redux";
 import * as THREE from 'three'
-import { ReactionCIMEBackendFromEnv } from '../../Backend/ReactionCIMEBackend';
-import { AppState } from '../../State/Store';
-import { AggregateDataset } from './AggregateDataset'
-import { LoadingIndicatorDialog } from '../Dataset/DatasetTabPanel';
+import { ReactionCIMEBackendFromEnv } from '../../../Backend/ReactionCIMEBackend';
+import { AppState } from '../../../State/Store';
+import { AggregateDataset } from '../AggregateDataset'
+import { LoadingIndicatorDialog } from '../../Dataset/DatasetTabPanel';
 import { GLHeatmap } from './GLHeatmap'
 import * as _ from "lodash";
-import { setUncertaintyRange, setValueRange } from '../../State/AggregateSettingsDuck';
-import { convert_to_rgb } from '../../Utility/Utils';
+import { setUncertaintyRange, setValueRange } from '../../../State/AggregateSettingsDuck';
+import { convert_to_rgb } from '../../../Utility/Utils';
 
 
 const retrieve_information_from_agg_dataset = (aggregateDataset: AggregateDataset, dataset: AggregateDataset, value_col: string, uncertainty_col: string, valueFilter: string[], scale: any) => {
@@ -73,10 +73,12 @@ const retrieve_information_from_agg_dataset = (aggregateDataset: AggregateDatase
 }
 
 const mapStateToProps = (state: AppState) => ({
-    aggregateColor: state.aggregateSettings?.aggregateColor,
+    // aggregateColor: state.aggregateSettings?.aggregateColor,
+    aggregateColor: state.multiples.multiples.entities[state.multiples.multiples.ids[0]]?.attributes.aggregateSettings?.colormapSettings.aggregateColor,
     poiDataset: state.dataset,
     viewTransform: state.multiples.multiples.entities[state.multiples.multiples.ids[0]]?.attributes.viewTransform,
-    aggregateSettings: state.aggregateSettings,
+    // aggregateSettings: state.aggregateSettings,
+    aggregateSettings: state.multiples.multiples.entities[state.multiples.multiples.ids[0]]?.attributes.aggregateSettings,
 })
 const mapDispatchToProps = (dispatch: any) => ({
     setValueRange: (range) => dispatch(setValueRange(range)),
@@ -129,10 +131,10 @@ const AggregationLayer = connector(({ aggregateColor, poiDataset, viewTransform,
             // load zoomed version of the aggregate dataset
             ReactionCIMEBackendFromEnv.loadAggCSV((dataset) => {
                 setAggregateDatasetZoomed(new AggregateDataset(dataset))
-            }, poiDataset.info.path, aggregateColor.value_col, aggregateColor.uncertainty_col, aggregateColor.cache_cols, aggregateSettings?.sampleSize, range, cancellablePromise, abort_controller, "None")
+            }, poiDataset.info.path, aggregateColor.value_col, aggregateColor.uncertainty_col, aggregateColor.cache_cols, 0, range, cancellablePromise, abort_controller, "None")
 
         }, 500, {leading:false, trailing:true}) // leading: execute function at the beginning of the events; trailing: execute function at the end of the events; maxWait: maximum time the function is allowed to be delayed
-        ,[aggregateColor, aggregateSettings?.sampleSize]
+        ,[aggregateColor]
     );
 
     React.useEffect(() => {
@@ -141,12 +143,12 @@ const AggregationLayer = connector(({ aggregateColor, poiDataset, viewTransform,
         // load the basic aggregateDataset with the high-level overview information
         ReactionCIMEBackendFromEnv.loadAggCSV((dataset) => {
             setAggregateDataset(new AggregateDataset(dataset))
-        }, poiDataset.info.path, aggregateColor.value_col, aggregateColor.uncertainty_col, aggregateColor.cache_cols, aggregateSettings?.sampleSize, null, cancellablePromise, abort_controller, loading_area)
+        }, poiDataset.info.path, aggregateColor.value_col, aggregateColor.uncertainty_col, aggregateColor.cache_cols, 0, null, cancellablePromise, abort_controller, loading_area)
 
         // reset the zoomed version of the dataset
         setAggregateDatasetZoomed(null)
         // eslint-disable-next-line
-    }, [aggregateColor, poiDataset.info.path, aggregateSettings?.sampleSize])
+    }, [aggregateColor, poiDataset.info.path])
     
 
     React.useEffect(() => {
@@ -157,7 +159,7 @@ const AggregationLayer = connector(({ aggregateColor, poiDataset, viewTransform,
 
     
     React.useEffect(() => {
-        if(aggregateDataset && aggregateDataset.vectors && aggregateSettings?.deriveRange){
+        if(aggregateDataset && aggregateDataset.vectors && aggregateSettings?.advancedSettings.deriveRange){
             if(Object.keys(aggregateDataset.columns).includes(aggregateColor.value_col)){
                 setValueRange(aggregateDataset.columns[aggregateColor.value_col].range)
             
@@ -170,21 +172,21 @@ const AggregationLayer = connector(({ aggregateColor, poiDataset, viewTransform,
         }
         // aggregateColor --> aggregateColor has direct influence on aggregateDataset through "setAggregateDataset" in the useEffect above
         // eslint-disable-next-line
-    }, [aggregateDataset, aggregateSettings?.deriveRange])
+    }, [aggregateDataset, aggregateSettings?.advancedSettings.deriveRange])
 
     React.useEffect(() => {
-        if(aggregateSettings.scale_obj != null){
+        if(aggregateSettings.colormapSettings.scale_obj != null){
             if(aggregateDataset && aggregateDataset.vectors){
                 if(Object.keys(aggregateDataset.columns).includes(aggregateColor.value_col)){
                     
                     let sizes = [null, null];
                     let textures = [null, null];
-                    let [texture, size] = retrieve_information_from_agg_dataset(aggregateDataset, aggregateDataset, aggregateColor.value_col, aggregateColor.uncertainty_col, aggregateSettings?.valueFilter, aggregateSettings.scale_obj)
+                    let [texture, size] = retrieve_information_from_agg_dataset(aggregateDataset, aggregateDataset, aggregateColor.value_col, aggregateColor.uncertainty_col, aggregateSettings?.colormapSettings.valueFilter, aggregateSettings.colormapSettings.scale_obj)
                     sizes[0] = size;
                     textures[0] = texture;
         
                     if(aggregateDatasetZoomed && aggregateDatasetZoomed.vectors){
-                        let [texture, size] = retrieve_information_from_agg_dataset(aggregateDataset, aggregateDatasetZoomed, aggregateColor.value_col, aggregateColor.uncertainty_col, aggregateSettings?.valueFilter, aggregateSettings.scale_obj)
+                        let [texture, size] = retrieve_information_from_agg_dataset(aggregateDataset, aggregateDatasetZoomed, aggregateColor.value_col, aggregateColor.uncertainty_col, aggregateSettings?.colormapSettings.valueFilter, aggregateSettings.colormapSettings.scale_obj)
                         sizes[1] = size;
                         textures[1] = texture;
                     }
@@ -199,7 +201,7 @@ const AggregationLayer = connector(({ aggregateColor, poiDataset, viewTransform,
         
         // scale_obj is directly dependent on uncertainty_col and value_col
         // eslint-disable-next-line
-    }, [aggregateSettings?.scale_obj, aggregateDataset, aggregateDatasetZoomed, aggregateSettings?.valueFilter])
+    }, [aggregateSettings?.colormapSettings.scale_obj, aggregateDataset, aggregateDatasetZoomed, aggregateSettings?.colormapSettings.valueFilter])
 
     return <div>
     <LoadingIndicatorDialog
