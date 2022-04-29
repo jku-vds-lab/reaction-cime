@@ -1,19 +1,19 @@
 import { Table, TableBody, TableCell, TableHead, TableRow } from "@mui/material";
 import { makeStyles } from "@mui/styles";
-import { Dataset } from "projection-space-explorer";
+import { Dataset, IProjection } from "projection-space-explorer";
 import { connect, ConnectedProps } from "react-redux";
 import { ReactionCIMEBackendFromEnv } from "../../Backend/ReactionCIMEBackend";
 import { AppState } from "../../State/Store";
 
 
-function genRows(aggregateSelection, aggregation, legendAttributes, dataset: Dataset) {
+function genRows(aggregateSelection, aggregation, legendAttributes, dataset: Dataset, workspace: IProjection) {
     // here is the code to retrieve the data for certain columns...
     ReactionCIMEBackendFromEnv.loadCategoryCount(dataset.info.path, "base_SMILES_index").then((data) => {
         console.log("count per category of base_SMILES_index for all datapoints")
         console.log(data)
     })
 
-    ReactionCIMEBackendFromEnv.loadCategoryCountOfHex(dataset.info.path, "base_SMILES_index", aggregateSelection.x, aggregateSelection.y, aggregateSelection.circ_radius).then((data) => {
+    ReactionCIMEBackendFromEnv.loadCategoryCountOfHex(dataset.info.path, "base_SMILES_index", workspace.xChannel, workspace.yChannel, aggregateSelection.x, aggregateSelection.y, aggregateSelection.circ_radius).then((data) => {
         console.log("count per category of base_SMILES_index for selected hexagon")
         console.log(data)
     })
@@ -23,7 +23,7 @@ function genRows(aggregateSelection, aggregation, legendAttributes, dataset: Dat
         console.log(data)
     })
 
-    ReactionCIMEBackendFromEnv.loadDensityOfHex(dataset.info.path, "pred_mean_0", aggregateSelection.x, aggregateSelection.y, aggregateSelection.circ_radius).then((data) => {
+    ReactionCIMEBackendFromEnv.loadDensityOfHex(dataset.info.path, "pred_mean_0", workspace.xChannel, workspace.yChannel, aggregateSelection.x, aggregateSelection.y, aggregateSelection.circ_radius).then((data) => {
         console.log("density data of pred_mean_0 for selected hexagon")
         console.log(data)
     })
@@ -34,6 +34,7 @@ const mapStateToProps = (state: AppState) => ({
     // aggregateSelection: state.selection?.currentAggregateSelection,
     legendAttributes: state.genericFingerprintAttributes,
     dataset: state.dataset,
+    workspace: state.multiples.multiples.entities[state.multiples.active].attributes.workspace
 })
 const mapDispatchToProps = (dispatch: any) => ({
 })
@@ -55,10 +56,10 @@ const useStyles = makeStyles({
     },
   });
 
-export const AggregateLegend = connector(({ aggregate, aggregateSelection, legendAttributes, dataset }: Props) => {
+export const AggregateLegend = connector(({ aggregate, aggregateSelection, legendAttributes, dataset, workspace }: Props) => {
     const classes = useStyles();
     // const rows = []
-    const rows = genRows(aggregateSelection, aggregate, legendAttributes, dataset);
+    const rows = genRows(aggregateSelection, aggregate, legendAttributes, dataset, workspace as IProjection);
 
     return <div style={{ width: '100%', maxHeight: '100%', overflowY: 'scroll' }}>
         <div

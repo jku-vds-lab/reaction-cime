@@ -104,7 +104,7 @@ export const AggregationTabPanel = connector(({poiDataset, selectAttribute, setS
         <Box paddingLeft={2} paddingTop={1} paddingRight={2}>
           {<NOItemsInfo variant={"all"}></NOItemsInfo>}
         </Box>
-        <Box paddingLeft={2} paddingTop={1} paddingRight={2}>
+        {/* <Box paddingLeft={2} paddingTop={1} paddingRight={2}>
           {
             <TextField
               id="knn-textfield"
@@ -116,7 +116,7 @@ export const AggregationTabPanel = connector(({poiDataset, selectAttribute, setS
               type="number"
             />
           }
-        </Box>
+        </Box> */}
 
         <Box paddingLeft={2} paddingTop={1} paddingRight={2}>
           {

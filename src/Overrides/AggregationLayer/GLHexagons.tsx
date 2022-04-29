@@ -31,8 +31,6 @@ type Props = PropsFromRedux & {
 
 export const GLHexagons = connector(({ smallMultiples, hexagons, hoverElement, selectElement, multipleId }: Props) => {
     const viewTransform = smallMultiples[multipleId].attributes.viewTransform;
-    console.log("my multipleId:", multipleId)
-    console.log("my viewTransform:", viewTransform)
     const ref = React.useRef<any>()
 
     const [renderer] = useState(() => new THREE.WebGLRenderer({

@@ -136,6 +136,7 @@ def get_grid_data(x, y, sample_size=200):
     
     return xi, yi, Xi, Yi
 
+# deprecated
 def aggregate_by_col_interpolate(df, value_cols, sample_size=200):
     from scipy.interpolate import griddata
     x = df["x"]
@@ -174,11 +175,11 @@ np_agg_methods_dict = {
     "median": np.nanmedian,
 }
 
-def create_hex(df, hex_x, hex_y, radius, circ_radius, value_cols, aggregation_methods):
-    window = isInsideHex(df["x"], df["y"], hex_x, hex_y, radius, circ_radius)
+def create_hex(df, hex_x, hex_y, radius, circ_radius, value_cols, aggregation_methods, xChannel, yChannel):
+    window = isInsideHex(df[xChannel], df[yChannel], hex_x, hex_y, radius, circ_radius)
     window_df = df[window]
     if len(window_df) > 0:
-        res = {"x": hex_x, "y": hex_y, "circ_radius": circ_radius}
+        res = {xChannel: hex_x, yChannel: hex_y, "circ_radius": circ_radius}
         for i in range(len(value_cols)):
             value_col = value_cols[i]
             aggregation_method = aggregation_methods[i]
@@ -194,9 +195,9 @@ def radius_to_circ_radius(radius):
 def circ_radius_to_radius(circ_radius):
     return (3**(1/2))*circ_radius/2
 
-def hex_aggregate_by_col(df, value_cols, aggregation_methods, range=None, sample_size=20):
-    x = df["x"]
-    y = df["y"]
+def hex_aggregate_by_col(df, value_cols, aggregation_methods, range=None, sample_size=20, xChannel="x", yChannel="y"):
+    x = df[xChannel]
+    y = df[yChannel]
 
     if range is None: # set range to be the maximum and minimum of the available dataset points
         x_min = x.min()
@@ -231,7 +232,7 @@ def hex_aggregate_by_col(df, value_cols, aggregation_methods, range=None, sample
     range_y = np.arange(y_min, y_max, radius*2)
     for i in range_x:
         for j in range_y:
-            hex, window = create_hex(df, i, j, radius, circ_radius, value_cols, aggregation_methods)
+            hex, window = create_hex(df, i, j, radius, circ_radius, value_cols, aggregation_methods, xChannel, yChannel)
             test_points_used += window
             if hex is not None:
                 hexes.append(hex)
@@ -241,7 +242,7 @@ def hex_aggregate_by_col(df, value_cols, aggregation_methods, range=None, sample
     range_y = np.arange(y_min-radius, y_max+radius, radius*2)
     for i in range_x:
         for j in range_y:
-            hex, window = create_hex(df, i, j, radius, circ_radius, value_cols, aggregation_methods)
+            hex, window = create_hex(df, i, j, radius, circ_radius, value_cols, aggregation_methods, xChannel, yChannel)
             test_points_used += window
             if hex is not None:
                 hexes.append(hex)
@@ -253,6 +254,7 @@ def hex_aggregate_by_col(df, value_cols, aggregation_methods, range=None, sample
     wrong_points = df[test_points_used != 1] # TODO: remove debugging at some point
     return pd.DataFrame(hexes), wrong_points
 
+# deprecated
 def aggregate_by_col(df, value_cols, sample_size=20):
     x = df["x"]
     y = df["y"]

@@ -178,6 +178,7 @@ class ReactionCIMEDBO():
         pandas.Dataframe
             A pandas dataframe containing the query result from the database
         """
+        subsample_flag = False
         select_cols = "*"
         if columns is not None:
             select_cols = "id"
@@ -190,11 +191,11 @@ class ReactionCIMEDBO():
             if max_datapoints > 0:
                 datapoint_count = self.get_filter_mask(table_name, filter)["mask"].sum()
                 if datapoint_count > max_datapoints:
+                    subsample_flag = True
                     # https://www.sqlitetutorial.net/sqlite-functions/sqlite-random/
-                    print(max_datapoints/datapoint_count*100)
                     sql_stmt += f' AND abs(RANDOM()%100) < {max_datapoints/datapoint_count*100}' # add random selection filter based on the ratio between maximum allowed datapoints and NO datapoints that would be selected without sampling
                     
-        return pd.read_sql(sql_stmt, self.db.engine, index_col="id")
+        return pd.read_sql(sql_stmt, self.db.engine, index_col="id"), subsample_flag
 
     def get_filter_mask(self, table_name, filter):
         sql_stmt = 'SELECT id, CASE WHEN ' + filter + ' THEN true ELSE false END as mask FROM "' + table_name + '"'

@@ -22,14 +22,18 @@ export class AggregateDataset {
     vectors: IVector[];
     bounds: { x; y; };
     columns: { [name: string] : ColumnType }
+    xChannel: string;
+    yChannel: string;
 
-    constructor(vectors) {
+    constructor(vectors, xChannel?:string, yChannel?:string) {
         this.vectors = vectors;
         this.columns = {};
+        this.xChannel = xChannel == null ? "x" : xChannel;
+        this.yChannel = yChannel == null ? "y" : yChannel;
 
         this.bounds = {
-            x: this.calculateRange("x"),
-            y: this.calculateRange("y")
+            x: this.calculateRange(xChannel),
+            y: this.calculateRange(yChannel)
         };
         this.inferColumns();
     }
@@ -65,10 +69,10 @@ export class AggregateDataset {
         }, {});
 
         // If data contains no x and y attributes, its invalid
-        if (header.includes("x") && header.includes("y")) {
+        if (header.includes(this.xChannel) && header.includes(this.yChannel)) {
             this.vectors.forEach(vector => {
-                vector.x = +vector.x;
-                vector.y = +vector.y;
+                vector[this.xChannel] = +vector[this.xChannel];
+                vector[this.yChannel] = +vector[this.yChannel];
             });
         }else{
             console.log("You have to specify x and y columns in your dataset")//TODO: x and y are only needed for calculation of bounds -> set bounds to some default (e.g. [-1;1]) if x and y not given

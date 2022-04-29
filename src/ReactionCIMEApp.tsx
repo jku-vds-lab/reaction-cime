@@ -115,14 +115,14 @@ const ApplicationWrapper = connector(({ setMouseMoveFn, dataset_path, setMouseCl
       ],
       detailViews: [ //TODO: switch between the two
         {
-          name: "paco",
-          // @ts-ignore
-          view: <PacoContext key={"paco"}></PacoContext>
-        },
-        {
           name: "lineup",
           // @ts-ignore
           view: <LineUpContext key={"lineup"}></LineUpContext>
+        },
+        {
+          name: "paco",
+          // @ts-ignore
+          view: <PacoContext key={"paco"}></PacoContext>
         },
       ],
       tabs: [

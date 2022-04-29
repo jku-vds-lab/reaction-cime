@@ -358,8 +358,15 @@ export class ReactionCIMEBackend {
     })
   }
 
-  public loadCategoryCountOfHex = async(filename:string, col_name:string, x:number, y:number, circ_radius:number) => {
-    return fetch(this.baseUrl + "/get_category_count_of_hex/" + filename + "/" + col_name + "?x=" + x + "&y=" + y + "&circ_radius=" + circ_radius, {
+  public loadCategoryCountOfHex = async(filename:string, col_name:string, xChannel:string, yChannel:string, x:number, y:number, circ_radius:number) => {
+    if(xChannel == null){
+      xChannel = "x";
+    }
+    if(yChannel == null){
+      yChannel = "y";
+    }
+
+    return fetch(this.baseUrl + "/get_category_count_of_hex/" + filename + "/" + col_name + "/" + xChannel + "/" + yChannel + "?x=" + x + "&y=" + y + "&circ_radius=" + circ_radius, {
       ...this.fetchParams,
       method: "GET",
     })
@@ -384,8 +391,15 @@ export class ReactionCIMEBackend {
     })
   }
 
-  public loadDensityOfHex = async(filename:string, col_name:string, x:number, y:number, circ_radius:number) => {
-    return fetch(this.baseUrl + "/get_density_of_hex/" + filename + "/" + col_name + "?x=" + x + "&y=" + y + "&circ_radius=" + circ_radius, {
+  public loadDensityOfHex = async(filename:string, col_name:string, xChannel:string, yChannel:string, x:number, y:number, circ_radius:number) => {
+    if(xChannel == null){
+      xChannel = "x";
+    }
+    if(yChannel == null){
+      yChannel = "y";
+    }
+
+    return fetch(this.baseUrl + "/get_density_of_hex/" + filename + "/" + col_name + "/" + xChannel + "/" + yChannel + "?x=" + x + "&y=" + y + "&circ_radius=" + circ_radius, {
       ...this.fetchParams,
       method: "GET",
     })
@@ -401,8 +415,8 @@ export class ReactionCIMEBackend {
 
   protected agg_dataset_cache:[{x: {min: number, max: number}, y: {min: number, max: number}, data: any}] = null;
   protected cur_agg_path = "";
-  protected cur_agg_value_col = "";
-  protected cur_agg_uncertainty_col = "";
+  // protected cur_agg_value_col = "";
+  // protected cur_agg_uncertainty_col = "";
   // reset when reprojecting, when dataset is changed, and when column is changed
   protected resetAggregationCache = ()=>{
     this.agg_dataset_cache = null;
@@ -421,16 +435,20 @@ export class ReactionCIMEBackend {
     }
     return false;
   }
-  protected handleAggregationCache = (path:string, value_col:string, uncertainty_col:string, range: {x: {min: number, max: number}, y: {min: number, max: number}}) => {
-    if(this.cur_agg_path !== path || this.cur_agg_value_col !== value_col || this.cur_agg_uncertainty_col !== uncertainty_col){
+  protected handleAggregationCache = (path:string, value_col:string, uncertainty_col:string, range: {x: {min: number, max: number}, y: {min: number, max: number}}, xChannel?:string, yChannel?:string) => {
+    if(this.agg_dataset_cache == null || this.agg_dataset_cache.length <= 0)
+      return null;
+    
+    xChannel = xChannel == null ? "x" : xChannel;
+    xChannel = yChannel == null ? "y" : yChannel;
+    if(this.cur_agg_path !== path || !(value_col in this.agg_dataset_cache[0].data) || !(uncertainty_col in this.agg_dataset_cache[0].data) || !(xChannel in this.agg_dataset_cache[0].data) || !(yChannel in this.agg_dataset_cache[0].data)){
+    // if(this.cur_agg_path !== path || this.cur_agg_value_col !== value_col || this.cur_agg_uncertainty_col !== uncertainty_col){
       this.resetAggregationCache();
       this.cur_agg_path = path;
-      this.cur_agg_value_col = value_col;
-      this.cur_agg_uncertainty_col = uncertainty_col;
+      // this.cur_agg_value_col = value_col;
+      // this.cur_agg_uncertainty_col = uncertainty_col;
       return null;
     }
-    if(this.agg_dataset_cache == null)
-      return null;
     
     let filtered = this.agg_dataset_cache.filter((value) => {
       // if it lies within a certain range of the cached data, we take it
@@ -455,9 +473,16 @@ export class ReactionCIMEBackend {
   };
 
 
-  public loadHexAgg(finished: (dataset: any) => void, path:string, value_column:string, uncertainty_col:string, cache_cols:string[], sample_size:number, aggregationMethod:any, range:{x: {min: number, max: number}, y: {min: number, max: number}}, cancellablePromise?: ReturnType<typeof useCancellablePromise>["cancellablePromise"], controller?: AbortController, loadingArea?:string){
+  public loadHexAgg(finished: (dataset: any) => void, path:string, xChannel:string, yChannel:string, value_column:string, uncertainty_col:string, cache_cols:string[], sample_size:number, aggregationMethod:any, range:{x: {min: number, max: number}, y: {min: number, max: number}}, cancellablePromise?: ReturnType<typeof useCancellablePromise>["cancellablePromise"], controller?: AbortController, loadingArea?:string){
     
-    const cached_data = this.handleAggregationCache(path, value_column, uncertainty_col, range);
+    if(xChannel == null){
+      xChannel = "x";
+    }
+    if(yChannel == null){
+      yChannel = "y";
+    }
+
+    const cached_data = this.handleAggregationCache(path, value_column, uncertainty_col, range, xChannel, yChannel);
     let promise = null;
     if (cached_data) {
       promise = this.async_cache(cached_data.data);
@@ -489,7 +514,7 @@ export class ReactionCIMEBackend {
       let range_string = "&x_min=" + range.x.min + "&x_max=" + range.x.max + "&y_min=" + range.y.min + "&y_max="+range.y.max
 
 
-      const agg_path = ReactionCIMEBackendFromEnv.baseUrl + "/get_hex_agg/" + path + "?" + retrieve_cols + cache_cols_string + sample_size_str + range_string;
+      const agg_path = ReactionCIMEBackendFromEnv.baseUrl + "/get_hex_agg/" + path + "/" + xChannel + "/" + yChannel + "?" + retrieve_cols + cache_cols_string + sample_size_str + range_string;
       
       promise = cancellablePromise
         ? cancellablePromise(

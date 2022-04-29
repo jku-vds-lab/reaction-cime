@@ -1,4 +1,4 @@
-import { useCancellablePromise } from 'projection-space-explorer'
+import { Dataset, IProjection, useCancellablePromise } from 'projection-space-explorer'
 import * as React from 'react'
 import { connect, ConnectedProps } from "react-redux";
 import * as THREE from 'three'
@@ -14,7 +14,7 @@ import { setCurrentAggregateSelection } from '../../State/SelectionDuck';
 import { EntityId } from '@reduxjs/toolkit';
 
 
-const createHexagons = (dataset: AggregateDataset, value_col: string, uncertainty_col: string, scale_obj:any, valueFilter: string[]) => {
+const createHexagons = (dataset: AggregateDataset, xChannel: string, yChannel: string, value_col: string, uncertainty_col: string, scale_obj:any, valueFilter: string[]) => {
     
     let hexagons = []
 
@@ -24,8 +24,8 @@ const createHexagons = (dataset: AggregateDataset, value_col: string, uncertaint
             let materialWrong = new THREE.MeshBasicMaterial({ color: 0x000000, side: THREE.DoubleSide })
             var geometryWrong = new THREE.CircleGeometry(1, 100)
             var objectWrong = new THREE.Mesh(geometryWrong, materialWrong)
-            objectWrong.position.x = row.x
-            objectWrong.position.y = row.y
+            objectWrong.position.x = row[xChannel]
+            objectWrong.position.y = row[yChannel]
 
             hexagons.push(objectWrong)
         }else{
@@ -42,8 +42,8 @@ const createHexagons = (dataset: AggregateDataset, value_col: string, uncertaint
                     let material = new THREE.MeshBasicMaterial({ color: color, side: THREE.DoubleSide })
                     var geometry = new THREE.CircleGeometry(row["circ_radius"]-row["circ_radius"]*0.04, 6)
                     var object = new THREE.Mesh(geometry, material)
-                    object.position.x = row.x
-                    object.position.y = row.y
+                    object.position.x = row[xChannel]
+                    object.position.y = row[yChannel]
         
                     hexagons.push(object)
                 }
@@ -67,11 +67,13 @@ function isInsideHex(point_x: number, point_y: number, hex_x: number, hex_y: num
 }
 
 // test if point is outside of a bounding box, including a certain threshold
-function isOutsideBoundingBox(position, dataset, threshold){
-    return position.x < (dataset.columns["x"].range.min - threshold) 
-                || position.x > (dataset.columns["x"].range.max + threshold)
-                || position.y < (dataset.columns["y"].range.min - threshold) 
-                || position.y > (dataset.columns["y"].range.max + threshold)
+function isOutsideBoundingBox(position:{x:number, y:number}, dataset: AggregateDataset, threshold:number, xChannel:string, yChannel:string){
+    if(!(xChannel in dataset.columns) || !(yChannel in dataset.columns))
+        return false;
+    return position.x < (dataset.columns[xChannel].range.min - threshold) 
+                || position.x > (dataset.columns[xChannel].range.max + threshold)
+                || position.y < (dataset.columns[yChannel].range.min - threshold) 
+                || position.y > (dataset.columns[yChannel].range.max + threshold);
 }
     
 
@@ -104,6 +106,9 @@ export const HexAggregationLayer = connector(({ setCurrentAggregateSelectionFn, 
     const aggregateSettings = smallMultiples[multipleId].attributes.aggregateSettings;
     const aggregateColor = aggregateSettings?.colormapSettings.aggregateColor;
     const viewTransform = smallMultiples[multipleId].attributes.viewTransform;
+    const workspace = smallMultiples[multipleId].attributes.workspace as IProjection;
+    const xChannel = workspace.xChannel == null ? "x" : workspace.xChannel;
+    const yChannel = workspace.yChannel == null ? "y" : workspace.yChannel;
 
     if(poiDataset == null || poiDataset.info == null || aggregateColor == null || aggregateColor.value_col == null || aggregateColor.value_col === "None"){
         return null;
@@ -117,6 +122,7 @@ export const HexAggregationLayer = connector(({ setCurrentAggregateSelectionFn, 
     const [datasetUncertaintyRange, setDatasetUncertaintyRange] = React.useState(null)
 
     const { cancellablePromise, cancelPromises } = useCancellablePromise();
+
 
     React.useEffect(() => {
         if(aggregateColor?.value_col != null){
@@ -143,44 +149,47 @@ export const HexAggregationLayer = connector(({ setCurrentAggregateSelectionFn, 
         }
         // eslint-disable-next-line
     }, [datasetValueRange, datasetUncertaintyRange, aggregateSettings?.advancedSettings.deriveRange])
+
     
     // eslint-disable-next-line react-hooks/exhaustive-deps
-const debouncedLoadAggDataset = React.useCallback(
-    _.debounce((viewTransform) => {
-        cancelPromises();
-        let abort_controller = new AbortController(); //TODO: reiterate where AbortController needs to be instantiated --> can it be moved inside the loadAggCSV function?
-        
-        const range = {
-            x: {
-                min: Math.round(-viewTransform.width/viewTransform.zoom/2 + viewTransform.centerX), 
-                max: Math.round(viewTransform.width/viewTransform.zoom/2 + viewTransform.centerX)
-            },
-            y: {
-                min: Math.round(-viewTransform.height/viewTransform.zoom/2 + viewTransform.centerY), 
-                max: Math.round(viewTransform.height/viewTransform.zoom/2 + viewTransform.centerY)
+    const debouncedLoadAggDataset = React.useCallback(
+        _.debounce((viewTransform) => {
+            cancelPromises();
+            let abort_controller = new AbortController(); //TODO: reiterate where AbortController needs to be instantiated --> can it be moved inside the loadAggCSV function?
+            
+            const range = {
+                x: {
+                    min: Math.round(-viewTransform.width/viewTransform.zoom/2 + viewTransform.centerX), 
+                    max: Math.round(viewTransform.width/viewTransform.zoom/2 + viewTransform.centerX)
+                },
+                y: {
+                    min: Math.round(-viewTransform.height/viewTransform.zoom/2 + viewTransform.centerY), 
+                    max: Math.round(viewTransform.height/viewTransform.zoom/2 + viewTransform.centerY)
+                }
             }
-        }
-        
-        // take 150% of the boundaries, such that we have clean borders
-        range.x.min = range.x.min - Math.abs(range.x.min/2)
-        range.x.max = range.x.max + Math.abs(range.x.max/2)
-        range.y.min = range.y.min - Math.abs(range.y.min/2)
-        range.y.max = range.y.max + Math.abs(range.y.max/2)
+            
+            // take 150% of the boundaries, such that we have clean borders
+            range.x.min = range.x.min - Math.abs(range.x.min/2)
+            range.x.max = range.x.max + Math.abs(range.x.max/2)
+            range.y.min = range.y.min - Math.abs(range.y.min/2)
+            range.y.max = range.y.max + Math.abs(range.y.max/2)
 
-        // load the aggregateDataset 
-        ReactionCIMEBackendFromEnv.loadHexAgg((dataset) => {
-            setAggregateDataset(new AggregateDataset(dataset))
-        }, poiDataset.info.path, aggregateColor.value_col, aggregateColor.uncertainty_col, aggregateColor.cache_cols, 0, aggregateSettings?.advancedSettings.aggregationMethod, range, cancellablePromise, abort_controller, loading_area)
-        
-    }, 500, {leading:false, trailing:true}) // leading: execute function at the beginning of the events; trailing: execute function at the end of the events; maxWait: maximum time the function is allowed to be delayed
-    ,[poiDataset?.info?.path, aggregateColor, aggregateSettings]
-);
+            // load the aggregateDataset 
+            ReactionCIMEBackendFromEnv.loadHexAgg((dataset) => {
+                setAggregateDataset(new AggregateDataset(dataset, xChannel, yChannel))
+            }, poiDataset.info.path, xChannel, yChannel, aggregateColor.value_col, aggregateColor.uncertainty_col, aggregateColor.cache_cols, 0, aggregateSettings?.advancedSettings.aggregationMethod, range, cancellablePromise, abort_controller, loading_area)
+            
+        }, 500, {leading:false, trailing:true}) // leading: execute function at the beginning of the events; trailing: execute function at the end of the events; maxWait: maximum time the function is allowed to be delayed
+        ,[poiDataset?.info?.path, aggregateColor, aggregateSettings, xChannel, yChannel]
+    );
+
+    
 
     React.useEffect(() => {
         // setAggregateDataset(null)
         debouncedLoadAggDataset(viewTransform)
     // eslint-disable-next-line
-    }, [aggregateColor, poiDataset.info.path, aggregateSettings?.advancedSettings.aggregationMethod, viewTransform])
+    }, [aggregateColor, poiDataset.info.path, aggregateSettings?.advancedSettings.aggregationMethod, viewTransform, xChannel, yChannel])
     
 
     React.useEffect(() => {
@@ -188,7 +197,7 @@ const debouncedLoadAggDataset = React.useCallback(
             if(aggregateDataset && aggregateDataset.vectors){
                 if(Object.keys(aggregateDataset.columns).includes(aggregateColor.value_col)){
                     
-                    let hexs = createHexagons(aggregateDataset, aggregateColor.value_col, aggregateColor.uncertainty_col, aggregateSettings?.colormapSettings.scale_obj, aggregateSettings?.colormapSettings.valueFilter) // "pred_var_9"
+                    let hexs = createHexagons(aggregateDataset, xChannel, yChannel, aggregateColor.value_col, aggregateColor.uncertainty_col, aggregateSettings?.colormapSettings.scale_obj, aggregateSettings?.colormapSettings.valueFilter) // "pred_var_9"
                     setHexagons(hexs);
                 }
             }else{
@@ -205,21 +214,21 @@ const debouncedLoadAggDataset = React.useCallback(
         if(mouseMove != null && !mouseMove.event_used && aggregateDataset != null){
             const circ_radius = aggregateDataset.columns["circ_radius"].range.max
             // check if it is outside of the aggregation bounding box
-            if(isOutsideBoundingBox(mouseMove, aggregateDataset, circ_radius)){
+            if(isOutsideBoundingBox(mouseMove, aggregateDataset, circ_radius, xChannel, yChannel)){
                 setHoverElement(null)
             }else{ // if it is inside, we need to check each hexagon, if coordinates are inside
                 const radius = Math.sqrt(3)/2 * circ_radius;// https://www-formula.com/geometry/circle-inscribed/radius-circle-inscribed-regular-hexagon
                 let foundHex = false;
                 aggregateDataset.vectors.forEach((row) => {
-                    const isInside = isInsideHex(mouseMove.x, mouseMove.y, row.x, row.y, radius, circ_radius)
+                    const isInside = isInsideHex(mouseMove.x, mouseMove.y, row[xChannel], row[yChannel], radius, circ_radius)
                     if(isInside){
                         foundHex = true;
-                        if(hoverElement == null || hoverElement.position.x !== row.x || hoverElement.position.y !== row.y){
+                        if(hoverElement == null || hoverElement.position.x !== row[xChannel] || hoverElement.position.y !== row[yChannel]){
                             let material = new THREE.MeshBasicMaterial({ color: PSE_BLUE, side: THREE.DoubleSide, transparent: true, opacity: 1.0 })
                             var geometry = new THREE.CircleGeometry(row["circ_radius"]-row["circ_radius"]*0.04, 6)
                             var object = new THREE.Mesh(geometry, material)
-                            object.position.x = row.x
-                            object.position.y = row.y
+                            object.position.x = row[xChannel]
+                            object.position.y = row[yChannel]
                             setHoverElement(object)
                         }
                         return;
@@ -241,14 +250,14 @@ const debouncedLoadAggDataset = React.useCallback(
         if(mouseClick != null && !mouseClick.event_used && aggregateDataset != null){
             const circ_radius = aggregateDataset.columns["circ_radius"].range.max
             // check if it is outside of the aggregation bounding box
-            if(isOutsideBoundingBox(mouseClick, aggregateDataset, circ_radius)){
+            if(isOutsideBoundingBox(mouseClick, aggregateDataset, circ_radius, xChannel, yChannel)){
                 setSelectElement(null)
                 setCurrentAggregateSelectionFn(null)
             }else{ // if it is inside, we need to check each hexagon, if coordinates are inside
                 const radius = Math.sqrt(3)/2 * circ_radius;// https://www-formula.com/geometry/circle-inscribed/radius-circle-inscribed-regular-hexagon
                 let foundHex = false;
                 aggregateDataset.vectors.forEach((row) => {
-                    const isInside = isInsideHex(mouseClick.x, mouseClick.y, row.x, row.y, radius, circ_radius)
+                    const isInside = isInsideHex(mouseClick.x, mouseClick.y, row[xChannel], row[yChannel], radius, circ_radius)
                     if(isInside){
                         foundHex = true;
                         if(selectElement == null || selectElement.position.x !== row.x || selectElement.position.y !== row.y){
@@ -256,8 +265,8 @@ const debouncedLoadAggDataset = React.useCallback(
                             const radius = Number(row["circ_radius"])+Number(row["circ_radius"])*0.04
                             var geometry = new THREE.CircleGeometry(radius, 6)
                             var object = new THREE.Mesh(geometry, material)
-                            object.position.x = row.x
-                            object.position.y = row.y
+                            object.position.x = row[xChannel]
+                            object.position.y = row[yChannel]
                             object.position.z = -1
                             setSelectElement(object)
                             setCurrentAggregateSelectionFn(row)

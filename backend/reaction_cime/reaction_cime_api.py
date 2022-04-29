@@ -58,11 +58,11 @@ def get_cime_dbo():
 
 # region --------------- caching ---------------
 dataset_cache = {} # structure: {"filename": dataset} # if "retrieve_cols" are contained in dataset.columns then the dataset is returned, otherwise dataset with all "cache_cols" are loaded into the cache
-def handle_dataset_cache(filename, cols=[]):
+def handle_dataset_cache(filename, cols=[], xChannel="x", yChannel="y"):
     if filename not in dataset_cache.keys():
         dataset_cache[filename] = None
 
-    all_cols = list(set(cols + ["x", "y"]))
+    all_cols = list(set(cols + [xChannel, yChannel, "x", "y"]))
     # dataset is not cached and has to be loaded
     if dataset_cache[filename] is None or not set(all_cols).issubset(set(dataset_cache[filename].columns)):
         print("---dataset is not cached and has to be loaded to memory")
@@ -226,7 +226,7 @@ def get_points_of_interest(filename):
     # domain = pd.read_csv("./temp-files/%s"%filename)
     # domain = get_cime_dbo().get_dataframe_from_table(filename)
 
-    poi_domain = get_poi_df_from_db(filename, get_cime_dbo())
+    poi_domain, is_subsample = get_poi_df_from_db(filename, get_cime_dbo()) # TODO: tell front-end that it is subsampled
     
     if len(poi_domain) > 0:
         poi_domain = preprocess_dataset(poi_domain)
@@ -239,8 +239,8 @@ def get_points_of_interest(filename):
 
 
 def get_poi_df_from_db(filename, cime_dbo):
-    poi_domain = cime_dbo.get_dataframe_from_table_filter(filename, get_poi_constraints_filter(filename), max_datapoints=MAX_POINTS)
-    return poi_domain
+    poi_domain, is_subsample = cime_dbo.get_dataframe_from_table_filter(filename, get_poi_constraints_filter(filename), max_datapoints=MAX_POINTS)
+    return poi_domain, is_subsample
 
 def get_poi_mask(filename, cime_dbo):
     mask = cime_dbo.get_filter_mask(filename, get_poi_constraints_filter(filename))
@@ -327,7 +327,7 @@ def get_points_given_radius(filename, x, y, r):
     # squared radius for SQLite query filter condition
     r2 = int(r) * int(r)
     # filters using euclidean distance (squared on both sides since SQLite does not have extended maths enabled for SQRT)
-    nearest_points_domain = get_cime_dbo().get_dataframe_from_table_filter(filename, '((x-('+str(x)+'))*(x-('+str(x)+')))+((y-('+str(y)+'))*(y-('+str(y)+'))) < '+str(r2))
+    nearest_points_domain, _ = get_cime_dbo().get_dataframe_from_table_filter(filename, '((x-('+str(x)+'))*(x-('+str(x)+')))+((y-('+str(y)+'))*(y-('+str(y)+'))) < '+str(r2))
 
     response = make_response(nearest_points_domain.to_csv(index=False))
     response.headers["Content-Disposition"] = "attachment; filename=%s_kNN_%s_%s.csv"%(filename, x, y)
@@ -341,14 +341,13 @@ def get_points_given_radius(filename, x, y, r):
 # deprecated
 @reaction_cime_api.route('/get_agg_csv/<filename>/<col_name>', methods=['GET'])
 def get_aggregated_dataset(filename, col_name):
-
     range = {"x_min": request.args.get("x_min"), 
         "x_max": request.args.get("x_max"),
         "y_min": request.args.get("y_min"), 
         "y_max": request.args.get("y_max"),
         }
     filter = "x > {x_min} and x < {x_max} and y > {y_min} and y < {y_max}".format(**range)
-    agg_domain = get_cime_dbo().get_dataframe_from_table_filter(filename, filter, columns=["x", "y", col_name])
+    agg_domain, _ = get_cime_dbo().get_dataframe_from_table_filter(filename, filter, columns=["x", "y", col_name])
     agg_df = aggregate_by_col_interpolate(agg_domain, col_name, sample_size=200) # TODO: dynamic sample_size
 
     csv_buffer = StringIO()
@@ -357,8 +356,10 @@ def get_aggregated_dataset(filename, col_name):
     return csv_buffer.getvalue()
 
 
+# deprecated
 @reaction_cime_api.route('/get_agg_csv_cached/<filename>', methods=['GET'])
 def get_aggregated_dataset_cached(filename):
+
     # value_col_name = request.args.get("value_col")
     # uncertainty_col_name = request.args.get("uncertainty_col")
     retrieve_cols = request.args.getlist("retrieve_cols")
@@ -382,8 +383,9 @@ def get_aggregated_dataset_cached(filename):
     return csv_buffer.getvalue()
 
 
-@reaction_cime_api.route('/get_hex_agg/<filename>', methods=['GET'])
-def get_hexagonal_aggregation(filename):
+@reaction_cime_api.route('/get_hex_agg/<filename>/<xChannel>/<yChannel>', methods=['GET'])
+def get_hexagonal_aggregation(filename, xChannel="x", yChannel="y"):
+
     retrieve_cols = request.args.getlist("retrieve_cols")
     aggregation_methods = request.args.getlist("aggregation_methods")
     cache_cols = request.args.getlist("cache_cols") # if value col or uncertainty col are not cached, we use this list of columns to prepare the new cached dataset
@@ -394,12 +396,12 @@ def get_hexagonal_aggregation(filename):
         "y_max": float(request.args.get("y_max")),
         }
     
-    agg_domain = handle_dataset_cache(filename, retrieve_cols + cache_cols)
-    agg_domain = agg_domain[(agg_domain["x"] < range["x_max"]) * (agg_domain["x"] > range["x_min"]) * (agg_domain["y"] < range["y_max"]) * (agg_domain["y"] > range["y_min"])]
+    agg_domain = handle_dataset_cache(filename, retrieve_cols + cache_cols, xChannel=xChannel, yChannel=yChannel)
+    agg_domain = agg_domain[(agg_domain[xChannel] < range["x_max"]) * (agg_domain[xChannel] > range["x_min"]) * (agg_domain[yChannel] < range["y_max"]) * (agg_domain[yChannel] > range["y_min"])]
 
-    agg_df, wrong_points = hex_aggregate_by_col(agg_domain, retrieve_cols, aggregation_methods, range=None, sample_size=sample_size) # TODO: what works better: range set to the boundaries of the dataset, or range set to the boundaries of the screen i.e. range=range
+    agg_df, wrong_points = hex_aggregate_by_col(agg_domain, retrieve_cols, aggregation_methods, range=None, sample_size=sample_size, xChannel=xChannel, yChannel=yChannel) # TODO: what works better: range set to the boundaries of the dataset, or range set to the boundaries of the screen i.e. range=range
 
-    wrong_df = wrong_points[list(set(retrieve_cols + ["x", "y"]))]
+    wrong_df = wrong_points[list(set(retrieve_cols + [xChannel, yChannel]))]
     wrong_df["hex"] = False
 
     agg_df["hex"] = True
@@ -433,16 +435,16 @@ def get_category_count(filename, col_name):
     cat_count = df.groupby(col_name, as_index=False).count()
     return json.dumps(cat_count.to_dict('records')).encode('utf-8')
 
-@reaction_cime_api.route('/get_category_count_of_hex/<filename>/<col_name>', methods=["GET"])
-def get_category_count_of_hex(filename, col_name):
+@reaction_cime_api.route('/get_category_count_of_hex/<filename>/<col_name>/<xChannel>/<yChannel>', methods=["GET"])
+def get_category_count_of_hex(filename, col_name, xChannel, yChannel):
     hex_x = float(request.args.get("x"))
     hex_y = float(request.args.get("y"))
     hex_circ_radius = float(request.args.get("circ_radius"))
 
-    # df = get_cime_dbo().get_dataframe_from_table(filename, columns=["x", "y", col_name])
-    df = handle_dataset_cache(filename, ["x", "y", col_name])
+    # df = get_cime_dbo().get_dataframe_from_table(filename, columns=[xChannel, yChannel, col_name])
+    df = handle_dataset_cache(filename, [xChannel, yChannel, col_name])
     
-    window = isInsideHex(df["x"], df["y"], hex_x=hex_x, hex_y=hex_y, radius=circ_radius_to_radius(hex_circ_radius), circ_radius=hex_circ_radius)
+    window = isInsideHex(df[xChannel], df[yChannel], hex_x=hex_x, hex_y=hex_y, radius=circ_radius_to_radius(hex_circ_radius), circ_radius=hex_circ_radius)
     df = df[window][[col_name]]
     df["count"] = 0 # dummy column, such that it can be aggregated by count
     cat_count = df.groupby(col_name, as_index=False).count()
@@ -460,16 +462,16 @@ def get_density(filename, col_name):
 
     return {"x_vals": list(x_vals), "y_vals": list(y_vals)}
 
-@reaction_cime_api.route('/get_density_of_hex/<filename>/<col_name>', methods=["GET"])
-def get_density_of_hex(filename, col_name):
+@reaction_cime_api.route('/get_density_of_hex/<filename>/<col_name>/<xChannel>/<yChannel>', methods=["GET"])
+def get_density_of_hex(filename, col_name, xChannel="x", yChannel="y"):
     hex_x = float(request.args.get("x"))
     hex_y = float(request.args.get("y"))
     hex_circ_radius = float(request.args.get("circ_radius"))
 
-    # df = get_cime_dbo().get_dataframe_from_table(filename, columns=["x", "y", col_name])
-    df = handle_dataset_cache(filename, ["x", "y", col_name])
+    # df = get_cime_dbo().get_dataframe_from_table(filename, columns=[xChannel, yChannel, col_name])
+    df = handle_dataset_cache(filename, [xChannel, yChannel, col_name])
     
-    window = isInsideHex(df["x"], df["y"], hex_x=hex_x, hex_y=hex_y, radius=circ_radius_to_radius(hex_circ_radius), circ_radius=hex_circ_radius)
+    window = isInsideHex(df[xChannel], df[yChannel], hex_x=hex_x, hex_y=hex_y, radius=circ_radius_to_radius(hex_circ_radius), circ_radius=hex_circ_radius)
     data = df[window][col_name]
 
     from scipy.stats import gaussian_kde
@@ -500,7 +502,7 @@ def project_dataset():
     # handle custom initialization of coordinates
     initialization = None
     if params["seeded"]: # take custom seed from current coordinates
-        initialization = get_poi_df_from_db(filename, get_cime_dbo())[["x","y"]].values
+        initialization, _ = get_poi_df_from_db(filename, get_cime_dbo())[["x","y"]].values
 
 
     # rescale numerical values and encode categorical values
@@ -545,7 +547,8 @@ def project_dataset():
     print("--- took %i min %f s to update database"%(delta_time/60, delta_time%60))
 
     print("return poi positions")
-    return {"done": "true", "embedding": get_poi_df_from_db(filename, get_cime_dbo())[["x","y"]].to_dict('records')}
+    df, _ = get_poi_df_from_db(filename, get_cime_dbo())[["x","y"]].to_dict('records')
+    return {"done": "true", "embedding": df}
 
 
 
@@ -750,7 +753,8 @@ def project_dataset_async():
                 proj.raise_exception()
                 proj.join()
             if proj.done: #proj.current_step >= params["iterations"] or proj.interrupt:
-                yield json.dumps({"step": None, "msg": None, "emb": get_poi_df_from_db(filename, cime_dbo)[["x","y"]].to_dict('records')}).encode('utf-8')
+                df, _ = get_poi_df_from_db(filename, cime_dbo)[["x","y"]].to_dict('records')
+                yield json.dumps({"step": None, "msg": None, "emb": df}).encode('utf-8')
                 break
     
     # https://flask.palletsprojects.com/en/1.1.x/patterns/streaming/
