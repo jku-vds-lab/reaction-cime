@@ -633,6 +633,19 @@ export class ReactionCIMEBackend {
       
   }
 
+  public loadPOIExceptions = async(filename: string) => {
+    return fetch(this.baseUrl + "/get_poi_exceptions/" + filename, {
+      ...this.fetchParams,
+      method: "GET",
+    })
+    .then(this.handleErrors)
+    .then((response) => response.json())
+    .then(this.handleJSONErrors)
+    .catch((error) => {
+      console.log(error);
+    })
+  }
+
   public loadPOIConstraints = async(filename: string) => {
     return fetch(this.baseUrl + "/get_poi_constraints/" + filename, {
       ...this.fetchParams,
@@ -650,6 +663,40 @@ export class ReactionCIMEBackend {
     return fetch(this.baseUrl + "/reset_poi_constraints/" + filename, {
       ...this.fetchParams,
       method: "GET",
+    })
+    .then(this.handleErrors)
+    .then((response) => response.json())
+    .then(this.handleJSONErrors)
+    .catch((error) => {
+      console.log(error);
+    })
+  }
+
+  public addPOIExceptions = async(filename: string, exceptions: any[]) => {
+    const formData = new FormData();
+    formData.append("exceptions", JSON.stringify(exceptions));
+    formData.append("filename", filename)
+    return fetch(this.baseUrl + "/add_poi_exceptions", {
+      ...this.fetchParams,
+      method: "POST",
+      body: formData,
+    })
+    .then(this.handleErrors)
+    .then((response) => response.json())
+    .then(this.handleJSONErrors)
+    .catch((error) => {
+      console.log(error);
+    })
+  }
+
+  public updatePOIExceptions = async(filename: string, exceptions: any[]) => {
+    const formData = new FormData();
+    formData.append("exceptions", JSON.stringify(exceptions));
+    formData.append("filename", filename)
+    return fetch(this.baseUrl + "/update_poi_exceptions", {
+      ...this.fetchParams,
+      method: "POST",
+      body: formData,
     })
     .then(this.handleErrors)
     .then((response) => response.json())

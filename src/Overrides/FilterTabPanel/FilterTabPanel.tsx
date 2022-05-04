@@ -10,6 +10,7 @@ import { ReactionCIMEBackendFromEnv } from "../../Backend/ReactionCIMEBackend";
 import { FilterSettings } from "./FilterSettings";
 import FileUploadIcon from '@mui/icons-material/FileUpload';
 import { NOItemsInfo } from "../../Utility/NOItemsInfo";
+import { ExceptionSettings } from "./ExceptionSettings";
 
 
 
@@ -118,6 +119,13 @@ export const FilterTabPanel = connector(({dataset, triggerDatasetUpdate}: Props)
             </Button>
           </Grid>
         </Grid>
+      </Box>
+
+      <Box paddingTop={1} paddingRight={2}>
+          <ExceptionSettings
+            triggerDatasetUpdate={triggerDatasetUpdate}
+            dataset={dataset}
+          ></ExceptionSettings>
       </Box>
 
     </div>

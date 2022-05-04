@@ -1,5 +1,3 @@
-from ast import operator
-import pickle
 from flask import Blueprint, request, current_app, abort, jsonify, Response, stream_with_context
 import logging
 from flask.helpers import make_response, send_file
@@ -8,7 +6,7 @@ from rdkit.Chem import Draw
 from io import BytesIO
 import base64
 from .helper_functions import (circ_radius_to_radius, preprocess_dataset, get_mcs, smiles_to_base64, aggregate_by_col_interpolate, 
-                                aggregate_by_col, rescale_and_encode, hex_aggregate_by_col, isInsideHex, circ_radius_to_radius)
+                                rescale_and_encode, hex_aggregate_by_col, isInsideHex, circ_radius_to_radius)
 import json
 
 _log = logging.getLogger(__name__)
@@ -154,9 +152,26 @@ def get_no_datapoints(filename):
 
 MAX_POINTS = 500 # 10000
 
+# --- save
+def save_poi_exceptions(filename, exceptions=[]):
+    if len(exceptions) > 0:
+        exceptions = pd.DataFrame(exceptions)
+    else:
+        exceptions = pd.DataFrame(columns=["x_col", "y_col", "x_coord", "y_coord", "radius"])
+    exceptions.to_csv(f'{current_app.config["tempdir"]}{filename}_exceptions.csv', index=False)
+
 def save_poi_constraints(filename, constraints=[{"col": "experimentCycle", "operator": "BETWEEN", "val1": 0, "val2": 100}]):
     constraints = pd.DataFrame(constraints)
     constraints.to_csv(f'{current_app.config["tempdir"]}{filename}_constraints.csv', index=False)
+
+# --- load
+def load_poi_exceptions(filename):
+    path = f'{current_app.config["tempdir"]}{filename}_exceptions.csv'
+    if not os.path.exists(path): # if there is no constraints file yet, create a default one
+        save_poi_exceptions(filename)
+
+    df_exceptions = pd.read_csv(path)
+    return df_exceptions
 
 def load_poi_constraints(filename):
     path = f'{current_app.config["tempdir"]}{filename}_constraints.csv'
@@ -166,10 +181,61 @@ def load_poi_constraints(filename):
     df_constraints = pd.read_csv(path)
     return df_constraints
 
+# --- reset
 @reaction_cime_api.route('/reset_poi_constraints/<filename>', methods=['GET'])
 def reset_poi_constraints(filename):
     save_poi_constraints(filename)
-    return get_poi_constraints(filename)
+    save_poi_exceptions(filename) # TODO: do we want to reset exceptions too?
+    return { "msg": "ok" }
+
+# --- update
+@reaction_cime_api.route('/add_poi_exceptions', methods=['OPTIONS', 'POST'])
+def add_poi_exceptions():
+    if request.method == 'POST':
+        filename = request.form.get("filename")
+        new_exceptions = json.loads(request.form.get("exceptions"))
+        new_exceptions_df = pd.DataFrame(new_exceptions)
+
+        if "x_col" in new_exceptions_df.columns and "y_col" in new_exceptions_df.columns and "x_coord" in new_exceptions_df.columns and "y_coord" in new_exceptions_df.columns and "radius" in new_exceptions_df.columns:
+            
+            exceptions_df = load_poi_exceptions(filename)
+            exceptions_df = exceptions_df.append(new_exceptions_df, ignore_index=True)
+            
+            poi_count = get_cime_dbo().get_filter_mask(filename, get_poi_constraints_filter(filename, load_poi_constraints(filename), exceptions_df))["mask"].sum() # check if constraints are limited enough
+            save_poi_exceptions(filename, exceptions_df)
+            if poi_count > MAX_POINTS:
+                return {"msg": "Too many experiments within the selected filter. Only a subset of the data will be shown."}
+            return {"msg": "ok"}
+
+        if len(new_exceptions_df) <= 0:
+            # save_poi_exceptions(filename)
+            return {"msg": "ok"}
+
+        return {"error": "wrong format; constraints must be of form [{'x_col': columnname, 'y_col': columnname, 'x_coord': number, 'y_coord': number, 'radius': number}]"}
+    else:
+        return {}
+
+@reaction_cime_api.route('/update_poi_exceptions', methods=['OPTIONS', 'POST'])
+def update_poi_exceptions():
+    if request.method == 'POST':
+        filename = request.form.get("filename")
+        exceptions = json.loads(request.form.get("exceptions"))
+        exceptions_df = pd.DataFrame(exceptions)
+
+        if "x_col" in exceptions_df.columns and "y_col" in exceptions_df.columns and "x_coord" in exceptions_df.columns and "y_coord" in exceptions_df.columns and "radius" in exceptions_df.columns:
+            poi_count = get_cime_dbo().get_filter_mask(filename, get_poi_constraints_filter(filename, load_poi_constraints(filename), exceptions_df))["mask"].sum() # check if constraints are limited enough
+            save_poi_exceptions(filename, exceptions_df)
+            if poi_count > MAX_POINTS:
+                return {"msg": "Too many experiments within the selected filter. Only a subset of the data will be shown."}
+            return {"msg": "ok"}
+
+        if len(exceptions_df) <= 0:
+            save_poi_exceptions(filename)
+            return {"msg": "ok"}
+
+        return {"error": "wrong format; constraints must be of form [{'x_col': columnname, 'y_col': columnname, 'x_coord': number, 'y_coord': number, 'radius': number}]"}
+    else:
+        return {}
 
 @reaction_cime_api.route('/update_poi_constraints', methods=['OPTIONS', 'POST'])
 def update_poi_constraints():
@@ -179,7 +245,7 @@ def update_poi_constraints():
         constraints_df = pd.DataFrame(constraints)
 
         if "col" in constraints_df.columns and "operator" in constraints_df.columns and "val1" in constraints_df.columns and "val2" in constraints_df.columns:
-            poi_count = get_cime_dbo().get_filter_mask(filename, get_poi_constraints_filter(filename, constraints_df))["mask"].sum() # check if constraints are limited enough
+            poi_count = get_cime_dbo().get_filter_mask(filename, get_poi_constraints_filter(filename, constraints_df, load_poi_exceptions(filename)))["mask"].sum() # check if constraints are limited enough
             if poi_count <= 0:
                 return {"msg": "No experiments are found with this filter. Please adjust the settings."}
             save_poi_constraints(filename, constraints_df)
@@ -195,11 +261,28 @@ def update_poi_constraints():
     else:
         return {}
 
+# --- load and download
+@reaction_cime_api.route('/get_poi_exceptions/<filename>', methods=['GET'])
+def get_poi_exceptions(filename):
+    exceptions_df = load_poi_exceptions(filename)
+    return json.dumps(exceptions_df.to_dict('records')).encode('utf-8')
+
 @reaction_cime_api.route('/get_poi_constraints/<filename>', methods=['GET'])
 def get_poi_constraints(filename):
     constraint_df = load_poi_constraints(filename)
     return json.dumps(constraint_df.to_dict('records')).encode('utf-8')
 
+@reaction_cime_api.route('/download_poi_constraints/<filename>', methods=['GET'])
+def download_poi_exceptions(filename):
+    path = f'{current_app.config["tempdir"]}{filename}_exceptions.csv'
+    return send_file(path, as_attachment=True)
+
+@reaction_cime_api.route('/download_poi_constraints/<filename>', methods=['GET'])
+def download_poi_constraints(filename):
+    path = f'{current_app.config["tempdir"]}{filename}_constraints.csv'
+    return send_file(path, as_attachment=True)
+
+# --- filter
 def map_constraint_operator(row):
     if row.operator == "BETWEEN":
         return f'"{row.col}" BETWEEN {row.val1} AND {row.val2}'
@@ -207,9 +290,20 @@ def map_constraint_operator(row):
         return f'"{row.col}"="{row.val1}"'
     return ''
 
-def get_poi_constraints_filter(filename, df_constraints=None):
+def map_exceptions_filter(row):
+    # TODO: make circle?
+    x_lower = row.x_coord - row.radius
+    x_upper = row.x_coord + row.radius
+    y_lower = row.y_coord - row.radius
+    y_upper = row.y_coord + row.radius
+    return f'("{row.x_col}" BETWEEN {x_lower} AND {x_upper}) AND ("{row.y_col}" BETWEEN {y_lower} AND {y_upper})'
+
+def get_poi_constraints_filter(filename, df_constraints=None, df_exceptions=None):
     if df_constraints is None:
         df_constraints = load_poi_constraints(filename)
+    
+    if df_exceptions is None:
+        df_exceptions = load_poi_exceptions(filename)
 
     cols = list(set(df_constraints["col"]))
     col_filters = []
@@ -221,10 +315,17 @@ def get_poi_constraints_filter(filename, df_constraints=None):
         col_filters.append(f'({col_filter})')
 
     # concatenate constraints of different columns with AND
-    filter_string = " AND ".join(col_filters)
+    constraints_filter_string = " AND ".join(col_filters)
+
+    exceptions_filter_string = " OR ".join(df_exceptions.apply(map_exceptions_filter, axis=1).tolist())
+
+    filter_string = f'({constraints_filter_string}) OR ({exceptions_filter_string})'
+
+    print(filter_string)
 
     return filter_string
 
+# --- retrieve
 import pandas as pd
 from io import StringIO
 @reaction_cime_api.route('/get_poi_csv/<filename>', methods=['GET'])
@@ -256,10 +357,6 @@ def get_poi_mask(filename, cime_dbo):
     mask = cime_dbo.get_filter_mask(filename, get_poi_constraints_filter(filename))
     return mask
 
-@reaction_cime_api.route('/download_poi_constraints/<filename>', methods=['GET'])
-def download_poi_constraints(filename):
-    path = f'{current_app.config["tempdir"]}{filename}_constraints.csv'
-    return send_file(path, as_attachment=True)
 
 # endregion
 

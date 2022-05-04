@@ -117,7 +117,7 @@ export const FilterSettings = ({dataset, removeFilter, constraintCols, constrain
             &nbsp;Apply Filter
             </Button>
         </Box>
-        <Box paddingLeft={2} paddingTop={1} paddingRight={2}>
+        <Box paddingLeft={2} paddingTop={1}>
             <Tooltip title="Reset constraints to initial state">
                 <Button fullWidth variant="outlined" aria-label="Reset constraints to initial state" onClick={() => {
                     ReactionCIMEBackendFromEnv.resetPOIConstraints(dataset.info.path).then((res_constraints) => {

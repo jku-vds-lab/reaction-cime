@@ -4,6 +4,33 @@ import * as d3v5 from "d3v5";
 export const PSE_BLUE = "#007dad" // "#1f77b4"
 export const LIGHT_GREY = "#DDDDDD"
 
+
+export const formatLabel = (value: number) => {
+    if(value < 0.01){
+        return d3v5.format(".2e")(value);
+    }
+    if(value >= 100){
+        return Math.round(value)
+    }
+    
+    return Math.round(value*100)/100;
+}
+
+export const formatLabelWithRange = (value, min, max) => {
+    if(max == null || min == null)
+        return Math.round(value)
+
+    const step_size = (max-min)/100;
+    if(step_size < 0.01){
+        // https://github.com/d3/d3-format
+        return d3v5.format(".2e")(value);
+    }
+    if(step_size >= 1)
+        return Math.round(value)
+    
+    return Math.round(value*100)/100
+}
+
 export function arrayEquals(a, b) {
     return (
       Array.isArray(a) &&

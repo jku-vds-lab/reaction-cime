@@ -154,7 +154,6 @@ export const PacoContext = connector(function ({dataset, pacoAttributes, pacoCon
                 Plotly.newPlot(paco_ref.current, [new_paco], layout, config);
 
                 paco_ref.current.on("plotly_restyle", (data) => {
-                    debugger;
                     // only change aggregation, if constraints were changed
                     if(Object.keys(data[0]).filter((item) => item.includes("constraintrange")).length > 0){
                         
@@ -232,7 +231,6 @@ export const PacoContext = connector(function ({dataset, pacoAttributes, pacoCon
     }, [dataset, pacoAttributes, pacoConstraints])
 
     React.useEffect(() => {
-        debugger;
         if(currentAggregation.aggregation != null && currentAggregation.aggregation.length > 0){
             if(!arrayEquals(currentAggregation.aggregation, pacoAggregation)){
 

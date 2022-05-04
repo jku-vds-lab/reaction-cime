@@ -3,22 +3,8 @@ import React from "react";
 import DeleteIcon from '@mui/icons-material/Delete';
 import { ReactionCIMEBackendFromEnv } from "../../Backend/ReactionCIMEBackend";
 import { Dataset } from "projection-space-explorer";
-import * as d3v5 from "d3v5";
+import { formatLabelWithRange as formatLabel } from "../../Utility/Utils";
 
-const formatLabel = (value, min, max) => {
-    if(max == null || min == null)
-        return Math.round(value)
-
-    const step_size = (max-min)/100;
-    if(step_size < 0.01){
-        // https://github.com/d3/d3-format
-        return d3v5.format(".2e")(value);
-    }
-    if(step_size >= 1)
-        return Math.round(value)
-    
-    return Math.round(value*100)/100
-}
 
 type Props = {
     col: string,

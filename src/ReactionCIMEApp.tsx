@@ -7,7 +7,8 @@ import {
   PSEIcons,
   PluginRegistry,
   setItemLabel,
-  ViewActions
+  ViewActions,
+  IProjection
 } from "projection-space-explorer";
 import { LineUpContext } from "./LineUpContext";
 import { LineUpTabPanel } from "./Overrides/LineUpTabPanel";
@@ -25,6 +26,8 @@ import { ReactionCIMEBackendFromEnv } from "./Backend/ReactionCIMEBackend";
 import { PacoContext } from "./PacoContext/PacoContext";
 import { FilterTabPanel } from "./Overrides/FilterTabPanel/FilterTabPanel";
 import { PacoTabPanel } from "./Overrides/PacoTabPanel/PacoTabPanel";
+import { MenuItem } from "@mui/material";
+import { AddRegionExceptionMenuItem } from "./Overrides/ContextMenu/AddRegionException";
 
 export const DEMO = false;
 
@@ -67,7 +70,6 @@ type Props = PropsFromRedux & {
 
 const ApplicationWrapper = connector(({ setMouseMoveFn, dataset_path, setMouseClickFn, legendAttributes, globalLabels, resetViews }: Props) => {
   
-
   const start_projection = (msg: string) => {
     if(msg === "init"){
       resetViews()
@@ -111,12 +113,15 @@ const ApplicationWrapper = connector(({ setMouseMoveFn, dataset_path, setMouseCl
         // {key:"getkNN", title:"Download k-Nearest", function:(coords) => {
         //   handleBackgroundSelectionDownload(coords, dataset_path)
         // }},
-        {key:"addRegion", title:`Show ${globalLabels.itemLabelPlural} in this region`, function:(coords) => {
-          // TODO
-            // ReactionCIMEBackendFromEnv.addFilterException(coords, radius).then((res) => {
-
-            // })
-        }}
+        // {key:"addRegion", title:`Show ${globalLabels.itemLabelPlural} in this region`, function:(coords) => {
+        //   // TODO
+        //     ReactionCIMEBackendFromEnv.addPOIExceptions(dataset_path, [{x_col: "", y_col: "", x_coord: "", y_coord: "", radius: 10}]).then((res) => {
+        //       if(res.msg === "ok"){
+        //         // TODO: reload dataset
+        //       }
+        //     })
+        // }}
+        AddRegionExceptionMenuItem
       ],
       detailViews: [
         {
@@ -162,4 +167,3 @@ const ApplicationWrapper = connector(({ setMouseMoveFn, dataset_path, setMouseCl
     }}
   />
 })
-
