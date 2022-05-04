@@ -3,14 +3,10 @@ import { connect, ConnectedProps } from "react-redux";
 import { AppState } from "../State/Store";
 import "./PacoContext.scss";
 import Plotly from 'plotly.js-dist'
-import { Box, Button, IconButton, Tooltip } from "@mui/material";
-import { AttributeSelectionTable, selectVectors } from "projection-space-explorer";
-import FileDownloadIcon from '@mui/icons-material/FileDownload';
-import RotateLeftIcon from '@mui/icons-material/RotateLeft';
-import FileUploadIcon from '@mui/icons-material/FileUpload';
-import SettingsIcon from '@mui/icons-material/Settings';
-import { downloadImpl, map_shortname_to_smiles, map_smiles_to_shortname } from "../Utility/Utils";
-import * as d3v5 from "d3v5";
+import { Box } from "@mui/material";
+import { selectVectors } from "projection-space-explorer";
+import { arrayEquals, LIGHT_GREY, map_shortname_to_smiles, map_smiles_to_shortname, PSE_BLUE } from "../Utility/Utils";
+import { setPacoRef } from "../State/PacoSettingsDuck";
 
 function unpack(col, rows, key) {
     return rows.map(function(row) {
@@ -61,71 +57,18 @@ function get_processed_info(constraints, col, values, key){
     return {ticktext: distinct, values: num_values, tickvals: [...new Set(num_values)], constraintrange: constraintrange};
 }
 
-const downloadArrayAsCSV = (array, header) => {
-    const csv_lines = array.map((row)=>{
-        return Object.values(row).join(",")
-    })
-    let csv_content = header.join(",") + "\n"
-    csv_content += csv_lines.join("\n")
-    downloadImpl(csv_content, "parallel_coordinates_constraints.csv", "text/csv")
-}
 
-const downloadConstraints = (dimensions, columns) => {
-    const constraint_dimensions = dimensions.filter((dim) => dim.constraintrange != null && dim.constraintrange.length > 0)
-    if(constraint_dimensions.length <= 0)
-        return;
-
-    let all_constraints = []
-    for(const i in constraint_dimensions){
-        const const_dimension = constraint_dimensions[i]
-        let constraintarray = const_dimension.constraintrange
-        if(!Array.isArray(constraintarray[0])){ // check, if it is a 1-dimensional array and transform it into a 2-d array
-            constraintarray = [constraintarray]
-        }
-        for(const j in constraintarray){
-            const constraint = constraintarray[j]
-            
-            //handle numeric data
-            if(columns[const_dimension.label].isNumeric){
-                let constraint_object = { col: const_dimension.label, operator: "BETWEEN", val1: constraint[0], val2: constraint[1] }
-                all_constraints.push(constraint_object)
-            }else{ // handle categorical data
-                const lower = Math.ceil(constraint[0])
-                const upper = Math.floor(constraint[1])
-                for (var n = lower; n <= upper; n++) { // iterate over all real valued indices and add them to the constraints
-                    let val = const_dimension.ticktext[n];
-                    if(columns[const_dimension.label].metaInformation.imgSmiles){
-                        val = map_shortname_to_smiles(val);
-                    }
-                    let constraint_object = { col: const_dimension.label, operator: "EQUALS", val1: val, val2: val }
-                    all_constraints.push(constraint_object)
-                }
-            }
-            
-        }
-    }
-    downloadArrayAsCSV(all_constraints, Object.keys(all_constraints[0]))
-}
-const uploadConstraints = (files, setConstraints) => {
-    if (files == null || files.length <= 0) {
-        return;
-    }
-    var file = files[0];
-
-    const fileReader = new FileReader()
-    fileReader.onload = (e) => {
-        const data = d3v5.csvParse(e.target.result)
-        setConstraints(data)
-    }
-    fileReader.readAsBinaryString(file)
-}
 
  const mapStateToProps = (state: AppState) => ({
     dataset: state.dataset,
+    pacoAttributes: state.pacoSettings?.pacoAttributes,
+    pacoConstraints: state.pacoSettings?.pacoConstraints,
+    currentAggregation: state.currentAggregation,
   });
   
   const mapDispatchToProps = (dispatch) => ({
     setCurrentAggregation: (samples: number[]) => dispatch(selectVectors(samples)),
+    setPacoRef: (ref) => dispatch(setPacoRef(ref)),
   });
   
   const connector = connect(mapStateToProps, mapDispatchToProps);
@@ -135,120 +78,193 @@ const uploadConstraints = (files, setConstraints) => {
   type Props = PropsFromRedux & {
   };
   
-export const PacoContext = connector(function ({dataset}: Props) {
+export const PacoContext = connector(function ({dataset, pacoAttributes, pacoConstraints, setPacoRef, setCurrentAggregation, currentAggregation}: Props) {
     if(dataset == null || dataset.columns == null)
         return null;
 
+
+    const [pacoAggregation, setPacoAggregation] = React.useState([]);
+
+    const line = {
+        // colorscale: 'YlOrRd',
+        // cmin: -4000,
+        // cmid: 0,
+        // cmax: -100,
+        // color: color,
+        showscale: false,
+        reversescale: false,
+        color: dataset.vectors.map((row) => 1),
+        colorscale: [[0, LIGHT_GREY], [1, PSE_BLUE]]
+    }
+    const paco = {
+        type: 'parcoords',
+        line: line
+    };
+    
+    const layout = {
+        padding: {
+            top: 0,
+            bottom: 0,
+            left: 0,
+            right: 0,
+        }
+        // width: 1500,
+        // height: 800, 
+        // hovermode: 'closest'
+    }
+
+    const config = {
+        responsive: true,
+        displayModeBar: false
+    }
+
     let paco_ref = React.useRef<any>();
-    let fileInput = React.useRef<any>();
-    // TODO: also save chosen attributes?
-    const [pacoAttributes, setPacoAttributes] = React.useState(Object.keys(dataset.columns).map((col) => {
-        return {feature: col, show: dataset.columns[col].metaInformation.paco};
-    }));
-    const [pacoConstraints, setPacoConstraints] = React.useState([])
+
+    React.useEffect(() => {
+        setPacoRef(paco_ref?.current)
+    }, [paco_ref])
 
     React.useEffect(()=> {
-        const pacoShowColumns = pacoAttributes.filter((col) => col.show).map((value) => value.feature);
-        if(pacoShowColumns.length > 0){
-            const cols = pacoShowColumns;
-            let dimensions = cols.map((v, i) => {
-                const values = unpack(dataset.columns[v], dataset.vectors, v)
-                const processed_info = get_processed_info(pacoConstraints, dataset.columns[v], values, v);
-                return {
-                    values: processed_info.values,
-                    label: v,
-                    // multiselect: false,
-                    constraintrange: processed_info.constraintrange,
-                    // range: [Math.min(...values), Math.max(...values)],
-                    tickvals: processed_info.tickvals,
-                    ticktext: processed_info.ticktext,
-                    // tickformat: ..., // https://plotly.com/javascript/reference/parcoords/#parcoords-dimensions-items-dimension-tickformat
-                    // visible: true, //TODO: set to false, if, for example, datatype not recognized
-                }
-            });
+        if(pacoAttributes != null){
+            const pacoShowColumns = pacoAttributes.filter((col) => col.show).map((value) => value.feature);
+            if(pacoShowColumns.length > 0){
+                const cols = pacoShowColumns;
+                let dimensions = cols.map((v, i) => {
+                    const values = unpack(dataset.columns[v], dataset.vectors, v)
+                    const processed_info = get_processed_info(pacoConstraints, dataset.columns[v], values, v);
+                    return {
+                        values: processed_info.values,
+                        label: v,
+                        // multiselect: false,
+                        constraintrange: processed_info.constraintrange,
+                        // range: [Math.min(...values), Math.max(...values)],
+                        tickvals: processed_info.tickvals,
+                        ticktext: processed_info.ticktext,
+                        // tickformat: ..., // https://plotly.com/javascript/reference/parcoords/#parcoords-dimensions-items-dimension-tickformat
+                        // visible: true, //TODO: set to false, if, for example, datatype not recognized
+                    }
+                });
 
-            // dimensions.push({ values: dataset.vectors.map((v) => v.__meta__.meshIndex), label: UNIQUE_ID, constraintrange: undefined, tickvals: [], ticktext: []})
+                // dimensions.push({ values: dataset.vectors.map((v) => v.__meta__.meshIndex), label: UNIQUE_ID, constraintrange: undefined, tickvals: [], ticktext: []})
 
-            // var color = unpack(rows, 'yield');
-            var paco = {
-                type: 'parcoords',
-                line: {
-                    showscale: true,
-                    reversescale: true,
-                    // colorscale: 'YlOrRd',
-                    // cmin: -4000,
-                    // cmid: 0,
-                    // cmax: -100,
-                    // color: color,
-                },
-            
-                dimensions: dimensions
-            };
+                // var color = unpack(rows, 'yield');
+                
 
-            var layout = {
-                padding: {
-                    top: 0
-                }
-                // width: 1500,
-                // height: 800, 
-                // hovermode: 'closest'
+                const new_paco = {...paco, dimensions: dimensions};
+                Plotly.newPlot(paco_ref.current, [new_paco], layout, config);
+
+                paco_ref.current.on("plotly_restyle", (data) => {
+                    debugger;
+                    // only change aggregation, if constraints were changed
+                    if(Object.keys(data[0]).filter((item) => item.includes("constraintrange")).length > 0){
+                        
+                        // reset coloring of lines
+                        Plotly.restyle(paco_ref.current, {line: {...line}}, [0]);
+
+                        const constraint_dims = paco_ref.current.data[0].dimensions.filter((dim) => dim.constraintrange != null && dim.constraintrange.length > 0);
+                        if(constraint_dims.length <= 0){
+                            let agg = dataset.vectors.map((row) => row.__meta__.meshIndex);
+                            if(!arrayEquals(currentAggregation.aggregation, agg)){
+                                setPacoAggregation(agg)
+                                setCurrentAggregation(agg);
+                            }
+                            return;
+                        }
+
+                        let filtered_vectors = dataset.vectors.filter((row) => {
+                            let highlightItem = true;
+                            for (const i in constraint_dims) {
+                                const const_dim = constraint_dims[i];
+                                const col = const_dim.label;
+                                const value = row[col];
+
+                                let constraintarray = const_dim.constraintrange
+                                if(!Array.isArray(constraintarray[0])){ // check, if it is a 1-dimensional array and transform it into a 2-d array
+                                    constraintarray = [constraintarray]
+                                }
+
+                                let dimHighlightItem = false;
+                                for(const j in constraintarray){
+                                    const constraint = constraintarray[j]
+                                    
+                                    //handle numeric data
+                                    if(dataset.columns[col].isNumeric){
+                                        dimHighlightItem = dimHighlightItem || (value > constraint[0] && value < constraint[1])
+                                    }else{ // handle categorical data
+                                        const lower = Math.ceil(constraint[0])
+                                        const upper = Math.floor(constraint[1])
+                                        for (var n = lower; n <= upper; n++) { // iterate over all real valued indices and add them to the constraints
+                                            let val = const_dim.ticktext[n];
+                                            if(dataset.columns[const_dim.label].metaInformation.imgSmiles){
+                                                val = map_shortname_to_smiles(val);
+                                                dimHighlightItem = dimHighlightItem || value === val
+                                            }
+                                        }
+                                    }
+                                    
+                                }
+
+                                highlightItem = highlightItem && dimHighlightItem;
+                            }
+
+                            return highlightItem;
+                        });
+
+                        const agg = filtered_vectors.map((row) => row.__meta__.meshIndex)
+                        if(!arrayEquals(currentAggregation.aggregation, agg)){
+                            setPacoAggregation(agg)
+                            setCurrentAggregation(agg);
+                        }
+
+                    }
+                    
+                    
+                });
+
+                // const ticks = d3v5.select(paco_ref.current).selectAll(".tick text")
+                // console.log(ticks)
+                // ticks.on("mouseenter", (d) => {
+                //     console.log("tick")
+                //     console.log(d)
+                // })
             }
-
-            var config = {
-                responsive: true,
-                displayModeBar: false
-            }
-
-            Plotly.newPlot(paco_ref.current, [paco], layout, config);
-
-            paco_ref.current.on("plotly_restyle", (data) => {
-                // TODO: implement filter or selection interaction
-                console.log(data)
-            });
-
-            const ticks = d3v5.select(paco_ref.current).selectAll(".tick text")
-            console.log(ticks)
-            ticks.on("mouseenter", (d) => {
-                console.log("tick")
-                console.log(d)
-            })
         }
     }, [dataset, pacoAttributes, pacoConstraints])
+
+    React.useEffect(() => {
+        debugger;
+        if(currentAggregation.aggregation != null && currentAggregation.aggregation.length > 0){
+            if(!arrayEquals(currentAggregation.aggregation, pacoAggregation)){
+
+                // const dims = paco_ref.current.data[0].dimensions;
+                const color = dataset.vectors.map((row) => currentAggregation.aggregation.includes(row.__meta__.meshIndex) ? 1 : 0);
+                const new_line = {...line, color: color};
+                
+                // var update = {
+                //     line: new_line
+                // }
+                // Plotly.restyle(paco_ref.current, update, [0]);
+
+                // use this to also reset constraints of paco
+                const dimensions = paco_ref.current.data[0].dimensions.map((dim) => { return {...dim, constraintrange: []}});
+                const new_paco = {...paco, dimensions: dimensions, line: new_line};
+                Plotly.react(paco_ref.current, [new_paco], layout, config);
+
+                setPacoAggregation([...currentAggregation.aggregation])
+
+                return;
+            }
+        }
+        else{
+            // reset coloring of lines
+            Plotly.restyle(paco_ref.current, {line: {...line}}, [0]);
+        }
+        
+    }, [currentAggregation])
   
     return <div className="PacoParent">
-        <div id="paco_tooltip" style={{position: "absolute", opacity: "0"}}></div>
-        <Box style={{clear: "both"}} paddingLeft={2} paddingTop={1} paddingRight={2}>
-            <Box style={{float: "left"}} paddingTop={1}>
-                <AttributeSelectionTable attributes={pacoAttributes} setAttributes={setPacoAttributes} btnFullWidth={false}><SettingsIcon/>&nbsp;Choose Attributes</AttributeSelectionTable>
-            </Box>
-            <Box style={{float: "right"}}>
-                <Tooltip title="Reset constraints to initial state">
-                    <Button style={{paddingRight: 25}} variant="outlined" aria-label="Update Points of Interest" onClick={() => {setPacoConstraints([...pacoConstraints])}}>
-                        <RotateLeftIcon />&nbsp;Reset Constraints
-                    </Button>
-                </Tooltip>
-                <Tooltip title="Export constraints">
-                    <IconButton color="primary" aria-label="Export POI constraints" onClick={() => {downloadConstraints(paco_ref.current.data[0].dimensions, dataset.columns)}}>
-                        <FileDownloadIcon />
-                    </IconButton>
-                </Tooltip>
-                <input
-                        style={{ display: 'none' }}
-                        accept={".csv"}
-                        ref={fileInput}
-                        type="file"
-                        onChange={(e) => {
-                            uploadConstraints(e.target.files, setPacoConstraints);
-                        }}
-                    />
-                <Tooltip title="Import constraints">
-                    <IconButton color="primary" aria-label="Import POI constraints" onClick={() => fileInput.current.click()}>
-                        <FileUploadIcon />
-                    </IconButton>
-                </Tooltip>
-            </Box>
-        </Box>
-        <Box style={{clear: "both"}} paddingLeft={2} paddingTop={1} paddingRight={2}>
+        {/* <div id="paco_tooltip" style={{position: "absolute", opacity: "0"}}></div> */}
+        <Box style={{clear: "both"}} paddingLeft={2} paddingTop={0} paddingRight={0}>
             <div style={{}} ref={paco_ref}></div>
         </Box>
     </div>

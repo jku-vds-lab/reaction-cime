@@ -154,7 +154,7 @@ def get_no_datapoints(filename):
 
 MAX_POINTS = 500 # 10000
 
-def save_poi_constraints(filename, constraints=[{"col": "yield", "operator": "BETWEEN", "val1": 0, "val2": 100}]):
+def save_poi_constraints(filename, constraints=[{"col": "experimentCycle", "operator": "BETWEEN", "val1": 0, "val2": 100}]):
     constraints = pd.DataFrame(constraints)
     constraints.to_csv(f'{current_app.config["tempdir"]}{filename}_constraints.csv', index=False)
 
@@ -166,6 +166,10 @@ def load_poi_constraints(filename):
     df_constraints = pd.read_csv(path)
     return df_constraints
 
+@reaction_cime_api.route('/reset_poi_constraints/<filename>', methods=['GET'])
+def reset_poi_constraints(filename):
+    save_poi_constraints(filename)
+    return get_poi_constraints(filename)
 
 @reaction_cime_api.route('/update_poi_constraints', methods=['OPTIONS', 'POST'])
 def update_poi_constraints():
@@ -176,6 +180,8 @@ def update_poi_constraints():
 
         if "col" in constraints_df.columns and "operator" in constraints_df.columns and "val1" in constraints_df.columns and "val2" in constraints_df.columns:
             poi_count = get_cime_dbo().get_filter_mask(filename, get_poi_constraints_filter(filename, constraints_df))["mask"].sum() # check if constraints are limited enough
+            if poi_count <= 0:
+                return {"msg": "No experiments are found with this filter. Please adjust the settings."}
             save_poi_constraints(filename, constraints_df)
             if poi_count > MAX_POINTS:
                 return {"msg": "Too many experiments within the selected filter. Only a subset of the data will be shown."}
@@ -225,6 +231,7 @@ from io import StringIO
 def get_points_of_interest(filename):
     # domain = pd.read_csv("./temp-files/%s"%filename)
     # domain = get_cime_dbo().get_dataframe_from_table(filename)
+    start_time = time.time()
 
     poi_domain, is_subsample = get_poi_df_from_db(filename, get_cime_dbo()) # TODO: tell front-end that it is subsampled
     
@@ -234,6 +241,9 @@ def get_points_of_interest(filename):
     csv_buffer = StringIO()
     poi_domain.to_csv(csv_buffer, index=False)
 
+    delta_time = time.time()-start_time
+    print("--- took", time.strftime('%H:%M:%S', time.gmtime(delta_time)), "to load file %s"%filename)
+    print("--- took %i min %f s to load file %s"%(delta_time/60, delta_time%60, filename))
     return csv_buffer.getvalue()
 
 
@@ -502,7 +512,7 @@ def project_dataset():
     # handle custom initialization of coordinates
     initialization = None
     if params["seeded"]: # take custom seed from current coordinates
-        initialization, _ = get_poi_df_from_db(filename, get_cime_dbo())[["x","y"]].values
+        initialization = get_poi_df_from_db(filename, get_cime_dbo())[0][["x","y"]].values
 
 
     # rescale numerical values and encode categorical values
@@ -547,7 +557,7 @@ def project_dataset():
     print("--- took %i min %f s to update database"%(delta_time/60, delta_time%60))
 
     print("return poi positions")
-    df, _ = get_poi_df_from_db(filename, get_cime_dbo())[["x","y"]].to_dict('records')
+    df = get_poi_df_from_db(filename, get_cime_dbo())[0][["x","y"]].to_dict('records')
     return {"done": "true", "embedding": df}
 
 
@@ -578,107 +588,20 @@ class ProjectionThread(threading.Thread):
              
     def run(self):
         try:
-
             if self.params["embedding_method"] == "rmOverlap":
-                self.msg = "load dataset..."
-                proj_df = self.cime_dbo.get_dataframe_from_table(self.filename, columns=["x", "y"])
-
-                self.msg = "calc embedding..."
-                from .dgrid import DGrid
-                # TODO: make parameters dynamic
-                icon_width = 1
-                icon_height = 1
-                delta = 6
-                start_time = time.time()
-                proj_data = DGrid(icon_width=icon_width, icon_height=icon_height, delta=delta).fit_transform(proj_df[["x","y"]].values)
-                delta_time = time.time()-start_time
-                print("--- took", time.strftime('%H:%M:%S', time.gmtime(delta_time)), "calculate remove overlap")
+                proj_data, proj_df = self.runRMOverlap()
             else:
-                self.msg = "load dataset..."
-                proj_df = self.cime_dbo.get_dataframe_from_table(self.filename, columns=list(self.selected_feature_info.keys()))
+                metric, normalized_values, proj_df, initialization = self.preprocessDataset()
 
-                self.msg = "seeding..."
-                # handle custom initialization of coordinates
-                initialization = None
-                if self.params["seeded"]: # take custom seed from current coordinates
-                    # initialization = get_poi_df_from_db(self.filename, self.cime_dbo)[["x","y"]].values # does this make sense?
-                    initialization = proj_df[["x","y"]].values
-
-                # TODO: if params["useSelection"]: only project selected points --> do this in front-end? do this at all?
-
-                self.msg = "rescale and encode..."
-                # rescale numerical values and encode categorical values
-                proj_df, categorical_features = rescale_and_encode(proj_df, self.params, self.selected_feature_info)
-
-
-                self.msg = "calc metric..."
-                # handle custom metrics
-                metric = self.params["distanceMetric"]
-                if metric == None or metric == "":
-                    metric = "euclidean"
-
-                if metric == "gower": # we precompute the similarity matrix with the gower metric
-                    metric = "precomputed"
-                    normalized_values = gower.gower_matrix(proj_df, cat_features=categorical_features)
-
-                    if initialization == "pca" and self.params["embedding_method"] == "tsne":
-                        print("--- calculating PCA for tSNE with Gowers distance")
-                        pca = PCA(n_components=2)
-                        initialization = pca.fit_transform(proj_df.values)
-                    
-                else: # otherwise, the similarity can be done by a pre-configured function and we just hand over the values
-                    normalized_values = proj_df.values
-
-                
                 self.msg = "calc embedding..."
                 # project the data
                 # --- umap
                 if self.params["embedding_method"] == "umap":
-                    if initialization == None:
-                        initialization = "spectral"
-
-                    # https://pypi.org/project/tqdm/#parameters
-                    # use TQDM to update steps for front-end
-                    class CustomTQDM:
-                        def __init__(self, parent):
-                            self.parent = parent
-
-                        def write(self, str):
-                            try:
-                                int(str) # if it is not possible to parse it as int, we reached the end?
-                                self.parent.current_step = str
-                            except ValueError:
-                                print(str)
-                            
-                        def flush(self):
-                            pass
-
-                    proj = umap.UMAP(n_neighbors=int(self.params["nNeighbors"]), n_components=2, metric=metric, n_epochs=int(self.params["iterations"]), init=initialization, tqdm_kwds={"bar_format": '{n_fmt}' ,"file": CustomTQDM(self)}, verbose=True) # output_metric="euclidean" --> ? learning_rate=float(params["learningRate"]) --> if we have user input for this, we would need "auto" as an option 
-                    proj_data = proj.fit_transform(normalized_values)
+                    proj_data = self.runUMAP(metric, normalized_values, initialization)
 
                 # --- tsne
                 elif self.params["embedding_method"] == "tsne":
-                    # https://github.com/pavlin-policar/openTSNE/blob/master/openTSNE/callbacks.py
-                    from openTSNE.callbacks import Callback
-                    class CustomCallback(Callback):
-                        def __init__(self, parent):
-                            self.parent = parent
-                            
-                        def optimization_about_to_start(self):
-                            """This is called at the beginning of the optimization procedure."""
-                            print("start optimization")
-                            pass
-                            
-                        def __call__(self, iteration, error, embedding): # error is current KL divergence of the given embedding
-                            poi_mask = get_poi_mask(self.parent.filename, self.parent.cime_dbo)
-                            self.parent.current_step = iteration
-                            self.parent.emb = [{"x": row[0], "y": row[1]} for row in embedding[poi_mask["mask"]]]
-                    #         return True # with this optimization will be interrupted
-
-                    if initialization == None:
-                        initialization = "pca"
-                    proj = TSNE(2, metric=metric, callbacks_every_iters=10, callbacks=[CustomCallback(self)], perplexity=int(self.params["perplexity"]), n_iter=int(self.params["iterations"]), initialization=initialization, verbose=True) #, learning_rate=float(params["learningRate"]) --> if we have user input for this, we would need "auto" as an option 
-                    proj_data = proj.fit(normalized_values)
+                    proj_data = self.runTSNE(metric, normalized_values, initialization)
 
                 # --- pca
                 else:
@@ -700,10 +623,128 @@ class ProjectionThread(threading.Thread):
 
         except Exception as e:
             self.msg = "error during projection"
+            print("--Exception:--")
             print(e)
 
         finally:
             self.done = True
+
+    def preprocessDataset(self):
+        self.msg = "load dataset..."
+        proj_df = self.cime_dbo.get_dataframe_from_table(self.filename, columns=list(self.selected_feature_info.keys()))
+
+        self.msg = "seeding..."
+        # handle custom initialization of coordinates
+        initialization = None
+        if self.params["seeded"]: # take custom seed from current coordinates
+            # initialization = get_poi_df_from_db(self.filename, self.cime_dbo)[["x","y"]].values # does this make sense?
+            initialization = proj_df[["x","y"]].values
+
+        # TODO: if params["useSelection"]: only project selected points --> do this in front-end? do this at all?
+
+        self.msg = "rescale and encode..."
+        # rescale numerical values and encode categorical values
+        proj_df, categorical_features = rescale_and_encode(proj_df, self.params, self.selected_feature_info)
+
+
+        self.msg = "calc metric..."
+        # handle custom metrics
+        metric = self.params["distanceMetric"]
+        if metric == None or metric == "":
+            metric = "euclidean"
+
+        if metric == "gower": # we precompute the similarity matrix with the gower metric
+            metric = "precomputed"
+            normalized_values = gower.gower_matrix(proj_df, cat_features=categorical_features)
+
+            if initialization == "pca" and self.params["embedding_method"] == "tsne":
+                print("--- calculating PCA for tSNE with Gowers distance")
+                pca = PCA(n_components=2)
+                initialization = pca.fit_transform(proj_df.values)
+            
+        else: # otherwise, the similarity can be done by a pre-configured function and we just hand over the values
+            normalized_values = proj_df.values
+        
+        return metric, normalized_values, proj_df, initialization
+
+    def runTSNE(self, metric, normalized_values, initialization):
+        # https://github.com/pavlin-policar/openTSNE/blob/master/openTSNE/callbacks.py
+        from openTSNE.callbacks import Callback
+        class CustomCallback(Callback):
+            def __init__(self, parent, poi_mask):
+                self.parent = parent
+                self.poi_mask = poi_mask
+                
+            def optimization_about_to_start(self):
+                """This is called at the beginning of the optimization procedure."""
+                print("start optimization")
+                pass
+                
+            def __call__(self, iteration, error, embedding): # error is current KL divergence of the given embedding
+                # poi_mask = get_poi_mask(self.parent.filename, self.parent.cime_dbo)
+                self.parent.current_step = iteration
+                if self.poi_mask is not None:
+                    self.parent.emb = [{"x": row[0], "y": row[1]} for row in embedding[self.poi_mask]]
+        #         return True # with this optimization will be interrupted
+
+        if initialization == None:
+            initialization = "pca"
+
+        # instead of "None" give the poi_mask as parameter, if you want point updates in front-end: get_poi_mask(self.filename, self.cime_dbo)["mask"]
+        # however, there is an error: Working outside of application context. (maybe due to changes in "get_poi_mask"?)
+        proj = TSNE(2, metric=metric, callbacks_every_iters=10, callbacks=[CustomCallback(self, None)], perplexity=int(self.params["perplexity"]), n_iter=int(self.params["iterations"]), initialization=initialization, verbose=True) #, learning_rate=float(params["learningRate"]) --> if we have user input for this, we would need "auto" as an option 
+        proj_data = proj.fit(normalized_values)
+        return proj_data
+
+    def runUMAP(self, metric, normalized_values, initialization):
+        if initialization == None:
+            initialization = "spectral"
+
+        # https://pypi.org/project/tqdm/#parameters
+        # use TQDM to update steps for front-end
+        class CustomTQDM:
+            def __init__(self, parent):
+                self.parent = parent
+
+            def write(self, str):
+                try:
+                    int(str) # if it is not possible to parse it as int, we reached the end?
+                    self.parent.current_step = str
+                except ValueError:
+                    print(str)
+                
+            def flush(self):
+                pass
+
+        proj = umap.UMAP(n_neighbors=int(self.params["nNeighbors"]), n_components=2, metric=metric, n_epochs=int(self.params["iterations"]), init=initialization, tqdm_kwds={"bar_format": '{n_fmt}' ,"file": CustomTQDM(self)}, verbose=True) # output_metric="euclidean" --> ? learning_rate=float(params["learningRate"]) --> if we have user input for this, we would need "auto" as an option 
+        proj_data = proj.fit_transform(normalized_values)
+        return proj_data
+
+    def runRMOverlap(self):
+        self.msg = "load dataset..."
+        proj_df = self.cime_dbo.get_dataframe_from_table(self.filename, columns=["x", "y"])
+
+        self.msg = "calc embedding..."
+        from .dgrid import DGrid
+        # TODO: make parameters dynamic
+        icon_width = 1
+        icon_height = 1
+        delta = 6
+        start_time = time.time()
+
+        from .dgrid_callback import CustomCallback as DGridCallback
+        class MyCallback(DGridCallback):
+            def __init__(self, parent):
+                    self.parent = parent
+
+            def __call__(self, msg):
+                # TODO: self.parent.current_step
+                self.parent.msg = msg
+                
+        proj_data = DGrid(icon_width=icon_width, icon_height=icon_height, delta=delta, callbacks=[MyCallback(self)]).fit_transform(proj_df[["x","y"]].values)
+        delta_time = time.time()-start_time
+        print("--- took", time.strftime('%H:%M:%S', time.gmtime(delta_time)), "calculate remove overlap")
+        return proj_data, proj_df
     
     def get_id(self):
  
@@ -753,7 +794,7 @@ def project_dataset_async():
                 proj.raise_exception()
                 proj.join()
             if proj.done: #proj.current_step >= params["iterations"] or proj.interrupt:
-                df, _ = get_poi_df_from_db(filename, cime_dbo)[["x","y"]].to_dict('records')
+                df = get_poi_df_from_db(filename, cime_dbo)[0][["x","y"]].to_dict('records')
                 yield json.dumps({"step": None, "msg": None, "emb": df}).encode('utf-8')
                 break
     

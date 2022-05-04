@@ -11,7 +11,7 @@ import {
 } from "projection-space-explorer";
 import { LineUpContext } from "./LineUpContext";
 import { LineUpTabPanel } from "./Overrides/LineUpTabPanel";
-import { AppState, CIME4RViewActions, CIMEReducers } from "./State/Store";
+import { AppState, CIME4RViewActions, CIMEReducers, createCIMERootReducer } from "./State/Store";
 import { AggregationTabPanel } from "./Overrides/AggregationTabPanel";
 import { DatasetTabPanel } from "./Overrides/Dataset/DatasetTabPanel";
 import { RemoteEmbeddingController } from "./Overrides/Embeddings/RemoteEmbeddingController";
@@ -24,6 +24,7 @@ import { ReactionsPlugin } from "./Overrides/Details/ReactionsPlugin";
 import { ReactionCIMEBackendFromEnv } from "./Backend/ReactionCIMEBackend";
 import { PacoContext } from "./PacoContext/PacoContext";
 import { FilterTabPanel } from "./Overrides/FilterTabPanel/FilterTabPanel";
+import { PacoTabPanel } from "./Overrides/PacoTabPanel/PacoTabPanel";
 
 export const DEMO = false;
 
@@ -34,7 +35,8 @@ export const ReactionCIMEApp = () => {
   // const [context] = useState(new API<RootState>(null, rootReducer))
 
   const [context] = useState(
-    new API<AppState>(null, createRootReducer(CIMEReducers))
+    // new API<AppState>(null, createRootReducer(CIMEReducers))
+    new API<AppState>(null, createCIMERootReducer())
   );
   context.store.dispatch(setItemLabel({label: "experiment", label_plural: "experiments"}))
   // context.store.dispatch(setDatasetEntriesAction(DATASETCONFIG))
@@ -106,24 +108,27 @@ const ApplicationWrapper = connector(({ setMouseMoveFn, dataset_path, setMouseCl
       datasetTab: DatasetTabPanel,
       appBar: () => <div></div>,
       contextMenuItems: [
-        {key:"getkNN", title:"Download k-Nearest", function:(coords) => {
-          handleBackgroundSelectionDownload(coords, dataset_path)
-        }},
-        {key:"addRegion", title:`Show ${globalLabels.itemLabel} in this region`, function:(coords) => {
-          handleBackgroundSelectionDownload(coords, dataset_path)
+        // {key:"getkNN", title:"Download k-Nearest", function:(coords) => {
+        //   handleBackgroundSelectionDownload(coords, dataset_path)
+        // }},
+        {key:"addRegion", title:`Show ${globalLabels.itemLabelPlural} in this region`, function:(coords) => {
+          // TODO
+            // ReactionCIMEBackendFromEnv.addFilterException(coords, radius).then((res) => {
+
+            // })
         }}
       ],
-      detailViews: [ //TODO: switch between the two
+      detailViews: [
         {
-          name: "lineup",
-          // @ts-ignore
-          view: <LineUpContext key={"lineup"}></LineUpContext>
+          name: 'LineUp',
+          view: <LineUpContext key={"lineup"}></LineUpContext>,
+          settings: LineUpTabPanel,
         },
         {
-          name: "paco",
-          // @ts-ignore
-          view: <PacoContext key={"paco"}></PacoContext>
-        },
+          name: 'Parallel Coordinates',
+          view: <PacoContext key={"paco"}></PacoContext>,
+          settings: PacoTabPanel,
+        }
       ],
       tabs: [
         {
@@ -140,13 +145,13 @@ const ApplicationWrapper = connector(({ setMouseMoveFn, dataset_path, setMouseCl
           description: "Aggregated Dataset that should be shown in the background",
           icon: ReactionCIMEIcons.Aggregate
         },
-        {
-          name: "lineup",
-          tab: LineUpTabPanel,
-          title: "LineUp Integration",
-          description: "Settings for LineUp Integration",
-          icon: PSEIcons.PseLineup,
-        },
+        // {
+        //   name: "lineup",
+        //   tab: LineUpTabPanel,
+        //   title: "LineUp Integration",
+        //   description: "Settings for LineUp Integration",
+        //   icon: PSEIcons.PseLineup,
+        // },
       ],
       layers: [
         {

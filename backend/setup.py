@@ -16,6 +16,7 @@ setup(
         'scikit-learn',
         'gower==0.0.5',
         'pandas',
-        'Pillow'
+        'Pillow',
+        'numba==0.55.1'
     ],
 )

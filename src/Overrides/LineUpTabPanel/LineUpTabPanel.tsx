@@ -8,16 +8,15 @@ import {
 import { AppState } from "../../State/Store";
 import React from "react";
 import { downloadImpl } from '../../Utility/Utils'
-import { setDetailVisibility } from "projection-space-explorer";
+import { DetailViewActions } from "projection-space-explorer";
 
 const mapStateToProps = (state: AppState) => ({
-  dataset: state.dataset,
   currentAggregation: state.currentAggregation,
   lineUpInput: state.lineUpInput,
 });
 
 const mapDispatchToProps = (dispatch) => ({
-  setDetailVisibility: (value) => dispatch(setDetailVisibility(value)),
+  setDetailVisibility: (value) => dispatch(DetailViewActions.setDetailVisibility(value)),
   setLineUpInput_filter: (value) => dispatch(setLineUpInput_filter(value)),
 });
 
@@ -34,7 +33,6 @@ export const LineUpTabPanel = connector(
     setDetailVisibility,
     setLineUpInput_filter,
     lineUpInput,
-    dataset,
     currentAggregation,
     splitRef,
   }: Props) => {
@@ -166,7 +164,3 @@ export const LineUpTabPanel = connector(
     );
   }
 );
-
-// function dispatch(arg0: { type: string; input: any }) {
-//   throw new Error("Function not implemented.");
-// }

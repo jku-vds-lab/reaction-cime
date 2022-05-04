@@ -1,5 +1,6 @@
 import { createAction } from "@reduxjs/toolkit";
-import { createViewDuckReducer, RootState } from "projection-space-explorer";
+import { createRootReducer, createViewDuckReducer, RootActionTypes, RootState } from "projection-space-explorer";
+import { Reducer } from "react";
 import { combineReducers } from "redux";
 import aggregateSettings, { AggregateInitStates } from "./AggregateSettingsDuck";
 import { handleDataset } from "./HandleDatasetDuck";
@@ -7,6 +8,7 @@ import { handleDataset } from "./HandleDatasetDuck";
 // import cimeBackgroundSelection from "projection-space-explorer/dist/components/Ducks/CimeBackgroundSelectionDuck";
 import lineUpInput from "./LineUpInputDuck";
 import { mouseInteractionHooks } from "./MouseInteractionHooksDuck";
+import { pacoSettings } from "./PacoSettingsDuck";
 import { selection } from "./SelectionDuck";
 
 const resetViews = createAction<void>('view/resetView');
@@ -31,13 +33,34 @@ export const CIMEReducers = {
   mouseInteractionHooks: mouseInteractionHooks,
   selection: selection,
   handleDataset: handleDataset,
+  pacoSettings: pacoSettings
 };
 
-const combined = combineReducers(CIMEReducers);
+const cimeCombined = combineReducers(CIMEReducers);
 
 /**
  * Cime typings...
  */
-export type CimeState = ReturnType<typeof combined>;
+export type CimeState = ReturnType<typeof cimeCombined>;
 
 export type AppState = RootState & CimeState;
+
+export function createCIMERootReducer() {
+  const pseRootReducer = createRootReducer(CIMEReducers)
+  
+  return (state: Parameters<typeof pseRootReducer>[0], action: Parameters<typeof pseRootReducer>[1]) => {
+    const newState = pseRootReducer(state, action)
+    console.log(action.type)
+    if (action.type === RootActionTypes.DATASET) {
+      // initialize pacoAttributes when dataset changes
+      if(newState.dataset != null){
+        const newPacoAttributes = Object.keys(newState.dataset.columns).map((col) => {
+          return {feature: col, show: newState.dataset.columns[col].metaInformation.paco as boolean};
+        })
+        Object.assign(newState, {pacoSettings: {...state.pacoSettings, pacoAttributes: newPacoAttributes}});
+      }
+    }
+
+    return newState;
+  };
+}

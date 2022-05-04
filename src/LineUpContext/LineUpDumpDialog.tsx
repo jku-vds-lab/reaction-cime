@@ -10,11 +10,11 @@ import {
 import { connect, ConnectedProps } from "react-redux";
 import React from "react";
 import { setLineUpInput_dump } from "../State/LineUpInputDuck";
-import { setDetailVisibility } from "projection-space-explorer";
+// import { setDetailVisibility } from "projection-space-explorer";
 
 const mapDispatchToProps = (dispatch) => ({
   setLineUp_dump: (dump) => dispatch(setLineUpInput_dump(dump)),
-  setLineUp_visibility: (vis) => dispatch(setDetailVisibility(vis)),
+  // setLineUp_visibility: (vis) => dispatch(setDetailVisibility(vis)),
 });
 
 const connector = connect(null, mapDispatchToProps);
@@ -31,7 +31,7 @@ export const LineUpDumpDialog = connector(function ({
   openDialog,
   setOpenDumpDialog,
   setLineUp_dump,
-  setLineUp_visibility,
+  // setLineUp_visibility,
 }: Props) {
   const [dump, setDump] = React.useState("");
   function handleChange(event) {
@@ -40,7 +40,7 @@ export const LineUpDumpDialog = connector(function ({
 
   function handleClose() {
     setOpenDumpDialog(() => false);
-    setLineUp_visibility(true);
+    // setLineUp_visibility(true);
     setLineUp_dump(dump);
   }
 

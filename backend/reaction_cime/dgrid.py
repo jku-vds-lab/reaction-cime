@@ -1,7 +1,34 @@
 import math
 import numpy as np
+import time
+import numba
 
 from sklearn.neighbors import KDTree
+
+
+@numba.jit(nopython=True, parallel=False)
+def _density_calculation(count_map, mask, mask_size, x_min, x_max, y_min, y_max, nr_columns, nr_rows):
+    dummy_points_candidates = []
+
+    for row in range(nr_rows):
+        y_ = row * (y_max - y_min) / (nr_rows - 1) + y_min
+
+        for column in range(nr_columns):
+            if count_map[row][column] == 0:
+                x_ = column * (x_max - x_min) / (nr_columns - 1) + x_min
+                density = 0
+
+                for i in range(mask_size):
+                    for j in range(mask_size):
+                        r = row - (int(mask_size / 2)) + j
+                        c = column - (int(mask_size / 2)) + i
+
+                        if (0 <= r < nr_rows) and (0 <= c < nr_columns):
+                            density += mask[i][j] * count_map[r][c]
+
+                dummy_points_candidates.append([x_, y_, density, -1])
+
+    return dummy_points_candidates
 
 
 class DGrid:
@@ -9,36 +36,45 @@ class DGrid:
     def __init__(self,
                  icon_width=1,
                  icon_height=1,
-                 delta=None
+                 delta=None,
+                 callbacks=[]
                  ):
         self.icon_width_ = icon_width
         self.icon_height_ = icon_height
         self.delta_ = delta
 
-        self.grid_ = []
+        if self.delta_ is None:
+            self.delta_ = 1
 
+        self.grid_ = []
+        self.callbacks = callbacks
+
+    def _trigger_callbacks(self, msg):
+        if self.callbacks is not None:
+            for callback in self.callbacks:
+                callback(msg)
     def _fit(self, y):
+        self._trigger_callbacks("start fit")
         # calculating the bounding box
         max_coordinates = np.amax(y, axis=0)
         min_coordinates = np.amin(y, axis=0)
         bounding_box_width = max_coordinates[0] - min_coordinates[0]
         bounding_box_height = max_coordinates[1] - min_coordinates[1]
-        
-        # if there is no delta given, we calculate the smalles possible delta as a natural number
-        if self.delta_ is None:
-            print("...calc delta...")
-            self.delta_ = math.ceil(math.sqrt((len(y)*self.icon_width_*self.icon_height_)/(bounding_box_height*bounding_box_width)))
-        
-        # defining the number of rows and columns
-        nr_columns = int((self.delta_ * bounding_box_width) / self.icon_width_)
-        nr_rows = int((self.delta_ * bounding_box_height) / self.icon_height_)
-        print(self.delta_)
-        print(nr_columns, nr_rows)
 
-        if (nr_rows * nr_columns) < len(y):
-            raise Exception("There is no space to remove overlaps! Rows: {0}, columns: {1}, data size: {2}. Try "
-                            "increasing delta.".
-                            format(nr_rows, nr_columns, len(y)))
+        # defining the number of rows and columns
+        nr_columns = math.ceil((self.delta_ * bounding_box_width) / self.icon_width_)
+        nr_rows = math.ceil((self.delta_ * bounding_box_height) / self.icon_height_)
+
+        # if the number of rows and columns are not enough to fit all data instances, increase delta
+        if nr_rows * nr_columns < len(y):
+            nr_columns = (bounding_box_width / self.icon_width_)
+            nr_rows = (bounding_box_height / self.icon_height_)
+            self.delta_ = math.sqrt(len(y) / (nr_rows * nr_columns))
+            nr_columns = math.ceil(self.delta_ * nr_columns)
+            nr_rows = math.ceil(self.delta_ * nr_rows)
+
+            print("There is not enough space to remove overlaps! Setting delta to {0}, the smallest possible number "
+                  "to fully remove overlaps. Increase it if more empty space is required.".format(self.delta_))
 
         # add the original points
         def to_grid_cell(id_, x_, y_):
@@ -49,22 +85,33 @@ class DGrid:
                     'j': 0,
                     'dummy': False}
 
+        self._trigger_callbacks("refactor data")
         for i in range(len(y)):
             self.grid_.append(to_grid_cell(i, y[i][0], y[i][1]))
 
         # add the dummy points
-        self.add_dummy_points(nr_columns, nr_rows)
+        start_time = time.time()
+        self._add_dummy_points(min_coordinates[0], max_coordinates[0],
+                               min_coordinates[1], max_coordinates[1],
+                               nr_columns, nr_rows)
+        print("--- Add dummy points executed in %s seconds ---" % (time.time() - start_time))
 
         # execute
-        self.grid_ = DGrid.grid_rec(self.grid_, nr_rows, nr_columns, 0, 0)
+        self._trigger_callbacks("grid assignment")
+        start_time = time.time()
+        self.grid_ = DGrid._grid_rec(self.grid_, nr_rows, nr_columns, 0, 0)
         self.grid_.sort(key=lambda v: v.get('id'))
+        print("--- Grid assignment executed in %s seconds ---" % (time.time() - start_time))
 
+        self._trigger_callbacks("transform")
+        # returning the overlap free scatterplot
         transformed = []
         for i in range(len(self.grid_)):
             if self.grid_[i]['dummy'] is False:
-                transformed.append(np.array([self.grid_[i]['j'] * self.icon_width_,
-                                    self.grid_[i]['i'] * self.icon_height_]))
+                transformed.append(np.array([min_coordinates[0] + self.grid_[i]['j'] * self.icon_width_,
+                                             min_coordinates[1] + self.grid_[i]['i'] * self.icon_height_]))
 
+        self._trigger_callbacks("finish")
         return np.array(transformed)
 
     def fit_transform(self, y):
@@ -74,7 +121,7 @@ class DGrid:
         return self._fit(y)
 
     @staticmethod
-    def split_grid(grid, cut_point, direction):
+    def _split_grid(grid, cut_point, direction):
         if direction == 'x':
             grid.sort(key=lambda cel: (cel['x'], cel['y']))
         else:
@@ -88,7 +135,7 @@ class DGrid:
         return grid0, grid1
 
     @staticmethod
-    def grid_rec(grid, r, s, i, j):
+    def _grid_rec(grid, r, s, i, j):
         size = len(grid)
 
         if size > 0:
@@ -98,86 +145,71 @@ class DGrid:
             else:
                 if r > s:
                     half_rows = int(math.ceil(r / 2.0))
-                    grid0, grid1 = DGrid.split_grid(grid, min(size, half_rows * s), 'y')
-                    DGrid.grid_rec(grid0, half_rows, s, i, j)
-                    DGrid.grid_rec(grid1, (r - half_rows), s, (i + half_rows), j)
+                    grid0, grid1 = DGrid._split_grid(grid, min(size, half_rows * s), 'y')
+                    DGrid._grid_rec(grid0, half_rows, s, i, j)
+                    DGrid._grid_rec(grid1, (r - half_rows), s, (i + half_rows), j)
                 else:
                     half_columns = int(math.ceil(s / 2.0))
-                    grid0, grid1 = DGrid.split_grid(grid, min(size, half_columns * r), 'x')
-                    DGrid.grid_rec(grid0, r, half_columns, i, j)
-                    DGrid.grid_rec(grid1, r, (s - half_columns), i, (j + half_columns))
+                    grid0, grid1 = DGrid._split_grid(grid, min(size, half_columns * r), 'x')
+                    DGrid._grid_rec(grid0, r, half_columns, i, j)
+                    DGrid._grid_rec(grid1, r, (s - half_columns), i, (j + half_columns))
 
         return grid
 
-    def add_dummy_points(self, nr_columns, nr_rows):
+    def _add_dummy_points(self, x_min, x_max, y_min, y_max, nr_columns, nr_rows):
+        self._trigger_callbacks("add dummy points")
         size = len(self.grid_)
-        min_x = min_y = math.inf
-        max_x = max_y = -math.inf
 
-        scatterplot = []
-
-        for i in range(size):
-            x_ = self.grid_[i]['x']
-            y_ = self.grid_[i]['y']
-
-            scatterplot.append([x_, y_])
-
-            if min_x > x_:
-                min_x = x_
-
-            if min_y > y_:
-                min_y = y_
-
-            if max_x < x_:
-                max_x = x_
-
-            if max_y < y_:
-                max_y = y_
-
-        count = [[0] * nr_columns for _ in range(nr_rows)]
+        # counting the number of points per grid cell
+        count_map = np.zeros((nr_rows, nr_columns), dtype=np.uint32)
 
         for i in range(size):
-            col = int((self.grid_[i]['x'] - min_x) / self.icon_width_)
-            row = int((self.grid_[i]['y'] - min_y) / self.icon_height_)
-            count[row][col] = count[row][col] + 1
+            col = math.ceil(((self.grid_[i]['x'] - x_min) / (x_max - x_min)) * (nr_columns - 1))
+            row = math.ceil(((self.grid_[i]['y'] - y_min) / (y_max - y_min)) * (nr_rows - 1))
+            count_map[row][col] = count_map[row][col] + 1
 
-        icons_area = size * self.icon_width_ * self.icon_height_
-        scatterplot_area = (max_x - min_x) * (max_y - min_y)
-        mask_size = int(max(3, scatterplot_area / icons_area))
+        # calculating the gaussian mask
+        mask_size = int(max(3, ((x_max - x_min) * (y_max - y_min)) / (size * self.icon_width_ * self.icon_height_)))
         mask_size = mask_size + 1 if mask_size % 2 == 0 else mask_size
+        mask = DGrid._gaussian_mask(mask_size, (mask_size - 1) / 6.0)
 
-        sigma = (mask_size - 1) / 6.0
-        mask = DGrid.gaussian_mask(mask_size, sigma)
+        self._trigger_callbacks("density calculation")
+        # creating all dummy candidates
+        dummy_points_candidates = _density_calculation(count_map, mask, mask_size,
+                                                       x_min, x_max, y_min, y_max,
+                                                       nr_columns, nr_rows)
 
-        # create a kd-tree to calculate the closest points
-        tree = KDTree(scatterplot, leaf_size=2)
+        self._trigger_callbacks("post process dummy points")
+        # sorting candidates using density
+        dummy_points_candidates.sort(key=lambda x: x[2])
 
-        dummy_points_candidates = []
-
-        for row in range(nr_rows):
-            y_ = row * (max_y - min_y) / (nr_rows - 1) + min_y
-
-            for column in range(nr_columns):
-                if count[row][column] == 0:
-                    density = 0
-
-                    for i in range(mask_size):
-                        for j in range(mask_size):
-                            r = row - (int(mask_size / 2)) + j
-                            c = column - (int(mask_size / 2)) + i
-
-                            if (0 <= r < nr_rows) and (0 <= c < nr_columns):
-                                density += mask[i][j] * count[r][c]
-
-                    x_ = column * (max_x - min_x) / (nr_columns - 1) + min_x
-
-                    distance, index = tree.query([[x_, y_]], 1)
-
-                    dummy_points_candidates.append([x_, y_, density, distance[0][0]])
-
-        dummy_points_candidates.sort(key=lambda x: (x[2], x[3]))
-
+        # defining the number of required dummy points
         nr_dummy_points = min((nr_rows * nr_columns) - size, len(dummy_points_candidates))
+
+        # checking if density is not enough to decide the correct dummy points
+        if len(dummy_points_candidates) > nr_dummy_points and math.fabs(
+                dummy_points_candidates[nr_dummy_points - 1][2] -
+                dummy_points_candidates[nr_dummy_points][2]) < 0.0001:
+
+            # if not, create a kd-tree to find the nearest point in the original layout
+            original_points = []
+            for i in range(size):
+                # adding the original points
+                x_ = self.grid_[i]['x']
+                y_ = self.grid_[i]['y']
+                original_points.append([x_, y_])
+
+            tree = KDTree(original_points, leaf_size=2)
+
+            # add the distance information for the "undecided" dummy points
+            for i in range(len(dummy_points_candidates)):
+                if math.fabs(dummy_points_candidates[nr_dummy_points - 1][2] -
+                             dummy_points_candidates[i][2]) < 0.0001:
+                    dummy_points_candidates[i][3] = float(tree.query([[dummy_points_candidates[i][0],
+                                                                       dummy_points_candidates[i][1]]], 1)[0])
+
+            # sort the candidates again using density and distance
+            dummy_points_candidates.sort(key=lambda x: (x[2], x[3]))
 
         for i in range(nr_dummy_points):
             self.grid_.append({'id': size + i,
@@ -190,8 +222,8 @@ class DGrid:
         return
 
     @staticmethod
-    def gaussian_mask(size, sigma):
-        mask = [[0.0] * size for _ in range(size)]
+    def _gaussian_mask(size, sigma):
+        mask = np.zeros((size, size), dtype=np.float32)
 
         for i in range(size):
             y = int(i - int(size / 2))

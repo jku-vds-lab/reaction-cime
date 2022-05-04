@@ -1,8 +1,17 @@
 import { ReactionCIMEBackendFromEnv } from "../Backend/ReactionCIMEBackend";
 import * as d3v5 from "d3v5";
 
-export const PSE_BLUE = "#1f77b4"
+export const PSE_BLUE = "#007dad" // "#1f77b4"
+export const LIGHT_GREY = "#DDDDDD"
 
+export function arrayEquals(a, b) {
+    return (
+      Array.isArray(a) &&
+      Array.isArray(b) &&
+      a.length === b.length &&
+      a.every((val, index) => val === b[index])
+    );
+  }
 
 export function save_smiles_lookup_table(files:FileList){
     if (files == null || files.length <= 0) {

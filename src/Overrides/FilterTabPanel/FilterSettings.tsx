@@ -1,10 +1,11 @@
-import { Box, Button } from "@mui/material";
+import { Box, Button, Tooltip } from "@mui/material";
 import { Dataset } from "projection-space-explorer";
 import React from "react";
 import { ReactionCIMEBackendFromEnv } from "../../Backend/ReactionCIMEBackend";
 import { CategoryFilter } from "./CategoryFilter";
 import { RangeFilter } from "./RangeFilter";
 import FilterAltIcon from '@mui/icons-material/FilterAlt';
+import RotateLeftIcon from '@mui/icons-material/RotateLeft';
 
 
 
@@ -17,7 +18,6 @@ type Props = {
 };
 
 export const FilterSettings = ({dataset, removeFilter, constraintCols, constraints, triggerDatasetUpdate}:Props) => {
-
     const [filterValues, setFilterValues] = React.useState({});
 
     React.useEffect(() => {
@@ -32,19 +32,17 @@ export const FilterSettings = ({dataset, removeFilter, constraintCols, constrain
                 let equals = [];
                 if(currentConstraints.length > 0){
                     currentConstraints.forEach((item) => {
-                        for(let i in constraints){
-                            const con = constraints[i];
-                            if(con.operator === "BETWEEN"){ // if there are several between operators, we choose the minimal minimum and the maximal maximum, because we can only handle one range
-                                if(between[0] == null || between[1] == null){
-                                    between = [parseFloat(con.val1), parseFloat(con.val2)]
-                                }else{
-                                    between[0] = Math.min(parseFloat(con.val1), between[0])
-                                    between[1] = Math.max(parseFloat(con.val2), between[1])
-                                }
-                                
-                            }else if(con.operator === "EQUALS"){
-                                equals.push(con.val1)
+                        const con = item;
+                        if(con.operator === "BETWEEN"){ // if there are several between operators, we choose the minimal minimum and the maximal maximum, because we can only handle one range
+                            if(between[0] == null || between[1] == null){
+                                between = [parseFloat(con.val1), parseFloat(con.val2)]
+                            }else{
+                                between[0] = Math.min(parseFloat(con.val1), between[0])
+                                between[1] = Math.max(parseFloat(con.val2), between[1])
                             }
+                            
+                        }else if(con.operator === "EQUALS"){
+                            equals.push(con.val1)
                         }
                     })
                 }
@@ -66,7 +64,7 @@ export const FilterSettings = ({dataset, removeFilter, constraintCols, constrain
             for(let i in constraintCols){
                 // add constraints, if not already included
                 const col = constraintCols[i];
-                if(!Object.keys(tempFilterValues).includes(col)){
+                if(!(col in tempFilterValues)){
                     if(dataset.columns[col].isNumeric){
                         tempFilterValues[col] = {isNum: true, val: [-Number.MAX_VALUE, Number.MAX_VALUE]}
                     }else{
@@ -118,6 +116,24 @@ export const FilterSettings = ({dataset, removeFilter, constraintCols, constrain
             <FilterAltIcon />
             &nbsp;Apply Filter
             </Button>
+        </Box>
+        <Box paddingLeft={2} paddingTop={1} paddingRight={2}>
+            <Tooltip title="Reset constraints to initial state">
+                <Button fullWidth variant="outlined" aria-label="Reset constraints to initial state" onClick={() => {
+                    ReactionCIMEBackendFromEnv.resetPOIConstraints(dataset.info.path).then((res_constraints) => {
+                        if(triggerDatasetUpdate != null){
+                            triggerDatasetUpdate({
+                                display: dataset.info.path,
+                                path: dataset.info.path,
+                                type: dataset.info.type,
+                                uploaded: true
+                            })
+                        }
+                    })
+                }}>
+                    <RotateLeftIcon />&nbsp;Reset Constraints
+                </Button>
+            </Tooltip>
         </Box>
         </div>
 }

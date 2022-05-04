@@ -78,8 +78,8 @@ export class BackendCSVLoader implements Loader {
       promise
         .then((vectors) => {
             if(vectors.length <= 0){
-                console.log("'points of interest' dataset is empty");
-                alert("'points of interest' dataset is empty")
+                console.log("Dataset is empty");
+                alert("Dataset is empty")
             }else{
                 this.vectors = convertFromCSV(vectors);
                 this.datasetType = DatasetType.Chem;

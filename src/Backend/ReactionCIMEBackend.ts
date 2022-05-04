@@ -646,6 +646,19 @@ export class ReactionCIMEBackend {
     })
   }
 
+  public resetPOIConstraints = async(filename: string) => {
+    return fetch(this.baseUrl + "/reset_poi_constraints/" + filename, {
+      ...this.fetchParams,
+      method: "GET",
+    })
+    .then(this.handleErrors)
+    .then((response) => response.json())
+    .then(this.handleJSONErrors)
+    .catch((error) => {
+      console.log(error);
+    })
+  }
+
   public updatePOIConstraints = async(filename: string, constraints: any[]) => {
     const formData = new FormData();
     formData.append("constraints", JSON.stringify(constraints));

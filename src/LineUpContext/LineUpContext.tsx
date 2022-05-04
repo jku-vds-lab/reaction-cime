@@ -1,6 +1,7 @@
 import { connect, ConnectedProps } from "react-redux";
 import * as LineUpJS from "lineupjs";
 import "./LineUpContext.scss";
+import { arrayEquals, map_shortname_to_smiles, map_smiles_to_shortname } from "../Utility/Utils";
 import {
   IStringFilter,
   createSelectionDesc,
@@ -88,17 +89,10 @@ type PropsFromRedux = ConnectedProps<typeof connector>;
 // }
 
 type Props = PropsFromRedux & {
-  onFilter;
+  // onFilter;
 };
 
-function arrayEquals(a, b) {
-  return (
-    Array.isArray(a) &&
-    Array.isArray(b) &&
-    a.length === b.length &&
-    a.every((val, index) => val === b[index])
-  );
-}
+
 
 // let lineup = null;
 const UPDATER = "lineup";
@@ -115,7 +109,7 @@ export const LineUpContext = connector(function ({
   channelColor,
   setCurrentAggregation,
   setLineUpInput_lineup,
-  onFilter,
+  // onFilter,
   activeStory,
   pointColorScale,
   setHoverstate,
@@ -982,7 +976,7 @@ export class MySmilesStructureRenderer implements ICellRendererFactory {
           } else {
             n.innerHTML = x;
           }
-          n.title = smiles;
+          n.title = map_smiles_to_shortname(smiles) + ": " + smiles;
           // n.alt = smiles;
         });
       },

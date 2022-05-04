@@ -1,4 +1,4 @@
-import { Grid, Typography } from "@mui/material";
+import { Grid, Tooltip, Typography } from "@mui/material";
 import { Box, Button } from "@mui/material";
 import { connect, ConnectedProps } from "react-redux";
 import GetAppIcon from "@mui/icons-material/GetApp";
@@ -34,14 +34,11 @@ export const FilterTabPanel = connector(({dataset, triggerDatasetUpdate}: Props)
   const [constraints, setConstraints] = React.useState([]);
   const [constraintCols, setConstraintCols] = React.useState([]);
   let fileInput = React.useRef<any>();
-  const [totalDataPoints, setTotalDataPoints] = React.useState(-1)
 
-  
   React.useEffect(()=> {
     if(dataset != null){
       ReactionCIMEBackendFromEnv.loadPOIConstraints(dataset.info.path).then((res_constraints) => {
         const con_cols = [...new Set(res_constraints.map((con) => con.col))];
-
         setConstraintCols(con_cols)
         setConstraints(res_constraints)
       })
@@ -58,7 +55,7 @@ export const FilterTabPanel = connector(({dataset, triggerDatasetUpdate}: Props)
         <NOItemsInfo variant="filterOutOfTotal"></NOItemsInfo> 
       </Box>
       <Box paddingLeft={2} paddingTop={1} paddingRight={2}>
-        {dataset && <SelectFeatureComponent
+        <SelectFeatureComponent
           column_info={dataset.columns}
           label="filter"
           default_val={undefined}
@@ -69,7 +66,7 @@ export const FilterTabPanel = connector(({dataset, triggerDatasetUpdate}: Props)
               setConstraintCols([...constraintCols, newValue]);
             }
           }}
-        />}
+        />
       </Box>
       <Box paddingTop={1} paddingRight={2}>
           <FilterSettings 
@@ -122,6 +119,7 @@ export const FilterTabPanel = connector(({dataset, triggerDatasetUpdate}: Props)
           </Grid>
         </Grid>
       </Box>
+
     </div>
   );
 });

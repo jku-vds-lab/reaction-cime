@@ -3,7 +3,6 @@ import React from "react";
 import DeleteIcon from '@mui/icons-material/Delete';
 import { ReactionCIMEBackendFromEnv } from "../../Backend/ReactionCIMEBackend";
 import { Dataset } from "projection-space-explorer";
-import * as d3v5 from "d3v5";
 import { map_smiles_to_shortname } from "../../Utility/Utils";
 
 

@@ -52,6 +52,7 @@ def create_app():
 #         iteration_step = Column(Integer, nullable=False)
 #         projection_coords = Column(PickleType, nullable=False)
 
+import time
 
 class ReactionCIMEDBO():
 
@@ -67,7 +68,6 @@ class ReactionCIMEDBO():
         return tbl_lst
         # return self.metadata.tables.keys()
 
-    
     def save_dataframe(self, df, table_name):
         # primary key is not set to index of dataframe by default. this code could be a workaround, but does not work yet
         # https://stackoverflow.com/questions/30867390/python-pandas-to-sql-how-to-create-a-table-with-a-primary-key/69350803#69350803
@@ -85,10 +85,25 @@ class ReactionCIMEDBO():
         # table.create()
         # res = table.insert(chunksize=5000, method=None) # method="multi"
         
+        start_time = time.time()
         res = df.to_sql(table_name, con=self.db.engine, if_exists="replace", index=True, index_label="id", chunksize=5000)#, schema=table.sql_schema()) # method="multi" 'STRING PRIMARY KEY'
         # https://www.sqlitetutorial.net/sqlite-index/
+        delta_time = time.time()-start_time
+        print("--- took", time.strftime('%H:%M:%S', time.gmtime(delta_time)), "to save file %s"%table_name)
+        print("--- took %i min %f s to save file %s"%(delta_time/60, delta_time%60, table_name))
+
+        start_time = time.time()
         self.db.session.execute('DROP INDEX IF EXISTS %s_index;'%table_name)
+        delta_time = time.time()-start_time
+        print("--- took", time.strftime('%H:%M:%S', time.gmtime(delta_time)), "to drop index of file %s"%table_name)
+        print("--- took %i min %f s to drop index of file %s"%(delta_time/60, delta_time%60, table_name))
+
+        start_time = time.time()
         self.db.session.execute('create unique index %s_index on %s(id)'%(table_name, table_name))
+        delta_time = time.time()-start_time
+        print("--- took", time.strftime('%H:%M:%S', time.gmtime(delta_time)), "to create index of file %s"%table_name)
+        print("--- took %i min %f s to create index of file %s"%(delta_time/60, delta_time%60, table_name))
+
         return res
 
     def update_row(self, table, row_id, value_dict):

@@ -36,9 +36,6 @@ export const RangeFilter = ({col, value, setValue, remove, dataset}:Props) => {
         ReactionCIMEBackendFromEnv.loadValueRange(dataset.info.path, col).then((result) => { // have to load real possible range; TODO: could also include real range in the column info?
             setMin(result.min)
             setMax(result.max)
-            // if(value[0] == null || value[1] == null){
-            //     setValue([result.min, result.max])
-            // }
         })
     }, [])
     
