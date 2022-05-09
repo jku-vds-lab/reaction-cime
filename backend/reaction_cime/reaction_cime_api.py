@@ -131,6 +131,7 @@ def upload_csv():
 
     # create default constraints file
     save_poi_constraints(filename)
+    save_poi_exceptions(filename)
     
     delta_time = time.time()-start_time
     print("--- took", time.strftime('%H:%M:%S', time.gmtime(delta_time)), "to upload file %s"%filename)
@@ -272,7 +273,7 @@ def get_poi_constraints(filename):
     constraint_df = load_poi_constraints(filename)
     return json.dumps(constraint_df.to_dict('records')).encode('utf-8')
 
-@reaction_cime_api.route('/download_poi_constraints/<filename>', methods=['GET'])
+@reaction_cime_api.route('/download_poi_exceptions/<filename>', methods=['GET'])
 def download_poi_exceptions(filename):
     path = f'{current_app.config["tempdir"]}{filename}_exceptions.csv'
     return send_file(path, as_attachment=True)
@@ -314,10 +315,14 @@ def get_poi_constraints_filter(filename, df_constraints=None, df_exceptions=None
         col_filter = " OR ".join(df_constraints_col.apply(map_constraint_operator, axis=1).tolist())
         col_filters.append(f'({col_filter})')
 
-    # concatenate constraints of different columns with AND
-    constraints_filter_string = " AND ".join(col_filters)
+    constraints_filter_string = "true" # if no filters are set, everything should be selected
+    if len(col_filters) > 0:
+        # concatenate constraints of different columns with AND
+        constraints_filter_string = " AND ".join(col_filters)
 
-    exceptions_filter_string = " OR ".join(df_exceptions.apply(map_exceptions_filter, axis=1).tolist())
+    exceptions_filter_string = "false" # if no exceptions are made, we default to false
+    if len(df_exceptions) > 0:
+        exceptions_filter_string = " OR ".join(df_exceptions.apply(map_exceptions_filter, axis=1).tolist())
 
     filter_string = f'({constraints_filter_string}) OR ({exceptions_filter_string})'
 

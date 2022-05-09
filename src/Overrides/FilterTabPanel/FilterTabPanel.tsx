@@ -1,4 +1,4 @@
-import { Grid, Tooltip, Typography } from "@mui/material";
+import { Grid, Typography } from "@mui/material";
 import { Box, Button } from "@mui/material";
 import { connect, ConnectedProps } from "react-redux";
 import GetAppIcon from "@mui/icons-material/GetApp";
@@ -47,7 +47,7 @@ export const FilterTabPanel = connector(({dataset, triggerDatasetUpdate}: Props)
   }, [dataset])
 
   return (dataset &&
-    <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", overflowY: "auto" }}>
       <Box paddingLeft={2} paddingTop={1} paddingRight={2}>
         <Typography variant="subtitle2" gutterBottom>
           Filter Settings
@@ -120,7 +120,6 @@ export const FilterTabPanel = connector(({dataset, triggerDatasetUpdate}: Props)
           </Grid>
         </Grid>
       </Box>
-
       <Box paddingTop={1} paddingRight={2}>
           <ExceptionSettings
             triggerDatasetUpdate={triggerDatasetUpdate}

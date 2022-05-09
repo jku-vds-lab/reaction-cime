@@ -50,9 +50,10 @@ export function createCIMERootReducer() {
   
   return (state: Parameters<typeof pseRootReducer>[0], action: Parameters<typeof pseRootReducer>[1]) => {
     const newState = pseRootReducer(state, action)
-    console.log(action.type)
+    // console.log(action.type)
     if (action.type === RootActionTypes.DATASET) {
       // initialize pacoAttributes when dataset changes
+      // TODO: might not be necessary
       if(newState.dataset != null){
         const newPacoAttributes = Object.keys(newState.dataset.columns).map((col) => {
           return {feature: col, show: newState.dataset.columns[col].metaInformation.paco as boolean};

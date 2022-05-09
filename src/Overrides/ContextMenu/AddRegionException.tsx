@@ -1,5 +1,5 @@
 import { MenuItem } from "@mui/material"
-import { CameraTransformations, IProjection } from "projection-space-explorer";
+import { CameraTransformations, IProjection, TypedObject } from "projection-space-explorer";
 import { connect, ConnectedProps } from "react-redux";
 import { ReactionCIMEBackendFromEnv } from "../../Backend/ReactionCIMEBackend";
 import { AppState } from "../../State/Store";
@@ -21,7 +21,8 @@ const mapStateToProps = (state: AppState) => ({
   type Props = PropsFromRedux & {
     handleClose: () => void, 
     pos_x: number, 
-    pos_y: number
+    pos_y: number,
+    menuTarget: TypedObject,
   };
   
 export const AddRegionExceptionMenuItem = connector(({ handleClose, pos_x, pos_y, dataset, multiples, globalLabels, triggerDatasetUpdate }: Props) => {

@@ -139,7 +139,7 @@ export const FilterSettings = ({dataset, removeFilter, constraintCols, constrain
 }
 
 
-const updateBackendConstraints = (dimensions, dataset, triggerDatasetUpdate) => {
+export const updateBackendConstraints = (dimensions: {}, dataset, triggerDatasetUpdate) => {
     const constraint_dimensions = dimensions;
     let all_constraints = []
     for(const i in constraint_dimensions){

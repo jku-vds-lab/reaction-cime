@@ -1,4 +1,4 @@
-import { Grid, IconButton, Tooltip, Typography } from "@mui/material";
+import { Box, Divider, Grid, IconButton, Tooltip, Typography } from "@mui/material";
 import { Dataset } from "projection-space-explorer";
 import React from "react";
 import { ReactionCIMEBackendFromEnv } from "../../Backend/ReactionCIMEBackend";
@@ -39,7 +39,15 @@ export const ExceptionSettings = ({dataset, triggerDatasetUpdate}:Props) => {
         })
     }, [dataset])
 
-    return <div>
+    return exceptions.length > 0 && <div>
+            <Box paddingY={2}>
+                <Divider orientation="horizontal" />
+            </Box>
+            <Box paddingLeft={2} paddingRight={2}>
+                <Typography variant="subtitle2" gutterBottom>
+                    Define Exceptions
+                </Typography>
+            </Box>
             {exceptions.map((exc, i) => 
             <Grid key={"exception"+i} container paddingTop={0}>
                 <Grid item xs={3} textAlign={"right"}>

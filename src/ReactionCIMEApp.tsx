@@ -28,6 +28,7 @@ import { FilterTabPanel } from "./Overrides/FilterTabPanel/FilterTabPanel";
 import { PacoTabPanel } from "./Overrides/PacoTabPanel/PacoTabPanel";
 import { MenuItem } from "@mui/material";
 import { AddRegionExceptionMenuItem } from "./Overrides/ContextMenu/AddRegionException";
+import { SetFiltersToItemFeatures } from "./Overrides/ContextMenu/SetFiltersToItemFeatures";
 
 export const DEMO = false;
 
@@ -121,7 +122,8 @@ const ApplicationWrapper = connector(({ setMouseMoveFn, dataset_path, setMouseCl
         //       }
         //     })
         // }}
-        AddRegionExceptionMenuItem
+        AddRegionExceptionMenuItem,
+        SetFiltersToItemFeatures
       ],
       detailViews: [
         {

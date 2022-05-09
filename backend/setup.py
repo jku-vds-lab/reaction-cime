@@ -15,8 +15,8 @@ setup(
         'umap-learn==0.5.2',
         'scikit-learn',
         'gower==0.0.5',
-        'pandas',
-        'Pillow',
+        'pandas==1.4.2',
+        'Pillow==9.1.0',
         'numba==0.55.1'
     ],
 )
