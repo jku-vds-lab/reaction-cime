@@ -1,6 +1,6 @@
-# Cime
+# Cime4R
 
-This is the repository for the public cime library (as discussed in the paper). It builds upon the PSE library found under the following repository https://github.com/jku-vds-lab/projection-space-explorer.
+This is the repository for the public cime4r library (as discussed in the paper). It builds upon the PSE library found under the following repository https://github.com/jku-vds-lab/projection-space-explorer.
 
 ## Installation
 
