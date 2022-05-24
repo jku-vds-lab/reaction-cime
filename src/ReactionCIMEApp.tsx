@@ -3,22 +3,17 @@ import {
   PSEContextProvider,
   API,
   Application,
-  createRootReducer,
-  PSEIcons,
   PluginRegistry,
   setItemLabel,
-  ViewActions,
-  IProjection
 } from "projection-space-explorer";
 import { LineUpContext } from "./LineUpContext";
 import { LineUpTabPanel } from "./Overrides/LineUpTabPanel";
-import { AppState, CIME4RViewActions, CIMEReducers, createCIMERootReducer } from "./State/Store";
+import { AppState, CIME4RViewActions, createCIMERootReducer } from "./State/Store";
 import { AggregationTabPanel } from "./Overrides/AggregationTabPanel";
 import { DatasetTabPanel } from "./Overrides/Dataset/DatasetTabPanel";
 import { RemoteEmbeddingController } from "./Overrides/Embeddings/RemoteEmbeddingController";
 import { ReactionCIMEIcons } from "./Utility/ReactionCIMEIcons";
 import { HexAggregationLayer } from "./Overrides/AggregationLayer/HexAggregationLayer";
-import { handleBackgroundSelectionDownload } from "./Utility/Utils";
 import { setMouseClick, setMouseMove } from "./State/MouseInteractionHooksDuck";
 import { connect, ConnectedProps } from "react-redux";
 import { ReactionsPlugin } from "./Overrides/Details/ReactionsPlugin";
@@ -26,7 +21,6 @@ import { ReactionCIMEBackendFromEnv } from "./Backend/ReactionCIMEBackend";
 import { PacoContext } from "./PacoContext/PacoContext";
 import { FilterTabPanel } from "./Overrides/FilterTabPanel/FilterTabPanel";
 import { PacoTabPanel } from "./Overrides/PacoTabPanel/PacoTabPanel";
-import { MenuItem } from "@mui/material";
 import { AddRegionExceptionMenuItem } from "./Overrides/ContextMenu/AddRegionException";
 import { SetFiltersToItemFeatures } from "./Overrides/ContextMenu/SetFiltersToItemFeatures";
 
@@ -45,7 +39,6 @@ export const ReactionCIMEApp = () => {
   context.store.dispatch(setItemLabel({label: "experiment", label_plural: "experiments"}))
   // context.store.dispatch(setDatasetEntriesAction(DATASETCONFIG))
   // context.store.getState().dataset...
-  
   return <PSEContextProvider context={context}><ApplicationWrapper></ApplicationWrapper></PSEContextProvider>
 
 }
@@ -85,7 +78,7 @@ const ApplicationWrapper = connector(({ setMouseMoveFn, dataset_path, setMouseCl
         ReactionCIMEBackendFromEnv.updateBackendCache(dataset_path, cols)
       }
     }
-  }, [legendAttributes])
+  }, [legendAttributes, dataset_path])
 
   return <Application
     config={{

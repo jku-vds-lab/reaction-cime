@@ -99,7 +99,7 @@ export const ColorMapLegend = connector(({setAggregateColorScale, selectAttribut
             setAggregateColorMapScale(scale)
         }
         // eslint-disable-next-line
-    }, [aggregateSettings.colormapSettings.useVSUP, aggregateSettings.advancedSettings.valueRange, aggregateSettings.advancedSettings.uncertaintyRange, aggregateSettings.colormapSettings.colorscale, aggregateSettings.colormapSettings.aggregateColor])
+    }, [activeId, aggregateSettings.colormapSettings.useVSUP, aggregateSettings.advancedSettings.valueRange, aggregateSettings.advancedSettings.uncertaintyRange, aggregateSettings.colormapSettings.colorscale, aggregateSettings.colormapSettings.aggregateColor])
 
     React.useEffect(() => {
         if(legend != null && gRef.current && svgRef.current){

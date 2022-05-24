@@ -1,5 +1,5 @@
-import { TextField, Box, Typography } from "@mui/material";
-import { connect, ConnectedProps, useSelector } from "react-redux";
+import { Box } from "@mui/material";
+import { connect, ConnectedProps } from "react-redux";
 import { AppState } from "../../State/Store";
 import React from "react";
 import { StepSlider } from "./StepSlider";
@@ -7,8 +7,8 @@ import { ColorMapLegend } from "./ColorMapLegend";
 import "./AggregationTabPanel.scss";
 import { AdvancedAggregationSettings } from "./AdvancedAggregationSettings";
 // @ts-ignore
-import { SelectFeatureComponent, ViewSelector } from "projection-space-explorer";
-import { setSelectAttribute } from "../../State/AggregateSettingsDuck";
+import { SelectFeatureComponent } from "projection-space-explorer";
+import { setDeriveRange, setSelectAttribute, setUncertaintyRange, setValueRange } from "../../State/AggregateSettingsDuck";
 import { NOItemsInfo } from "../../Utility/NOItemsInfo";
 
 
@@ -19,7 +19,10 @@ const mapStateToProps = (state: AppState) => ({
 });
 
 const mapDispatchToProps = (dispatch) => ({
-  setSelectAttribute: (name:string, info:{}) => dispatch(setSelectAttribute({attribute_name: name, attribute_info: info}))
+  setSelectAttribute: (name:string, info:{}) => dispatch(setSelectAttribute({attribute_name: name, attribute_info: info})),
+  setValueRange: (range) => dispatch(setValueRange(range)),
+  setUncertaintyRange: (range) => dispatch(setUncertaintyRange(range)),
+  setDeriveRange: (value) => dispatch(setDeriveRange(value)),
 });
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
@@ -37,6 +40,16 @@ export const AggregationTabPanel = connector(({poiDataset, selectAttribute, setS
     // const [selectAttribute, setSelectAttribute] = React.useState(null)
     // const [selectAttributeInfo, setSelectAttributeInfo] = React.useState(null)
     const [columnInfo, setColumnInfo] = React.useState(null)
+
+    
+
+    React.useEffect(() => {
+      setValueRange(null)
+      setUncertaintyRange(null)
+      setDeriveRange(true)
+
+      // eslint-disable-next-line
+  }, [selectAttribute])
 
     React.useEffect(() => {
       // setSelectAttribute(null) // reset selection to None
@@ -149,12 +162,10 @@ export const AggregationTabPanel = connector(({poiDataset, selectAttribute, setS
           default_val={selectAttribute}
           categoryOptions={categoryOptions}
           onChange={(newValue) => {
-            console.log(newValue)
             let attribute = newValue //categoryOptions.filter(opt => opt.key === newValue)[0]
             if(attribute == null){
               attribute = "None" //{key: "None", name: "None"}
             }
-            
             // setSelectAttribute(attribute)
             if(selectColumns != null && Object.keys(selectColumns).includes(attribute)){
               setSelectAttribute(attribute, selectColumns[attribute])

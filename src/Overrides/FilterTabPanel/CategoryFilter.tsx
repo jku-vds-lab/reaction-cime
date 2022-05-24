@@ -22,7 +22,7 @@ export const CategoryFilter = ({col, value, setValue, remove, dataset}:Props) =>
         ReactionCIMEBackendFromEnv.loadCategoryValues(dataset.info.path, col).then((result) => {
             setCatValues(result.values)
         })
-    }, [col]);
+    }, [col, dataset.info.path]);
     
     return (
         <Grid container paddingTop={0}>

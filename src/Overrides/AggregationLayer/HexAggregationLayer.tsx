@@ -1,4 +1,4 @@
-import { Dataset, IProjection, useCancellablePromise } from 'projection-space-explorer'
+import { IProjection, useCancellablePromise } from 'projection-space-explorer'
 import * as React from 'react'
 import { connect, ConnectedProps } from "react-redux";
 import * as THREE from 'three'
@@ -189,7 +189,7 @@ export const HexAggregationLayer = connector(({ setCurrentAggregateSelectionFn, 
         // setAggregateDataset(null)
         debouncedLoadAggDataset(viewTransform)
     // eslint-disable-next-line
-    }, [aggregateColor, poiDataset.info.path, aggregateSettings?.advancedSettings.aggregationMethod, viewTransform, xChannel, yChannel])
+    }, [aggregateColor, poiDataset.info.path, aggregateSettings?.advancedSettings.aggregationMethod, viewTransform, xChannel, yChannel]) 
     
 
     React.useEffect(() => {
@@ -283,7 +283,7 @@ export const HexAggregationLayer = connector(({ setCurrentAggregateSelectionFn, 
             setSelectElement(null)
             setCurrentAggregateSelectionFn(null)
         }
-        
+        // eslint-disable-next-line
     }, [aggregateDataset, mouseClick, setCurrentAggregateSelectionFn])
 
 

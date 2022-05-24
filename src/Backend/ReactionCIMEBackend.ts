@@ -485,6 +485,7 @@ export class ReactionCIMEBackend {
     const cached_data = this.handleAggregationCache(path, value_column, uncertainty_col, range, xChannel, yChannel);
     let promise = null;
     if (cached_data) {
+      console.log("cached")
       promise = this.async_cache(cached_data.data);
     }else{
       let retrieve_cols = "retrieve_cols=" + value_column

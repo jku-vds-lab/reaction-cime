@@ -9,13 +9,14 @@ import { formatLabel } from "../../Utility/Utils";
 
 type Props = {
     dataset: Dataset,
-    triggerDatasetUpdate
+    triggerDatasetUpdate,
+    state
 };
 
-export const ExceptionSettings = ({dataset, triggerDatasetUpdate}:Props) => {
+export const ExceptionSettings = ({dataset, triggerDatasetUpdate, state}:Props) => {
     const [exceptions, setExceptions] = React.useState([]);
 
-    const dropException = (index) => {
+    const dropException = (index, state) => {
         const new_ex = exceptions.filter((e, i) => i !== index)
         // setExceptions(new_ex)
         ReactionCIMEBackendFromEnv.updatePOIExceptions(dataset.info.path, new_ex).then((res) => {
@@ -28,7 +29,7 @@ export const ExceptionSettings = ({dataset, triggerDatasetUpdate}:Props) => {
                     path: dataset.info.path,
                     type: dataset.info.type,
                     uploaded: true
-                })
+                }, state)
             }
         })
     }
@@ -52,7 +53,7 @@ export const ExceptionSettings = ({dataset, triggerDatasetUpdate}:Props) => {
             <Grid key={"exception"+i} container paddingTop={0}>
                 <Grid item xs={3} textAlign={"right"}>
                     <Tooltip title={"Remove exception"}>
-                        <IconButton onClick={() => dropException(i)}><DeleteIcon fontSize="large"/></IconButton>
+                        <IconButton onClick={() => dropException(i, state)}><DeleteIcon fontSize="large"/></IconButton>
                     </Tooltip>
                 </Grid>
                 <Grid item xs={9} margin={"auto"}>

@@ -14,10 +14,11 @@ type Props = {
     removeFilter: (col) => void,
     constraintCols: string[],
     constraints: {col:string, operator:string, val1:string, val2:string}[],
-    triggerDatasetUpdate
+    triggerDatasetUpdate,
+    state
 };
 
-export const FilterSettings = ({dataset, removeFilter, constraintCols, constraints, triggerDatasetUpdate}:Props) => {
+export const FilterSettings = ({dataset, removeFilter, constraintCols, constraints, triggerDatasetUpdate, state}:Props) => {
     const [filterValues, setFilterValues] = React.useState({});
 
     React.useEffect(() => {
@@ -55,7 +56,7 @@ export const FilterSettings = ({dataset, removeFilter, constraintCols, constrain
             }
             setFilterValues(tempFilterValues);
         }
-        
+        // eslint-disable-next-line
     }, [constraints])
 
     React.useEffect(() => {
@@ -81,7 +82,8 @@ export const FilterSettings = ({dataset, removeFilter, constraintCols, constrain
             }
             setFilterValues(tempFilterValues);
         }
-    }, [constraintCols])
+        // eslint-disable-next-line
+    }, [constraintCols, dataset.columns])
     
 
     return <div><Box paddingTop={2} paddingRight={2}>
@@ -110,7 +112,7 @@ export const FilterSettings = ({dataset, removeFilter, constraintCols, constrain
                 fullWidth
                 variant="outlined"
                 onClick={() => {
-                    updateBackendConstraints(filterValues, dataset, triggerDatasetUpdate)
+                    updateBackendConstraints(filterValues, dataset, triggerDatasetUpdate, state)
                 }}
             >
             <FilterAltIcon />
@@ -139,7 +141,7 @@ export const FilterSettings = ({dataset, removeFilter, constraintCols, constrain
 }
 
 
-export const updateBackendConstraints = (dimensions: {}, dataset, triggerDatasetUpdate) => {
+export const updateBackendConstraints = (dimensions: {}, dataset, triggerDatasetUpdate, state) => {
     const constraint_dimensions = dimensions;
     let all_constraints = []
     for(const i in constraint_dimensions){
@@ -166,7 +168,7 @@ export const updateBackendConstraints = (dimensions: {}, dataset, triggerDataset
                 path: dataset.info.path,
                 type: dataset.info.type,
                 uploaded: true
-            })
+            }, state)
         }
     })
     

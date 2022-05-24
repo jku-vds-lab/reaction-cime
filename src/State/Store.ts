@@ -1,6 +1,5 @@
 import { createAction } from "@reduxjs/toolkit";
 import { createRootReducer, createViewDuckReducer, RootActionTypes, RootState } from "projection-space-explorer";
-import { Reducer } from "react";
 import { combineReducers } from "redux";
 import aggregateSettings, { AggregateInitStates } from "./AggregateSettingsDuck";
 import { handleDataset } from "./HandleDatasetDuck";

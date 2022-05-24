@@ -1,7 +1,6 @@
 import { MenuItem } from "@mui/material"
-import { CameraTransformations, EXCLUDED_COLUMNS_ALL, IProjection, TypedObject } from "projection-space-explorer";
+import { EXCLUDED_COLUMNS_ALL, TypedObject } from "projection-space-explorer";
 import { connect, ConnectedProps } from "react-redux";
-import { ReactionCIMEBackendFromEnv } from "../../Backend/ReactionCIMEBackend";
 import { AppState } from "../../State/Store";
 import { updateBackendConstraints } from "../FilterTabPanel/FilterSettings";
 
@@ -9,6 +8,7 @@ const mapStateToProps = (state: AppState) => ({
     globalLabels: state.globalLabels,
     dataset: state.dataset,
     triggerDatasetUpdate: state.handleDataset.triggerUpdate,
+    state: state
   });
   
   const mapDispatchToProps = (dispatch) => ({
@@ -25,7 +25,7 @@ const mapStateToProps = (state: AppState) => ({
     menuTarget: TypedObject,
   };
   
-export const SetFiltersToItemFeatures = connector(({ handleClose, globalLabels, menuTarget, dataset, triggerDatasetUpdate }: Props) => {
+export const SetFiltersToItemFeatures = connector(({ handleClose, globalLabels, menuTarget, dataset, triggerDatasetUpdate, state }: Props) => {
     if(menuTarget == null){
       return null;
     }
@@ -51,7 +51,7 @@ export const SetFiltersToItemFeatures = connector(({ handleClose, globalLabels, 
           constraints[col] = {val: val, isNum: dataset.columns[col].isNumeric}
         }
 
-        updateBackendConstraints(constraints, dataset, triggerDatasetUpdate)
+        updateBackendConstraints(constraints, dataset, triggerDatasetUpdate, state)
         handleClose()
       }}
     >

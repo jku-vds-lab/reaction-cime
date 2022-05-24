@@ -3,7 +3,7 @@ import { DatasetType } from 'projection-space-explorer'
 
 
 export interface HandleDatasetState {
-    triggerUpdate: (entry:{display:string, path:string, type: DatasetType, uploaded: boolean}) => void
+    triggerUpdate: (entry:{display:string, path:string, type: DatasetType, uploaded: boolean}, state?) => void
 }
 
 const initialState = { triggerUpdate: null } as HandleDatasetState

@@ -16,7 +16,8 @@ import { ExceptionSettings } from "./ExceptionSettings";
 
 const mapStateToProps = (state: AppState) => ({
   dataset: state.dataset,
-  triggerDatasetUpdate: state.handleDataset?.triggerUpdate
+  triggerDatasetUpdate: state.handleDataset?.triggerUpdate,
+  state: state
 });
 
 const mapDispatchToProps = (dispatch) => ({
@@ -29,7 +30,7 @@ type PropsFromRedux = ConnectedProps<typeof connector>;
 type Props = PropsFromRedux & {
 };
 
-export const FilterTabPanel = connector(({dataset, triggerDatasetUpdate}: Props) => {
+export const FilterTabPanel = connector(({dataset, triggerDatasetUpdate, state}: Props) => {
 
   // const [constraintsMap, setConstraintsMap] = React.useState({});
   const [constraints, setConstraints] = React.useState([]);
@@ -71,6 +72,7 @@ export const FilterTabPanel = connector(({dataset, triggerDatasetUpdate}: Props)
       </Box>
       <Box paddingTop={1} paddingRight={2}>
           <FilterSettings 
+            state={state}
             triggerDatasetUpdate={triggerDatasetUpdate}
             dataset={dataset}
             constraintCols={constraintCols}
@@ -104,7 +106,7 @@ export const FilterTabPanel = connector(({dataset, triggerDatasetUpdate}: Props)
                 // multiple
                 type="file"
                 onChange={(e) => {
-                  uploadConstraints(e.target.files, dataset, triggerDatasetUpdate);
+                  uploadConstraints(e.target.files, dataset, triggerDatasetUpdate, state);
                 }}
             />
             <Button
@@ -122,6 +124,7 @@ export const FilterTabPanel = connector(({dataset, triggerDatasetUpdate}: Props)
       </Box>
       <Box paddingTop={1} paddingRight={2}>
           <ExceptionSettings
+            state={state}
             triggerDatasetUpdate={triggerDatasetUpdate}
             dataset={dataset}
           ></ExceptionSettings>
@@ -135,7 +138,7 @@ export const FilterTabPanel = connector(({dataset, triggerDatasetUpdate}: Props)
 const downloadConstraints = (path) => {
   ReactionCIMEBackendFromEnv.downloadPOIConstraints(path);
 }
-const uploadConstraints = (files, dataset, triggerDatasetUpdate) => {
+const uploadConstraints = (files, dataset, triggerDatasetUpdate, state) => {
   if (files == null || files.length <= 0) {
       return;
   }
@@ -150,7 +153,7 @@ const uploadConstraints = (files, dataset, triggerDatasetUpdate) => {
                   path: dataset.info.path,
                   type: dataset.info.type,
                   uploaded: true
-              })
+              }, state)
           }
       })
   }

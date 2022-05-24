@@ -7,7 +7,7 @@ import {
     Tooltip,
     Typography,
   } from "@mui/material";
-import { useCancellablePromise } from "projection-space-explorer";
+import { RootActions, useCancellablePromise, UtilityActions } from "projection-space-explorer";
 import { usePromiseTracker } from "react-promise-tracker";
 import { DatasetDrop } from "./DatasetDrop";
 import Loader from "react-loader-spinner";
@@ -16,7 +16,6 @@ import { connect, ConnectedProps } from "react-redux";
 import { UploadedFiles } from "./UploadedFiles";
 import React, { useState } from "react";
 import { BackendCSVLoader } from "./BackendCSVLoader";
-import { setAggregateColor } from "../../State/AggregateSettingsDuck";
 import { setTriggerUpdate } from "../../State/HandleDatasetDuck";
 import { save_smiles_lookup_table } from "../../Utility/Utils";
 import ManageSearchIcon from '@mui/icons-material/ManageSearch';
@@ -64,9 +63,9 @@ import ManageSearchIcon from '@mui/icons-material/ManageSearch';
   });
   
   const mapDispatchToProps = (dispatch) => ({
-    setAggregateColor: value => dispatch(setAggregateColor(value)),
     setTriggerUpdate: value => dispatch(setTriggerUpdate(value)),
     resetViews: () => dispatch(CIME4RViewActions.resetViews()),
+    hydrateState: (dump) => dispatch(RootActions.hydrate(dump)),
   });
   
   const connector = connect(mapStateToProps, mapDispatchToProps);
@@ -77,23 +76,31 @@ import ManageSearchIcon from '@mui/icons-material/ManageSearch';
     onDataSelected
   };
 
-  export const DatasetTabPanel = connector(({onDataSelected, resetViews, setTriggerUpdate}: Props) => {
+  export const DatasetTabPanel = connector(({onDataSelected, resetViews, setTriggerUpdate, hydrateState}: Props) => {
     const { cancellablePromise, cancelPromises } = useCancellablePromise();
     let abort_controller = new AbortController();
     const [refreshUploadedFiles, setRefreshUploadedFiles] = useState(0);
     let lookupFileInput = React.useRef<any>();
 
-    const intermediateOnDataSelected = (dataset) => {
-      // setAggregateColor(null);
+    const intermediateOnDataSelected = (dataset, state_dump?) => {
       resetViews();
       onDataSelected(dataset);
+      if(state_dump != null){
+        console.log("hydrate state")
+        hydrateState(state_dump)
+      }
+      
     }
 
-    const triggerUpdate = (entry) => {
+    const triggerUpdate = (entry, state?) => {
+      let state_dump = null;
+      if(state != null)
+        state_dump = UtilityActions.partialDump(state, ['dataset', 'activeLine', 'currentAggregation', 'genericFingerprintAttributes', 'handleDataset', 'highlightedSequence', 'hoverState', 'mouseInteractionHooks', 'projectionColumns', 'projects', 'interfaceState', 'selectedLineBy']);
+
       new BackendCSVLoader().resolvePath(
         entry,
         (dataset) => {
-          intermediateOnDataSelected(dataset);
+          intermediateOnDataSelected(dataset, state_dump);
         },
         cancellablePromise,
         null,
@@ -103,6 +110,7 @@ import ManageSearchIcon from '@mui/icons-material/ManageSearch';
 
     React.useEffect(() => {
       setTriggerUpdate(triggerUpdate)
+      // eslint-disable-next-line
     }, [])
   
     return (

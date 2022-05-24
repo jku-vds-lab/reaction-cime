@@ -1,4 +1,4 @@
-import { accordionActionsClasses } from '@mui/material'
+
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
 
 export enum AggregationMethod {
@@ -91,6 +91,10 @@ const aggregateSettingsSlice = createSlice({
         },
         setAggregateColor: {
             reducer: (state, action: PayloadAction<AggregateColorType>) => {
+                if(state.colormapSettings.aggregateColor.value_col === action.payload.value_col 
+                    && state.colormapSettings.aggregateColor.uncertainty_col === action.payload.uncertainty_col){
+                        return;
+                    }
                 state.colormapSettings.scale_obj = null;
                 state.colormapSettings.valueFilter = [];
 

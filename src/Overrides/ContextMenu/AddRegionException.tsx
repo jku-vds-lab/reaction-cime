@@ -9,6 +9,7 @@ const mapStateToProps = (state: AppState) => ({
     multiples: state.multiples,
     globalLabels: state.globalLabels,
     triggerDatasetUpdate: state.handleDataset?.triggerUpdate,
+    state: state
   });
   
   const mapDispatchToProps = (dispatch) => ({
@@ -25,7 +26,7 @@ const mapStateToProps = (state: AppState) => ({
     menuTarget: TypedObject,
   };
   
-export const AddRegionExceptionMenuItem = connector(({ handleClose, pos_x, pos_y, dataset, multiples, globalLabels, triggerDatasetUpdate }: Props) => {
+export const AddRegionExceptionMenuItem = connector(({ handleClose, pos_x, pos_y, dataset, multiples, globalLabels, triggerDatasetUpdate, state }: Props) => {
     const workspace = multiples.multiples.entities[multiples.active]?.attributes?.workspace as IProjection;
     const xChannel = workspace?.xChannel == null ? "x" : workspace?.xChannel;
     const yChannel = workspace?.yChannel == null ? "y" : workspace?.yChannel;
@@ -50,7 +51,7 @@ export const AddRegionExceptionMenuItem = connector(({ handleClose, pos_x, pos_y
                     path: dataset.info.path,
                     type: dataset.info.type,
                     uploaded: true
-                })
+                }, state)
             }
             
         })

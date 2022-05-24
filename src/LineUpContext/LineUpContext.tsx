@@ -1,7 +1,7 @@
 import { connect, ConnectedProps } from "react-redux";
 import * as LineUpJS from "lineupjs";
 import "./LineUpContext.scss";
-import { arrayEquals, map_shortname_to_smiles, map_smiles_to_shortname } from "../Utility/Utils";
+import { arrayEquals, map_smiles_to_shortname } from "../Utility/Utils";
 import {
   IStringFilter,
   createSelectionDesc,

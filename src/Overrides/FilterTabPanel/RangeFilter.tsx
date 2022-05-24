@@ -1,4 +1,4 @@
-import { Box, Grid, IconButton, Slider, Tooltip, Typography } from "@mui/material";
+import { Grid, IconButton, Slider, Tooltip, Typography } from "@mui/material";
 import React from "react";
 import DeleteIcon from '@mui/icons-material/Delete';
 import { ReactionCIMEBackendFromEnv } from "../../Backend/ReactionCIMEBackend";
@@ -23,7 +23,7 @@ export const RangeFilter = ({col, value, setValue, remove, dataset}:Props) => {
             setMin(result.min)
             setMax(result.max)
         })
-    }, [])
+    }, [dataset.info.path, col])
     
     const handleChange = (event, newValue) => {
         setValue(newValue);

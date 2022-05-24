@@ -1,7 +1,7 @@
 import React from "react";
 import { connect, ConnectedProps } from "react-redux";
 import { AppState } from "../../State/Store";
-import { Button, Checkbox, FormControlLabel, TextField, Grid, Radio, FormControl, InputLabel, Select, MenuItem, Typography } from "@mui/material";
+import { Checkbox, FormControlLabel, Grid, Radio, FormControl, InputLabel, Select, MenuItem, Typography } from "@mui/material";
 import { AggregationMethod, setAggregationMethod, setDeriveRange, setUncertaintyRange, setValueRange, setVariableIndex, toggleDeriveRange } from "../../State/AggregateSettingsDuck";
 import { MinMaxNumberInput } from "../../Utility/MinMaxNumberInput";
 import { Box } from "@mui/system";
@@ -31,21 +31,11 @@ type Props = PropsFromRedux & {
 
   
 export const AdvancedAggregationSettings = connector(({ selectAttribute, setValueRange, setUncertaintyRange, toggleDeriveRange, 
-            setDeriveRange, selectAttributeInfo, setVariableIndex, setAggregationMethod, aggregateSettings}: Props) => {
+            selectAttributeInfo, setVariableIndex, setAggregationMethod, aggregateSettings}: Props) => {
     if(selectAttribute == null || selectAttribute === "None"){
         return null;
     }
     
-
-    React.useEffect(() => {
-        setValueRange(null)
-        setUncertaintyRange(null)
-        setDeriveRange(true)
-
-        // eslint-disable-next-line
-    }, [selectAttribute])
-
-
     React.useEffect(()=>{
         if(selectAttributeInfo){
             // initialize valueIndices when attributionInfo changes

@@ -122,6 +122,7 @@ export const PacoContext = connector(function ({dataset, pacoAttributes, pacoCon
 
     React.useEffect(() => {
         setPacoRef(paco_ref?.current)
+    // eslint-disable-next-line
     }, [paco_ref])
 
     React.useEffect(()=> {
@@ -228,6 +229,7 @@ export const PacoContext = connector(function ({dataset, pacoAttributes, pacoCon
                 // })
             }
         }
+    // eslint-disable-next-line
     }, [dataset, pacoAttributes, pacoConstraints])
 
     React.useEffect(() => {
@@ -257,7 +259,7 @@ export const PacoContext = connector(function ({dataset, pacoAttributes, pacoCon
             // reset coloring of lines
             Plotly.restyle(paco_ref.current, {line: {...line}}, [0]);
         }
-        
+    // eslint-disable-next-line
     }, [currentAggregation])
   
     return <div className="PacoParent">
