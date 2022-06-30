@@ -22,6 +22,7 @@
     "@mui/icons-material": "^5.0.5",
     "@mui/material": "^5.0.6",
     "@mui/styles": "^5.0.2",
+    "@rdkit/rdkit": "^2022.3.3-2",
     "@reduxjs/toolkit": "^1.7.1",
     "@types/d3": "^5.7.2",
     "@types/jest": "^26.0.24",

@@ -7,7 +7,7 @@ import {
     Tooltip,
     Typography,
   } from "@mui/material";
-import { RootActions, useCancellablePromise, UtilityActions } from "projection-space-explorer";
+import { Dataset, IProjection, RootActions, useCancellablePromise, UtilityActions } from "projection-space-explorer";
 import { usePromiseTracker } from "react-promise-tracker";
 import { DatasetDrop } from "./DatasetDrop";
 import Loader from "react-loader-spinner";
@@ -19,6 +19,17 @@ import { BackendCSVLoader } from "./BackendCSVLoader";
 import { setTriggerUpdate } from "../../State/HandleDatasetDuck";
 import { save_smiles_lookup_table } from "../../Utility/Utils";
 import ManageSearchIcon from '@mui/icons-material/ManageSearch';
+
+function selectPositions(dataset: Dataset, projection: IProjection) {
+  const xChannel = projection.xChannel ?? "x";
+  const yChannel = projection.xChannel ?? "y";
+  return dataset.vectors.map((vector) => ({
+    x: xChannel ? vector[xChannel] : 0,
+    y: yChannel ? vector[yChannel] : 0,
+  }));
+  
+
+}
 
   export const LoadingIndicatorView = (props) => {
     const { promiseInProgress } = usePromiseTracker({ area: props.area });
@@ -86,20 +97,36 @@ import ManageSearchIcon from '@mui/icons-material/ManageSearch';
       resetViews();
       onDataSelected(dataset);
       if(state_dump != null){
-        console.log("hydrate state")
         hydrateState(state_dump)
       }
       
     }
 
-    const triggerUpdate = (entry, state?) => {
+    const triggerUpdate = (entry, state?:AppState) => {
       let state_dump = null;
-      if(state != null)
-        state_dump = UtilityActions.partialDump(state, ['dataset', 'activeLine', 'currentAggregation', 'genericFingerprintAttributes', 'handleDataset', 'highlightedSequence', 'hoverState', 'mouseInteractionHooks', 'projectionColumns', 'projects', 'interfaceState', 'selectedLineBy']);
-
+      if(state != null){
+        state_dump = UtilityActions.partialDump(state, [ 'dataset', 'activeLine', 'currentAggregation', 'genericFingerprintAttributes', 'handleDataset', 'highlightedSequence', 'hoverState', 'mouseInteractionHooks', 'projectionColumns', 'projects', 'interfaceState', 'selectedLineBy']);
+      }
       new BackendCSVLoader().resolvePath(
         entry,
         (dataset) => {
+          if(state_dump != null){
+            // we have to update the workspace positions manually to the new positions
+            let new_projection_entities = {...state_dump.multiples.projections.entities}
+            for (const i in state_dump.multiples.multiples.ids) {
+              const id = state_dump.multiples.multiples.ids[i]
+              const active = state_dump.multiples.multiples.entities[id]
+              const workspace_id = active.attributes.workspace
+              const workspace = state.multiples.multiples.entities[id].attributes.workspace as IProjection;
+              const new_positions = selectPositions(dataset, workspace)
+              let new_workspace_id_position = {...new_projection_entities[workspace_id]}
+              new_workspace_id_position.positions = new_positions;
+              new_projection_entities[workspace_id] = new_workspace_id_position;
+            }
+            const new_projections = {...state_dump.multiples.projections, entities: new_projection_entities}
+            const new_multiples = {...state_dump.multiples, projections: new_projections}
+            state_dump = {...state_dump, multiples: new_multiples}
+          }
           intermediateOnDataSelected(dataset, state_dump);
         },
         cancellablePromise,

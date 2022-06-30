@@ -3,6 +3,9 @@ import * as d3v5 from "d3v5";
 
 export const PSE_BLUE = "#007dad" // "#1f77b4"
 export const LIGHT_GREY = "#DDDDDD"
+export const PSE_GREEN = "#7fc97f"
+export const RED = "#ff0000"
+export const GREEN = "#67D934"
 
 
 export const formatLabel = (value: number) => {
@@ -69,6 +72,28 @@ export function map_shortname_to_smiles(shortname:string):string {
     const smiles_lookup = d3v5.csvParse(smiles_lookup_str) as Array<{smiles:string, shortname:string}>;
     return smiles_lookup.find((pair) => pair.shortname === shortname)?.smiles;
 }
+
+// does not work properly with react
+// export function replace_all_smiles_with_short_names(el: HTMLElement){
+//     // console.log("replace_all_smiles_with_short_names")
+//     // el.innerHTML = el.innerHTML.replace("O=S(C1=CC(C(F)(F)F)=CC(C(F)(F)F)=C1)(F)=O", "asdf");
+//     const smiles_lookup_str = localStorage.getItem("smiles_lookup");
+//     if(smiles_lookup_str != null){
+//         const smiles_lookup = d3v5.csvParse(smiles_lookup_str) as Array<{smiles:string, shortname:string}>;
+//         smiles_lookup.forEach((value) => { 
+//             el.innerHTML = el.innerHTML.replace(value.smiles, value.shortname);
+//         })
+//     }
+// }
+// export function replace_all_short_names_with_smiles(el: HTMLElement){
+//     const smiles_lookup_str = localStorage.getItem("smiles_lookup");
+//     if(smiles_lookup_str != null){
+//         const smiles_lookup = d3v5.csvParse(smiles_lookup_str) as Array<{smiles:string, shortname:string}>;
+//         smiles_lookup.forEach((value) => { 
+//             el.innerHTML = el.innerHTML.replace(value.shortname, value.smiles);
+//         })
+//     }
+// }
 
 /**
  * This is merely a helper function to decompose the code into smaller individual segments.

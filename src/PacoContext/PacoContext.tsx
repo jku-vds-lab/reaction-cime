@@ -5,7 +5,7 @@ import "./PacoContext.scss";
 import Plotly from 'plotly.js-dist'
 import { Box } from "@mui/material";
 import { selectVectors } from "projection-space-explorer";
-import { arrayEquals, LIGHT_GREY, map_shortname_to_smiles, map_smiles_to_shortname, PSE_BLUE } from "../Utility/Utils";
+import { arrayEquals, LIGHT_GREY, map_shortname_to_smiles, map_smiles_to_shortname, RED } from "../Utility/Utils";
 import { setPacoRef } from "../State/PacoSettingsDuck";
 
 function unpack(col, rows, key) {
@@ -94,7 +94,7 @@ export const PacoContext = connector(function ({dataset, pacoAttributes, pacoCon
         showscale: false,
         reversescale: false,
         color: dataset.vectors.map((row) => 1),
-        colorscale: [[0, LIGHT_GREY], [1, PSE_BLUE]]
+        colorscale: [[0, LIGHT_GREY], [1, RED]] //PSE_BLUE
     }
     const paco = {
         type: 'parcoords',

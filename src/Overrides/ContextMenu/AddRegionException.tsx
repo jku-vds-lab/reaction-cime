@@ -30,7 +30,7 @@ export const AddRegionExceptionMenuItem = connector(({ handleClose, pos_x, pos_y
     const workspace = multiples.multiples.entities[multiples.active]?.attributes?.workspace as IProjection;
     const xChannel = workspace?.xChannel == null ? "x" : workspace?.xChannel;
     const yChannel = workspace?.yChannel == null ? "y" : workspace?.yChannel;
-
+    
     const viewTransform = multiples.multiples.entities[multiples.active]?.attributes?.viewTransform;
     
     return <MenuItem

@@ -1,7 +1,7 @@
 // this sets the context (non-selected lines) to be less prominent
-// .PacoParent .gl-canvas-context{
-//   opacity: 0.3 !important;
-// }
+.PacoParent .gl-canvas-context{
+  opacity: 0.5 !important;
+}
 
 .PacoParent {
   width: 100%;

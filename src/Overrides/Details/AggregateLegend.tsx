@@ -1,33 +1,73 @@
 import { Table, TableBody, TableCell, TableHead, TableRow } from "@mui/material";
 import { makeStyles } from "@mui/styles";
-import { Dataset, IProjection } from "projection-space-explorer";
+import { Dataset, FeatureType, IProjection } from "projection-space-explorer";
+import React from "react";
 import { connect, ConnectedProps } from "react-redux";
 import { ReactionCIMEBackendFromEnv } from "../../Backend/ReactionCIMEBackend";
 import { AppState } from "../../State/Store";
+import * as vegaImport from 'vega';
+import BarChart from "./VegaHelpers/BarChart";
+import AreaChart from "./VegaHelpers/AreaChart";
+import { formatSMILESTooltip } from "./FeatureLegend";
+import { Handler } from 'vega-tooltip';
+import { map_smiles_to_shortname } from "../../Utility/Utils";
 
 
-function genRows(aggregateSelection, aggregation, legendAttributes, dataset: Dataset, workspace: IProjection) {
-    // here is the code to retrieve the data for certain columns...
-    ReactionCIMEBackendFromEnv.loadCategoryCount(dataset.info.path, "base_SMILES_index").then((data) => {
-        console.log("count per category of base_SMILES_index for all datapoints")
-        console.log(data)
-    })
+async function genRows(aggregateSelection: {x:number, y:number, circ_radius:number}, aggregation:boolean, legendAttributes:{feature:string, show:boolean}[], dataset: Dataset, workspace: IProjection, setRows:any) {
+    
+    const showFeatures = legendAttributes.filter((row) => row.show);
+    let rows = [];
 
-    ReactionCIMEBackendFromEnv.loadCategoryCountOfHex(dataset.info.path, "base_SMILES_index", workspace.xChannel, workspace.yChannel, aggregateSelection.x, aggregateSelection.y, aggregateSelection.circ_radius).then((data) => {
-        console.log("count per category of base_SMILES_index for selected hexagon")
-        console.log(data)
-    })
+    for (const key in showFeatures) {
+        const feature = showFeatures[key].feature;
+        if (dataset.columns[feature]?.featureType === FeatureType.Quantitative) {
 
-    ReactionCIMEBackendFromEnv.loadDensity(dataset.info.path, "pred_mean_0").then((data) => {
-        console.log("density data of pred_mean_0 for all datapoints")
-        console.log(data)
-    })
+            const data_all = await ReactionCIMEBackendFromEnv.loadDensity(dataset.info.path, feature)
+            const data_line_all = data_all.x_vals.map((x, idx) => {
+                return {feature: x, density: data_all.y_vals[idx], selection: "all"}
+            })
+        
+            const data_hex = await ReactionCIMEBackendFromEnv.loadDensityOfHex(dataset.info.path, feature, workspace.xChannel, workspace.yChannel, aggregateSelection.x, aggregateSelection.y, aggregateSelection.circ_radius)
+            const data_line_hex = data_hex.x_vals.map((x, idx) => {
+                return {feature: x, density: data_hex.y_vals[idx], selection: "selection"}
+            })
 
-    ReactionCIMEBackendFromEnv.loadDensityOfHex(dataset.info.path, "pred_mean_0", workspace.xChannel, workspace.yChannel, aggregateSelection.x, aggregateSelection.y, aggregateSelection.circ_radius).then((data) => {
-        console.log("density data of pred_mean_0 for selected hexagon")
-        console.log(data)
-    })
-    return [];
+            const data_line = data_line_all.concat(data_line_hex)
+            // create vega lite chart
+            var lineChart;
+            if (Object.keys(data_line).length > 1) {
+                // logLevel={vegaImport.Debug} | {vegaImport.Warn} | {vegaImport.Error} | {vegaImport.None} | {vegaImport.Info}
+                lineChart = <AreaChart logLevel={vegaImport.Error} data={{values: data_line}} actions={false} />;
+            } else {
+                lineChart = null;
+            }
+            rows.push({feature: feature, category: "", char: lineChart, score: 1-data_hex.norm_sd});
+
+        } else {
+
+            var { bar_data, cat_list, score } = await handleCategoricalData(dataset, feature, workspace, aggregateSelection);
+
+            // create vega lite chart
+            var barChart;
+            if (Object.keys(bar_data).length > 1) {
+                // logLevel={vegaImport.Debug} | {vegaImport.Warn} | {vegaImport.Error} | {vegaImport.None} | {vegaImport.Info}
+                let tooltip_options = {}
+                if(dataset.columns[feature]?.metaInformation.imgSmiles){
+                    tooltip_options = { formatTooltip: formatSMILESTooltip }
+                }
+                barChart = <BarChart logLevel={vegaImport.Error} data={{values: bar_data}} actions={false} tooltip={new Handler(tooltip_options).call} />;
+            } else {
+                barChart = null;
+            }
+            rows.push({feature: feature, category: cat_list[0], char: barChart, score: score});
+        }
+
+    }
+
+    // sort rows by score
+    rows.sort((a,b) => b.score-a.score);
+
+    setRows(rows)
 }
 
 const mapStateToProps = (state: AppState) => ({
@@ -58,9 +98,13 @@ const useStyles = makeStyles({
 
 export const AggregateLegend = connector(({ aggregate, aggregateSelection, legendAttributes, dataset, workspace }: Props) => {
     const classes = useStyles();
-    // const rows = []
-    const rows = genRows(aggregateSelection, aggregate, legendAttributes, dataset, workspace as IProjection);
+    const [rows, setRows] = React.useState([])
 
+    React.useEffect(() => {
+        genRows(aggregateSelection, aggregate, legendAttributes, dataset, workspace as IProjection, setRows);
+    // only need to update if we have a new aggregate selection
+    // eslint-disable-next-line
+    }, [aggregateSelection])
     return <div style={{ width: '100%', maxHeight: '100%', overflowY: 'scroll' }}>
         <div
         style={{
@@ -77,7 +121,7 @@ export const AggregateLegend = connector(({ aggregate, aggregateSelection, legen
                         <div style={{ maxWidth: 200 }}>
                         {row.feature}
                         <br />
-                        <b>{row.category}</b>
+                        <b>{map_smiles_to_shortname(row.category)}</b>
                         </div>
                     </TableCell>
                     <TableCell>{row.char}</TableCell>
@@ -88,3 +132,55 @@ export const AggregateLegend = connector(({ aggregate, aggregateSelection, legen
         </div>
     </div>
 });
+
+async function handleCategoricalData(dataset: Dataset, feature: string, workspace: IProjection, aggregateSelection: { x: number; y: number; circ_radius: number; }) {
+    const data_all = await ReactionCIMEBackendFromEnv.loadCategoryCount(dataset.info.path, feature);
+    const sum_all = data_all.reduce(function (acc, row) { return acc + row.count; }, 0);
+    const bar_data_all = data_all.map((row) => {
+        return { selection: "all", category: row[feature], count: row.count / sum_all };
+    });
+
+    const data_hex = await ReactionCIMEBackendFromEnv.loadCategoryCountOfHex(dataset.info.path, feature, workspace.xChannel, workspace.yChannel, aggregateSelection.x, aggregateSelection.y, aggregateSelection.circ_radius);
+    const sum_hex = data_hex.reduce(function (acc, row) { return acc + row.count; }, 0);
+    const bar_data_hex = data_hex.map((row) => {
+        return { selection: "selection", category: row[feature], count: row.count / sum_hex };
+    });
+
+    // sort cat_list by count
+    const cat_list = bar_data_all.map((row) => row.category);
+    cat_list.sort((a, b) => {
+
+        const bar_hex_a = bar_data_hex.find((row) => row.category === a);
+        const bar_hex_b = bar_data_hex.find((row) => row.category === b);
+        if (bar_hex_a && bar_hex_b) { // first sort by aggregate count
+            return bar_hex_b.count - bar_hex_a.count;
+        } else if (bar_hex_a) { // if there exists this value
+            return -1;
+        } else if (bar_hex_b) { // if there exists this value
+            return 1;
+        }
+
+        // if feature not present in aggregated data
+        const bar_all_a = bar_data_all.find((row) => row.category === a);
+        const bar_all_b = bar_data_all.find((row) => row.category === b);
+        return bar_all_b.count - bar_all_a.count;
+    });
+
+    // add ids to the data; i.e. instances with the same feature values must have same id
+    let bar_data = [];
+    for (const i in cat_list) {
+        const cat = cat_list[i];
+
+        const bar_all = bar_data_all.find((row) => row.category === cat);
+        if (bar_all != null) {
+            bar_data.push({ ...bar_all, id: i });
+        }
+        const bar_hex = bar_data_hex.find((row) => row.category === cat);
+        if (bar_hex != null) {
+            bar_data.push({ ...bar_hex, id: i });
+        }
+    }
+
+    const score = bar_data_hex.find((row) => row.category === cat_list[0]).count; // maximum bar count is score
+    return { bar_data, cat_list, score};
+}

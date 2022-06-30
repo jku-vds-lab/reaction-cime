@@ -569,10 +569,16 @@ def get_density(filename, col_name):
 
     from scipy.stats import gaussian_kde
     density = gaussian_kde(data)
-    x_vals = np.linspace(min(data), max(data), 100)
+    data_min = min(data)
+    data_max = max(data)
+    x_vals = np.linspace(data_min, data_max, 100)
     y_vals = density(x_vals)
 
-    return {"x_vals": list(x_vals), "y_vals": list(y_vals)}
+    # norm_sd like calculated in PSE: CoralDetail.tsx > getNormalizedSTD
+    data_range = data_max - data_min
+    if data_range == 0:
+        data_range = 1
+    return {"x_vals": list(x_vals), "y_vals": list(y_vals), "norm_sd": np.std((data-data_min)/data_range)}
 
 @reaction_cime_api.route('/get_density_of_hex/<filename>/<col_name>/<xChannel>/<yChannel>', methods=["GET"])
 def get_density_of_hex(filename, col_name, xChannel="x", yChannel="y"):
@@ -588,10 +594,16 @@ def get_density_of_hex(filename, col_name, xChannel="x", yChannel="y"):
 
     from scipy.stats import gaussian_kde
     density = gaussian_kde(data)
-    x_vals = np.linspace(min(data), max(data), 100)
+    data_min = min(data)
+    data_max = max(data)
+    x_vals = np.linspace(data_min, data_max, 100)
     y_vals = density(x_vals)
 
-    return {"x_vals": list(x_vals), "y_vals": list(y_vals)}
+    # norm_sd like calculated in PSE: CoralDetail.tsx > getNormalizedSTD
+    data_range = data_max - data_min
+    if data_range == 0:
+        data_range = 1
+    return {"x_vals": list(x_vals), "y_vals": list(y_vals), "norm_sd": np.std((data-data_min)/data_range)}
 
 # endregion
 
