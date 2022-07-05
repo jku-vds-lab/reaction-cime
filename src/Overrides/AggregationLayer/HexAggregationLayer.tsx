@@ -197,7 +197,7 @@ export const HexAggregationLayer = connector(({ setCurrentAggregateSelectionFn, 
             if(aggregateDataset && aggregateDataset.vectors){
                 if(Object.keys(aggregateDataset.columns).includes(aggregateColor.value_col)){
                     
-                    let hexs = createHexagons(aggregateDataset, xChannel, yChannel, aggregateColor.value_col, aggregateColor.uncertainty_col, aggregateSettings?.colormapSettings.scale_obj, aggregateSettings?.colormapSettings.valueFilter) // "pred_var_9"
+                    let hexs = createHexagons(aggregateDataset, xChannel, yChannel, aggregateColor.value_col, aggregateColor.uncertainty_col, aggregateSettings?.colormapSettings.scale_obj, aggregateSettings?.colormapSettings.valueFilter) 
                     setHexagons(hexs);
                 }
             }else{

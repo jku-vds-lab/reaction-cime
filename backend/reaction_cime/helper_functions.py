@@ -4,9 +4,8 @@
 
 
 def preprocess_dataset(domain):
-
     # calculates the error between measurement and prediction
-    error_col = domain.apply(lambda x: np.nan if x[cycle_column] < 0 else abs(x[target_column] - x['pred_mean_%i'%x[cycle_column]]), axis=1)
+    error_col = domain.apply(lambda x: np.nan if x[cycle_column] < 0 else abs(x[target_column] - x['%s_mean_%i'%(error_calc_col, x[cycle_column])]), axis=1)
     index = list(domain.columns).index(target_column)
 
     new_cols = generate_rename_list(domain)
@@ -77,9 +76,11 @@ def get_time_series_modifier(col, modifier, global_ranges):
 
     return modifier
 
-# target_column = "measured_yield"
-target_column = "yield"
 cycle_column = "experimentCycle"
+target_column = "measured_yield"
+# target_column = "yield" # old version
+# error_calc_col = "pred" # old version
+error_calc_col = "predicted_yield"
 time_series_tuples = ["predicted_yield", "pred"]
 time_series_cols_diverging = ["shap"]
 smiles_modifier = "smiles"
@@ -112,6 +113,15 @@ def generate_rename_list(domain):
             # col ends with _value bzw _step in lineup -> it belongs to a lineup time series
             # TODO: make this dynamic
             modifier = '"project":false,"paco":false,"lineup_meta_column":"pred_step"' # signal lineup that it should add a meta_column with this label, that gives information for other columns
+        elif col == "groupLabel":
+            groups = list(set(domain[domain[col] != "-1"][col]))
+            groups.sort()
+            clusterEdges = []
+            indices = range(0,len(groups)-1)
+            for i in indices:
+                clusterEdges.append([i,groups[i],groups[i+1],""])
+            # need double quotes for javascript json parsing
+            modifier = '"project":false,"paco":false,"edges":{"columns":["id","source","destination","name"],"index":%s,"data":%s}'%(str(list(indices)),str(clusterEdges).replace("\'", "\""))
         else:
             # -- column should not be shown in lineup or in the summary view
             hide_col_list = [elem for elem in hide_lineup_summary_cols if elem in col]

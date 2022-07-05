@@ -40,6 +40,7 @@ export const CategoryFilter = ({col, value, setValue, remove, dataset}:Props) =>
                         return <Tooltip title={val} key={val}>
                             <ToggleButton
                             // fullWidth
+                            style={{margin:"1px"}}
                             color="primary"
                             value={val}
                             selected={value.includes(val)} 
@@ -51,7 +52,7 @@ export const CategoryFilter = ({col, value, setValue, remove, dataset}:Props) =>
                                 }
                             }}>&nbsp;{
                                 dataset.columns[col].metaInformation.imgSmiles ? map_smiles_to_shortname(val) : val
-                            }&nbsp;</ToggleButton>
+                            } ({dataset.vectors.filter((vector) => vector[col] === val).length})&nbsp;</ToggleButton>
                         </Tooltip>
                     })}
                 </div>

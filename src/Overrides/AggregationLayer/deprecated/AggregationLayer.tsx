@@ -39,7 +39,6 @@ const retrieve_information_from_agg_dataset = (aggregateDataset: AggregateDatase
                 var rgb = convert_to_rgb(color)
                 
                 // RGB from 0 to 255
-                // var rgb = background_colorMapping.map(arr_pred[i]).rgb
                 bgRGBA[4*i] = rgb.r;
                 bgRGBA[4*i+1] = rgb.g;
                 bgRGBA[4*i+2] = rgb.b;

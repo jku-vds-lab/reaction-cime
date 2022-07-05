@@ -167,13 +167,13 @@ export const AggregationContourLayer = connector(({ aggregateColor, poiDataset, 
     
     React.useEffect(() => {
         if(aggregateDataset && aggregateDataset.vectors){
-            retrieve_colorscale(aggregateDataset, aggregateColor.value_col, aggregateColor.uncertainty_col, setAggregateColorMapScale, aggregateSettings) // "pred_var_9"
+            retrieve_colorscale(aggregateDataset, aggregateColor.value_col, aggregateColor.uncertainty_col, setAggregateColorMapScale, aggregateSettings)
         }
     }, [aggregateDataset, aggregateColor, aggregateSettings?.colormapSettings.colorscale, aggregateSettings?.colormapSettings.useVSUP])
 
     React.useEffect(() => {
         if(aggregateSettings?.colormapSettings.scale_obj != null && aggregateDataset && aggregateDataset.vectors){
-            let lines = createContours(aggregateDataset, aggregateColor.value_col, aggregateSettings?.colormapSettings.scale_obj) // "pred_var_9"
+            let lines = createContours(aggregateDataset, aggregateColor.value_col, aggregateSettings?.colormapSettings.scale_obj)
             setLines(lines);
         }else{
             setLines(null);

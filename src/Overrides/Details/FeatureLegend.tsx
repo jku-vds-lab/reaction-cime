@@ -11,7 +11,6 @@ import BarChart from './VegaHelpers/BarChart';
 import VegaDate from './VegaHelpers/VegaDate';
 import { map_smiles_to_shortname } from '../../Utility/Utils';
 import { ReactionCIMEBackendFromEnv } from '../../Backend/ReactionCIMEBackend';
-// import * as RDKitModule from '@rdkit/rdkit';
 
 
 export function formatSMILESTooltip(value: any, valueToHtml: (value: any) => string, maxDepth: number): string {
@@ -43,11 +42,6 @@ export function formatSMILESTooltip(value: any, valueToHtml: (value: any) => str
         n.title = smiles;
       }
     });
-    // content += `<img src="${}">`;
-    // const mol = window.RDKit.get_mol(value.category);
-    // var svg = mol.get_svg();
-    // console.log(svg)
-    // content += svg;
   return content;
 }
 
@@ -348,10 +342,5 @@ export var FeatureLegend = connector(({ selection, aggregate, legendAttributes, 
   if (selection.length <= 0) {
     return <DefaultLegend></DefaultLegend>;
   }
-  // console.log("---init")
-  // console.log(RDKitModule)
-  // RDKitModule().then((RDKit) =>{
-  //   console.log(RDKit)
-  // })
   return getTable(selection, aggregate, legendAttributes, dataset);
 });

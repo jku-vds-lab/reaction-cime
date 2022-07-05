@@ -6,6 +6,7 @@ import { CategoryFilter } from "./CategoryFilter";
 import { RangeFilter } from "./RangeFilter";
 import FilterAltIcon from '@mui/icons-material/FilterAlt';
 import RotateLeftIcon from '@mui/icons-material/RotateLeft';
+import { CategoryFilterChart } from "./CategoryFilterChart";
 
 
 

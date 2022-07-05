@@ -562,6 +562,7 @@ def get_category_count_of_hex(filename, col_name, xChannel, yChannel):
     cat_count = df.groupby(col_name, as_index=False).count()
     return json.dumps(cat_count.to_dict('records')).encode('utf-8')
 
+
 @reaction_cime_api.route('/get_density/<filename>/<col_name>', methods=["GET"])
 def get_density(filename, col_name):
     # data = get_cime_dbo().get_dataframe_from_table(filename, columns=[col_name])[col_name]
