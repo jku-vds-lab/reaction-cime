@@ -17,12 +17,12 @@ ENV FLASK_ENV development
 
 # copy the pre-built front-end --> comment for development because we mount the volume anyway
 # CONSTANTS
-COPY build/ /app/build/jku-vds-lab/reaction-cime
+# COPY build/ /app/build/jku-vds-lab/reaction-cime
 
 
 # copy everything from temp-files folder that includes the database --> comment for development because we mount the volume anyway
 # CONSTANTS
-COPY temp-files/ /app/temp-files/
+# COPY temp-files/ /app/temp-files/
 
 
 
@@ -35,4 +35,4 @@ CMD [ "python3", "-m", "flask", "run", "--host=0.0.0.0", "--eager-loading"]
 # docker build -f Dockerfile -t reaction_cime .
 # docker run -d -p 5000:5000 --detach reaction_cime
 # use this for development (file sharing); first -v contains the "backend" folder; second -v contains the "temp-files" folder where our database is; third -v contains the "build" folder where the front-end gets compiled to
-# docker run -d -p 5000:5000 -v "C:/Users/Christina/Workspace/ICG/bayer/reaction-cime/backend:/app/backend" -v "C:/Users/Christina/Workspace/ICG/bayer/reaction-cime/temp-files:/app/temp-files" -v "C:/Users/Christina/Workspace/ICG/bayer/reaction-cime/build:/app/build/jku-vds-lab/reaction-cime"  --detach reaction_cime
+# docker run -d -p 5000:5000 -v "C:/Users/Christina/Repositories/ICG/bayer/reaction-cime/backend:/app/backend" -v "C:/Users/Christina/Repositories/ICG/bayer/reaction-cime/temp-files:/app/temp-files" -v "C:/Users/Christina/Repositories/ICG/bayer/reaction-cime/build:/app/build/jku-vds-lab/reaction-cime"  --detach reaction_cime

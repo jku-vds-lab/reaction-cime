@@ -95,6 +95,7 @@ const downloadArrayAsCSV = (array, header) => {
 }
 
 const downloadConstraints = (dimensions, columns) => {
+    debugger;
     const constraint_dimensions = dimensions.filter((dim) => dim.constraintrange != null && dim.constraintrange.length > 0)
     if(constraint_dimensions.length <= 0)
         return;

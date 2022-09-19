@@ -210,7 +210,6 @@ export const LineUpContext = connector(function ({
       // row[UNIQUE_ID] = element["__meta__"]["meshIndex"];
       // lineup_data.push(row);
     });
-
     return [lineup_data, columns];
   };
 

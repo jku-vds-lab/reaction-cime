@@ -5,12 +5,14 @@
 
 def preprocess_dataset(domain):
     # calculates the error between measurement and prediction
-    error_col = domain.apply(lambda x: np.nan if x[cycle_column] < 0 else abs(x[target_column] - x['%s_mean_%i'%(error_calc_col, x[cycle_column])]), axis=1)
+    if error_calc_col is not None:
+        error_col = domain.apply(lambda x: np.nan if x[cycle_column] < 0 else abs(x[target_column] - x['%s_mean_%i'%(error_calc_col, x[cycle_column])]), axis=1)
     index = list(domain.columns).index(target_column)
 
     new_cols = generate_rename_list(domain)
     domain.columns = new_cols
-    domain.insert(loc=index+1, column='error{"project":false,"paco":false,"real_column":false}', value=error_col)
+    if error_calc_col is not None:
+        domain.insert(loc=index+1, column='error{"project":false,"paco":false,"real_column":false}', value=error_col)
 
     return domain
 
@@ -48,10 +50,11 @@ def get_time_series_modifier(col, modifier, global_ranges):
     split_name = col.split("_")
     timestep = split_name.pop(-1)
     featureLabel = "_".join(split_name)
-
+    
     # -- column is a tuple time series feature
     if len([ele for ele in time_series_tuples if ele in col]) > 0:
-        timeSeriesGroup = ":".join(split_name) # for pred_mean and pred_var we need to add a colon because lineup uses the colon to find time series with 2 variables
+        featureVal = split_name.pop(-1)
+        timeSeriesGroup = "_".join(split_name) + ":" + featureVal # for pred_mean and pred_var we need to add a colon because lineup uses the colon to find time series with 2 variables
         modifier += '"paco":false,' # show column in parallel coordinates
     else: 
         timeSeriesGroup = "_".join(split_name)
@@ -76,9 +79,10 @@ def get_time_series_modifier(col, modifier, global_ranges):
 
     return modifier
 
-cycle_column = "experimentCycle"
-target_column = "measured_yield"
+# cycle_column = "experimentCycle" # old version
+cycle_column = "experiment_cycle"
 # target_column = "yield" # old version
+target_column = "measured_yield"
 # error_calc_col = "pred" # old version
 error_calc_col = "predicted_yield"
 time_series_tuples = ["predicted_yield", "pred"]
@@ -87,6 +91,14 @@ smiles_modifier = "smiles"
 experiment_parameters = ["substrate_concentration", "sulfonyl_equiv", "base_equiv", "temperature"]
 hide_lineup_summary_cols = ["sulfonyl_fluoride", "base", "solvent"]
 
+# error_calc_col = None
+# target_column = "yield"
+# cycle_column = "experimentCycle"
+# time_series_tuples = ["pred"]
+# time_series_cols_diverging = ["shap"]
+# smiles_modifier = "smiles"
+# experiment_parameters = ["concentration", "temperature", "Ligand_SMILES", "Base_SMILES", "Solvent_SMILES"]
+# hide_lineup_summary_cols = [] #["reagent", "catalyst", "solvent"]
 
 def generate_rename_list(domain):
 

@@ -6,7 +6,7 @@ from rdkit.Chem import Draw
 from io import BytesIO
 import base64
 from .helper_functions import (circ_radius_to_radius, preprocess_dataset, get_mcs, smiles_to_base64, aggregate_by_col_interpolate, 
-                                rescale_and_encode, hex_aggregate_by_col, isInsideHex, circ_radius_to_radius)
+                                rescale_and_encode, hex_aggregate_by_col, isInsideHex, circ_radius_to_radius, cycle_column)
 import json
 
 _log = logging.getLogger(__name__)
@@ -43,6 +43,9 @@ def get_uploaded_files_list():
 @reaction_cime_api.route('/delete_file/<filename>', methods=['GET'])
 def delete_uploaded_file(filename):
     deleted = get_cime_dbo().drop_table(filename)
+    if deleted:
+        delete_poi_exceptions(filename)
+        delete_poi_constraints(filename)
     print("----")
     print(deleted)
     # TODO: Refactor to true and false instead of strings
@@ -153,7 +156,22 @@ def get_no_datapoints(filename):
 
 MAX_POINTS = 500 # 10000
 
+def delete_poi_exceptions(filename):
+    file = f'{current_app.config["tempdir"]}{filename}_exceptions.csv'
+    if os.path.exists(file):
+        os.remove(file)
+    else:
+        print("The file does not exist")
+
+def delete_poi_constraints(filename):
+    file = f'{current_app.config["tempdir"]}{filename}_constraints.csv'
+    if os.path.exists(file):
+        os.remove(file)
+    else:
+        print("The file does not exist")
+
 # --- save
+
 def save_poi_exceptions(filename, exceptions=[]):
     if len(exceptions) > 0:
         exceptions = pd.DataFrame(exceptions)
@@ -161,7 +179,7 @@ def save_poi_exceptions(filename, exceptions=[]):
         exceptions = pd.DataFrame(columns=["x_col", "y_col", "x_coord", "y_coord", "radius"])
     exceptions.to_csv(f'{current_app.config["tempdir"]}{filename}_exceptions.csv', index=False)
 
-def save_poi_constraints(filename, constraints=[{"col": "experimentCycle", "operator": "BETWEEN", "val1": 0, "val2": 100}]):
+def save_poi_constraints(filename, constraints=[{"col": cycle_column, "operator": "BETWEEN", "val1": 0, "val2": 100}]):
     constraints = pd.DataFrame(constraints)
     constraints.to_csv(f'{current_app.config["tempdir"]}{filename}_constraints.csv', index=False)
 
@@ -340,6 +358,8 @@ def get_points_of_interest(filename):
     start_time = time.time()
 
     poi_domain, is_subsample = get_poi_df_from_db(filename, get_cime_dbo()) # TODO: tell front-end that it is subsampled
+    print("----------------------------------------------")
+    print(poi_domain)
     
     if len(poi_domain) > 0:
         poi_domain = preprocess_dataset(poi_domain)
