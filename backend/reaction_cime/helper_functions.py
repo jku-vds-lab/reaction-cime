@@ -91,14 +91,14 @@ smiles_modifier = "smiles"
 experiment_parameters = ["substrate_concentration", "sulfonyl_equiv", "base_equiv", "temperature"]
 hide_lineup_summary_cols = ["sulfonyl_fluoride", "base", "solvent"]
 
-# error_calc_col = None
-# target_column = "yield"
-# cycle_column = "experimentCycle"
-# time_series_tuples = ["pred"]
-# time_series_cols_diverging = ["shap"]
-# smiles_modifier = "smiles"
-# experiment_parameters = ["concentration", "temperature", "Ligand_SMILES", "Base_SMILES", "Solvent_SMILES"]
-# hide_lineup_summary_cols = [] #["reagent", "catalyst", "solvent"]
+error_calc_col = None
+target_column = "yield"
+cycle_column = "experimentCycle"
+time_series_tuples = ["pred"]
+time_series_cols_diverging = ["shap"]
+smiles_modifier = "smiles"
+experiment_parameters = ["concentration", "temperature", "Ligand_SMILES", "Base_SMILES", "Solvent_SMILES"]
+hide_lineup_summary_cols = [] #["reagent", "catalyst", "solvent"]
 
 def generate_rename_list(domain):
 

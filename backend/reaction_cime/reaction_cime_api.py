@@ -358,8 +358,6 @@ def get_points_of_interest(filename):
     start_time = time.time()
 
     poi_domain, is_subsample = get_poi_df_from_db(filename, get_cime_dbo()) # TODO: tell front-end that it is subsampled
-    print("----------------------------------------------")
-    print(poi_domain)
     
     if len(poi_domain) > 0:
         poi_domain = preprocess_dataset(poi_domain)
