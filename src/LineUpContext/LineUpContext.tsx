@@ -32,7 +32,8 @@ import {
   PrebuiltFeatures,
   selectVectors,
   setHoverState,
-  ShallowSet,
+  AShallowSet,
+  mapValueToColor,
 } from "projection-space-explorer";
 import { TestColumn } from "./LineUpClasses/TestColumn";
 import { setLineUpInput_lineup } from "../State/LineUpInputDuck";
@@ -130,11 +131,11 @@ export const LineUpContext = connector(function ({
   );
 
   const preprocess_lineup_data = (data) => {
-    if (activeStory)
-      ACluster.deriveVectorLabelsFromClusters(
-        data,
-        Object.values(activeStory.clusters.entities)
-      );
+    // if (activeStory)
+    //   ACluster.deriveVectorLabelsFromClusters(
+    //     data,
+    //     Object.values(activeStory.clusters.entities)
+    //   );
     let lineup_data = new Array<any>();
     let columns = {};
     data.forEach(element => {
@@ -568,16 +569,21 @@ function buildLineup(cols, data, pointColorScale, channelColor) {
   let groupLabel_cat_color;
   if (channelColor?.key === PrebuiltFeatures.ClusterLabel) {
     // TODO: update colormapping code; does not work since colormapping of PSE changed...
-    let groupLabel_mapping = new DiscreteMapping(
-      pointColorScale,
-      new ShallowSet(
-        data.map((vector) => vector[PrebuiltFeatures.ClusterLabel])
-      )
-    );
+    // let groupLabel_mapping = new DiscreteMapping(
+    //   pointColorScale,
+    //   new ShallowSet(
+    //     data.map((vector) => vector[PrebuiltFeatures.ClusterLabel])
+    //   )
+    // );
+    let groupLabel_mapping = {
+      scale: pointColorScale,
+      values: AShallowSet.create(data.map((vector) => vector[PrebuiltFeatures.ClusterLabel])),
+      type: "categorical"
+    } as DiscreteMapping;
     groupLabel_cat_color = groupLabel_mapping.values
       .filter((cat) => cat && cat !== "")
       .map((cat) => {
-        return { name: cat, color: groupLabel_mapping.map(cat).hex };
+        return { name: cat, color: mapValueToColor(groupLabel_mapping, cat).hex };
       });
   }
 
@@ -793,37 +799,33 @@ export class MyLineChartRenderer implements ICellRendererFactory {
           .domain([data_min, data_max])
           .range([rel_height, 0]);
 
+        
+
         // Show confidence interval
         svg
           .select(".areaChart")
           .datum(data_var_list)
           .attr("fill", "#c1c1c14d")
           .attr("stroke", "none")
-          .attr(
-            "d",
-            d3v5
-              .area()
+          .attr("d", d3v5.area()
               .x(function (d, i) {
                 return x(i);
               })
-              .y0(function (d, i) {
+              .y0(function (d: number, i: number) {
                 return y(data_mean_list[i] - d);
               })
-              .y1(function (d, i) {
+              .y1(function (d: number, i: number) {
                 return y(data_mean_list[i] + d);
               })
           );
 
         // draw the line chart
         var path = svg.select(".lineChart");
-        path.datum(data_mean_list).attr(
-          "d",
-          d3v5
-            .line()
-            .x(function (d, i) {
+        path.datum(data_mean_list).attr("d", d3v5.line()
+            .x(function (d: number, i: number) {
               return x(i);
             }) // i/data_list.length
-            .y(function (d) {
+            .y(function (d: number) {
               return y(d);
             }) // 1-(d/data_max)
         );
@@ -898,7 +900,6 @@ export class MyLineChartRenderer implements ICellRendererFactory {
 
         function mousemove() {
           // recover coordinate we need
-          //@ts-ignore
           var x0 = d3v5.mouse(this)[0];
           // var y0 = d3v5.mouse(this)[1];
           // var i = bisect(data, x0, 1);

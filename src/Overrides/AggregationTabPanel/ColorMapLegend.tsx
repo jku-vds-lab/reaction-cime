@@ -65,6 +65,7 @@ export const ColorMapLegend = connector(({setAggregateColorScale, selectAttribut
             // simple encoding
             if(aggregateSettings.advancedSettings.uncertaintyRange == null){
                 scale = d3.scaleQuantize()
+                    // @ts-ignore
                     .domain(vDom)
                     .range(d3.quantize(d3[aggregateSettings.colormapSettings.colorscale], 8));
                 vDom = scale.domain()

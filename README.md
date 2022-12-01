@@ -13,7 +13,7 @@ git clone git@github.com:jku-vds-lab/reaction-cime.git
 After this step you can install the dependencies using
 
 ```
-npm install
+npm install # or: npm i --legacy-peer-deps
 ```
 
 Run the application with the following command

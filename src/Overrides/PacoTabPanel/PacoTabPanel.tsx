@@ -139,7 +139,7 @@ const uploadConstraints = (files, setConstraints) => {
 
     const fileReader = new FileReader()
     fileReader.onload = (e) => {
-        const data = d3v5.csvParse(e.target.result)
+        const data = d3v5.csvParse(e.target.result as string)
         setConstraints(data)
     }
     fileReader.readAsBinaryString(file)
