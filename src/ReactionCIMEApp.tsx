@@ -93,7 +93,7 @@ const ApplicationWrapper = connector(({ setMouseMoveFn, dataset_path, setMouseCl
         {id:"umapRemote", name:"UMAP", settings: {nneighbors:true}, embController: new RemoteEmbeddingController("umap", start_projection)},
         {id:"tsneRemote", name:"t-SNE", settings: {perplexity:true}, embController: new RemoteEmbeddingController("tsne", start_projection)},
         {id:"pcaRemote", name:"PCA", settings: {}, embController: new RemoteEmbeddingController("pca", start_projection)},
-        {id:"rmOverlap", name:"Overlap Removal", settings: {hideSettings:true}, embController: new RemoteEmbeddingController("rmOverlap", start_projection)}, //TODO: implement overplot removal in backend; tell PSE to not show any settings
+        {id:"rmOverlap", name:"Overlap Removal", settings: {hideSettings:true}, embController: new RemoteEmbeddingController("rmOverlap", start_projection)}, 
       ],
     }}
     overrideComponents={{

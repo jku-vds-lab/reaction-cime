@@ -5,14 +5,16 @@
 
 def preprocess_dataset(domain):
     # calculates the error between measurement and prediction
-    if error_calc_col is not None:
-        error_col = domain.apply(lambda x: np.nan if x[cycle_column] < 0 else abs(x[target_column] - x['%s_mean_%i'%(error_calc_col, x[cycle_column])]), axis=1)
+    target_column = [col for col in domain.columns if target_modifier in col.lower()][0]
+    # if error_calc_modifier is not None:
+    #     error_calc_col = [col for col in domain.columns if error_calc_modifier in col.lower()][0]
+    #     error_col = domain.apply(lambda x: np.nan if x[cycle_column] < 0 else abs(x[target_column] - x['%s_mean_%i'%(error_calc_col, x[cycle_column])]), axis=1)
     index = list(domain.columns).index(target_column)
 
     new_cols = generate_rename_list(domain)
     domain.columns = new_cols
-    if error_calc_col is not None:
-        domain.insert(loc=index+1, column='error{"project":false,"paco":false,"real_column":false}', value=error_col)
+    # if error_calc_modifier is not None:
+    #     domain.insert(loc=index+1, column='error{"project":false,"paco":false,"real_column":false}', value=error_col)
 
     return domain
 
@@ -82,23 +84,27 @@ def get_time_series_modifier(col, modifier, global_ranges):
 # cycle_column = "experimentCycle" # old version
 cycle_column = "experiment_cycle"
 # target_column = "yield" # old version
-target_column = "measured_yield"
+# target_column = "measured_yield"
+target_modifier = "measured"
 # error_calc_col = "pred" # old version
-error_calc_col = "predicted_yield"
-time_series_tuples = ["predicted_yield", "pred"]
+# error_calc_col = "predicted_yield"
+# error_calc_modifier = "predicted"
+time_series_tuples = ["predicted", "pred"]
 time_series_cols_diverging = ["shap"]
 smiles_modifier = "smiles"
-experiment_parameters = ["substrate_concentration", "sulfonyl_equiv", "base_equiv", "temperature"]
-hide_lineup_summary_cols = ["sulfonyl_fluoride", "base", "solvent"]
+# experiment_parameters = ["substrate_concentration", "sulfonyl_equiv", "base_equiv", "temperature"]
+experiment_modifier = "exp_param"
+# hide_lineup_summary_cols = ["sulfonyl_fluoride", "base", "solvent"]
+hide_lineup_summary_modifier = "desc"
 
-error_calc_col = None
-target_column = "yield"
-cycle_column = "experimentCycle"
-time_series_tuples = ["pred"]
-time_series_cols_diverging = ["shap"]
-smiles_modifier = "smiles"
-experiment_parameters = ["concentration", "temperature", "Ligand_SMILES", "Base_SMILES", "Solvent_SMILES"]
-hide_lineup_summary_cols = [] #["reagent", "catalyst", "solvent"]
+# error_calc_col = None
+# target_column = "yield"
+# cycle_column = "experimentCycle"
+# time_series_tuples = ["pred"]
+# time_series_cols_diverging = ["shap"]
+# smiles_modifier = "smiles"
+# experiment_parameters = ["concentration", "temperature", "Ligand_SMILES", "Base_SMILES", "Solvent_SMILES"]
+# hide_lineup_summary_cols = [] #["reagent", "catalyst", "solvent"]
 
 def generate_rename_list(domain):
 
@@ -112,12 +118,11 @@ def generate_rename_list(domain):
         # -- column is a time series feature
         if re.search(r'_\d+$', col) != None:
             modifier = get_time_series_modifier(col, modifier, global_ranges)
-        # -- column is a smiles feature
-        elif smiles_modifier in col.lower():
-            modifier = '"project":true,"imgSmiles":true,"featureLabel":"smiles","paco":true'
-        elif col in experiment_parameters:
-            modifier = '"project":true,"featureLabel":"exp_parameters","paco":true'
-        elif col == target_column:
+        elif experiment_modifier in col.lower():
+        # elif col in experiment_parameters:
+            modifier = '"project":true,"featureLabel":"exp_parameters","paco":true,"colName":"%s"'%col.replace(experiment_modifier, "") # TODO: use colName as visual name in frontend
+        elif target_modifier in col.lower():
+        # elif target_col == col:
             # col ends with _value bzw _step in lineup -> it belongs to a lineup time series
             # TODO: make this dynamic
             modifier = '"project":false,"paco":true,"lineup_meta_column":"pred_value"' # signal lineup that it should add a meta_column with this label, that gives information for other columns
@@ -136,13 +141,18 @@ def generate_rename_list(domain):
             modifier = '"project":false,"paco":false,"edges":{"columns":["id","source","destination","name"],"index":%s,"data":%s}'%(str(list(indices)),str(clusterEdges).replace("\'", "\""))
         else:
             # -- column should not be shown in lineup or in the summary view
-            hide_col_list = [elem for elem in hide_lineup_summary_cols if elem in col]
-            if len(hide_col_list) > 0:
-                modifier = '"noLineUp":true,"featureLabel":"%s", "project":false'%hide_col_list[0]
+            # hide_col_list = [elem for elem in hide_lineup_summary_cols if elem in col]
+            if hide_lineup_summary_modifier in col.lower():
+            # if len(hide_col_list) > 0:
+                modifier = '"noLineUp":true,"featureLabel":"%s","project":false,"colName":"%s"'%(col.split("_")[0], col.replace(hide_lineup_summary_modifier, ""))
 
             # -- column does not have any special meaning
             else:
                 modifier = '"project":false,"paco":false'
+
+        # -- column is a smiles feature
+        if smiles_modifier in col.lower():
+            modifier += ',"imgSmiles":true'
 
         new_cols.append('%s{"real_column":true,%s}'%(col_name, modifier)) # "real_column" indicates that the column is actually in the dataset and was not derived
     
