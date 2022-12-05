@@ -1,32 +1,22 @@
-name: Build
+name: build
 
-on: 
-  push:
+on:
   workflow_dispatch:
-  schedule:
-    - cron: "15 1 * * *" # "At 01:15 on every day.”, see: https://crontab.guru/#15_1_*_*_*
-
-env: 
-  CI: false
+    inputs:
+      cypress:
+        description: 'Run cypress'
+        required: false
+        type: boolean
+        default: false
+  push:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    uses: datavisyn/github-workflows/.github/workflows/build-node-python.yml@new_deployment
+    secrets: inherit
 
-    steps:
-    - uses: actions/checkout@v3
-
-    - name: Use Node 16.x
-      uses: actions/setup-node@v3
-      with:
-        node-version: 16.x
-
-    - name: Install dependencies
-      run: |
-        npm install
-    - name: Run build
-      run: |
-        npm run build
-    - name: Compile lib
-      run: |
-        npm run compile:lib
+  cypress:
+    needs: build
+    if: inputs.cypress == true || github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' || startsWith(github.ref, 'release-')
+    uses: datavisyn/github-workflows/.github/workflows/cypress.yml@new_deployment
+    secrets: inherit

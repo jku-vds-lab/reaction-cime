@@ -135,7 +135,7 @@ export const ColorMapLegend = connector(({setAggregateColorScale, selectAttribut
             if(color_sections.nodes().length <= 0){ // if there are no path elements, we look for rect elements
                 color_sections = gElement.selectAll("rect")
             }
-            setColorSections(color_sections)
+            setColorSections(color_sections.nodes())
 
             
             color_sections

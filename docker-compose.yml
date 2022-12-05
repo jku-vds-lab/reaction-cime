@@ -1,0 +1,14 @@
+version: '2.0'
+services:
+  db_postgres:
+    image: postgres:13
+    ports:
+      - 5432:5432
+    volumes:
+      - db_postgres_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
+      POSTGRES_DB: db
+volumes:
+  db_postgres_data:

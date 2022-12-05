@@ -1,0 +1,20 @@
+name: build develop nightly
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '15 3 * * 1-5'
+
+jobs:
+  build:
+    uses: datavisyn/github-workflows/.github/workflows/build-node-python.yml@new_deployment
+    secrets: inherit
+    with:
+      branch: develop
+
+  cypress:
+    needs: build
+    uses: datavisyn/github-workflows/.github/workflows/cypress.yml@new_deployment
+    secrets: inherit
+    with:
+      branch: develop
