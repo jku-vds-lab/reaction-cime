@@ -5,18 +5,17 @@ setup(
     packages=['reaction_cime'],
     include_package_data=True,
     install_requires=[
-        'flask==2.0.1', # 2.0.1; set to 2.0.2 later --> 2.0.2 does not show error traceback.... (or 2.0.3 as soon as it is released)
+        'flask>=2.0.3,<3.0.0',
         'flask_sqlalchemy==2.5.1',
-        'sqlalchemy==1.4.30', # 1.3.20 # 1.4 includes caching
+        'sqlalchemy>=1.4.30,<2.0.0',
         'projection-space-explorer @ git+https://github.com/jku-vds-lab/projection-space-explorer.git@develop-cime#egg=projection-space-explorer&subdirectory=backend',
         'flask-cors==3.0.10',
-        'rdkit-pypi==2021.9.2',
+        'rdkit==2022.3.5',
         'opentsne==0.6.1',
         'umap-learn==0.5.2',
         'scikit-learn',
         'gower==0.0.5',
-        'pandas==1.3.5',
-        'Pillow==9.1.0',
+        'pandas>=1.3.5,<2.0.0',
         'numba==0.55.1'
     ],
 )
