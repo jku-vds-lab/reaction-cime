@@ -1,4 +1,4 @@
-import React from "react";
+import * as React from 'react';
 import { connect, ConnectedProps } from "react-redux";
 import { AppState } from "../../State/Store";
 import { Button, InputLabel, MenuItem, Select } from "@mui/material";

@@ -1,3 +1,4 @@
+import * as React from 'react';
 import { connect, ConnectedProps } from "react-redux";
 import * as LineUpJS from "lineupjs";
 import "./LineUpContext.scss";
@@ -23,7 +24,6 @@ import {
 
 import { ReactionCIMEBackendFromEnv } from "../Backend/ReactionCIMEBackend";
 import * as _ from "lodash";
-import React from "react";
 import {
   ACluster,
   AStorytelling,

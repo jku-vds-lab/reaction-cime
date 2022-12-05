@@ -1,3 +1,4 @@
+import * as React from 'react';
 import { MenuItem } from "@mui/material"
 import { CameraTransformations, IProjection, TypedObject } from "projection-space-explorer";
 import { connect, ConnectedProps } from "react-redux";

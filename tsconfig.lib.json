@@ -2,13 +2,14 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "outDir": "lib",
-    "target": "es5",
+    "target": "es2022",
     "lib": ["dom", "es2015"],
     "declaration": true,
     "declarationMap": true,
     "sourceMap": true,
     "noEmit": false,
-    "jsx": "react-jsx"
+    "jsx": "react",
+    "preserveSymlinks": true
   },
   "exclude": ["node_modules", "./src/index.tsx"],
   "files": ["./src/export.ts", "./src/tsd.d.ts"]

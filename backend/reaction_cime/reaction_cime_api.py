@@ -36,6 +36,9 @@ def index_2():
 
 # region --------------- database ---------------
 
+def get_cime_dbo():
+    return current_app.config['REACTION_CIME_DBO']
+
 @reaction_cime_api.route('/get_uploaded_files_list', methods=['GET'])
 def get_uploaded_files_list():
     return jsonify(get_cime_dbo().get_table_names())
@@ -51,9 +54,6 @@ def delete_uploaded_file(filename):
     # TODO: Refactor to true and false instead of strings
     return {"deleted": "true" if deleted else "false"}
 
-
-def get_cime_dbo():
-    return current_app.config['REACTION_CIME_DBO']
 
 # endregion
 

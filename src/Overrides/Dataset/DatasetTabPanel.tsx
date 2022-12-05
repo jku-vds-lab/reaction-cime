@@ -1,3 +1,4 @@
+import * as React from 'react';
 import {
     Box,
     Button,
@@ -14,7 +15,7 @@ import Loader from "react-loader-spinner";
 import { AppState, CIME4RViewActions } from "../../State/Store";
 import { connect, ConnectedProps } from "react-redux";
 import { UploadedFiles } from "./UploadedFiles";
-import React, { useState } from "react";
+import { useState } from "react";
 import { BackendCSVLoader } from "./BackendCSVLoader";
 import { setTriggerUpdate } from "../../State/HandleDatasetDuck";
 import { save_smiles_lookup_table } from "../../Utility/Utils";

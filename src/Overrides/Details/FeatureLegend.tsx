@@ -1,3 +1,4 @@
+import * as React from 'react';
 // adapted from PSEs CoralLegend
 import { connect, ConnectedProps } from 'react-redux';
 import { Handler } from 'vega-tooltip';

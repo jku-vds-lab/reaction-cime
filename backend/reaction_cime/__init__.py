@@ -6,6 +6,7 @@ import os
 import logging
 import pandas as pd
 from sqlalchemy import MetaData, Table
+import io
 # from sqlalchemy.ext.declarative import declarative_base
 
 
@@ -246,7 +247,6 @@ class ReactionCIMEDBO():
             # return table.drop(self.db.engine, checkfirst=True)
         return False
 
-import io
 def to_sql(engine, df, table, if_exists='fail', sep='\t', encoding='utf8'):
     # Create Table
     df[:0].to_sql(table, engine, if_exists=if_exists)

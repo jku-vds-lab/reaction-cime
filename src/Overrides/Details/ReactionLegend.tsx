@@ -1,3 +1,4 @@
+import * as React from 'react';
 import { DefaultLegend, IVector } from "projection-space-explorer";
 import { connect, ConnectedProps } from "react-redux";
 import { AppState } from "../../State/Store";

@@ -1,3 +1,4 @@
+import * as React from 'react';
 import { Grid } from "@mui/material";
 import { DragAndDrop } from "projection-space-explorer";
 import { BackendCSVLoader } from "./BackendCSVLoader";

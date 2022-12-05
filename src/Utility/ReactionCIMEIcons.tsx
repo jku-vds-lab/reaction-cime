@@ -1,3 +1,4 @@
+import * as React from 'react';
 import ReactionCIMEAggregateIcon from '../assets/pse-icon-aggregate.svg'
 import ReactionCIMEFilterIcon from '../assets/pse-icon-filter.svg'
 import SVG from 'react-inlinesvg';
