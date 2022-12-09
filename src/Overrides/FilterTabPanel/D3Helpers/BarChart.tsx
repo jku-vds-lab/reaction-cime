@@ -46,7 +46,7 @@ export const ReactBarChart = ({data, value, isSmiles, setValue}: Props) => {
             <g>
                 {
                     data.map((d) => {
-                        return <LightTooltip followCursor={true} placement="right-start" style={{backgroundColor: "white"}} title={
+                        return <Tooltip followCursor={true} placement="right-start" style={{backgroundColor: "white"}} title={
                             <FeatureTooltipTitle feature={d.feature} isSmiles={isSmiles} count={d.count}></FeatureTooltipTitle>
                         }>
                             <rect 
@@ -63,13 +63,14 @@ export const ReactBarChart = ({data, value, isSmiles, setValue}: Props) => {
                                     }
                                 }}
                             ></rect>
-                        </LightTooltip>
+                        </Tooltip>
                     })
                 }
             </g>
         }
     </svg>
 }
+
 
 const LightTooltip = styled(({ className, ...props }: any) => (
     <Tooltip {...props} classes={{ popper: className }} />

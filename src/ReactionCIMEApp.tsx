@@ -5,6 +5,7 @@ import {
   Application,
   PluginRegistry,
   setItemLabel,
+  PSEIcons,
 } from "projection-space-explorer";
 import { LineUpContext } from "./LineUpContext";
 import { LineUpTabPanel } from "./Overrides/LineUpTabPanel";
@@ -23,6 +24,7 @@ import { FilterTabPanel } from "./Overrides/FilterTabPanel/FilterTabPanel";
 import { PacoTabPanel } from "./Overrides/PacoTabPanel/PacoTabPanel";
 import { AddRegionExceptionMenuItem } from "./Overrides/ContextMenu/AddRegionException";
 import { SetFiltersToItemFeatures } from "./Overrides/ContextMenu/SetFiltersToItemFeatures";
+import { ViewsTabPanel } from "./Overrides/ViewTabPanel/ViewsTabPanel";
 
 export const DEMO = false;
 
@@ -131,6 +133,13 @@ const ApplicationWrapper = connector(({ setMouseMoveFn, dataset_path, setMouseCl
         }
       ],
       tabs: [
+        {
+          name: "views",
+          tab: ViewsTabPanel,
+          title: "Views",
+          description: "Contains settings for the bottom view",
+          icon: ReactionCIMEIcons.Table,
+        },
         {
           name: "aggregatDS",
           tab: AggregationTabPanel,

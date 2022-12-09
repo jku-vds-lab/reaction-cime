@@ -35,6 +35,7 @@
     "lodash.isequal": "^4.5.0",
     "node-sass": "^6.0.1",
     "parcoord-es": "^2.2.10",
+    "projection-space-explorer": "git+https://github.com/jku-vds-lab/projection-space-explorer.git#develop",
     "plotly.js-dist": "^2.11.1",
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
