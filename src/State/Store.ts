@@ -55,7 +55,7 @@ export function createCIMERootReducer() {
       // TODO: might not be necessary
       if(newState.dataset != null){
         const newPacoAttributes = Object.keys(newState.dataset.columns).map((col) => {
-          return {feature: col, show: newState.dataset.columns[col].metaInformation.paco as boolean};
+          return {feature: col, show: newState.dataset.columns[col].metaInformation.paco === true};
         })
         Object.assign(newState, {pacoSettings: {...state.pacoSettings, pacoAttributes: newPacoAttributes}});
       }

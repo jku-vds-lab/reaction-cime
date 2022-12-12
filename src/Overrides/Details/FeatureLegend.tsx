@@ -242,7 +242,6 @@ function genRows(vectors, aggregation, legendAttributes, dataset) {
       } else if (dataset.columns[key]?.featureType === FeatureType.Categorical) {
         // categorical feature
         const barData = mapBarChartData(dataset.vectors, vectors, key);
-        console.log(barData)
         var barChart;
         if (Object.keys(barData.values).length !== 1) {
           // logLevel={vegaImport.Debug} | {vegaImport.Warn} | {vegaImport.Error} | {vegaImport.None} | {vegaImport.Info}

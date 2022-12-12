@@ -42,7 +42,8 @@ export const PacoContext = connector(function ({dataset, triggerDatasetUpdate}: 
 
     // const [pacoShowColumns, setPacoShowColumns] = React.useState(Object.keys(dataset.columns).filter((col) => dataset.columns[col].metaInformation.paco));
     const [pacoAttributes, setPacoAttributes] = React.useState(Object.keys(dataset.columns).map((col) => {
-        return {feature: col, show: dataset.columns[col].metaInformation.paco};
+        console.log(dataset.columns[col].metaInformation.paco, dataset.columns[col].metaInformation.paco === true)
+        return {feature: col, show: dataset.columns[col].metaInformation.paco === true};
     }));
     const [totalDataPoints, setTotalDataPoints] = React.useState(-1)
 
