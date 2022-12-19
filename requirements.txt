@@ -1,5 +1,5 @@
 flask_sqlalchemy==2.5.1
 gower==0.0.5
 opentsne==0.6.1
-tdp_core@git+https://github.com/datavisyn/tdp_core.git@develop#egg=tdp_core
-umap-learn==0.5.2
+tdp_core@git+https://github.com/datavisyn/tdp_core.git@remove_numpy#egg=tdp_core
+umap-learn==0.5.3

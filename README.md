@@ -32,13 +32,17 @@ yarn start
 First, create a new virtual environment for the dependencies
 
 ```bash
-python3 -m venv .venv
+python -m venv .venv
 ```
 
 and activate it
 
 ```bash
+# Ubuntu
 source .venv/bin/activate
+
+# Windows (cmd)
+.\.venv\Scripts\activate
 ```
 
 Then install all dependencies (including dev dependencies)
