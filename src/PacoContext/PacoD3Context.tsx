@@ -2,7 +2,7 @@ import React from "react";
 import { connect, ConnectedProps } from "react-redux";
 import { AppState } from "../State/Store";
 import { Box, Button, IconButton, Tooltip } from "@mui/material";
-import { AttributeTable, selectVectors } from "projection-space-explorer";
+import { AttributeSelectionTable, selectVectors } from "projection-space-explorer";
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import RotateLeftIcon from '@mui/icons-material/RotateLeft';
 import FileUploadIcon from '@mui/icons-material/FileUpload';
@@ -170,7 +170,7 @@ export const PacoContext = connector(function ({dataset}: Props) {
         <div id="paco_tooltip" style={{position: "absolute", opacity: "0"}}></div>
         <Box style={{clear: "both"}} paddingLeft={2} paddingTop={1} paddingRight={2}>
             <Box style={{float: "left"}} paddingTop={1}>
-                <AttributeTable config={{}} attributes={pacoAttributes} setAttributes={setPacoAttributes} />
+                {/* <AttributeTable config={{}} attributes={pacoAttributes} setAttributes={setPacoAttributes} /> */}
                 {/* <AttributeSelectionTable attributes={pacoAttributes} setAttributes={setPacoAttributes} btnFullWidth={false}><SettingsIcon/>&nbsp;Choose Attributes</AttributeSelectionTable> */}
             </Box>
             <Box style={{float: "right"}}>

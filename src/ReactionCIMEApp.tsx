@@ -87,7 +87,8 @@ const ApplicationWrapper = connector(({ setMouseMoveFn, dataset_path, setMouseCl
       preselect: {
         initOnMount: false, // should default dataset be loaded? could specify url to default // TODO: define a default dataset that is already uploaded (e.g. domain.csv)
         // url: DATASETCONFIG[0].path
-      }
+      },
+      baseUrl: ReactionCIMEBackendFromEnv.baseUrl,
     }}
     features={{
       embeddings: [

@@ -10,7 +10,8 @@ import FileUploadIcon from '@mui/icons-material/FileUpload';
 import SettingsIcon from '@mui/icons-material/Settings';
 import { downloadImpl, map_shortname_to_smiles } from "../../Utility/Utils";
 import * as d3v5 from "d3v5";
-import { AttributeTable } from "projection-space-explorer";
+import { AttributeSelectionTable } from "projection-space-explorer";
+// import { AttributeTable } from "projection-space-explorer";
 
 const mapStateToProps = (state: AppState) => ({
     pacoAttributes: state.pacoSettings?.pacoAttributes,
@@ -44,7 +45,6 @@ export const PacoTabPanel = connector(({setPacoAttributes, pacoAttributes, setPa
         </Box>
         <Box paddingLeft={2} paddingTop={1} paddingRight={2}>
             {/* TODO: also save chosen attributes? */}
-            <AttributeTable config={{}} attributes={pacoAttributes} setAttributes={setPacoAttributes} />
             {/* <AttributeSelectionTable attributes={pacoAttributes} setAttributes={setPacoAttributes} btnFullWidth={true}><SettingsIcon/>&nbsp;Choose Attributes</AttributeSelectionTable> */}
         </Box>
         <Box paddingLeft={2} paddingTop={1} paddingRight={2}>

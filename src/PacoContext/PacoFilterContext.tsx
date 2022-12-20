@@ -42,8 +42,7 @@ export const PacoContext = connector(function ({dataset, triggerDatasetUpdate}: 
 
     // const [pacoShowColumns, setPacoShowColumns] = React.useState(Object.keys(dataset.columns).filter((col) => dataset.columns[col].metaInformation.paco));
     const [pacoAttributes, setPacoAttributes] = React.useState(Object.keys(dataset.columns).map((col) => {
-        console.log(dataset.columns[col].metaInformation.paco, dataset.columns[col].metaInformation.paco === true)
-        return {feature: col, show: dataset.columns[col].metaInformation.paco === true};
+        return {feature: col, show: dataset.columns[col].metaInformation.paco};
     }));
     const [totalDataPoints, setTotalDataPoints] = React.useState(-1)
 
@@ -236,7 +235,7 @@ export const PacoContext = connector(function ({dataset, triggerDatasetUpdate}: 
         <div id="paco_tooltip" style={{position: "absolute", opacity: "0"}}></div>
         <Box style={{clear: "both"}} paddingLeft={2} paddingTop={1} paddingRight={2}>
             <Box style={{float: "left"}} paddingTop={1}>
-                <AttributeSelectionTable attributes={pacoAttributes} setAttributes={setPacoAttributes} btnFullWidth={false}><SettingsIcon/>&nbsp;Choose Attributes</AttributeSelectionTable>
+                {/* <AttributeSelectionTable attributes={pacoAttributes} setAttributes={setPacoAttributes} btnFullWidth={false}><SettingsIcon/>&nbsp;Choose Attributes</AttributeSelectionTable> */}
             </Box>
             <Box style={{float: "right"}}>
                 <Typography color="textSecondary" variant="body2">Currently showing {dataset.vectors.length} out of {totalDataPoints} items</Typography>
