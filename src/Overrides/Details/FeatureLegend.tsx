@@ -13,36 +13,30 @@ import VegaDate from './VegaHelpers/VegaDate';
 import { map_smiles_to_shortname } from '../../Utility/Utils';
 import { ReactionCIMEBackendFromEnv } from '../../Backend/ReactionCIMEBackend';
 
-
 export function formatSMILESTooltip(value: any, valueToHtml: (value: any) => string, maxDepth: number): string {
-  
-    let content = '';
+  let content = '';
 
-    content += '<table>';
-    content += `<tr><td class="key">ratio:</td><td class="value">${valueToHtml(value.feature)}</td></tr>`;
-    content += `<tr><td class="key">short name:</td><td class="value">${valueToHtml(map_smiles_to_shortname(value.category))}</td></tr>`;
-    content += `<tr><td class="key">smiles:</td><td class="value">${valueToHtml(value.category)}</td></tr>`;
-    content += `<tr><td class="key">subset:</td><td class="value">${valueToHtml(value.subset)}</td></tr>`;
-    content += `</table>`;
-    content += `<div id="smiles_${value.category}" style="width:100%; height:100px; background-size: contain; background-position: center; background-repeat: no-repeat;"></div>`;
-    
-    let smiles = value.category;
-    ReactionCIMEBackendFromEnv.getStructureFromSmiles(
-      smiles,
-      false,
-      null
-    ).then((x) => {
-      const n = document.getElementById(`smiles_${value.category}`)
-      if(n != null){
-        if (x && x.length > 100) {
-          // check if it is actually long enogh to be an img
-          n.style.backgroundImage = `url('data:image/jpg;base64,${x}')`;
-        } else {
-          n.innerHTML = x;
-        }
-        n.title = smiles;
+  content += '<table>';
+  content += `<tr><td class="key">ratio:</td><td class="value">${valueToHtml(value.feature)}</td></tr>`;
+  content += `<tr><td class="key">short name:</td><td class="value">${valueToHtml(map_smiles_to_shortname(value.category))}</td></tr>`;
+  content += `<tr><td class="key">smiles:</td><td class="value">${valueToHtml(value.category)}</td></tr>`;
+  content += `<tr><td class="key">subset:</td><td class="value">${valueToHtml(value.subset)}</td></tr>`;
+  content += `</table>`;
+  content += `<div id="smiles_${value.category}" style="width:100%; height:100px; background-size: contain; background-position: center; background-repeat: no-repeat;"></div>`;
+
+  const smiles = value.category;
+  ReactionCIMEBackendFromEnv.getStructureFromSmiles(smiles, false, null).then((x) => {
+    const n = document.getElementById(`smiles_${value.category}`);
+    if (n != null) {
+      if (x && x.length > 100) {
+        // check if it is actually long enogh to be an img
+        n.style.backgroundImage = `url('data:image/jpg;base64,${x}')`;
+      } else {
+        n.innerHTML = x;
       }
-    });
+      n.title = smiles;
+    }
+  });
   return content;
 }
 
@@ -103,7 +97,7 @@ function mapBarChartData(allData, selectedData, feature) {
   for (const key in selectedCounts) {
     let count = selectedCounts[key] / selectedData.length;
     count = isFinite(count) ? count : 0;
-    selectedBarChartData.push({ selection: 'selection', category: key, count: count });
+    selectedBarChartData.push({ selection: 'selection', category: key, count });
   }
   selectedBarChartData.sort(sortCountDesc);
 
@@ -114,7 +108,7 @@ function mapBarChartData(allData, selectedData, feature) {
     x.id = i;
   });
   const l = selectedBarChartData.length;
-  var idxCounter = l;
+  let idxCounter = l;
 
   const allBarChartData = [];
   for (const key in allCounts) {
@@ -122,13 +116,13 @@ function mapBarChartData(allData, selectedData, feature) {
     count = isFinite(count) ? count : 0;
     // apply that mapping to allBarChartData without actually having to sort it
     // make sure to check whether category in allBarChartData even exists in map, otherwise create new entry in map for new id
-    var i = categoryMap[key];
+    let i = categoryMap[key];
     if (i == null) {
       i = idxCounter;
       categoryMap[key] = i;
       idxCounter++;
     }
-    allBarChartData.push({ selection: 'all', category: key, count: count, id: i });
+    allBarChartData.push({ selection: 'all', category: key, count, id: i });
   }
 
   const barChartData = [...allBarChartData, ...selectedBarChartData];
@@ -188,7 +182,6 @@ function sortByScore(a, b) {
   return a.score < b.score ? 1 : -1;
 }
 
-
 function getProjectionColumns(legendAttributes) {
   if (legendAttributes === null) {
     return [];
@@ -246,9 +239,9 @@ function genRows(vectors, aggregation, legendAttributes, dataset) {
         var barChart;
         if (Object.keys(barData.values).length !== 1) {
           // logLevel={vegaImport.Debug} | {vegaImport.Warn} | {vegaImport.Error} | {vegaImport.None} | {vegaImport.Info}
-          let tooltip_options = {}
-          if(dataset.columns[key]?.metaInformation.imgSmiles){
-            tooltip_options = { formatTooltip: formatSMILESTooltip }
+          let tooltip_options = {};
+          if (dataset.columns[key]?.metaInformation.imgSmiles) {
+            tooltip_options = { formatTooltip: formatSMILESTooltip };
           }
           barChart = <BarChart logLevel={vegaImport.Error} data={barData} actions={false} tooltip={new Handler(tooltip_options).call} />;
         } else {
@@ -290,7 +283,7 @@ function getTable(vectors, aggregation, legendAttributes, dataset) {
     },
   })();
   const rows = genRows(vectors, aggregation, legendAttributes, dataset);
-  
+
   return (
     <div style={{ width: '100%', maxHeight: '100%', overflowY: 'scroll' }}>
       <div
@@ -341,7 +334,7 @@ type Props = PropsFromRedux & {
 
 export var FeatureLegend = connector(({ selection, aggregate, legendAttributes, dataset }: Props) => {
   if (selection.length <= 0) {
-    return <DefaultLegend></DefaultLegend>;
+    return <DefaultLegend />;
   }
   return getTable(selection, aggregate, legendAttributes, dataset);
 });

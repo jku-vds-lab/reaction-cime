@@ -1,15 +1,7 @@
-import {
-  Button,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogContentText,
-  DialogTitle,
-  TextField,
-} from "@mui/material";
-import { connect, ConnectedProps } from "react-redux";
-import React from "react";
-import { setLineUpInput_dump } from "../State/LineUpInputDuck";
+import { Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, TextField } from '@mui/material';
+import { connect, ConnectedProps } from 'react-redux';
+import React from 'react';
+import { setLineUpInput_dump } from '../State/LineUpInputDuck';
 // import { setDetailVisibility } from "projection-space-explorer";
 
 const mapDispatchToProps = (dispatch) => ({
@@ -31,9 +23,9 @@ export const LineUpDumpDialog = connector(function ({
   openDialog,
   setOpenDumpDialog,
   setLineUp_dump,
-  // setLineUp_visibility,
-}: Props) {
-  const [dump, setDump] = React.useState("");
+}: // setLineUp_visibility,
+Props) {
+  const [dump, setDump] = React.useState('');
   function handleChange(event) {
     setDump(event.target.value);
   }
@@ -49,15 +41,7 @@ export const LineUpDumpDialog = connector(function ({
       <DialogTitle>Specify Modifiers</DialogTitle>
       <DialogContent>
         <DialogContentText>Insert Linup JSON dump</DialogContentText>
-        <TextField
-          autoFocus
-          margin="dense"
-          id="modifiers"
-          label="Modifiers"
-          value={dump}
-          onChange={handleChange}
-          fullWidth={true}
-        />
+        <TextField autoFocus margin="dense" id="modifiers" label="Modifiers" value={dump} onChange={handleChange} fullWidth />
       </DialogContent>
       <DialogActions>
         <Button onClick={handleClose}>Cancel</Button>
