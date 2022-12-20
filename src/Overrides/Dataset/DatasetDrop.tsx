@@ -6,7 +6,6 @@ import { BackendCSVLoader } from './BackendCSVLoader';
 export function DatasetDrop({ onDatasetChange, cancellablePromise, abort_controller }) {
   return (
     <Grid container item alignItems="stretch" justifyContent="center" direction="column" style={{ padding: '16px' }}>
-      {/** @ts-ignore* */}
       <DragAndDrop
         accept=".csv"
         handleDrop={(files) => {

@@ -73,10 +73,8 @@ export const LineUpTabPanel = connector(({ setDetailVisibility, setLineUpInput_f
     }
 
     const css = cell_value_vis ? '.lu-hover-only { visibility: visible; }' : '.lu-hover-only { visibility: hidden; }';
-    // @ts-ignore
     if (style.styleSheet) {
       // This is required for IE8 and below.
-      // @ts-ignore
       style.styleSheet.cssText = css;
     } else {
       style.innerHTML = '';

@@ -24,7 +24,6 @@ export declare type INumbersMapColumnDesc = INumbersDesc & IMapColumnDesc<number
 @toolbar('rename', 'filterNumber', 'colorMapped', 'editMapping')
 @dialogAddons('sort', 'sortNumbers')
 @SortByDefault('descending')
-// @ts-ignore
 export default class NumbersMapColumn extends MapColumn<number[]> {
   readonly dataLength: number | null;
 

@@ -83,7 +83,6 @@ export class AggregateDataset {
     // TODO: check, if the format of the dataset is ok (e.g. it has to be a cube, and only quantitative data is allowed...)
 
     Object.keys(metaInformation).forEach((key) => {
-      // @ts-ignore
       this.columns[key] = {};
 
       this.retrieveFeatureTypes(metaInformation, key);

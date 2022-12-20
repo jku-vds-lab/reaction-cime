@@ -6,7 +6,6 @@ import React from 'react';
 import { SelectFeatureComponent } from 'projection-space-explorer';
 import FileUploadIcon from '@mui/icons-material/FileUpload';
 import { AppState } from '../../State/Store';
-// @ts-ignore
 import { ReactionCIMEBackendFromEnv } from '../../Backend/ReactionCIMEBackend';
 import { FilterSettings } from './FilterSettings';
 import { NOItemsInfo } from '../../Utility/NOItemsInfo';

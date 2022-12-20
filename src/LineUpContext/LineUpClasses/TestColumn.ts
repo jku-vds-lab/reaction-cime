@@ -69,7 +69,6 @@ export declare type ITestColumnDesc = INumbersDesc & IMapColumnDesc<number[]>;
 @toolbar('rename', 'filterNumber', 'sort', 'sortBy')
 @dialogAddons('sort', 'sortNumbers')
 @SortByDefault('descending')
-// @ts-ignore
 export class TestColumn extends MapColumn<number[]> {
   static readonly EVENT_MAPPING_CHANGED = NumberColumn.EVENT_MAPPING_CHANGED;
 
@@ -176,9 +175,9 @@ export class TestColumn extends MapColumn<number[]> {
 
   toCompareValue(row: IDataRow): number {
     const data = this.getValue(row);
-    const value_list = data[0].value;
+    const valueList = data[0].value;
     const method = this.getSortMethod();
-    return this.get_advanced_value(method, value_list);
+    return this.get_advanced_value(method, valueList);
   }
 
   toCompareValueType() {
@@ -257,11 +256,9 @@ export class TestColumn extends MapColumn<number[]> {
     const values = this.getRawValue(row);
 
     if (values.length === 0) {
-      // @ts-ignore
       return null;
     }
 
-    // @ts-ignore
     return values.map(({ key, value }) => {
       return {
         key,
@@ -283,8 +280,8 @@ export class TestColumn extends MapColumn<number[]> {
     // });
   }
 
-  getExportValue(row: IDataRow, format: 'text' | 'json'): any {
-    return format === 'json' ? this.getRawValue(row) : super.getExportValue(row, format);
+  getExportValue(row: IDataRow, exportformat: 'text' | 'json'): IKeyValue<number[]>[] {
+    return exportformat === 'json' ? this.getRawValue(row) : super.getExportValue(row, exportformat);
   }
 
   getFormatedLabelArray(arr): string {
@@ -399,7 +396,7 @@ export class TestColumn extends MapColumn<number[]> {
     if (Number.isNaN(value)) {
       return !filter.filterMissing;
     }
-    return !((isFinite(filter.min) && value < filter.min) || (isFinite(filter.max) && value > filter.max));
+    return !((Number.isFinite(filter.min) && value < filter.min) || (Number.isFinite(filter.max) && value > filter.max));
   }
 
   /**

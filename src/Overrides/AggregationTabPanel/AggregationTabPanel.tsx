@@ -6,7 +6,6 @@ import { StepSlider } from './StepSlider';
 import { ColorMapLegend } from './ColorMapLegend';
 import './AggregationTabPanel.scss';
 import { AdvancedAggregationSettings } from './AdvancedAggregationSettings';
-// @ts-ignore
 import { SelectFeatureComponent } from 'projection-space-explorer';
 import { setDeriveRange, setSelectAttribute, setUncertaintyRange, setValueRange } from '../../State/AggregateSettingsDuck';
 import { NOItemsInfo } from '../../Utility/NOItemsInfo';

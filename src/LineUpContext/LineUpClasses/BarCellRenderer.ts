@@ -16,7 +16,7 @@ import {
   renderMissingCanvas,
   renderMissingDOM,
 } from 'lineupjs';
-import { adaptDynamicColorToBgColor, noRenderer, setText, CANVAS_HEIGHT } from './utils';
+import { noRenderer, setText, CANVAS_HEIGHT } from './utils';
 
 // https://github.com/lineupjs/lineupjs/blob/master/src/renderer/BarCellRenderer.ts
 
@@ -45,17 +45,16 @@ export default class BarCellRenderer implements ICellRendererFactory {
       update: (n: HTMLDivElement, d: IDataRow) => {
         const value = col.getNumber(d);
         const missing = renderMissingDOM(n, col, d);
-        const w = isNaN(value) ? 0 : Math.round(value * 10000) / 100;
+        const w = Number.isNaN(value) ? 0 : Math.round(value * 10000) / 100;
         const title = col.getLabel(d);
         n.title = title;
 
-        const bar = <HTMLElement>n.firstElementChild!;
+        const bar = <HTMLElement>n.firstElementChild ?? null;
         bar.style.width = missing ? '100%' : `${w}%`;
         const color = colorOf(col, d, imposer, value);
-        // @ts-ignore
         bar.style.backgroundColor = missing ? null : color;
-        setText(bar.firstElementChild!, title);
-        const item = <HTMLElement>bar.firstElementChild!;
+        setText(bar.firstElementChild ?? null, title);
+        const item = <HTMLElement>bar.firstElementChild ?? null;
         setText(item, title);
         item.style.color = 'black';
         // adaptDynamicColorToBgColor(item, color || DEFAULT_COLOR, title, w / 100);
@@ -67,7 +66,7 @@ export default class BarCellRenderer implements ICellRendererFactory {
         const value = col.getNumber(d);
         ctx.fillStyle = colorOf(col, d, imposer, value) || DEFAULT_COLOR;
         const w = width * value;
-        ctx.fillRect(0, 0, isNaN(w) ? 0 : w, CANVAS_HEIGHT);
+        ctx.fillRect(0, 0, Number.isNaN(w) ? 0 : w, CANVAS_HEIGHT);
       },
     };
   }

@@ -19,15 +19,12 @@ ctx.addEventListener(
       embedding.initializeFit(callback_fn_step);
       // embedding.step(callback_fn)
 
-      // @ts-ignore
       ctx.embedding = embedding;
     } else if (e.data.messageType === 'abort') {
-      // @ts-ignore
       const { embedding } = ctx;
       embedding.abort(callback_fn_terminated);
     }
     // else {
-    //     // @ts-ignore
     //     const embedding = ctx.embedding;
     //     embedding.step(callback_fn)
     // }
