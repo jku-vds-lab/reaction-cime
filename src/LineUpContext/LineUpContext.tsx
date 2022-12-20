@@ -776,14 +776,14 @@ export class MyLineChartRenderer implements ICellRendererFactory {
           .attr(
             'd',
             d3v5
-              .area()
-              .x(function (d, i) {
+              .area<number>()
+              .x((d, i) => {
                 return x(i);
               })
-              .y0(function (d: number, i: number) {
+              .y0((d, i: number) => {
                 return y(data_mean_list[i] - d);
               })
-              .y1(function (d: number, i: number) {
+              .y1((d, i: number) => {
                 return y(data_mean_list[i] + d);
               }),
           );
@@ -793,11 +793,11 @@ export class MyLineChartRenderer implements ICellRendererFactory {
         path.datum(data_mean_list).attr(
           'd',
           d3v5
-            .line()
-            .x(function (d: number, i: number) {
+            .line<number>()
+            .x((d, i: number) => {
               return x(i);
             }) // i/data_list.length
-            .y(function (d: number) {
+            .y((d) => {
               return y(d);
             }), // 1-(d/data_max)
         );

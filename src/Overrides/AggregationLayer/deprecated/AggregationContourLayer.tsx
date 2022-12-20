@@ -19,7 +19,7 @@ const retrieve_colorscale = (aggregateDataset: AggregateDataset, value_col: stri
     }    
 
     // visit https://github.com/uwdata/vsup for more info about VSUP vs bivariate colorscale encoding
-    var vDom = [aggregateDataset.columns[value_col].range.min, aggregateDataset.columns[value_col].range.max];
+    var vDom = [aggregateDataset.columns[value_col].range.min, aggregateDataset.columns[value_col].range.max] as [number, number];
 
     var scale, quantization;
     if(aggregateDataset.columns[uncertainty_col] != null){
