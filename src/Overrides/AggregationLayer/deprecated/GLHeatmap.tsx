@@ -52,7 +52,7 @@ export const GLHeatmap = connector(({ viewTransform, textures, sizes }: Props) =
     }, [])
 
     useEffect(() => {
-        scene.clear(); // clears the scene // .remove(...scene.children)
+        scene.remove(...scene.children)(); // clears the scene // .remove(...scene.children)
         for(let i in textures){
             const texture = textures[i]
             const size = sizes[i]
