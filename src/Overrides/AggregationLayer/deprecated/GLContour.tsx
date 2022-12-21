@@ -39,7 +39,7 @@ export const GLContour = connector(({ viewTransform, lines }: Props) => {
     }, [])
 
   useEffect(() => {
-    scene.remove(...scene.children)(); // clears the scene //.remove(...scene.children)//
+    scene.remove(...scene.children); // clears the scene
     for (const i in lines) {
       const line = lines[i];
 

@@ -44,7 +44,7 @@ export const GLHexagons = connector(({ smallMultiples, hexagons, hoverElement, s
     }, [])
 
   useEffect(() => {
-    scene.remove(...scene.children); // clears the scene //.remove(...scene.children)//
+    scene.remove(...scene.children); // clears the scene
     for (const i in hexagons) {
       const hex = hexagons[i];
 
