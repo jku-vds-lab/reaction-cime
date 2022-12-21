@@ -41,7 +41,7 @@ const retrieveInformationFromAggDataset = (
         // if there is a filter, and the current value is not within, we set it to transparent
         bgRGBA[4 * i + 3] = 0;
       } else {
-        let rgb = convertToRgb(color);
+        const rgb = convertToRgb(color);
 
         // RGB from 0 to 255
         bgRGBA[4 * i] = rgb.r;
@@ -63,15 +63,15 @@ const retrieveInformationFromAggDataset = (
 
   let [width, height, x, y] = [100, 100, 0, 0];
   if (dataset.bounds) {
-    width = dataset.bounds.x['max'] - dataset.bounds.x['min'];
-    height = dataset.bounds.y['max'] - dataset.bounds.y['min'];
+    width = dataset.bounds.x.max - dataset.bounds.x.min;
+    height = dataset.bounds.y.max - dataset.bounds.y.min;
 
     // need to set x and y because the center is not at 0 0 if max and min are unequal
-    x = (dataset.bounds.x['max'] + dataset.bounds.x['min']) / 2;
-    y = (dataset.bounds.y['max'] + dataset.bounds.y['min']) / 2;
+    x = (dataset.bounds.x.max + dataset.bounds.x.min) / 2;
+    y = (dataset.bounds.y.max + dataset.bounds.y.min) / 2;
   }
 
-  return [bgDataTex, { width: width, height: height, x: x, y: y }];
+  return [bgDataTex, { width, height, x, y }];
 };
 
 const mapStateToProps = (state: AppState) => ({

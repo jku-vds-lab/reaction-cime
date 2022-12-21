@@ -180,10 +180,10 @@ export const HexAggregationLayer = connector(
           };
 
           // take 150% of the boundaries, such that we have clean borders
-          range.x.min = range.x.min - Math.abs(range.x.min / 2);
-          range.x.max = range.x.max + Math.abs(range.x.max / 2);
-          range.y.min = range.y.min - Math.abs(range.y.min / 2);
-          range.y.max = range.y.max + Math.abs(range.y.max / 2);
+          range.x.min -= Math.abs(range.x.min / 2);
+          range.x.max += Math.abs(range.x.max / 2);
+          range.y.min -= Math.abs(range.y.min / 2);
+          range.y.max += Math.abs(range.y.max / 2);
 
           // load the aggregateDataset
           ReactionCIMEBackendFromEnv.loadHexAgg(
