@@ -1,1 +1,1 @@
-export * from "./AggregationTabPanel";
+export * from './AggregationTabPanel';
