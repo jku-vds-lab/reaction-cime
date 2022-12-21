@@ -6,9 +6,9 @@ import * as _ from 'lodash';
 import { ReactionCIMEBackendFromEnv } from '../../../Backend/ReactionCIMEBackend';
 import { AppState } from '../../../State/Store';
 import { AggregateDataset } from '../AggregateDataset';
-import { LoadingIndicatorDialog } from '../../Dataset/DatasetTabPanel';
+import { LoadingIndicatorDialog } from '../../Dataset/LoadingIndicatorDialog';
 import { GLHeatmap } from './GLHeatmap';
-import { setUncertaintyRange, setValueRange } from '../../../State/AggregateSettingsDuck';
+import { AggregateActions } from '../../../State/AggregateSettingsDuck';
 import { convertToRgb } from '../../../Utility/Utils';
 
 const retrieveInformationFromAggDataset = (
@@ -19,8 +19,9 @@ const retrieveInformationFromAggDataset = (
   valueFilter: string[],
   scale: any,
 ) => {
+  let uncertaintyArr: any[];
   if (aggregateDataset.columns[uncertainty_col] != null) {
-    var uncertaintyArr = dataset.vectors.map((row) => row[uncertainty_col]);
+    uncertaintyArr = dataset.vectors.map((row) => row[uncertainty_col]);
   }
 
   const valueArr = dataset.vectors.map((row) => row[value_col]);
@@ -83,14 +84,14 @@ const mapStateToProps = (state: AppState) => ({
   aggregateSettings: state.multiples.multiples.entities[state.multiples.multiples.ids[0]]?.attributes.aggregateSettings,
 });
 const mapDispatchToProps = (dispatch: any) => ({
-  setValueRange: (range) => dispatch(setValueRange(range)),
-  setUncertaintyRange: (range) => dispatch(setUncertaintyRange(range)),
+  setValueRange: (range) => dispatch(AggregateActions.setValueRange(range)),
+  setUncertaintyRange: (range) => dispatch(AggregateActions.setUncertaintyRange(range)),
 });
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
 type PropsFromRedux = ConnectedProps<typeof connector>;
 
-type AggregationLayerProps = PropsFromRedux & {};
+type AggregationLayerProps = PropsFromRedux;
 
 const loadingArea = 'global_loading_indicator_aggregation_ds';
 const AggregationLayer = connector(
@@ -110,26 +111,26 @@ const AggregationLayer = connector(
     // eslint-disable-next-line react-hooks/exhaustive-deps
     const debouncedLoadAggDataset = React.useCallback(
       _.debounce(
-        (viewTransform) => {
+        (newViewTransform) => {
           cancelPromises();
           const abortController = new AbortController(); // TODO: reiterate where AbortController needs to be instantiated --> can it be moved inside the loadAggCSV function?
 
           const range = {
             x: {
-              min: Math.round(-viewTransform.width / viewTransform.zoom / 2 + viewTransform.centerX),
-              max: Math.round(viewTransform.width / viewTransform.zoom / 2 + viewTransform.centerX),
+              min: Math.round(-newViewTransform.width / newViewTransform.zoom / 2 + newViewTransform.centerX),
+              max: Math.round(newViewTransform.width / newViewTransform.zoom / 2 + newViewTransform.centerX),
             },
             y: {
-              min: Math.round(-viewTransform.height / viewTransform.zoom / 2 + viewTransform.centerY),
-              max: Math.round(viewTransform.height / viewTransform.zoom / 2 + viewTransform.centerY),
+              min: Math.round(-newViewTransform.height / newViewTransform.zoom / 2 + newViewTransform.centerY),
+              max: Math.round(newViewTransform.height / newViewTransform.zoom / 2 + newViewTransform.centerY),
             },
           };
 
           // take 150% of the boundaries, such that we have clean borders
-          range.x.min = range.x.min - Math.abs(range.x.min / 2);
-          range.x.max = range.x.max + Math.abs(range.x.max / 2);
-          range.y.min = range.y.min - Math.abs(range.y.min / 2);
-          range.y.max = range.y.max + Math.abs(range.y.max / 2);
+          range.x.min -= Math.abs(range.x.min / 2);
+          range.x.max += Math.abs(range.x.max / 2);
+          range.y.min -= Math.abs(range.y.min / 2);
+          range.y.max += Math.abs(range.y.max / 2);
 
           // load zoomed version of the aggregate dataset
           ReactionCIMEBackendFromEnv.loadAggCSV(
@@ -204,8 +205,8 @@ const AggregationLayer = connector(
       if (aggregateSettings.colormapSettings.scale_obj != null) {
         if (aggregateDataset && aggregateDataset.vectors) {
           if (Object.keys(aggregateDataset.columns).includes(aggregateColor.value_col)) {
-            const sizes = [null, null];
-            const textures = [null, null];
+            const newSizes = [null, null];
+            const newTextures = [null, null];
             const [texture, size] = retrieveInformationFromAggDataset(
               aggregateDataset,
               aggregateDataset,
@@ -214,11 +215,11 @@ const AggregationLayer = connector(
               aggregateSettings?.colormapSettings.valueFilter,
               aggregateSettings.colormapSettings.scale_obj,
             );
-            sizes[0] = size;
-            textures[0] = texture;
+            newSizes[0] = size;
+            newTextures[0] = texture;
 
             if (aggregateDatasetZoomed && aggregateDatasetZoomed.vectors) {
-              const [texture, size] = retrieveInformationFromAggDataset(
+              const retrieved = retrieveInformationFromAggDataset(
                 aggregateDataset,
                 aggregateDatasetZoomed,
                 aggregateColor.value_col,
@@ -226,11 +227,11 @@ const AggregationLayer = connector(
                 aggregateSettings?.colormapSettings.valueFilter,
                 aggregateSettings.colormapSettings.scale_obj,
               );
-              sizes[1] = size;
-              textures[1] = texture;
+              newSizes[1] = retrieved[1];
+              newTextures[1] = retrieved[0];
             }
-            setSizes(sizes);
-            setTextures(textures);
+            setSizes(newSizes);
+            setTextures(newTextures);
           }
         } else {
           setSizes(null);

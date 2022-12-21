@@ -8,7 +8,7 @@ import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import UpdateIcon from '@mui/icons-material/Update';
 import FileUploadIcon from '@mui/icons-material/FileUpload';
 import SettingsIcon from '@mui/icons-material/Settings';
-import { LoadingIndicatorView } from '../Overrides/Dataset/DatasetTabPanel';
+import { LoadingIndicatorView } from '../Overrides/Dataset/LoadingIndicatorDialog';
 import { ReactionCIMEBackendFromEnv } from '../Backend/ReactionCIMEBackend';
 import { AppState } from '../State/Store';
 
@@ -114,8 +114,8 @@ export const PacoContext = connector(function ({ dataset, triggerDatasetUpdate }
           (rows) => {
             setTotalDataPoints(rows.length);
 
-            function unpack(rows, key) {
-              return rows.map(function (row) {
+            function unpack(elements, key) {
+              return elements.map(function (row) {
                 let val = row[key];
                 if (dataset.columns[key].isNumeric) val = parseFloat(val);
                 return val;

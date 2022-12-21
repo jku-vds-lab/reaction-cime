@@ -59,7 +59,7 @@ export const LineUpTabPanel = connector(({ setDetailVisibility, setLineUpInput_f
     }
   };
 
-  const [cell_value_vis, set_cell_value_vis] = React.useState(false);
+  const [cellValueVis, setCellValueVis] = React.useState(false);
 
   React.useEffect(() => {
     let style = document.getElementById('cell_value_vis');
@@ -71,7 +71,7 @@ export const LineUpTabPanel = connector(({ setDetailVisibility, setLineUpInput_f
       head.appendChild(style);
     }
 
-    const css = cell_value_vis ? '.lu-hover-only { visibility: visible; }' : '.lu-hover-only { visibility: hidden; }';
+    const css = cellValueVis ? '.lu-hover-only { visibility: visible; }' : '.lu-hover-only { visibility: hidden; }';
     // @ts-ignore
     if (style.styleSheet) {
       // This is required for IE8 and below.
@@ -81,11 +81,11 @@ export const LineUpTabPanel = connector(({ setDetailVisibility, setLineUpInput_f
       style.innerHTML = '';
       style.appendChild(document.createTextNode(css));
     }
-  }, [cell_value_vis]);
+  }, [cellValueVis]);
 
   const toggleVis = () => {
-    set_cell_value_vis(() => {
-      return !cell_value_vis;
+    setCellValueVis(() => {
+      return !cellValueVis;
     });
   };
 
@@ -116,7 +116,7 @@ export const LineUpTabPanel = connector(({ setDetailVisibility, setLineUpInput_f
           control={
             <Switch
               color="primary"
-              value={cell_value_vis}
+              value={cellValueVis}
               onChange={(event) => {
                 toggleVis();
               }}

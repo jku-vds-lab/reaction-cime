@@ -1,7 +1,7 @@
 import { Slider, Typography } from '@mui/material';
 import React from 'react';
 import { connect, ConnectedProps } from 'react-redux';
-import { setAggregateColor, setCurStep } from '../../State/AggregateSettingsDuck';
+import { AggregateActions } from '../../State/AggregateSettingsDuck';
 import { AppState } from '../../State/Store';
 
 const mapStateToPropsSlider = (state: AppState) => ({
@@ -12,15 +12,15 @@ const mapStateToPropsSlider = (state: AppState) => ({
 });
 
 const mapDispatchToPropsSlider = (dispatch) => ({
-  setAggregateColor: (values) => dispatch(setAggregateColor(values)),
-  setCurStep: (values) => dispatch(setCurStep(values)),
+  setAggregateColor: (values) => dispatch(AggregateActions.setAggregateColor(values)),
+  setCurStep: (values) => dispatch(AggregateActions.setCurStep(values)),
 });
 
 const sliderconnector = connect(mapStateToPropsSlider, mapDispatchToPropsSlider);
 
 type SliderPropsFromRedux = ConnectedProps<typeof sliderconnector>;
 
-type SliderProps = SliderPropsFromRedux & {};
+type SliderProps = SliderPropsFromRedux;
 
 export const StepSlider = sliderconnector(({ selectAttribute, setAggregateColor, selectAttributeInfo, variableIndex, curStep, setCurStep }: SliderProps) => {
   const stepChanged = (newVal) => {

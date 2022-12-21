@@ -121,7 +121,7 @@ export class AggregateDataset {
     });
   }
 
-  private retrieveFeatureTypes(metaInformation: {}, key: string) {
+  private retrieveFeatureTypes(metaInformation, key: string) {
     const colMeta = metaInformation[key];
     if (colMeta?.dtype) {
       switch (colMeta.dtype) {

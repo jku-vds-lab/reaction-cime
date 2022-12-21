@@ -8,7 +8,7 @@ import FileUploadIcon from '@mui/icons-material/FileUpload';
 import SettingsIcon from '@mui/icons-material/Settings';
 import * as d3v5 from 'd3v5';
 import { downloadImpl, mapShortnameToSmiles } from '../../Utility/Utils';
-import { setPacoAttributes, setPacoConstraints } from '../../State/PacoSettingsDuck';
+import { PacoActions } from '../../State/PacoSettingsDuck';
 import { AppState } from '../../State/Store';
 
 const downloadArrayAsCSV = (array, header) => {
@@ -77,8 +77,8 @@ const mapStateToProps = (state: AppState) => ({
 });
 
 const mapDispatchToProps = (dispatch) => ({
-  setPacoAttributes: (atts) => dispatch(setPacoAttributes(atts)),
-  setPacoConstraints: (consts) => dispatch(setPacoConstraints(consts)),
+  setPacoAttributes: (atts) => dispatch(PacoActions.setPacoAttributes(atts)),
+  setPacoConstraints: (consts) => dispatch(PacoActions.setPacoConstraints(consts)),
 });
 
 const connector = connect(mapStateToProps, mapDispatchToProps);

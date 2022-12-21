@@ -1,8 +1,6 @@
 import * as React from 'react';
-import { Box, Button, Dialog, DialogActions, DialogContent, Tooltip, Typography } from '@mui/material';
+import { Box, Button, Tooltip, Typography } from '@mui/material';
 import { Dataset, IProjection, RootActions, useCancellablePromise, UtilityActions } from 'projection-space-explorer';
-import { usePromiseTracker } from 'react-promise-tracker';
-import Loader from 'react-loader-spinner';
 import { connect, ConnectedProps } from 'react-redux';
 import { useState } from 'react';
 import ManageSearchIcon from '@mui/icons-material/ManageSearch';
@@ -10,8 +8,9 @@ import { DatasetDrop } from './DatasetDrop';
 import { AppState, CIME4RViewActions } from '../../State/Store';
 import { UploadedFiles } from './UploadedFiles';
 import { BackendCSVLoader } from './BackendCSVLoader';
-import { setTriggerUpdate } from '../../State/HandleDatasetDuck';
+import { setTriggerUpdate as setTriggerUpdateAction } from '../../State/HandleDatasetDuck';
 import { saveSmilesLookupTable } from '../../Utility/Utils';
+import { LoadingIndicatorDialog } from './LoadingIndicatorDialog';
 
 function selectPositions(dataset: Dataset, projection: IProjection) {
   const xChannel = projection.xChannel ?? 'x';
@@ -22,47 +21,10 @@ function selectPositions(dataset: Dataset, projection: IProjection) {
   }));
 }
 
-export function LoadingIndicatorView(props) {
-  const { promiseInProgress } = usePromiseTracker({ area: props.area });
-
-  return (
-    promiseInProgress && (
-      <div
-        style={{
-          width: '100%',
-          height: '100',
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-        }}
-      >
-        <Loader type="ThreeDots" color="#2BAD60" height="100" width="100" />
-      </div>
-    )
-  );
-}
-
-export function LoadingIndicatorDialog(props) {
-  const { promiseInProgress } = usePromiseTracker({ area: props.area });
-
-  return (
-    <Dialog maxWidth="lg" open={promiseInProgress}>
-      {' '}
-      {/* onClose={props.handleClose} */}
-      <DialogContent>
-        <LoadingIndicatorView area={props.area} />
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={props.handleClose}>Cancel</Button>
-      </DialogActions>
-    </Dialog>
-  );
-}
-
 const mapStateToProps = (state: AppState) => ({});
 
 const mapDispatchToProps = (dispatch) => ({
-  setTriggerUpdate: (value) => dispatch(setTriggerUpdate(value)),
+  setTriggerUpdate: (value) => dispatch(setTriggerUpdateAction(value)),
   resetViews: () => dispatch(CIME4RViewActions.resetViews()),
   hydrateState: (dump) => dispatch(RootActions.hydrate(dump)),
 });

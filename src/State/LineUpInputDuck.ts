@@ -66,7 +66,7 @@ export type LineUpType = {
   update: number;
 };
 
-const lineUpInput = (state = initialState, action): LineUpType => {
+const lineUpInput = (state = initialState, action = undefined): LineUpType => {
   switch (action.type) {
     // case SET_DATA:
     //     return {...state, data: action.input}

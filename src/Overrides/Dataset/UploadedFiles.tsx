@@ -6,7 +6,7 @@ import RefreshIcon from '@mui/icons-material/Refresh';
 import { trackPromise } from 'react-promise-tracker';
 import { DEMO } from '../../ReactionCIMEApp';
 import { ReactionCIMEBackendFromEnv } from '../../Backend/ReactionCIMEBackend';
-import { LoadingIndicatorView } from './DatasetTabPanel';
+import { LoadingIndicatorView } from './LoadingIndicatorDialog';
 
 const loadingArea = 'update_uploaded_files_list';
 export function UploadedFiles({ onChange, refresh }) {

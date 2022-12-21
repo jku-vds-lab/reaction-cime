@@ -101,7 +101,7 @@ export function handleBackgroundSelectionDownload(coords: any, filename: string)
     typeof coords?.y !== 'undefined' &&
     (document.getElementById('knn-textfield') as HTMLInputElement)?.value !== 'undefined'
   ) {
-    const k = +(document.getElementById('knn-textfield') as HTMLInputElement)?.value;
+    const k = +(document.getElementById('knn-textfield') as HTMLInputElement).value;
     // if input k is neither integer nor below 1
     if (k < 1 || k % 1 !== 0) {
       // warn user

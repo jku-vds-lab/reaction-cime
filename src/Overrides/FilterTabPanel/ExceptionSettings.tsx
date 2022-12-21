@@ -14,10 +14,10 @@ type Props = {
 export function ExceptionSettings({ dataset, triggerDatasetUpdate, state }: Props) {
   const [exceptions, setExceptions] = React.useState([]);
 
-  const dropException = (index, state) => {
-    const new_ex = exceptions.filter((e, i) => i !== index);
+  const dropException = (index) => {
+    const newEx = exceptions.filter((e, i) => i !== index);
     // setExceptions(new_ex)
-    ReactionCIMEBackendFromEnv.updatePOIExceptions(dataset.info.path, new_ex).then((res) => {
+    ReactionCIMEBackendFromEnv.updatePOIExceptions(dataset.info.path, newEx).then((res) => {
       if (res.msg !== 'ok') alert(res.msg);
 
       if (triggerDatasetUpdate != null) {
@@ -55,7 +55,7 @@ export function ExceptionSettings({ dataset, triggerDatasetUpdate, state }: Prop
           <Grid key={`exception${i}`} container paddingTop={0}>
             <Grid item xs={3} textAlign="right">
               <Tooltip title="Remove exception">
-                <IconButton onClick={() => dropException(i, state)}>
+                <IconButton onClick={() => dropException(i)}>
                   <DeleteIcon fontSize="large" />
                 </IconButton>
               </Tooltip>

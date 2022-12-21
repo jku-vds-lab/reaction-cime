@@ -3,15 +3,7 @@ import { connect, ConnectedProps } from 'react-redux';
 import { Button, InputLabel, MenuItem, Select } from '@mui/material';
 import * as vsup from 'vsup';
 import * as d3 from 'd3v5';
-import {
-  D3_CONTINUOUS_COLOR_SCALE_LIST,
-  setAggregateColorScale,
-  addValueFilter,
-  removeValueFilter,
-  toggleUseVSUP,
-  clearValueFilter,
-  setAggregateColorMapScale,
-} from '../../State/AggregateSettingsDuck';
+import { D3_CONTINUOUS_COLOR_SCALE_LIST, AggregateActions } from '../../State/AggregateSettingsDuck';
 import { AppState } from '../../State/Store';
 import { PSE_BLUE } from '../../Utility/Utils';
 
@@ -22,19 +14,19 @@ const mapStateToProps = (state: AppState) => ({
 });
 
 const mapDispatchToProps = (dispatch) => ({
-  setAggregateColorScale: (value) => dispatch(setAggregateColorScale(value)),
-  toggleUseVSUP: () => dispatch(toggleUseVSUP()),
-  addValueFilter: (value) => dispatch(addValueFilter(value)),
-  removeValueFilter: (value) => dispatch(removeValueFilter(value)),
-  clearValueFilter: () => dispatch(clearValueFilter()),
-  setAggregateColorMapScale: (scale) => dispatch(setAggregateColorMapScale(scale)),
+  setAggregateColorScale: (value) => dispatch(AggregateActions.setAggregateColorScale(value)),
+  toggleUseVSUP: () => dispatch(AggregateActions.toggleUseVSUP()),
+  addValueFilter: (value) => dispatch(AggregateActions.addValueFilter(value)),
+  removeValueFilter: (value) => dispatch(AggregateActions.removeValueFilter(value)),
+  clearValueFilter: () => dispatch(AggregateActions.clearValueFilter()),
+  setAggregateColorMapScale: (scale) => dispatch(AggregateActions.setAggregateColorMapScale(scale)),
 });
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
 
 type PropsFromRedux = ConnectedProps<typeof connector>;
 
-type Props = PropsFromRedux & {};
+type Props = PropsFromRedux;
 
 export const ColorMapLegend = connector(
   ({
@@ -160,17 +152,17 @@ export const ColorMapLegend = connector(
 
         // --- add interaction with legend
         const legendContainer = svgElement.select('.legend > g:last-child');
-        let colorSections = legendContainer.selectAll('path');
-        if (colorSections.nodes().length <= 0) {
+        let newColorSections = legendContainer.selectAll('path');
+        if (newColorSections.nodes().length <= 0) {
           // if there are no path elements, we look for rect elements
-          colorSections = gElement.selectAll('rect');
+          newColorSections = gElement.selectAll('rect');
         }
-        setColorSections(colorSections.nodes());
+        setColorSections(newColorSections.nodes());
 
-        colorSections.on('mouseover', (d, i) => {
+        newColorSections.on('mouseover', (d, i) => {
           // TODO: add hover interaction --> highlight areas in background somehow (e.g. have a component that draws a border around the selected areas)
           legendContainer.select('.hover_clone').remove();
-          const hoverEl = d3.select(colorSections.nodes()[i]).clone();
+          const hoverEl = d3.select(newColorSections.nodes()[i]).clone();
           hoverEl.attr('class', 'hover_clone');
           hoverEl.attr('fill', PSE_BLUE);
 
@@ -182,7 +174,7 @@ export const ColorMapLegend = connector(
           // when clicking, we want to select the underlying section
           hoverEl.on('click', () => {
             // color_sections.attr("stroke", "none")
-            const curNode = d3.select(colorSections.nodes()[i]);
+            const curNode = d3.select(newColorSections.nodes()[i]);
             if (curNode.attr('stroke') == null) {
               curNode.attr('stroke', PSE_BLUE);
               curNode.attr('stroke-width', '3px');

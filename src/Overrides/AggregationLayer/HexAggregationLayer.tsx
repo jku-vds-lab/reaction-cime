@@ -7,8 +7,8 @@ import { EntityId } from '@reduxjs/toolkit';
 import { ReactionCIMEBackendFromEnv } from '../../Backend/ReactionCIMEBackend';
 import { AppState } from '../../State/Store';
 import { AggregateDataset } from './AggregateDataset';
-import { LoadingIndicatorDialog } from '../Dataset/DatasetTabPanel';
-import { setUncertaintyRange, setValueRange } from '../../State/AggregateSettingsDuck';
+import { LoadingIndicatorDialog } from '../Dataset/LoadingIndicatorDialog';
+import { AggregateActions } from '../../State/AggregateSettingsDuck';
 import { GLHexagons } from './GLHexagons';
 import { PSE_BLUE } from '../../Utility/Utils';
 import { setCurrentAggregateSelection } from '../../State/SelectionDuck';
@@ -93,8 +93,8 @@ const mapStateToProps = (state: AppState) => ({
   mouseClick: state.mouseInteractionHooks?.mouseclick,
 });
 const mapDispatchToProps = (dispatch: any) => ({
-  setValueRange: (range) => dispatch(setValueRange(range)),
-  setUncertaintyRange: (range) => dispatch(setUncertaintyRange(range)),
+  setValueRange: (range) => dispatch(AggregateActions.setValueRange(range)),
+  setUncertaintyRange: (range) => dispatch(AggregateActions.setUncertaintyRange(range)),
   setCurrentAggregateSelectionFn: (selection) => dispatch(setCurrentAggregateSelection(selection)),
 });
 
@@ -165,18 +165,18 @@ export const HexAggregationLayer = connector(
     // eslint-disable-next-line react-hooks/exhaustive-deps
     const debouncedLoadAggDataset = React.useCallback(
       _.debounce(
-        (viewTransform) => {
+        (newViewTransform) => {
           cancelPromises();
           const abortController = new AbortController(); // TODO: reiterate where AbortController needs to be instantiated --> can it be moved inside the loadAggCSV function?
 
           const range = {
             x: {
-              min: Math.round(-viewTransform.width / viewTransform.zoom / 2 + viewTransform.centerX),
-              max: Math.round(viewTransform.width / viewTransform.zoom / 2 + viewTransform.centerX),
+              min: Math.round(-newViewTransform.width / newViewTransform.zoom / 2 + newViewTransform.centerX),
+              max: Math.round(newViewTransform.width / newViewTransform.zoom / 2 + newViewTransform.centerX),
             },
             y: {
-              min: Math.round(-viewTransform.height / viewTransform.zoom / 2 + viewTransform.centerY),
-              max: Math.round(viewTransform.height / viewTransform.zoom / 2 + viewTransform.centerY),
+              min: Math.round(-newViewTransform.height / newViewTransform.zoom / 2 + newViewTransform.centerY),
+              max: Math.round(newViewTransform.height / newViewTransform.zoom / 2 + newViewTransform.centerY),
             },
           };
 

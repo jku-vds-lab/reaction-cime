@@ -12,6 +12,77 @@ import AreaChart from './VegaHelpers/AreaChart';
 import { formatSMILESTooltip } from './FeatureLegend';
 import { mapSmilesToShortname } from '../../Utility/Utils';
 
+async function handleCategoricalData(
+  dataset: Dataset,
+  feature: string,
+  workspace: IProjection,
+  aggregateSelection: { x: number; y: number; circ_radius: number },
+) {
+  const dataAll = await ReactionCIMEBackendFromEnv.loadCategoryCount(dataset.info.path, feature);
+  const sumAll = dataAll.reduce(function (acc, row) {
+    return acc + row.count;
+  }, 0);
+  const barDataAll = dataAll.map((row) => {
+    return { selection: 'all', category: row[feature], count: row.count / sumAll };
+  });
+
+  const dataHex = await ReactionCIMEBackendFromEnv.loadCategoryCountOfHex(
+    dataset.info.path,
+    feature,
+    workspace.xChannel,
+    workspace.yChannel,
+    aggregateSelection.x,
+    aggregateSelection.y,
+    aggregateSelection.circ_radius,
+  );
+  const sumHex = dataHex.reduce(function (acc, row) {
+    return acc + row.count;
+  }, 0);
+  const barDataHex = dataHex.map((row) => {
+    return { selection: 'selection', category: row[feature], count: row.count / sumHex };
+  });
+
+  // sort cat_list by count
+  const catList = barDataAll.map((row) => row.category);
+  catList.sort((a, b) => {
+    const barHexA = barDataHex.find((row) => row.category === a);
+    const barHexB = barDataHex.find((row) => row.category === b);
+    if (barHexA && barHexB) {
+      // first sort by aggregate count
+      return barHexB.count - barHexA.count;
+    }
+    if (barHexA) {
+      // if there exists this value
+      return -1;
+    }
+    if (barHexB) {
+      // if there exists this value
+      return 1;
+    }
+
+    // if feature not present in aggregated data
+    const barAllA = barDataAll.find((row) => row.category === a);
+    const barAllB = barDataAll.find((row) => row.category === b);
+    return barAllB.count - barAllA.count;
+  });
+
+  // add ids to the data; i.e. instances with the same feature values must have same id
+  const barData = [];
+  catList.forEach((cat, i) => {
+    const barAll = barDataAll.find((row) => row.category === cat);
+    if (barAll != null) {
+      barData.push({ ...barAll, id: i });
+    }
+    const barHex = barDataHex.find((row) => row.category === cat);
+    if (barHex != null) {
+      barData.push({ ...barHex, id: i });
+    }
+  });
+
+  const score = barDataHex.find((row) => row.category === catList[0]).count; // maximum bar count is score
+  return { bar_data: barData, cat_list: catList, score };
+}
+
 async function genRows(
   aggregateSelection: { x: number; y: number; circ_radius: number },
   aggregation: boolean,
@@ -143,74 +214,3 @@ export const AggregateLegend = connector(({ aggregate, aggregateSelection, legen
     </div>
   );
 });
-
-async function handleCategoricalData(
-  dataset: Dataset,
-  feature: string,
-  workspace: IProjection,
-  aggregateSelection: { x: number; y: number; circ_radius: number },
-) {
-  const dataAll = await ReactionCIMEBackendFromEnv.loadCategoryCount(dataset.info.path, feature);
-  const sumAll = dataAll.reduce(function (acc, row) {
-    return acc + row.count;
-  }, 0);
-  const barDataAll = dataAll.map((row) => {
-    return { selection: 'all', category: row[feature], count: row.count / sumAll };
-  });
-
-  const dataHex = await ReactionCIMEBackendFromEnv.loadCategoryCountOfHex(
-    dataset.info.path,
-    feature,
-    workspace.xChannel,
-    workspace.yChannel,
-    aggregateSelection.x,
-    aggregateSelection.y,
-    aggregateSelection.circ_radius,
-  );
-  const sumHex = dataHex.reduce(function (acc, row) {
-    return acc + row.count;
-  }, 0);
-  const barDataHex = dataHex.map((row) => {
-    return { selection: 'selection', category: row[feature], count: row.count / sumHex };
-  });
-
-  // sort cat_list by count
-  const catList = barDataAll.map((row) => row.category);
-  catList.sort((a, b) => {
-    const barHexA = barDataHex.find((row) => row.category === a);
-    const barHexB = barDataHex.find((row) => row.category === b);
-    if (barHexA && barHexB) {
-      // first sort by aggregate count
-      return barHexB.count - barHexA.count;
-    }
-    if (barHexA) {
-      // if there exists this value
-      return -1;
-    }
-    if (barHexB) {
-      // if there exists this value
-      return 1;
-    }
-
-    // if feature not present in aggregated data
-    const barAllA = barDataAll.find((row) => row.category === a);
-    const barAllB = barDataAll.find((row) => row.category === b);
-    return barAllB.count - barAllA.count;
-  });
-
-  // add ids to the data; i.e. instances with the same feature values must have same id
-  const barData = [];
-  catList.forEach((cat, i) => {
-    const barAll = barDataAll.find((row) => row.category === cat);
-    if (barAll != null) {
-      barData.push({ ...barAll, id: i });
-    }
-    const barHex = barDataHex.find((row) => row.category === cat);
-    if (barHex != null) {
-      barData.push({ ...barHex, id: i });
-    }
-  });
-
-  const score = barDataHex.find((row) => row.category === catList[0]).count; // maximum bar count is score
-  return { bar_data: barData, cat_list: catList, score };
-}

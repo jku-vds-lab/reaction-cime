@@ -21,7 +21,7 @@ type Props = PropsFromRedux & {
 
 export const NOItemsInfo = connector(({ dataset, globalLabels, variant }: Props) => {
   const [totalDataPoints, setTotalDataPoints] = React.useState(-1);
-
+  const length = dataset?.vectors?.length ?? 0;
   React.useEffect(() => {
     if (dataset != null) {
       ReactionCIMEBackendFromEnv.loadNODatapoints(dataset.info.path).then((res) => {
@@ -36,8 +36,8 @@ export const NOItemsInfo = connector(({ dataset, globalLabels, variant }: Props)
       text = `Showing all ${totalDataPoints} ${globalLabels.itemLabelPlural} as aggregation`;
       break;
     case 'filterOutOfTotal':
-      text = `Currently showing ${dataset?.vectors?.length} out of ${totalDataPoints} ${globalLabels.itemLabelPlural} (~${
-        Math.round((dataset?.vectors?.length / totalDataPoints) * 10000) / 100
+      text = `Currently showing ${length} out of ${totalDataPoints} ${globalLabels.itemLabelPlural} (~${
+        Math.round((length / totalDataPoints) * 10000) / 100
       }% of the dataset)`;
       break;
     default:

@@ -75,7 +75,7 @@ const connector = connect(mapStateToProps, mapDispatchToProps);
 
 type PropsFromRedux = ConnectedProps<typeof connector>;
 
-type Props = PropsFromRedux & {};
+type Props = PropsFromRedux;
 
 export const PacoContext = connector(function ({ dataset, pacoAttributes, pacoConstraints, setPacoRef, setCurrentAggregation, currentAggregation }: Props) {
   if (dataset == null || dataset.columns == null) return null;

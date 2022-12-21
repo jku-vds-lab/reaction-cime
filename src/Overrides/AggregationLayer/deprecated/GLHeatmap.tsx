@@ -52,8 +52,7 @@ export const GLHeatmap = connector(({ viewTransform, textures, sizes }: Props) =
 
   useEffect(() => {
     scene.remove(...scene.children); // clears the scene // .remove(...scene.children)
-    for (const i in textures) {
-      const texture = textures[i];
+    textures.forEach((texture, i) => {
       const size = sizes[i];
 
       if (texture != null && size != null) {
@@ -66,7 +65,7 @@ export const GLHeatmap = connector(({ viewTransform, textures, sizes }: Props) =
 
         scene.add(mesh);
       }
-    }
+    });
     setRerender(rerender + 1);
     // eslint-disable-next-line
   }, [textures, sizes]);

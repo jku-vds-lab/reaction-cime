@@ -2,6 +2,8 @@ import * as d3v5 from 'd3v5';
 import { useCancellablePromise } from 'projection-space-explorer';
 import { trackPromise } from 'react-promise-tracker';
 
+let env: ReactionCIMEBackend;
+
 export class ReactionCIMEBackend {
   protected smiles_cache = {};
 
@@ -19,7 +21,7 @@ export class ReactionCIMEBackend {
     return this.smiles_cache[smiles];
   };
 
-  protected setSmilesCache = (smiles, highlight = false, data) => {
+  protected setSmilesCache = (smiles, highlight, data) => {
     if (highlight) this.smiles_highlight_cache[smiles] = data;
     else this.smiles_cache[smiles] = data;
   };
@@ -83,10 +85,10 @@ export class ReactionCIMEBackend {
       });
   };
 
-  public getStructureFromSmiles = (smiles: string, highlight = false, controller) => {
-    const cached_data = this.handleSmilesCache(smiles, highlight);
-    if (cached_data) {
-      return this.async_cache(cached_data);
+  public getStructureFromSmiles = (smiles: string, highlight, controller) => {
+    const cachedData = this.handleSmilesCache(smiles, highlight);
+    if (cachedData) {
+      return this.async_cache(cachedData);
     }
 
     const formData = new FormData();
@@ -117,22 +119,22 @@ export class ReactionCIMEBackend {
   };
 
   public getMCSFromSmilesList = async (formData: FormData, controller?) => {
-    let my_fetch;
+    let myFetch;
     if (controller) {
-      my_fetch = fetch(`${this.baseUrl}/get_common_mol_img`, {
+      myFetch = fetch(`${this.baseUrl}/get_common_mol_img`, {
         ...this.fetchParams,
         method: 'POST',
         body: formData,
         signal: controller?.signal,
       });
     } else {
-      my_fetch = fetch(`${this.baseUrl}/get_common_mol_img`, {
+      myFetch = fetch(`${this.baseUrl}/get_common_mol_img`, {
         ...this.fetchParams,
         method: 'POST',
         body: formData,
       });
     }
-    return my_fetch
+    return myFetch
       .then(this.handleErrors)
       .then((response) => response.json())
       .then(this.handleJSONErrors)
@@ -241,14 +243,14 @@ export class ReactionCIMEBackend {
   public upload_csv_file = async (file, controller?): Promise<{ name: string; id: number }> => {
     // upload the csv file to the server
     // the response is a unique filename that can be used to make further requests
-    const formData_file = new FormData();
-    formData_file.append('myFile', file);
-    formData_file.append('file_size', file.size);
+    const formDataFile = new FormData();
+    formDataFile.append('myFile', file);
+    formDataFile.append('file_size', file.size);
 
     const promise = fetch(`${this.baseUrl}/upload_csv`, {
       ...this.fetchParams,
       method: 'POST',
-      body: formData_file,
+      body: formDataFile,
       signal: controller?.signal,
     })
       .then(this.handleErrors)
@@ -304,15 +306,14 @@ export class ReactionCIMEBackend {
       });
   };
 
-  public updateBackendCache = async (filename: string, cache_cols: string[]) => {
-    let cache_cols_string = '';
-    if (cache_cols != null) {
-      for (const key in cache_cols) {
-        const col = cache_cols[key];
-        cache_cols_string += `&cache_cols=${col}`;
-      }
+  public updateBackendCache = async (filename: string, cacheCols: string[]) => {
+    let cacheColsString = '';
+    if (cacheCols != null) {
+      cacheCols.forEach((col) => {
+        cacheColsString += `&cache_cols=${col}`;
+      });
     }
-    return fetch(`${this.baseUrl}/update_cache/${filename}?dummy=1${cache_cols_string}`, {
+    return fetch(`${this.baseUrl}/update_cache/${filename}?dummy=1${cacheColsString}`, {
       ...this.fetchParams,
       method: 'GET',
     })
@@ -488,42 +489,41 @@ export class ReactionCIMEBackend {
       yChannel = 'y';
     }
 
-    const cached_data = this.handleAggregationCache(path, value_column, uncertainty_col, range, xChannel, yChannel);
+    const cachedData = this.handleAggregationCache(path, value_column, uncertainty_col, range, xChannel, yChannel);
     let promise = null;
-    if (cached_data) {
+    if (cachedData) {
       console.log('cached');
-      promise = this.async_cache(cached_data.data);
+      promise = this.async_cache(cachedData.data);
     } else {
-      let retrieve_cols = `retrieve_cols=${value_column}`;
-      retrieve_cols += `&aggregation_methods=${aggregationMethod.valueAggregationMethod}`;
+      let retrieveCols = `retrieve_cols=${value_column}`;
+      retrieveCols += `&aggregation_methods=${aggregationMethod.valueAggregationMethod}`;
       if (uncertainty_col !== 'None' && uncertainty_col != null) {
-        retrieve_cols += `&retrieve_cols=${uncertainty_col}`;
-        retrieve_cols += `&aggregation_methods=${aggregationMethod.uncertaintyAggregationMethod}`;
+        retrieveCols += `&retrieve_cols=${uncertainty_col}`;
+        retrieveCols += `&aggregation_methods=${aggregationMethod.uncertaintyAggregationMethod}`;
       }
 
-      let cache_cols_string = '';
+      let cacheColsString = '';
       if (cache_cols != null) {
-        for (const key in cache_cols) {
-          const col = cache_cols[key];
-          cache_cols_string += `&cache_cols=${col}`;
-        }
+        cache_cols.forEach((col) => {
+          cacheColsString += `&cache_cols=${col}`;
+        });
       }
 
-      let sample_size_str = '';
+      let sampleSizeStr = '';
       if (sample_size != null) {
-        sample_size_str = `&sample_size=${sample_size}`;
+        sampleSizeStr = `&sample_size=${sample_size}`;
       }
 
       if (range == null) {
         range = { x: { min: -10000, max: 10000 }, y: { min: -10000, max: 10000 } };
       }
-      const range_string = `&x_min=${range.x.min}&x_max=${range.x.max}&y_min=${range.y.min}&y_max=${range.y.max}`;
+      const rangeString = `&x_min=${range.x.min}&x_max=${range.x.max}&y_min=${range.y.min}&y_max=${range.y.max}`;
 
-      const agg_path = `${ReactionCIMEBackendFromEnv.baseUrl}/get_hex_agg/${path}/${xChannel}/${yChannel}?${retrieve_cols}${cache_cols_string}${sample_size_str}${range_string}`;
+      const aggPath = `${env.baseUrl}/get_hex_agg/${path}/${xChannel}/${yChannel}?${retrieveCols}${cacheColsString}${sampleSizeStr}${rangeString}`;
 
       promise = cancellablePromise
-        ? cancellablePromise(d3v5.csv(agg_path, { ...ReactionCIMEBackendFromEnv.fetchParams, signal: controller?.signal }), controller)
-        : d3v5.csv(agg_path, { ...ReactionCIMEBackendFromEnv.fetchParams, signal: controller?.signal });
+        ? cancellablePromise(d3v5.csv(aggPath, { ...env.fetchParams, signal: controller?.signal }), controller)
+        : d3v5.csv(aggPath, { ...env.fetchParams, signal: controller?.signal });
     }
     trackPromise(
       promise
@@ -532,7 +532,7 @@ export class ReactionCIMEBackend {
             console.log('aggregation dataset is empty');
             alert('aggregation dataset is empty');
           } else {
-            if (cached_data == null) {
+            if (cachedData == null) {
               this.cache_agg_data(range, vectors);
             }
             finished(vectors);
@@ -561,38 +561,37 @@ export class ReactionCIMEBackend {
       range = { x: { min: -10000, max: 10000 }, y: { min: -10000, max: 10000 } };
     }
 
-    const cached_data = this.handleAggregationCache(path, value_column, uncertainty_col, range);
+    const cachedData = this.handleAggregationCache(path, value_column, uncertainty_col, range);
     let promise = null;
-    if (cached_data) {
-      promise = this.async_cache(cached_data.data);
+    if (cachedData) {
+      promise = this.async_cache(cachedData.data);
     } else {
-      let retrieve_cols = `retrieve_cols=${value_column}`;
+      let retrieveCols = `retrieve_cols=${value_column}`;
       if (uncertainty_col !== 'None' && uncertainty_col != null) {
-        retrieve_cols += `&retrieve_cols=${uncertainty_col}`;
+        retrieveCols += `&retrieve_cols=${uncertainty_col}`;
       }
 
-      let cache_cols_string = '';
+      let cacheColsString = '';
       if (cache_cols != null) {
-        for (const key in cache_cols) {
-          const col = cache_cols[key];
-          cache_cols_string += `&cache_cols=${col}`;
-        }
+        cache_cols.forEach((col) => {
+          cacheColsString += `&cache_cols=${col}`;
+        });
       }
 
-      let sample_size_str = '';
+      let sampleSizeStr = '';
       if (sample_size != null) {
-        sample_size_str = `&sample_size=${sample_size}`;
+        sampleSizeStr = `&sample_size=${sample_size}`;
       }
 
-      const range_string = `&x_min=${range.x.min}&x_max=${range.x.max}&y_min=${range.y.min}&y_max=${range.y.max}`;
+      const rangeString = `&x_min=${range.x.min}&x_max=${range.x.max}&y_min=${range.y.min}&y_max=${range.y.max}`;
 
       // request the server to return a csv file using the unique filename
       // const agg_path = ReactionCIMEBackendFromEnv.baseUrl + "/get_agg_csv/" + path + "/" + column + "?x_min=" + range.x.min + "&x_max=" + range.x.max + "&y_min=" + range.y.min + "&y_max="+range.y.max; // TODO: make dynamic
-      const agg_path = `${ReactionCIMEBackendFromEnv.baseUrl}/get_agg_csv_cached/${path}?${retrieve_cols}${cache_cols_string}${sample_size_str}${range_string}`; // TODO: make dynamic
+      const aggPath = `${env.baseUrl}/get_agg_csv_cached/${path}?${retrieveCols}${cacheColsString}${sampleSizeStr}${rangeString}`; // TODO: make dynamic
 
       promise = cancellablePromise
-        ? cancellablePromise(d3v5.csv(agg_path, { ...ReactionCIMEBackendFromEnv.fetchParams, signal: controller?.signal }), controller)
-        : d3v5.csv(agg_path, { ...ReactionCIMEBackendFromEnv.fetchParams, signal: controller?.signal });
+        ? cancellablePromise(d3v5.csv(aggPath, { ...env.fetchParams, signal: controller?.signal }), controller)
+        : d3v5.csv(aggPath, { ...env.fetchParams, signal: controller?.signal });
     }
     trackPromise(
       promise
@@ -601,7 +600,7 @@ export class ReactionCIMEBackend {
             console.log('aggregation dataset is empty');
             alert('aggregation dataset is empty');
           } else {
-            if (cached_data == null) {
+            if (cachedData == null) {
               this.cache_agg_data(range, vectors);
             }
             finished(vectors);
@@ -622,17 +621,16 @@ export class ReactionCIMEBackend {
     controller?: AbortController,
     loadingArea?: string,
   ) {
-    let cols_string = '?dummy=0';
-    for (const i in cols) {
-      const col = cols[i];
-      cols_string += `&cols=${col}`;
-    }
+    let colsString = '?dummy=0';
+    cols.forEach((col) => {
+      colsString += `&cols=${col}`;
+    });
 
-    const path = `${ReactionCIMEBackendFromEnv.baseUrl}/get_csv_by_columns/${filename}${cols_string}`;
+    const path = `${env.baseUrl}/get_csv_by_columns/${filename}${colsString}`;
 
     const promise = cancellablePromise
-      ? cancellablePromise(d3v5.csv(path, { ...ReactionCIMEBackendFromEnv.fetchParams, signal: controller?.signal }), controller)
-      : d3v5.csv(path, { ...ReactionCIMEBackendFromEnv.fetchParams, signal: controller?.signal });
+      ? cancellablePromise(d3v5.csv(path, { ...env.fetchParams, signal: controller?.signal }), controller)
+      : d3v5.csv(path, { ...env.fetchParams, signal: controller?.signal });
 
     trackPromise(
       promise
@@ -750,7 +748,7 @@ export class ReactionCIMEBackend {
   public uploadPOIConstraints = async (filename: string, file) => {
     const contents = await file.text();
     const data = d3v5.csvParse(contents);
-    return ReactionCIMEBackendFromEnv.updatePOIConstraints(filename, data);
+    return env.updatePOIConstraints(filename, data);
     // var reader = new FileReader();
 
     // reader.onload = function(e) {
@@ -768,6 +766,8 @@ if (process.env.REACT_APP_CIME_BACKEND_URL == null) {
   console.error('The ENV-variable REACT_APP_CIME_BACKEND_URL must be set.');
 }
 
-export const ReactionCIMEBackendFromEnv = new ReactionCIMEBackend(process.env.REACT_APP_CIME_BACKEND_URL, {
+env = new ReactionCIMEBackend(process.env.REACT_APP_CIME_BACKEND_URL, {
   // credentials: "omit",
 });
+
+export const ReactionCIMEBackendFromEnv = env;

@@ -3,15 +3,7 @@ import { connect, ConnectedProps } from 'react-redux';
 import { Checkbox, FormControlLabel, Grid, Radio, FormControl, InputLabel, Select, MenuItem, Typography } from '@mui/material';
 import { Box } from '@mui/system';
 import { AppState } from '../../State/Store';
-import {
-  AggregationMethod,
-  setAggregationMethod,
-  setDeriveRange,
-  setUncertaintyRange,
-  setValueRange,
-  setVariableIndex,
-  toggleDeriveRange,
-} from '../../State/AggregateSettingsDuck';
+import { AggregationMethod, AggregateActions } from '../../State/AggregateSettingsDuck';
 import { MinMaxNumberInput } from '../../Utility/MinMaxNumberInput';
 
 const mapStateToProps = (state: AppState) => ({
@@ -21,19 +13,19 @@ const mapStateToProps = (state: AppState) => ({
 });
 
 const mapDispatchToProps = (dispatch) => ({
-  setValueRange: (range) => dispatch(setValueRange(range)),
-  setUncertaintyRange: (range) => dispatch(setUncertaintyRange(range)),
-  toggleDeriveRange: () => dispatch(toggleDeriveRange()),
-  setDeriveRange: (value) => dispatch(setDeriveRange(value)),
-  setVariableIndex: (value) => dispatch(setVariableIndex(value)),
-  setAggregationMethod: (value) => dispatch(setAggregationMethod(value)),
+  setValueRange: (range) => dispatch(AggregateActions.setValueRange(range)),
+  setUncertaintyRange: (range) => dispatch(AggregateActions.setUncertaintyRange(range)),
+  toggleDeriveRange: () => dispatch(AggregateActions.toggleDeriveRange()),
+  setDeriveRange: (value) => dispatch(AggregateActions.setDeriveRange(value)),
+  setVariableIndex: (value) => dispatch(AggregateActions.setVariableIndex(value)),
+  setAggregationMethod: (value) => dispatch(AggregateActions.setAggregationMethod(value)),
 });
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
 
 type PropsFromRedux = ConnectedProps<typeof connector>;
 
-type Props = PropsFromRedux & {};
+type Props = PropsFromRedux;
 
 export const AdvancedAggregationSettings = connector(
   ({
@@ -61,8 +53,7 @@ export const AdvancedAggregationSettings = connector(
         }
       }
       // eslint-disable-next-line
-    }, [selectAttributeInfo])
-
+    }, [selectAttributeInfo]);
 
     // TODO: should we give a user input for sample size? the benefits are not so big (would be a maximum of 300 due to browser memory issues, now it is set to 200)
     // if we decide to include it: remove "false" flag; also make sure that cache is cleared and that the background is updated when sample size is changed
