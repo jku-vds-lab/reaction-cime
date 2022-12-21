@@ -1,0 +1,24 @@
+diff --git a/build/src/index.d.ts b/build/src/index.d.ts
+index 57e347321b38143ff0706fb5102b097840411de7..ebc6e06e9053e5177c0136c6dc8724b94dbdbd81 100644
+--- a/build/src/index.d.ts
++++ b/build/src/index.d.ts
+@@ -4,5 +4,5 @@ export { compile } from './compile/compile';
+ export type { Config } from './config';
+ export type { TopLevelSpec } from './spec';
+ export * from './util';
+-export { normalize, version };
++export { normalize };
+ //# sourceMappingURL=index.d.ts.map
+\ No newline at end of file
+diff --git a/build/src/index.js b/build/src/index.js
+index 34342d5b7411e198fc5bb728634dc7fc394b54ad..1dfdc804472542d36407091af90ece2f4bd4a2fc 100644
+--- a/build/src/index.js
++++ b/build/src/index.js
+@@ -2,5 +2,5 @@ import { version } from '../package.json';
+ import { normalize } from './normalize';
+ export { compile } from './compile/compile';
+ export * from './util';
+-export { normalize, version };
++export { normalize };
+ //# sourceMappingURL=index.js.map
+\ No newline at end of file
