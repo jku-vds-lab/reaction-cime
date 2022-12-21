@@ -11,7 +11,7 @@ import gower
 import numpy as np
 import pandas as pd
 import umap
-from flask import Blueprint, Response, abort, current_app, jsonify, render_template, request, stream_with_context
+from flask import Blueprint, Response, abort, current_app, jsonify, request, stream_with_context
 from flask.helpers import make_response, send_file
 from openTSNE import TSNE
 from rdkit import Chem
@@ -39,25 +39,6 @@ reaction_cime_api = Blueprint("reaction_cime", __name__)
 def hello():
     return "Hello World"
 
-
-# region --------------- server management ---------------
-
-
-@reaction_cime_api.route("/")
-def index():
-    return render_template("jku-vds-lab/reaction-cime/index.html")
-
-
-@reaction_cime_api.route("/index.html")
-def index_2():
-    return render_template("jku-vds-lab/reaction-cime/index.html")
-
-
-# @reaction_cime_api.route('/favicon.ico')
-# def favicon():
-#     return render_template('jku-vds-lab/reaction-cime/favicon.ico')
-
-# endregion
 
 # region --------------- database ---------------
 

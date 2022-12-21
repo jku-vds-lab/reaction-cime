@@ -3,6 +3,7 @@ from typing import Type
 
 from fastapi import FastAPI
 from fastapi.middleware.wsgi import WSGIMiddleware
+from fastapi.staticfiles import StaticFiles
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from pydantic import BaseModel
@@ -34,23 +35,18 @@ class VisynPlugin(AVisynPlugin):
         pass
 
     def init_app(self, app: FastAPI):
+        import logging
 
-        # TODO: Flask app and bundle are actually separate in the deployment
-        flask_app = Flask(
-            __name__,
-            template_folder="../build",
-            static_folder="../build/jku-vds-lab/reaction-cime/static",
-            static_url_path="/jku-vds-lab/reaction-cime/static",
-        )  # , static_folder="../../build/static", template_folder="../../build")
+        _log = logging.getLogger(__name__)
+
+        flask_app = Flask(__name__)
         # CORS(app)
 
         tmp_dir = get_settings().tmp_dir
         flask_app.config["tempdir"] = tmp_dir
         if not os.path.exists(tmp_dir):
             os.makedirs(tmp_dir)
-        flask_app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///" + os.path.join(
-            tmp_dir, "app.sqlite"
-        )  # 'sqlite://' + app.config['REACTION_CIME_FILES_DIRECTORY'] + "//app.sqlite"
+        flask_app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///" + os.path.join(tmp_dir, "app.sqlite")
 
         db = SQLAlchemy(flask_app)
         # app.config['SQLALCHEMY_ECHO'] = True
@@ -61,16 +57,19 @@ class VisynPlugin(AVisynPlugin):
 
         flask_app.config["REACTION_CIME_DBO"] = ReactionCIMEDBO(db)
 
-        # app.config['REACTION_CIME_DBO'].save_dataframe(pd.DataFrame([{"col1":"new", "col2": "test2"}]), "MyTest1")
-        # print(app.config['REACTION_CIME_DBO'].get_dataframe_from_table("MyTest1"))
-        # app.config['REACTION_CIME_DBO'].update_row("MyTest1", 0, {"col1": "asdf"})
-        # print(app.config['REACTION_CIME_DBO'].get_dataframe_from_table("MyTest1"))
-
         from .reaction_cime_api import reaction_cime_api
 
         flask_app.register_blueprint(reaction_cime_api)
 
         app.mount("/api/reaction_cime", WSGIMiddleware(init_legacy_app(flask_app)))
+
+        @app.on_event("startup")
+        async def startup():
+            # Add the / path at the very end to match all other routes before
+            if get_settings().bundles_dir:
+                # Mount the bundles directory as static file to enable the frontend (required in single Dockerfile mode)
+                _log.info(f"Mounting bundles dir: {get_settings().bundles_dir}")
+                app.mount("/", StaticFiles(directory=get_settings().bundles_dir, html=True), name="reaction_cime_bundles")
 
     @property
     def setting_class(self) -> Type[BaseModel]:
