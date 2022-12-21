@@ -7,6 +7,7 @@ from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from pydantic import BaseModel
 from tdp_core.plugin.model import AVisynPlugin, RegHelper
+from tdp_core.server.utils import init_legacy_app
 
 from .settings import ReactionCimeSettings, get_settings
 
@@ -69,7 +70,7 @@ class VisynPlugin(AVisynPlugin):
 
         flask_app.register_blueprint(reaction_cime_api)
 
-        app.mount("/api/reaction_cime", WSGIMiddleware(flask_app))
+        app.mount("/api/reaction_cime", WSGIMiddleware(init_legacy_app(flask_app)))
 
     @property
     def setting_class(self) -> Type[BaseModel]:
