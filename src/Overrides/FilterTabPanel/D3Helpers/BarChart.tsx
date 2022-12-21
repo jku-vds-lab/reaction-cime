@@ -13,8 +13,8 @@ type Props = {
 };
 
 export function ReactBarChart({ data, value, isSmiles, setValue }: Props) {
-  const rel_width = 2;
-  const rel_height = 1;
+  const relWidth = 2;
+  const relHeight = 1;
 
   const [xScale, setXScale] = React.useState<any>();
   const [yScale, setYScale] = React.useState<any>();
@@ -31,7 +31,7 @@ export function ReactBarChart({ data, value, isSmiles, setValue }: Props) {
               return d.feature;
             }),
           )
-          .range([0, rel_width]),
+          .range([0, relWidth]),
       );
 
       setYScale(() =>
@@ -43,12 +43,12 @@ export function ReactBarChart({ data, value, isSmiles, setValue }: Props) {
               return d.count;
             }),
           ])
-          .range([0, rel_height]),
+          .range([0, relHeight]),
       );
     }
   }, [data]);
   return (
-    <svg preserveAspectRatio="xMidYMid meet" width="100%" height="100" viewBox={`0 0 ${rel_width} ${rel_height}`}>
+    <svg preserveAspectRatio="xMidYMid meet" width="100%" height="100" viewBox={`0 0 ${relWidth} ${relHeight}`}>
       {xScale && yScale && (
         <g>
           {data.map((d) => {
@@ -61,7 +61,7 @@ export function ReactBarChart({ data, value, isSmiles, setValue }: Props) {
               >
                 <rect
                   x={xScale(d.feature)}
-                  y={rel_height - yScale(d.count)}
+                  y={relHeight - yScale(d.count)}
                   width={xScale.bandwidth()}
                   height={yScale(d.count)}
                   style={{
@@ -113,7 +113,7 @@ export function FeatureTooltipTitle({ feature, count, isSmiles }) {
         }
       });
     }
-  }, [feature]);
+  }, [feature, isSmiles]);
 
   return (
     <>

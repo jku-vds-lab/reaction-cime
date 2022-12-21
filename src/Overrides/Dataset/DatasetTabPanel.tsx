@@ -113,8 +113,7 @@ export const DatasetTabPanel = connector(({ onDataSelected, resetViews, setTrigg
         if (stateDump != null) {
           // we have to update the workspace positions manually to the new positions
           const newProjectionEntities = { ...stateDump.multiples.projections.entities };
-          for (const i in stateDump.multiples.multiples.ids) {
-            const id = stateDump.multiples.multiples.ids[i];
+          stateDump.multiples.multiples.ids.forEach((id) => {
             const active = stateDump.multiples.multiples.entities[id];
             const workspaceId = active.attributes.workspace;
             const workspace = state.multiples.multiples.entities[id].attributes.workspace as IProjection;
@@ -122,7 +121,7 @@ export const DatasetTabPanel = connector(({ onDataSelected, resetViews, setTrigg
             const newWorkspaceIdPosition = { ...newProjectionEntities[workspaceId] };
             newWorkspaceIdPosition.positions = newPositions;
             newProjectionEntities[workspaceId] = newWorkspaceIdPosition;
-          }
+          });
           const newProjections = { ...stateDump.multiples.projections, entities: newProjectionEntities };
           const newMultiples = { ...stateDump.multiples, projections: newProjections };
           stateDump = { ...stateDump, multiples: newMultiples };

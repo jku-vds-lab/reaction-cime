@@ -70,10 +70,10 @@ export class BackendCSVLoader implements Loader {
     controller?: AbortController,
   ) {
     // request the server to return a csv file using the unique filename
-    const poi_path = `${ReactionCIMEBackendFromEnv.baseUrl}/get_poi_csv/${entry.path}`;
+    const poiPath = `${ReactionCIMEBackendFromEnv.baseUrl}/get_poi_csv/${entry.path}`;
     const promise = cancellablePromise
-      ? cancellablePromise(d3v5.csv(poi_path, { ...ReactionCIMEBackendFromEnv.fetchParams, signal: controller?.signal }), controller)
-      : d3v5.csv(poi_path, { ...ReactionCIMEBackendFromEnv.fetchParams, signal: controller?.signal });
+      ? cancellablePromise(d3v5.csv(poiPath, { ...ReactionCIMEBackendFromEnv.fetchParams, signal: controller?.signal }), controller)
+      : d3v5.csv(poiPath, { ...ReactionCIMEBackendFromEnv.fetchParams, signal: controller?.signal });
     trackPromise(
       promise
         .then((vectors) => {

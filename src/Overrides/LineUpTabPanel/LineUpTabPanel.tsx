@@ -32,9 +32,9 @@ export const LineUpTabPanel = connector(({ setDetailVisibility, setLineUpInput_f
     setDetailVisibility(true);
     setLineUpInput_filter(filter);
 
-    const curr_sizes = splitRef.current.split.getSizes();
-    if (curr_sizes[1] < 2) {
-      splitRef.current.split.setSizes([curr_sizes[0], 70]);
+    const currSizes = splitRef.current.split.getSizes();
+    if (currSizes[1] < 2) {
+      splitRef.current.split.setSizes([currSizes[0], 70]);
     }
   };
 

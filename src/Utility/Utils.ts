@@ -133,7 +133,9 @@ export const downloadImpl = (data: string, name: string, mimetype: string) => {
 };
 
 export const convertToRgb = (value: string | { r: number; g: number; b: number }): { r: number; g: number; b: number } => {
-  if (Object.keys(value).includes('r') && Object.keys(value).includes('g') && Object.keys(value).includes('b')) return { r: value.r, g: value.g, b: value.b };
+  if (typeof value !== 'string') {
+    return { r: value.r, g: value.g, b: value.b };
+  }
 
   value = value.toString();
   if (value.startsWith('rgb')) {

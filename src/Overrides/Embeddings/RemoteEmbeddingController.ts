@@ -1,5 +1,5 @@
 import { Dataset, EmbeddingController, IProjection } from 'projection-space-explorer';
-import remoteWorker from './remote.worker';
+import RemoteWorker from './remote.worker';
 
 export class RemoteEmbeddingController extends EmbeddingController {
   targetBounds: any;
@@ -17,19 +17,20 @@ export class RemoteEmbeddingController extends EmbeddingController {
 
   init(dataset: Dataset, selection: any, params: any, workspace: IProjection) {
     if (this.callback_fn) this.callback_fn('init');
-    const selected_feature_info = {};
+    const selectedFeatureInfo = {};
     selection.forEach((feature) => {
       if (feature.checked) {
-        const feature_info = {};
-        feature_info.normalize = feature.normalized;
-        feature_info.featureType = dataset.columns[feature.name].featureType.toString();
-        feature_info.range = dataset.columns[feature.name].range;
-        feature_info.distinct = dataset.columns[feature.name].distinct;
-        selected_feature_info[feature.name] = feature_info;
+        const featureInfo = {
+          normalize: feature.normalize,
+          featureType: dataset.columns[feature.name].featureType.toString(),
+          range: dataset.columns[feature.name].range,
+          distinct: dataset.columns[feature.name].distinct,
+        };
+        selectedFeatureInfo[feature.name] = featureInfo;
       }
     });
     params.embedding_method = this.embedding_method;
-    this.worker = new remoteWorker();
+    this.worker = new RemoteWorker();
     this.worker.postMessage({
       messageType: 'init',
       init_coordinates: workspace.positions.map((v, i) => {
@@ -37,7 +38,7 @@ export class RemoteEmbeddingController extends EmbeddingController {
       }),
       path: dataset.info.path,
       params,
-      selected_feature_info,
+      selected_feature_info: selectedFeatureInfo,
     });
 
     this.worker.addEventListener(
