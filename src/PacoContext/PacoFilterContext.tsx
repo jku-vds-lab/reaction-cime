@@ -3,13 +3,11 @@ import { connect, ConnectedProps } from 'react-redux';
 import './PacoContext.scss';
 import Plotly from 'plotly.js-dist';
 import { Box, Button, IconButton, Tooltip, Typography } from '@mui/material';
-import { useCancellablePromise } from 'projection-space-explorer';
+import { useCancellablePromise, AttributeSelectionTable } from 'projection-space-explorer';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import UpdateIcon from '@mui/icons-material/Update';
 import FileUploadIcon from '@mui/icons-material/FileUpload';
 import SettingsIcon from '@mui/icons-material/Settings';
-// @ts-ignore
-import { AttributeSelectionTable } from 'projection-space-explorer';
 import { LoadingIndicatorView } from '../Overrides/Dataset/DatasetTabPanel';
 import { ReactionCIMEBackendFromEnv } from '../Backend/ReactionCIMEBackend';
 import { AppState } from '../State/Store';
@@ -27,11 +25,11 @@ type PropsFromRedux = ConnectedProps<typeof connector>;
 
 type Props = PropsFromRedux & {};
 
-const loading_area = 'loading_indicator_paco';
+const loadingArea = 'loading_indicator_paco';
 export const PacoContext = connector(function ({ dataset, triggerDatasetUpdate }: Props) {
   if (dataset == null || dataset.columns == null) return null;
 
-  const paco_ref = React.useRef<any>();
+  const pacoRef = React.useRef<any>();
   const fileInput = React.useRef<any>();
   const { cancellablePromise, cancelPromises } = useCancellablePromise();
 
@@ -44,11 +42,11 @@ export const PacoContext = connector(function ({ dataset, triggerDatasetUpdate }
   const [totalDataPoints, setTotalDataPoints] = React.useState(-1);
 
   const updateBackendConstraints = (dimensions) => {
-    const constraint_dimensions = dimensions.filter((dim) => dim.constraintrange != null && dim.constraintrange.length > 0);
-    const all_constraints = [];
-    for (const i in constraint_dimensions) {
-      const const_dimension = constraint_dimensions[i];
-      let constraintarray = const_dimension.constraintrange;
+    const constraintDimensions = dimensions.filter((dim) => dim.constraintrange != null && dim.constraintrange.length > 0);
+    const allConstraints = [];
+    for (const i in constraintDimensions) {
+      const constDimension = constraintDimensions[i];
+      let constraintarray = constDimension.constraintrange;
       if (!Array.isArray(constraintarray[0])) {
         // check, if it is a 1-dimensional array and transform it into a 2-d array
         constraintarray = [constraintarray];
@@ -57,23 +55,23 @@ export const PacoContext = connector(function ({ dataset, triggerDatasetUpdate }
         const constraint = constraintarray[j];
 
         // handle numeric data
-        if (dataset.columns[const_dimension.label].isNumeric) {
-          const constraint_object = { col: const_dimension.label, operator: 'BETWEEN', val1: constraint[0], val2: constraint[1] };
-          all_constraints.push(constraint_object);
+        if (dataset.columns[constDimension.label].isNumeric) {
+          const constraint_object = { col: constDimension.label, operator: 'BETWEEN', val1: constraint[0], val2: constraint[1] };
+          allConstraints.push(constraint_object);
         } else {
           // handle categorical data
           const lower = Math.ceil(constraint[0]);
           const upper = Math.floor(constraint[1]);
           for (let n = lower; n <= upper; n++) {
             // iterate over all real valued indices and add them to the constraints
-            const constraint_object = { col: const_dimension.label, operator: 'EQUALS', val1: const_dimension.ticktext[n], val2: const_dimension.ticktext[n] };
-            all_constraints.push(constraint_object);
+            const constraintObject = { col: constDimension.label, operator: 'EQUALS', val1: constDimension.ticktext[n], val2: constDimension.ticktext[n] };
+            allConstraints.push(constraintObject);
           }
         }
       }
     }
 
-    ReactionCIMEBackendFromEnv.updatePOIConstraints(dataset.info.path, all_constraints).then((res) => {
+    ReactionCIMEBackendFromEnv.updatePOIConstraints(dataset.info.path, allConstraints).then((res) => {
       if (res.msg === 'ok' && triggerDatasetUpdate != null) {
         triggerDatasetUpdate({
           display: dataset.info.path,
@@ -113,7 +111,7 @@ export const PacoContext = connector(function ({ dataset, triggerDatasetUpdate }
     const pacoShowColumns = pacoAttributes.filter((col) => col.show);
     if (pacoShowColumns.length > 0) {
       cancelPromises();
-      const abort_controller = new AbortController(); // TODO: reiterate where AbortController needs to be instantiated --> can it be moved inside the loadPacoCSV function?
+      const abortController = new AbortController(); // TODO: reiterate where AbortController needs to be instantiated --> can it be moved inside the loadPacoCSV function?
       ReactionCIMEBackendFromEnv.loadPOIConstraints(dataset.info.path).then((constraints) => {
         ReactionCIMEBackendFromEnv.loadPacoCSV(
           (rows) => {
@@ -127,17 +125,17 @@ export const PacoContext = connector(function ({ dataset, triggerDatasetUpdate }
               });
             }
 
-            function get_processed_info(values, key) {
-              const current_constraints = constraints.filter((constraint) => constraint.col === key);
+            function getProcessedInfo(values, key) {
+              const currentConstraints = constraints.filter((constraint) => constraint.col === key);
 
               // handle numeric data
               if (dataset.columns[key].isNumeric) {
-                const val_range = dataset.columns[key].range.max - dataset.columns[key].range.min;
-                const eps = val_range * 0.01;
+                const valRange = dataset.columns[key].range.max - dataset.columns[key].range.min;
+                const eps = valRange * 0.01;
 
                 const constraintrange = [];
-                for (const i in current_constraints) {
-                  const constraint = current_constraints[i];
+                for (const i in currentConstraints) {
+                  const constraint = currentConstraints[i];
                   if (constraint.operator === 'BETWEEN') {
                     constraintrange.push([+constraint.val1, +constraint.val2]);
                   } else if (constraint.operator === 'EQUALS') {
@@ -152,8 +150,8 @@ export const PacoContext = connector(function ({ dataset, triggerDatasetUpdate }
               const num_values = values.map((val) => distinct.indexOf(val));
 
               const constraintrange = [];
-              for (const i in current_constraints) {
-                const constraint = current_constraints[i];
+              for (const i in currentConstraints) {
+                const constraint = currentConstraints[i];
                 if (constraint.operator === 'EQUALS') {
                   const num_val = distinct.indexOf(constraint.val1);
                   constraintrange.push([num_val - 0.5, num_val + 0.5]); // have to add a small amount to get a range
@@ -166,15 +164,15 @@ export const PacoContext = connector(function ({ dataset, triggerDatasetUpdate }
             const cols = Object.keys(rows[0]);
             const dimensions = cols.map((v, i) => {
               const values = unpack(rows, v);
-              const processed_info = get_processed_info(values, v);
+              const processedInfo = getProcessedInfo(values, v);
               return {
-                values: processed_info.values,
+                values: processedInfo.values,
                 label: v,
                 // multiselect: false,
-                constraintrange: processed_info.constraintrange,
+                constraintrange: processedInfo.constraintrange,
                 // range: [Math.min(...values), Math.max(...values)],
-                tickvals: processed_info.tickvals,
-                ticktext: processed_info.ticktext,
+                tickvals: processedInfo.tickvals,
+                ticktext: processedInfo.ticktext,
                 // tickformat: ..., // https://plotly.com/javascript/reference/parcoords/#parcoords-dimensions-items-dimension-tickformat
                 // visible: true, //TODO: set to false, if, for example, datatype not recognized
               };
@@ -209,9 +207,9 @@ export const PacoContext = connector(function ({ dataset, triggerDatasetUpdate }
               responsive: true,
             };
 
-            Plotly.newPlot(paco_ref.current, [paco], layout, config);
+            Plotly.newPlot(pacoRef.current, [paco], layout, config);
 
-            paco_ref.current
+            pacoRef.current
               .on('plotly_hover', function (data) {
                 console.log('plotly_hover');
                 console.log(data);
@@ -224,8 +222,8 @@ export const PacoContext = connector(function ({ dataset, triggerDatasetUpdate }
           dataset.info.path,
           pacoShowColumns.map((col) => col.feature),
           cancellablePromise,
-          abort_controller,
-          loading_area,
+          abortController,
+          loadingArea,
         );
       });
     }
@@ -251,7 +249,7 @@ export const PacoContext = connector(function ({ dataset, triggerDatasetUpdate }
               variant="outlined"
               aria-label="Update Points of Interest"
               onClick={() => {
-                updateBackendConstraints(paco_ref.current.data[0].dimensions);
+                updateBackendConstraints(pacoRef.current.data[0].dimensions);
               }}
             >
               <UpdateIcon />
@@ -287,9 +285,9 @@ export const PacoContext = connector(function ({ dataset, triggerDatasetUpdate }
         </Box>
       </Box>
       <Box style={{ clear: 'both' }} paddingLeft={2} paddingTop={1} paddingRight={2}>
-        <div style={{}} ref={paco_ref} />
+        <div style={{}} ref={pacoRef} />
       </Box>
-      <LoadingIndicatorView area={loading_area} />
+      <LoadingIndicatorView area={loadingArea} />
     </div>
   );
 });

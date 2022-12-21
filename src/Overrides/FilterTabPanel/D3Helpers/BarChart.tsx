@@ -3,7 +3,7 @@ import * as d3 from 'd3v5';
 import React from 'react';
 import { styled } from '@mui/material/styles';
 import { ReactionCIMEBackendFromEnv } from '../../../Backend/ReactionCIMEBackend';
-import { LIGHT_GREY, map_smiles_to_shortname, PSE_BLUE } from '../../../Utility/Utils';
+import { LIGHT_GREY, mapSmilesToShortname, PSE_BLUE } from '../../../Utility/Utils';
 
 type Props = {
   data: { feature: string; count: number }[];
@@ -119,7 +119,7 @@ export function FeatureTooltipTitle({ feature, count, isSmiles }) {
     <>
       <div>Count: {count}</div>
       <div>Feature: {feature}</div>
-      {isSmiles && <div>Short name: {map_smiles_to_shortname(feature)}</div>}
+      {isSmiles && <div>Short name: {mapSmilesToShortname(feature)}</div>}
       {smilesImg && (
         <div
           id="smiles_${value.category}"

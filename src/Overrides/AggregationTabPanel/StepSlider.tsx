@@ -33,11 +33,11 @@ export const StepSlider = sliderconnector(({ selectAttribute, setAggregateColor,
     let m;
     if (selectAttributeInfo) {
       const variables = Object.keys(selectAttributeInfo);
-      const step_arr = Object.keys(selectAttributeInfo[variables[0]].temporal_columns);
-      step_arr.sort();
+      const stepArr = Object.keys(selectAttributeInfo[variables[0]].temporal_columns);
+      stepArr.sort();
 
-      m = step_arr.map((step, index) => {
-        return { value: parseInt(step), label: step };
+      m = stepArr.map((step, index) => {
+        return { value: parseInt(step, 10), label: step };
       });
     }
     setMarks(m);
@@ -47,40 +47,36 @@ export const StepSlider = sliderconnector(({ selectAttribute, setAggregateColor,
   React.useEffect(() => {
     const timestep = curStep;
     if (selectAttributeInfo && variableIndex) {
-      const variables_array = Object.keys(selectAttributeInfo);
-      const value_col = selectAttributeInfo[variables_array[variableIndex.valueVariableIndex]].temporal_columns[timestep];
-      let cache_cols = Object.values(selectAttributeInfo[variables_array[variableIndex.valueVariableIndex]].temporal_columns);
+      const variablesArray = Object.keys(selectAttributeInfo);
+      const valueCol = selectAttributeInfo[variablesArray[variableIndex.valueVariableIndex]].temporal_columns[timestep];
+      let cacheCols = Object.values(selectAttributeInfo[variablesArray[variableIndex.valueVariableIndex]].temporal_columns);
 
-      let uncertainty_col = null;
-      if (variableIndex.valueVariableIndex !== variableIndex.uncertaintyVariableIndex && variables_array[variableIndex.uncertaintyVariableIndex] != null) {
-        uncertainty_col = selectAttributeInfo[variables_array[variableIndex.uncertaintyVariableIndex]].temporal_columns[timestep];
-        cache_cols = cache_cols.concat(Object.values(selectAttributeInfo[variables_array[variableIndex.uncertaintyVariableIndex]].temporal_columns));
+      let uncertaintyCol = null;
+      if (variableIndex.valueVariableIndex !== variableIndex.uncertaintyVariableIndex && variablesArray[variableIndex.uncertaintyVariableIndex] != null) {
+        uncertaintyCol = selectAttributeInfo[variablesArray[variableIndex.uncertaintyVariableIndex]].temporal_columns[timestep];
+        cacheCols = cacheCols.concat(Object.values(selectAttributeInfo[variablesArray[variableIndex.uncertaintyVariableIndex]].temporal_columns));
       }
-      setAggregateColor({ value_col, uncertainty_col, cache_cols });
+      setAggregateColor({ value_col: valueCol, uncertainty_col: uncertaintyCol, cache_cols: cacheCols });
     } else {
       setAggregateColor({ value_col: selectAttribute, uncertainty_col: null, cache_cols: null });
     }
     // eslint-disable-next-line
-    }, [curStep, selectAttribute, variableIndex])
+  }, [curStep, selectAttribute, variableIndex]);
 
-  return (
+  return marks && marks.length > 0 ? (
     <>
-      {marks && marks.length > 0 && (
-        <>
-          <Typography id="range-slider" gutterBottom>
-            Choose Step
-          </Typography>
-          <Slider
-            min={0}
-            max={marks.length - 1}
-            value={curStep}
-            onChange={(_, newValue) => stepChanged(newValue)}
-            step={1}
-            marks={marks}
-            valueLabelDisplay="auto"
-          />
-        </>
-      )}
+      <Typography id="range-slider" gutterBottom>
+        Choose Step
+      </Typography>
+      <Slider
+        min={0}
+        max={marks.length - 1}
+        value={curStep}
+        onChange={(_, newValue) => stepChanged(newValue)}
+        step={1}
+        marks={marks}
+        valueLabelDisplay="auto"
+      />
     </>
-  );
+  ) : null;
 });

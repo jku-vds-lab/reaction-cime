@@ -11,7 +11,7 @@ import { AppState, CIME4RViewActions } from '../../State/Store';
 import { UploadedFiles } from './UploadedFiles';
 import { BackendCSVLoader } from './BackendCSVLoader';
 import { setTriggerUpdate } from '../../State/HandleDatasetDuck';
-import { save_smiles_lookup_table } from '../../Utility/Utils';
+import { saveSmilesLookupTable } from '../../Utility/Utils';
 
 function selectPositions(dataset: Dataset, projection: IProjection) {
   const xChannel = projection.xChannel ?? 'x';
@@ -77,7 +77,7 @@ type Props = PropsFromRedux & {
 
 export const DatasetTabPanel = connector(({ onDataSelected, resetViews, setTriggerUpdate, hydrateState }: Props) => {
   const { cancellablePromise, cancelPromises } = useCancellablePromise();
-  const abort_controller = new AbortController();
+  const abortController = new AbortController();
   const [refreshUploadedFiles, setRefreshUploadedFiles] = useState(0);
   const lookupFileInput = React.useRef<any>();
 
@@ -90,9 +90,9 @@ export const DatasetTabPanel = connector(({ onDataSelected, resetViews, setTrigg
   };
 
   const triggerUpdate = (entry, state?: AppState) => {
-    let state_dump = null;
+    let stateDump = null;
     if (state != null) {
-      state_dump = UtilityActions.partialDump(state, [
+      stateDump = UtilityActions.partialDump(state, [
         'dataset',
         'activeLine',
         'currentAggregation',
@@ -110,35 +110,35 @@ export const DatasetTabPanel = connector(({ onDataSelected, resetViews, setTrigg
     new BackendCSVLoader().resolvePath(
       entry,
       (dataset) => {
-        if (state_dump != null) {
+        if (stateDump != null) {
           // we have to update the workspace positions manually to the new positions
-          const new_projection_entities = { ...state_dump.multiples.projections.entities };
-          for (const i in state_dump.multiples.multiples.ids) {
-            const id = state_dump.multiples.multiples.ids[i];
-            const active = state_dump.multiples.multiples.entities[id];
-            const workspace_id = active.attributes.workspace;
+          const newProjectionEntities = { ...stateDump.multiples.projections.entities };
+          for (const i in stateDump.multiples.multiples.ids) {
+            const id = stateDump.multiples.multiples.ids[i];
+            const active = stateDump.multiples.multiples.entities[id];
+            const workspaceId = active.attributes.workspace;
             const workspace = state.multiples.multiples.entities[id].attributes.workspace as IProjection;
-            const new_positions = selectPositions(dataset, workspace);
-            const new_workspace_id_position = { ...new_projection_entities[workspace_id] };
-            new_workspace_id_position.positions = new_positions;
-            new_projection_entities[workspace_id] = new_workspace_id_position;
+            const newPositions = selectPositions(dataset, workspace);
+            const newWorkspaceIdPosition = { ...newProjectionEntities[workspaceId] };
+            newWorkspaceIdPosition.positions = newPositions;
+            newProjectionEntities[workspaceId] = newWorkspaceIdPosition;
           }
-          const new_projections = { ...state_dump.multiples.projections, entities: new_projection_entities };
-          const new_multiples = { ...state_dump.multiples, projections: new_projections };
-          state_dump = { ...state_dump, multiples: new_multiples };
+          const newProjections = { ...stateDump.multiples.projections, entities: newProjectionEntities };
+          const newMultiples = { ...stateDump.multiples, projections: newProjections };
+          stateDump = { ...stateDump, multiples: newMultiples };
         }
-        intermediateOnDataSelected(dataset, state_dump);
+        intermediateOnDataSelected(dataset, stateDump);
       },
       cancellablePromise,
       null,
-      abort_controller,
+      abortController,
     );
   };
 
   React.useEffect(() => {
     setTriggerUpdate(triggerUpdate);
     // eslint-disable-next-line
-    }, [])
+  }, []);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
@@ -154,7 +154,7 @@ export const DatasetTabPanel = connector(({ onDataSelected, resetViews, setTrigg
           setRefreshUploadedFiles(refreshUploadedFiles + 1);
         }}
         cancellablePromise={cancellablePromise}
-        abort_controller={abort_controller}
+        abort_controller={abortController}
       />
 
       <Box paddingLeft={2} paddingTop={2}>
@@ -182,7 +182,7 @@ export const DatasetTabPanel = connector(({ onDataSelected, resetViews, setTrigg
         ref={lookupFileInput}
         type="file"
         onChange={(e) => {
-          save_smiles_lookup_table(e.target.files);
+          saveSmilesLookupTable(e.target.files);
         }}
       />
       <Box paddingLeft={2} paddingTop={2} paddingRight={2}>

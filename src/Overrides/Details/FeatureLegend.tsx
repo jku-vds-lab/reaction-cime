@@ -10,7 +10,7 @@ import { DefaultLegend, FeatureType, IVector, RootState } from 'projection-space
 import VegaDensity from './VegaHelpers/VegaDensity';
 import BarChart from './VegaHelpers/BarChart';
 import VegaDate from './VegaHelpers/VegaDate';
-import { map_smiles_to_shortname } from '../../Utility/Utils';
+import { mapSmilesToShortname } from '../../Utility/Utils';
 import { ReactionCIMEBackendFromEnv } from '../../Backend/ReactionCIMEBackend';
 
 export function formatSMILESTooltip(value: any, valueToHtml: (value: any) => string, maxDepth: number): string {
@@ -18,7 +18,7 @@ export function formatSMILESTooltip(value: any, valueToHtml: (value: any) => str
 
   content += '<table>';
   content += `<tr><td class="key">ratio:</td><td class="value">${valueToHtml(value.feature)}</td></tr>`;
-  content += `<tr><td class="key">short name:</td><td class="value">${valueToHtml(map_smiles_to_shortname(value.category))}</td></tr>`;
+  content += `<tr><td class="key">short name:</td><td class="value">${valueToHtml(mapSmilesToShortname(value.category))}</td></tr>`;
   content += `<tr><td class="key">smiles:</td><td class="value">${valueToHtml(value.category)}</td></tr>`;
   content += `<tr><td class="key">subset:</td><td class="value">${valueToHtml(value.subset)}</td></tr>`;
   content += `</table>`;
@@ -301,7 +301,7 @@ function getTable(vectors, aggregation, legendAttributes, dataset) {
                   <div style={{ maxWidth: 200 }}>
                     {row.feature}
                     <br />
-                    <b>{map_smiles_to_shortname(row.category)}</b>
+                    <b>{mapSmilesToShortname(row.category)}</b>
                   </div>
                 </TableCell>
                 <TableCell>{row.char}</TableCell>

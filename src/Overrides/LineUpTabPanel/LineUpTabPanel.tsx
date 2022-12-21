@@ -3,7 +3,7 @@ import { connect, ConnectedProps } from 'react-redux';
 import GetAppIcon from '@mui/icons-material/GetApp';
 import React from 'react';
 import { DetailViewActions } from 'projection-space-explorer';
-import { setLineUpInput_filter } from '../../State/LineUpInputDuck';
+import { setLineUpInputFilter } from '../../State/LineUpInputDuck';
 import { AppState } from '../../State/Store';
 import { downloadImpl } from '../../Utility/Utils';
 
@@ -14,7 +14,7 @@ const mapStateToProps = (state: AppState) => ({
 
 const mapDispatchToProps = (dispatch) => ({
   setDetailVisibility: (value) => dispatch(DetailViewActions.setDetailVisibility(value)),
-  setLineUpInput_filter: (value) => dispatch(setLineUpInput_filter(value)),
+  setLineUpInput_filter: (value) => dispatch(setLineUpInputFilter(value)),
 });
 
 const connector = connect(mapStateToProps, mapDispatchToProps);

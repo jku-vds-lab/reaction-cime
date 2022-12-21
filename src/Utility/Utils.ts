@@ -21,12 +21,12 @@ export const formatLabel = (value: number) => {
 export const formatLabelWithRange = (value, min, max) => {
   if (max == null || min == null) return Math.round(value);
 
-  const step_size = (max - min) / 100;
-  if (step_size < 0.01) {
+  const stepSize = (max - min) / 100;
+  if (stepSize < 0.01) {
     // https://github.com/d3/d3-format
     return d3v5.format('.2e')(value);
   }
-  if (step_size >= 1) return Math.round(value);
+  if (stepSize >= 1) return Math.round(value);
 
   return Math.round(value * 100) / 100;
 };
@@ -35,7 +35,7 @@ export function arrayEquals(a, b) {
   return Array.isArray(a) && Array.isArray(b) && a.length === b.length && a.every((val, index) => val === b[index]);
 }
 
-export function save_smiles_lookup_table(files: FileList) {
+export function saveSmilesLookupTable(files: FileList) {
   if (files == null || files.length <= 0) {
     return;
   }
@@ -49,18 +49,18 @@ export function save_smiles_lookup_table(files: FileList) {
   fileReader.readAsBinaryString(file);
 }
 
-export function map_smiles_to_shortname(smiles: string): string {
-  const smiles_lookup_str = localStorage.getItem('smiles_lookup');
-  if (smiles_lookup_str == null) return smiles;
-  const smiles_lookup = d3v5.csvParse(smiles_lookup_str) as Array<{ smiles: string; shortname: string }>;
-  return smiles_lookup.find((pair) => pair.smiles === smiles)?.shortname;
+export function mapSmilesToShortname(smiles: string): string {
+  const smilesLookupStr = localStorage.getItem('smiles_lookup');
+  if (smilesLookupStr == null) return smiles;
+  const smilesLookup = d3v5.csvParse(smilesLookupStr) as Array<{ smiles: string; shortname: string }>;
+  return smilesLookup.find((pair) => pair.smiles === smiles)?.shortname;
 }
 
-export function map_shortname_to_smiles(shortname: string): string {
-  const smiles_lookup_str = localStorage.getItem('smiles_lookup');
-  if (smiles_lookup_str == null) return shortname;
-  const smiles_lookup = d3v5.csvParse(smiles_lookup_str) as Array<{ smiles: string; shortname: string }>;
-  return smiles_lookup.find((pair) => pair.shortname === shortname)?.smiles;
+export function mapShortnameToSmiles(shortname: string): string {
+  const smilesLookupStr = localStorage.getItem('smiles_lookup');
+  if (smilesLookupStr == null) return shortname;
+  const smilesLookup = d3v5.csvParse(smilesLookupStr) as Array<{ smiles: string; shortname: string }>;
+  return smilesLookup.find((pair) => pair.shortname === shortname)?.smiles;
 }
 
 // does not work properly with react
@@ -132,7 +132,7 @@ export const downloadImpl = (data: string, name: string, mimetype: string) => {
   // TODO give created element a unique id and remove it again
 };
 
-export const convert_to_rgb = (value: string | { r: number; g: number; b: number }): { r: number; g: number; b: number } => {
+export const convertToRgb = (value: string | { r: number; g: number; b: number }): { r: number; g: number; b: number } => {
   if (Object.keys(value).includes('r') && Object.keys(value).includes('g') && Object.keys(value).includes('b')) return { r: value.r, g: value.g, b: value.b };
 
   value = value.toString();
@@ -140,8 +140,8 @@ export const convert_to_rgb = (value: string | { r: number; g: number; b: number
     let rgb = value.replace('rgb(', '');
     rgb = rgb.replace(')', '');
     rgb = rgb.replace(' ', '');
-    const rgb_arr = rgb.split(',');
-    return { r: parseInt(rgb_arr[0]), g: parseInt(rgb_arr[1]), b: parseInt(rgb_arr[2]) };
+    const rgbArr = rgb.split(',');
+    return { r: parseInt(rgbArr[0], 10), g: parseInt(rgbArr[1], 10), b: parseInt(rgbArr[2], 10) };
   }
 
   if (value.startsWith('#')) {

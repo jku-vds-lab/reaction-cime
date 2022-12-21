@@ -67,7 +67,7 @@
     "lodash.isequal": "^4.5.0",
     "parcoord-es": "^2.2.10",
     "plotly.js-dist": "^2.11.1",
-    "projection-space-explorer": "git+ssh://git@github.com:jku-vds-lab/projection-space-explorer#develop-cime",
+    "projection-space-explorer": "git+ssh://git@github.com:jku-vds-lab/projection-space-explorer#develop",
     "react": "^16.13.0",
     "react-dom": "^16.13.0",
     "react-inlinesvg": "^2.3.0",

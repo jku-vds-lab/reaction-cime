@@ -48,10 +48,10 @@ export const GLHeatmap = connector(({ viewTransform, textures, sizes }: Props) =
   useEffect(() => {
     ref.current.appendChild(renderer.domElement);
     // eslint-disable-next-line
-    }, [])
+  }, []);
 
   useEffect(() => {
-    scene.remove(...scene.children)(); // clears the scene // .remove(...scene.children)
+    scene.remove(...scene.children); // clears the scene // .remove(...scene.children)
     for (const i in textures) {
       const texture = textures[i];
       const size = sizes[i];
@@ -69,7 +69,7 @@ export const GLHeatmap = connector(({ viewTransform, textures, sizes }: Props) =
     }
     setRerender(rerender + 1);
     // eslint-disable-next-line
-    }, [textures, sizes])
+  }, [textures, sizes]);
 
   useEffect(() => {
     if (viewTransform) {
@@ -99,7 +99,7 @@ export const GLHeatmap = connector(({ viewTransform, textures, sizes }: Props) =
       }
     }
     // eslint-disable-next-line
-    }, [viewTransform, scene, scene.children, rerender])
+  }, [viewTransform, scene, scene.children, rerender]);
 
   return <div style={{}} ref={ref} />;
 });

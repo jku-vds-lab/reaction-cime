@@ -7,7 +7,7 @@ import RotateLeftIcon from '@mui/icons-material/RotateLeft';
 import FileUploadIcon from '@mui/icons-material/FileUpload';
 import SettingsIcon from '@mui/icons-material/Settings';
 import * as d3v5 from 'd3v5';
-import { downloadImpl, map_shortname_to_smiles } from '../../Utility/Utils';
+import { downloadImpl, mapShortnameToSmiles } from '../../Utility/Utils';
 import { setPacoAttributes, setPacoConstraints } from '../../State/PacoSettingsDuck';
 import { AppState } from '../../State/Store';
 
@@ -141,7 +141,7 @@ const downloadConstraints = (dimensions, columns) => {
           // iterate over all real valued indices and add them to the constraints
           let val = const_dimension.ticktext[n];
           if (columns[const_dimension.label].metaInformation.imgSmiles) {
-            val = map_shortname_to_smiles(val);
+            val = mapShortnameToSmiles(val);
           }
           const constraint_object = { col: const_dimension.label, operator: 'EQUALS', val1: val, val2: val };
           all_constraints.push(constraint_object);

@@ -5,7 +5,7 @@ import './PacoContext.scss';
 import Plotly from 'plotly.js-dist';
 import { Box } from '@mui/material';
 import { selectVectors } from 'projection-space-explorer';
-import { arrayEquals, LIGHT_GREY, map_shortname_to_smiles, map_smiles_to_shortname, RED } from '../Utility/Utils';
+import { arrayEquals, LIGHT_GREY, mapShortnameToSmiles, mapSmilesToShortname, RED } from '../Utility/Utils';
 import { setPacoRef } from '../State/PacoSettingsDuck';
 
 function unpack(col, rows, key) {
@@ -16,17 +16,17 @@ function unpack(col, rows, key) {
   });
 }
 
-function get_processed_info(constraints, col, values, key) {
-  const current_constraints = constraints.filter((constraint) => constraint.col === key);
+function getProcessedInfo(constraints, col, values, key) {
+  const currentConstraints = constraints.filter((constraint) => constraint.col === key);
 
   // handle numeric data
   if (col.isNumeric) {
-    const val_range = col.range.max - col.range.min;
-    const eps = val_range * 0.01;
+    const valRange = col.range.max - col.range.min;
+    const eps = valRange * 0.01;
 
     const constraintrange = [];
-    for (const i in current_constraints) {
-      const constraint = current_constraints[i];
+    for (const i in currentConstraints) {
+      const constraint = currentConstraints[i];
       if (constraint.operator === 'BETWEEN') {
         constraintrange.push([+constraint.val1, +constraint.val2]);
       } else if (constraint.operator === 'EQUALS') {
@@ -38,11 +38,11 @@ function get_processed_info(constraints, col, values, key) {
 
   // handle categorical data
   const distinct = [...new Set(values)];
-  const num_values = values.map((val) => distinct.indexOf(val));
+  const numValues = values.map((val) => distinct.indexOf(val));
 
   const constraintrange = [];
-  for (const i in current_constraints) {
-    const constraint = current_constraints[i];
+  for (const i in currentConstraints) {
+    const constraint = currentConstraints[i];
     if (constraint.operator === 'EQUALS') {
       const num_val = distinct.indexOf(constraint.val1);
       constraintrange.push([num_val - 0.5, num_val + 0.5]); // have to add a small amount to get a range
@@ -51,14 +51,14 @@ function get_processed_info(constraints, col, values, key) {
 
   if (col.metaInformation.imgSmiles) {
     return {
-      ticktext: distinct.map((val) => map_smiles_to_shortname(val as string)),
-      values: num_values,
-      tickvals: [...new Set(num_values)],
+      ticktext: distinct.map((val) => mapSmilesToShortname(val as string)),
+      values: numValues,
+      tickvals: [...new Set(numValues)],
       constraintrange,
     };
   }
 
-  return { ticktext: distinct, values: num_values, tickvals: [...new Set(num_values)], constraintrange };
+  return { ticktext: distinct, values: numValues, tickvals: [...new Set(numValues)], constraintrange };
 }
 
 const mapStateToProps = (state: AppState) => ({
@@ -120,12 +120,12 @@ export const PacoContext = connector(function ({ dataset, pacoAttributes, pacoCo
     displayModeBar: false,
   };
 
-  const paco_ref = React.useRef<any>();
+  const pacoRef = React.useRef<any>();
 
   React.useEffect(() => {
-    setPacoRef(paco_ref?.current);
+    setPacoRef(pacoRef?.current);
     // eslint-disable-next-line
-    }, [paco_ref])
+  }, [pacoRef]);
 
   React.useEffect(() => {
     if (pacoAttributes != null) {
@@ -134,15 +134,15 @@ export const PacoContext = connector(function ({ dataset, pacoAttributes, pacoCo
         const cols = pacoShowColumns;
         const dimensions = cols.map((v, i) => {
           const values = unpack(dataset.columns[v], dataset.vectors, v);
-          const processed_info = get_processed_info(pacoConstraints, dataset.columns[v], values, v);
+          const processedInfo = getProcessedInfo(pacoConstraints, dataset.columns[v], values, v);
           return {
-            values: processed_info.values,
+            values: processedInfo.values,
             label: v,
             // multiselect: false,
-            constraintrange: processed_info.constraintrange,
+            constraintrange: processedInfo.constraintrange,
             // range: [Math.min(...values), Math.max(...values)],
-            tickvals: processed_info.tickvals,
-            ticktext: processed_info.ticktext,
+            tickvals: processedInfo.tickvals,
+            ticktext: processedInfo.ticktext,
             // tickformat: ..., // https://plotly.com/javascript/reference/parcoords/#parcoords-dimensions-items-dimension-tickformat
             // visible: true, //TODO: set to false, if, for example, datatype not recognized
           };
@@ -152,17 +152,17 @@ export const PacoContext = connector(function ({ dataset, pacoAttributes, pacoCo
 
         // var color = unpack(rows, 'yield');
 
-        const new_paco = { ...paco, dimensions };
-        Plotly.newPlot(paco_ref.current, [new_paco], layout, config);
+        const newPaco = { ...paco, dimensions };
+        Plotly.newPlot(pacoRef.current, [newPaco], layout, config);
 
-        paco_ref.current.on('plotly_restyle', (data) => {
+        pacoRef.current.on('plotly_restyle', (data) => {
           // only change aggregation, if constraints were changed
           if (Object.keys(data[0]).filter((item) => item.includes('constraintrange')).length > 0) {
             // reset coloring of lines
-            Plotly.restyle(paco_ref.current, { line: { ...line } }, [0]);
+            Plotly.restyle(pacoRef.current, { line: { ...line } }, [0]);
 
-            const constraint_dims = paco_ref.current.data[0].dimensions.filter((dim) => dim.constraintrange != null && dim.constraintrange.length > 0);
-            if (constraint_dims.length <= 0) {
+            const constraintDims = pacoRef.current.data[0].dimensions.filter((dim) => dim.constraintrange != null && dim.constraintrange.length > 0);
+            if (constraintDims.length <= 0) {
               const agg = dataset.vectors.map((row) => row.__meta__.meshIndex);
               if (!arrayEquals(currentAggregation.aggregation, agg)) {
                 setPacoAggregation(agg);
@@ -171,14 +171,14 @@ export const PacoContext = connector(function ({ dataset, pacoAttributes, pacoCo
               return;
             }
 
-            const filtered_vectors = dataset.vectors.filter((row) => {
+            const filteredVectors = dataset.vectors.filter((row) => {
               let highlightItem = true;
-              for (const i in constraint_dims) {
-                const const_dim = constraint_dims[i];
-                const col = const_dim.label;
+              for (const i in constraintDims) {
+                const constDim = constraintDims[i];
+                const col = constDim.label;
                 const value = row[col];
 
-                let constraintarray = const_dim.constraintrange;
+                let constraintarray = constDim.constraintrange;
                 if (!Array.isArray(constraintarray[0])) {
                   // check, if it is a 1-dimensional array and transform it into a 2-d array
                   constraintarray = [constraintarray];
@@ -197,9 +197,9 @@ export const PacoContext = connector(function ({ dataset, pacoAttributes, pacoCo
                     const upper = Math.floor(constraint[1]);
                     for (let n = lower; n <= upper; n++) {
                       // iterate over all real valued indices and add them to the constraints
-                      let val = const_dim.ticktext[n];
-                      if (dataset.columns[const_dim.label].metaInformation.imgSmiles) {
-                        val = map_shortname_to_smiles(val);
+                      let val = constDim.ticktext[n];
+                      if (dataset.columns[constDim.label].metaInformation.imgSmiles) {
+                        val = mapShortnameToSmiles(val);
                         dimHighlightItem = dimHighlightItem || value === val;
                       }
                     }
@@ -212,7 +212,7 @@ export const PacoContext = connector(function ({ dataset, pacoAttributes, pacoCo
               return highlightItem;
             });
 
-            const agg = filtered_vectors.map((row) => row.__meta__.meshIndex);
+            const agg = filteredVectors.map((row) => row.__meta__.meshIndex);
             if (!arrayEquals(currentAggregation.aggregation, agg)) {
               setPacoAggregation(agg);
               setCurrentAggregation(agg);
@@ -229,14 +229,14 @@ export const PacoContext = connector(function ({ dataset, pacoAttributes, pacoCo
       }
     }
     // eslint-disable-next-line
-    }, [dataset, pacoAttributes, pacoConstraints])
+  }, [dataset, pacoAttributes, pacoConstraints]);
 
   React.useEffect(() => {
     if (currentAggregation.aggregation != null && currentAggregation.aggregation.length > 0) {
       if (!arrayEquals(currentAggregation.aggregation, pacoAggregation)) {
         // const dims = paco_ref.current.data[0].dimensions;
         const color = dataset.vectors.map((row) => (currentAggregation.aggregation.includes(row.__meta__.meshIndex) ? 1 : 0));
-        const new_line = { ...line, color };
+        const newLine = { ...line, color };
 
         // var update = {
         //     line: new_line
@@ -244,26 +244,26 @@ export const PacoContext = connector(function ({ dataset, pacoAttributes, pacoCo
         // Plotly.restyle(paco_ref.current, update, [0]);
 
         // use this to also reset constraints of paco
-        const dimensions = paco_ref.current.data[0].dimensions.map((dim) => {
+        const dimensions = pacoRef.current.data[0].dimensions.map((dim) => {
           return { ...dim, constraintrange: [] };
         });
-        const new_paco = { ...paco, dimensions, line: new_line };
-        Plotly.react(paco_ref.current, [new_paco], layout, config);
+        const newPaco = { ...paco, dimensions, line: newLine };
+        Plotly.react(pacoRef.current, [newPaco], layout, config);
 
         setPacoAggregation([...currentAggregation.aggregation]);
       }
     } else {
       // reset coloring of lines
-      Plotly.restyle(paco_ref.current, { line: { ...line } }, [0]);
+      Plotly.restyle(pacoRef.current, { line: { ...line } }, [0]);
     }
     // eslint-disable-next-line
-    }, [currentAggregation])
+  }, [currentAggregation]);
 
   return (
     <div className="PacoParent">
       {/* <div id="paco_tooltip" style={{position: "absolute", opacity: "0"}}></div> */}
       <Box style={{ clear: 'both' }} paddingLeft={2} paddingTop={0} paddingRight={0}>
-        <div style={{}} ref={paco_ref} />
+        <div style={{}} ref={pacoRef} />
       </Box>
     </div>
   );

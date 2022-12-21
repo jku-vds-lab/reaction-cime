@@ -33,11 +33,11 @@ import {
   mapValueToColor,
 } from 'projection-space-explorer';
 import * as d3v5 from 'd3v5';
-import { arrayEquals, map_smiles_to_shortname } from '../Utility/Utils';
+import { arrayEquals, mapSmilesToShortname } from '../Utility/Utils';
 
 import { ReactionCIMEBackendFromEnv } from '../Backend/ReactionCIMEBackend';
 import { TestColumn } from './LineUpClasses/TestColumn';
-import { setLineUpInput_lineup } from '../State/LineUpInputDuck';
+import { setLineUpInputLineup } from '../State/LineUpInputDuck';
 import { AppState } from '../State/Store';
 
 const isEqual = require('lodash.isequal');
@@ -67,7 +67,7 @@ const mapStateToProps = (state: AppState) => ({
  */
 const mapDispatchToProps = (dispatch) => ({
   setCurrentAggregation: (samples: number[]) => dispatch(selectVectors(samples)),
-  setLineUpInput_lineup: (input) => dispatch(setLineUpInput_lineup(input)),
+  setLineUpInput_lineup: (input) => dispatch(setLineUpInputLineup(input)),
   setHoverstate: (state, updater) => dispatch(setHoverState(state, updater)),
 });
 
@@ -939,7 +939,7 @@ export class MySmilesStructureRenderer implements ICellRendererFactory {
           } else {
             n.innerHTML = x;
           }
-          n.title = `${map_smiles_to_shortname(smiles)}: ${smiles}`;
+          n.title = `${mapSmilesToShortname(smiles)}: ${smiles}`;
           // n.alt = smiles;
         });
       },

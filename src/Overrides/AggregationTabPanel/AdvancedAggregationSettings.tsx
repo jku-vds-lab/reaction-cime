@@ -53,10 +53,10 @@ export const AdvancedAggregationSettings = connector(
     React.useEffect(() => {
       if (selectAttributeInfo) {
         // initialize valueIndices when attributionInfo changes
-        const variables_array = Object.keys(selectAttributeInfo);
-        if (variables_array.length === 1) {
+        const variablesArray = Object.keys(selectAttributeInfo);
+        if (variablesArray.length === 1) {
           setVariableIndex({ valueVariableIndex: 0, uncertaintyVariableIndex: 0 });
-        } else if (variables_array.length > 1) {
+        } else if (variablesArray.length > 1) {
           setVariableIndex({ valueVariableIndex: 0, uncertaintyVariableIndex: 1 });
         }
       }

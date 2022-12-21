@@ -1,11 +1,11 @@
 import { Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, TextField } from '@mui/material';
 import { connect, ConnectedProps } from 'react-redux';
 import React from 'react';
-import { setLineUpInput_dump } from '../State/LineUpInputDuck';
+import { setLineUpInputDump } from '../State/LineUpInputDuck';
 // import { setDetailVisibility } from "projection-space-explorer";
 
 const mapDispatchToProps = (dispatch) => ({
-  setLineUp_dump: (dump) => dispatch(setLineUpInput_dump(dump)),
+  setLineUp_dump: (dump) => dispatch(setLineUpInputDump(dump)),
   // setLineUp_visibility: (vis) => dispatch(setDetailVisibility(vis)),
 });
 

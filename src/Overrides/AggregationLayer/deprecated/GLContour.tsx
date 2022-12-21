@@ -36,21 +36,16 @@ export const GLContour = connector(({ viewTransform, lines }: Props) => {
   useEffect(() => {
     ref.current.appendChild(renderer.domElement);
     // eslint-disable-next-line
-    }, [])
+  }, []);
 
   useEffect(() => {
-    scene.remove(...scene.children)(); // clears the scene //.remove(...scene.children)//
-    for (const i in lines) {
-      const line = lines[i];
-
-      if (lines != null) {
-        scene.add(line);
-      }
-    }
+    scene.remove(...scene.children); // clears the scene //.remove(...scene.children)//
+    lines?.forEach((line) => {
+      scene.add(line);
+    });
     setRerender(rerender + 1);
     // eslint-disable-next-line
-    }, [lines])
-
+  }, [lines]);
 
   useEffect(() => {
     if (viewTransform) {
@@ -80,7 +75,7 @@ export const GLContour = connector(({ viewTransform, lines }: Props) => {
       }
     }
     // eslint-disable-next-line
-    }, [viewTransform, scene, scene.children, rerender])
+  }, [viewTransform, scene, scene.children, rerender]);
 
   return <div style={{}} ref={ref} />;
 });

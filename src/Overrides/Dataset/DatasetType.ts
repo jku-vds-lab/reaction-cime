@@ -13,5 +13,3 @@
 // let DatasetType = { ...PSEDatasetType, ...ReactionCimeDatasetType };
 
 // export default DatasetType;
-
-export const TODO_Mo = 'Moritz is adding a feature to PSE that allows to have custom datasettypes';

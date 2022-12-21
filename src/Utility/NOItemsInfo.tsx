@@ -40,6 +40,8 @@ export const NOItemsInfo = connector(({ dataset, globalLabels, variant }: Props)
         Math.round((dataset?.vectors?.length / totalDataPoints) * 10000) / 100
       }% of the dataset)`;
       break;
+    default:
+      break;
   }
 
   return (

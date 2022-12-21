@@ -41,21 +41,16 @@ export const GLHexagons = connector(({ smallMultiples, hexagons, hoverElement, s
   useEffect(() => {
     ref.current.appendChild(renderer.domElement);
     // eslint-disable-next-line
-    }, [])
+  }, []);
 
   useEffect(() => {
-    scene.remove(...scene.children); // clears the scene //.remove(...scene.children)//
-    for (const i in hexagons) {
-      const hex = hexagons[i];
-
-      if (hexagons != null) {
-        scene.add(hex);
-      }
-    }
+    scene.remove(...scene.children);
+    hexagons?.forEach((hex) => {
+      scene.add(hex);
+    });
     setRerender(rerender + 1);
     // eslint-disable-next-line
-    }, [hexagons])
-
+  }, [hexagons]);
 
   useEffect(() => {
     const selectedObject = scene.getObjectByName('hoverElement');
@@ -67,7 +62,7 @@ export const GLHexagons = connector(({ smallMultiples, hexagons, hoverElement, s
     }
     setRerender(rerender + 1);
     // eslint-disable-next-line
-    }, [hoverElement])
+  }, [hoverElement]);
 
   useEffect(() => {
     const selectedObject = scene.getObjectByName('selectElement');
@@ -79,8 +74,7 @@ export const GLHexagons = connector(({ smallMultiples, hexagons, hoverElement, s
     }
     setRerender(rerender + 1);
     // eslint-disable-next-line
-    }, [selectElement])
-
+  }, [selectElement]);
 
   useEffect(() => {
     if (viewTransform) {
@@ -110,9 +104,7 @@ export const GLHexagons = connector(({ smallMultiples, hexagons, hoverElement, s
       }
     }
     // eslint-disable-next-line
-    }, [viewTransform, scene, scene.children, rerender])
-
-
+  }, [viewTransform, scene, scene.children, rerender]);
 
   return <div style={{}} ref={ref} />;
 });

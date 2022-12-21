@@ -10,7 +10,7 @@ import { AppState } from '../../State/Store';
 import BarChart from './VegaHelpers/BarChart';
 import AreaChart from './VegaHelpers/AreaChart';
 import { formatSMILESTooltip } from './FeatureLegend';
-import { map_smiles_to_shortname } from '../../Utility/Utils';
+import { mapSmilesToShortname } from '../../Utility/Utils';
 
 async function genRows(
   aggregateSelection: { x: number; y: number; circ_radius: number },
@@ -26,9 +26,9 @@ async function genRows(
   for (const key in showFeatures) {
     const { feature } = showFeatures[key];
     if (dataset.columns[feature]?.featureType === FeatureType.Quantitative) {
-      const data_all = await ReactionCIMEBackendFromEnv.loadDensity(dataset.info.path, feature);
-      const data_line_all = data_all.x_vals.map((x, idx) => {
-        return { feature: x, density: data_all.y_vals[idx], selection: 'all' };
+      const dataAll = await ReactionCIMEBackendFromEnv.loadDensity(dataset.info.path, feature);
+      const dataLineAll = dataAll.x_vals.map((x, idx) => {
+        return { feature: x, density: dataAll.y_vals[idx], selection: 'all' };
       });
 
       const data_hex = await ReactionCIMEBackendFromEnv.loadDensityOfHex(
@@ -44,7 +44,7 @@ async function genRows(
         return { feature: x, density: data_hex.y_vals[idx], selection: 'selection' };
       });
 
-      const data_line = data_line_all.concat(data_line_hex);
+      const data_line = dataLineAll.concat(data_line_hex);
       // create vega lite chart
       var lineChart;
       if (Object.keys(data_line).length > 1) {
@@ -112,7 +112,7 @@ export const AggregateLegend = connector(({ aggregate, aggregateSelection, legen
     genRows(aggregateSelection, aggregate, legendAttributes, dataset, workspace as IProjection, setRows);
     // only need to update if we have a new aggregate selection
     // eslint-disable-next-line
-    }, [aggregateSelection])
+  }, [aggregateSelection]);
   return (
     <div style={{ width: '100%', maxHeight: '100%', overflowY: 'scroll' }}>
       <div
@@ -130,7 +130,7 @@ export const AggregateLegend = connector(({ aggregate, aggregateSelection, legen
                   <div style={{ maxWidth: 200 }}>
                     {row.feature}
                     <br />
-                    <b>{map_smiles_to_shortname(row.category)}</b>
+                    <b>{mapSmilesToShortname(row.category)}</b>
                   </div>
                 </TableCell>
                 <TableCell>{row.char}</TableCell>

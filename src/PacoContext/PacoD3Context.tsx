@@ -13,67 +13,23 @@ import ParCoords from 'parcoord-es';
 import { downloadImpl } from '../Utility/Utils';
 import { AppState } from '../State/Store';
 
-function unpack(col, rows, key) {
-  return rows.map(function (row) {
-    let val = row[key];
-    if (col.isNumeric) val = parseFloat(val);
-    return val;
-  });
-}
-
-function get_processed_info(constraints, col, values, key) {
-  const current_constraints = constraints.filter((constraint) => constraint.col === key);
-
-  // handle numeric data
-  if (col.isNumeric) {
-    const val_range = col.range.max - col.range.min;
-    const eps = val_range * 0.01;
-
-    const constraintrange = [];
-    for (const i in current_constraints) {
-      const constraint = current_constraints[i];
-      if (constraint.operator === 'BETWEEN') {
-        constraintrange.push([+constraint.val1, +constraint.val2]);
-      } else if (constraint.operator === 'EQUALS') {
-        constraintrange.push([+constraint.val1 - eps, +constraint.val1 + eps]); // have to add a small amount to get a range
-      }
-    }
-    return { ticktext: undefined, values, tickvals: undefined, constraintrange };
-  }
-
-  // handle categorical data
-  const distinct = [...new Set(values)];
-  const num_values = values.map((val) => distinct.indexOf(val));
-
-  const constraintrange = [];
-  for (const i in current_constraints) {
-    const constraint = current_constraints[i];
-    if (constraint.operator === 'EQUALS') {
-      const num_val = distinct.indexOf(constraint.val1);
-      constraintrange.push([num_val - 0.5, num_val + 0.5]); // have to add a small amount to get a range
-    }
-  }
-
-  return { ticktext: distinct, values: num_values, tickvals: [...new Set(num_values)], constraintrange };
-}
-
 const downloadArrayAsCSV = (array, header) => {
-  const csv_lines = array.map((row) => {
+  const csvLines = array.map((row) => {
     return Object.values(row).join(',');
   });
-  let csv_content = `${header.join(',')}\n`;
-  csv_content += csv_lines.join('\n');
-  downloadImpl(csv_content, 'parallel_coordinates_constraints.csv', 'text/csv');
+  let csvContent = `${header.join(',')}\n`;
+  csvContent += csvLines.join('\n');
+  downloadImpl(csvContent, 'parallel_coordinates_constraints.csv', 'text/csv');
 };
 
 const downloadConstraints = (dimensions, columns) => {
-  const constraint_dimensions = dimensions.filter((dim) => dim.constraintrange != null && dim.constraintrange.length > 0);
-  if (constraint_dimensions.length <= 0) return;
+  const constraintDimensions = dimensions.filter((dim) => dim.constraintrange != null && dim.constraintrange.length > 0);
+  if (constraintDimensions.length <= 0) return;
 
-  const all_constraints = [];
-  for (const i in constraint_dimensions) {
-    const const_dimension = constraint_dimensions[i];
-    let constraintarray = const_dimension.constraintrange;
+  const allConstraints = [];
+  for (const i in constraintDimensions) {
+    const constDimension = constraintDimensions[i];
+    let constraintarray = constDimension.constraintrange;
     if (!Array.isArray(constraintarray[0])) {
       // check, if it is a 1-dimensional array and transform it into a 2-d array
       constraintarray = [constraintarray];
@@ -82,22 +38,22 @@ const downloadConstraints = (dimensions, columns) => {
       const constraint = constraintarray[j];
 
       // handle numeric data
-      if (columns[const_dimension.label].isNumeric) {
-        const constraint_object = { col: const_dimension.label, operator: 'BETWEEN', val1: constraint[0], val2: constraint[1] };
-        all_constraints.push(constraint_object);
+      if (columns[constDimension.label].isNumeric) {
+        const constraint_object = { col: constDimension.label, operator: 'BETWEEN', val1: constraint[0], val2: constraint[1] };
+        allConstraints.push(constraint_object);
       } else {
         // handle categorical data
         const lower = Math.ceil(constraint[0]);
         const upper = Math.floor(constraint[1]);
         for (let n = lower; n <= upper; n++) {
           // iterate over all real valued indices and add them to the constraints
-          const constraint_object = { col: const_dimension.label, operator: 'EQUALS', val1: const_dimension.ticktext[n], val2: const_dimension.ticktext[n] };
-          all_constraints.push(constraint_object);
+          const constraint_object = { col: constDimension.label, operator: 'EQUALS', val1: constDimension.ticktext[n], val2: constDimension.ticktext[n] };
+          allConstraints.push(constraint_object);
         }
       }
     }
   }
-  downloadArrayAsCSV(all_constraints, Object.keys(all_constraints[0]));
+  downloadArrayAsCSV(allConstraints, Object.keys(allConstraints[0]));
 };
 const uploadConstraints = (files, setConstraints) => {
   if (files == null || files.length <= 0) {
@@ -130,7 +86,7 @@ type Props = PropsFromRedux & {};
 export const PacoContext = connector(function ({ dataset }: Props) {
   if (dataset == null || dataset.columns == null || dataset.vectors == null) return null;
 
-  const paco_ref = React.useRef<any>();
+  const pacoRef = React.useRef<any>();
   const fileInput = React.useRef<any>();
   // TODO: also save chosen attributes?
   const [pacoAttributes, setPacoAttributes] = React.useState(
@@ -150,7 +106,7 @@ export const PacoContext = connector(function ({ dataset }: Props) {
       //     });
       const data = dataset.vectors;
       // const data = [{axis1: 5, axis2: 9, axis3: 4}, {axis1: 6, axis2: 1, axis3: 2}]
-      const parcoords = ParCoords()(paco_ref.current);
+      const parcoords = ParCoords()(pacoRef.current);
       parcoords
         .mode('queue') // mode: "queue" --> for large dataset such that everything is still responsive during rendering
         .data(data)
@@ -195,7 +151,7 @@ export const PacoContext = connector(function ({ dataset }: Props) {
               color="primary"
               aria-label="Export POI constraints"
               onClick={() => {
-                downloadConstraints(paco_ref.current.data[0].dimensions, dataset.columns);
+                downloadConstraints(pacoRef.current.data[0].dimensions, dataset.columns);
               }}
             >
               <FileDownloadIcon />
@@ -218,7 +174,7 @@ export const PacoContext = connector(function ({ dataset }: Props) {
         </Box>
       </Box>
       <Box style={{ clear: 'both' }} paddingLeft={2} paddingTop={1} paddingRight={2}>
-        <div style={{}} ref={paco_ref} />
+        <div style={{}} ref={pacoRef} />
       </Box>
     </div>
   );
