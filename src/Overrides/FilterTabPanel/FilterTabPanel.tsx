@@ -11,6 +11,33 @@ import { FilterSettings } from './FilterSettings';
 import { NOItemsInfo } from '../../Utility/NOItemsInfo';
 import { ExceptionSettings } from './ExceptionSettings';
 
+const downloadConstraints = (path) => {
+  ReactionCIMEBackendFromEnv.downloadPOIConstraints(path);
+};
+const uploadConstraints = (files, dataset, triggerDatasetUpdate, state) => {
+  if (files == null || files.length <= 0) {
+    return;
+  }
+  const file = files[0];
+  const fileName = file.name as string;
+
+  if (fileName.endsWith('csv')) {
+    ReactionCIMEBackendFromEnv.uploadPOIConstraints(dataset.info.path, file).then((res) => {
+      if (res.msg === 'ok' && triggerDatasetUpdate != null) {
+        triggerDatasetUpdate(
+          {
+            display: dataset.info.path,
+            path: dataset.info.path,
+            type: dataset.info.type,
+            uploaded: true,
+          },
+          state,
+        );
+      }
+    });
+  }
+};
+
 const mapStateToProps = (state: AppState) => ({
   dataset: state.dataset,
   triggerDatasetUpdate: state.handleDataset?.triggerUpdate,
@@ -23,7 +50,7 @@ const connector = connect(mapStateToProps, mapDispatchToProps);
 
 type PropsFromRedux = ConnectedProps<typeof connector>;
 
-type Props = PropsFromRedux & {};
+type Props = PropsFromRedux;
 
 export const FilterTabPanel = connector(({ dataset, triggerDatasetUpdate, state }: Props) => {
   // const [constraintsMap, setConstraintsMap] = React.useState({});
@@ -34,8 +61,8 @@ export const FilterTabPanel = connector(({ dataset, triggerDatasetUpdate, state 
   React.useEffect(() => {
     if (dataset != null) {
       ReactionCIMEBackendFromEnv.loadPOIConstraints(dataset.info.path).then((res_constraints) => {
-        const con_cols = [...new Set(res_constraints.map((con) => con.col))];
-        setConstraintCols(con_cols);
+        const conCols = [...new Set(res_constraints.map((con) => con.col))];
+        setConstraintCols(conCols);
         setConstraints(res_constraints);
       });
     }
@@ -124,30 +151,3 @@ export const FilterTabPanel = connector(({ dataset, triggerDatasetUpdate, state 
     )
   );
 });
-
-const downloadConstraints = (path) => {
-  ReactionCIMEBackendFromEnv.downloadPOIConstraints(path);
-};
-const uploadConstraints = (files, dataset, triggerDatasetUpdate, state) => {
-  if (files == null || files.length <= 0) {
-    return;
-  }
-  const file = files[0];
-  const fileName = file.name as string;
-
-  if (fileName.endsWith('csv')) {
-    ReactionCIMEBackendFromEnv.uploadPOIConstraints(dataset.info.path, file).then((res) => {
-      if (res.msg === 'ok' && triggerDatasetUpdate != null) {
-        triggerDatasetUpdate(
-          {
-            display: dataset.info.path,
-            path: dataset.info.path,
-            type: dataset.info.type,
-            uploaded: true,
-          },
-          state,
-        );
-      }
-    });
-  }
-};

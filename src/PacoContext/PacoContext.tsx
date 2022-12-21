@@ -1,10 +1,10 @@
 import React from 'react';
 import { connect, ConnectedProps } from 'react-redux';
-import { AppState } from '../State/Store';
 import './PacoContext.scss';
 import Plotly from 'plotly.js-dist';
 import { Box } from '@mui/material';
 import { selectVectors } from 'projection-space-explorer';
+import { AppState } from '../State/Store';
 import { arrayEquals, LIGHT_GREY, mapShortnameToSmiles, mapSmilesToShortname, RED } from '../Utility/Utils';
 import { setPacoRef } from '../State/PacoSettingsDuck';
 
@@ -25,14 +25,13 @@ function getProcessedInfo(constraints, col, values, key) {
     const eps = valRange * 0.01;
 
     const constraintrange = [];
-    for (const i in currentConstraints) {
-      const constraint = currentConstraints[i];
+    currentConstraints.forEach((constraint) => {
       if (constraint.operator === 'BETWEEN') {
         constraintrange.push([+constraint.val1, +constraint.val2]);
       } else if (constraint.operator === 'EQUALS') {
         constraintrange.push([+constraint.val1 - eps, +constraint.val1 + eps]); // have to add a small amount to get a range
       }
-    }
+    });
     return { ticktext: undefined, values, tickvals: undefined, constraintrange };
   }
 
@@ -41,13 +40,12 @@ function getProcessedInfo(constraints, col, values, key) {
   const numValues = values.map((val) => distinct.indexOf(val));
 
   const constraintrange = [];
-  for (const i in currentConstraints) {
-    const constraint = currentConstraints[i];
+  currentConstraints.forEach((constraint) => {
     if (constraint.operator === 'EQUALS') {
-      const num_val = distinct.indexOf(constraint.val1);
-      constraintrange.push([num_val - 0.5, num_val + 0.5]); // have to add a small amount to get a range
+      const numVal = distinct.indexOf(constraint.val1);
+      constraintrange.push([numVal - 0.5, numVal + 0.5]);
     }
-  }
+  });
 
   if (col.metaInformation.imgSmiles) {
     return {
@@ -173,8 +171,8 @@ export const PacoContext = connector(function ({ dataset, pacoAttributes, pacoCo
 
             const filteredVectors = dataset.vectors.filter((row) => {
               let highlightItem = true;
-              for (const i in constraintDims) {
-                const constDim = constraintDims[i];
+
+              constraintDims.forEach((constDim) => {
                 const col = constDim.label;
                 const value = row[col];
 
@@ -185,9 +183,7 @@ export const PacoContext = connector(function ({ dataset, pacoAttributes, pacoCo
                 }
 
                 let dimHighlightItem = false;
-                for (const j in constraintarray) {
-                  const constraint = constraintarray[j];
-
+                constraintarray.forEach((constraint) => {
                   // handle numeric data
                   if (dataset.columns[col].isNumeric) {
                     dimHighlightItem = dimHighlightItem || (value > constraint[0] && value < constraint[1]);
@@ -204,10 +200,10 @@ export const PacoContext = connector(function ({ dataset, pacoAttributes, pacoCo
                       }
                     }
                   }
-                }
+                });
 
                 highlightItem = highlightItem && dimHighlightItem;
-              }
+              });
 
               return highlightItem;
             });

@@ -26,15 +26,15 @@ export const LineUpDumpDialog = connector(function ({
 }: // setLineUp_visibility,
 Props) {
   const [dump, setDump] = React.useState('');
-  function handleChange(event) {
+  const handleChange = (event) => {
     setDump(event.target.value);
-  }
+  };
 
-  function handleClose() {
+  const handleClose = () => {
     setOpenDumpDialog(() => false);
     // setLineUp_visibility(true);
     setLineUp_dump(dump);
-  }
+  };
 
   return (
     <Dialog maxWidth="lg" open={openDialog} onClose={handleClose}>

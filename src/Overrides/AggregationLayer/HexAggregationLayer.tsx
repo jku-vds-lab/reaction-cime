@@ -12,6 +12,7 @@ import { setUncertaintyRange, setValueRange } from '../../State/AggregateSetting
 import { GLHexagons } from './GLHexagons';
 import { PSE_BLUE } from '../../Utility/Utils';
 import { setCurrentAggregateSelection } from '../../State/SelectionDuck';
+import { ReactionVector } from '../../State/interfaces';
 
 const createHexagons = (
   dataset: AggregateDataset,
@@ -24,7 +25,7 @@ const createHexagons = (
 ) => {
   const hexagons = [];
 
-  dataset.vectors.forEach((row) => {
+  dataset.vectors.forEach((row: ReactionVector) => {
     if (row.hex === 'False') {
       console.log('wrong point');
       const materialWrong = new THREE.MeshBasicMaterial({ color: 0x000000, side: THREE.DoubleSide });
@@ -250,7 +251,7 @@ export const HexAggregationLayer = connector(
           // if it is inside, we need to check each hexagon, if coordinates are inside
           const radius = (Math.sqrt(3) / 2) * circRadius; // https://www-formula.com/geometry/circle-inscribed/radius-circle-inscribed-regular-hexagon
           let foundHex = false;
-          aggregateDataset.vectors.forEach((row) => {
+          aggregateDataset.vectors.forEach((row: ReactionVector) => {
             const isInside = isInsideHex(mouseMove.x, mouseMove.y, row[xChannel], row[yChannel], radius, circRadius);
             if (isInside) {
               foundHex = true;
@@ -288,14 +289,14 @@ export const HexAggregationLayer = connector(
           // if it is inside, we need to check each hexagon, if coordinates are inside
           const radius = (Math.sqrt(3) / 2) * circRadius; // https://www-formula.com/geometry/circle-inscribed/radius-circle-inscribed-regular-hexagon
           let foundHex = false;
-          aggregateDataset.vectors.forEach((row) => {
+          aggregateDataset.vectors.forEach((row: ReactionVector) => {
             const isInside = isInsideHex(mouseClick.x, mouseClick.y, row[xChannel], row[yChannel], radius, circRadius);
             if (isInside) {
               foundHex = true;
               if (selectElement == null || selectElement.position.x !== row.x || selectElement.position.y !== row.y) {
                 const material = new THREE.MeshBasicMaterial({ color: PSE_BLUE, side: THREE.DoubleSide, transparent: true, opacity: 1.0 });
-                const radius = Number(row.circ_radius) + Number(row.circ_radius) * 0.04;
-                const geometry = new THREE.CircleGeometry(radius, 6);
+                const tempRadius = Number(row.circ_radius) + Number(row.circ_radius) * 0.04;
+                const geometry = new THREE.CircleGeometry(tempRadius, 6);
                 const object = new THREE.Mesh(geometry, material);
                 object.position.x = row[xChannel];
                 object.position.y = row[yChannel];

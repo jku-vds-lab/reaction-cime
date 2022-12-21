@@ -44,20 +44,17 @@ export const PacoContext = connector(function ({ dataset, triggerDatasetUpdate }
   const updateBackendConstraints = (dimensions) => {
     const constraintDimensions = dimensions.filter((dim) => dim.constraintrange != null && dim.constraintrange.length > 0);
     const allConstraints = [];
-    for (const i in constraintDimensions) {
-      const constDimension = constraintDimensions[i];
+    constraintDimensions.forEach((constDimension) => {
       let constraintarray = constDimension.constraintrange;
       if (!Array.isArray(constraintarray[0])) {
         // check, if it is a 1-dimensional array and transform it into a 2-d array
         constraintarray = [constraintarray];
       }
-      for (const j in constraintarray) {
-        const constraint = constraintarray[j];
-
+      constraintarray.forEach((constraint) => {
         // handle numeric data
         if (dataset.columns[constDimension.label].isNumeric) {
-          const constraint_object = { col: constDimension.label, operator: 'BETWEEN', val1: constraint[0], val2: constraint[1] };
-          allConstraints.push(constraint_object);
+          const constraintObject = { col: constDimension.label, operator: 'BETWEEN', val1: constraint[0], val2: constraint[1] };
+          allConstraints.push(constraintObject);
         } else {
           // handle categorical data
           const lower = Math.ceil(constraint[0]);
@@ -68,8 +65,8 @@ export const PacoContext = connector(function ({ dataset, triggerDatasetUpdate }
             allConstraints.push(constraintObject);
           }
         }
-      }
-    }
+      });
+    });
 
     ReactionCIMEBackendFromEnv.updatePOIConstraints(dataset.info.path, allConstraints).then((res) => {
       if (res.msg === 'ok' && triggerDatasetUpdate != null) {
@@ -134,31 +131,29 @@ export const PacoContext = connector(function ({ dataset, triggerDatasetUpdate }
                 const eps = valRange * 0.01;
 
                 const constraintrange = [];
-                for (const i in currentConstraints) {
-                  const constraint = currentConstraints[i];
+                currentConstraints.forEach((constraint) => {
                   if (constraint.operator === 'BETWEEN') {
                     constraintrange.push([+constraint.val1, +constraint.val2]);
                   } else if (constraint.operator === 'EQUALS') {
                     constraintrange.push([+constraint.val1 - eps, +constraint.val1 + eps]); // have to add a small amount to get a range
                   }
-                }
+                });
                 return { ticktext: undefined, values, tickvals: undefined, constraintrange };
               }
 
               // handle categorical data
               const distinct = [...new Set(values)];
-              const num_values = values.map((val) => distinct.indexOf(val));
+              const numValues = values.map((val) => distinct.indexOf(val));
 
               const constraintrange = [];
-              for (const i in currentConstraints) {
-                const constraint = currentConstraints[i];
+              currentConstraints.forEach((constraint) => {
                 if (constraint.operator === 'EQUALS') {
-                  const num_val = distinct.indexOf(constraint.val1);
-                  constraintrange.push([num_val - 0.5, num_val + 0.5]); // have to add a small amount to get a range
+                  const numVal = distinct.indexOf(constraint.val1);
+                  constraintrange.push([numVal - 0.5, numVal + 0.5]); // have to add a small amount to get a range
                 }
-              }
+              });
 
-              return { ticktext: distinct, values: num_values, tickvals: [...new Set(num_values)], constraintrange };
+              return { ticktext: distinct, values: numValues, tickvals: [...new Set(numValues)], constraintrange };
             }
 
             const cols = Object.keys(rows[0]);

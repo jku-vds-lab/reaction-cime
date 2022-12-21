@@ -52,7 +52,7 @@ export const ColorMapLegend = connector(
       return null;
     }
 
-    const discrete_steps = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1];
+    const discreteSteps = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1];
 
     const handleChange = (event) => {
       setAggregateColorScale(event.target.value);
@@ -182,15 +182,15 @@ export const ColorMapLegend = connector(
           // when clicking, we want to select the underlying section
           hoverEl.on('click', () => {
             // color_sections.attr("stroke", "none")
-            const cur_node = d3.select(colorSections.nodes()[i]);
-            if (cur_node.attr('stroke') == null) {
-              cur_node.attr('stroke', PSE_BLUE);
-              cur_node.attr('stroke-width', '3px');
-              addValueFilter(cur_node.attr('fill'));
+            const curNode = d3.select(colorSections.nodes()[i]);
+            if (curNode.attr('stroke') == null) {
+              curNode.attr('stroke', PSE_BLUE);
+              curNode.attr('stroke-width', '3px');
+              addValueFilter(curNode.attr('fill'));
             } else {
-              cur_node.attr('stroke', null);
-              cur_node.attr('stroke-width', '0px');
-              removeValueFilter(cur_node.attr('fill'));
+              curNode.attr('stroke', null);
+              curNode.attr('stroke-width', '0px');
+              removeValueFilter(curNode.attr('fill'));
             }
           });
         });
@@ -213,7 +213,7 @@ export const ColorMapLegend = connector(
                   width: '100%',
                   minWidth: '13rem',
                   height: '1rem',
-                  backgroundImage: `linear-gradient(to right, ${discrete_steps.map((step) => d3[colorscale](step)).join(',')})`,
+                  backgroundImage: `linear-gradient(to right, ${discreteSteps.map((step) => d3[colorscale](step)).join(',')})`,
                 }}
               />
             </MenuItem>

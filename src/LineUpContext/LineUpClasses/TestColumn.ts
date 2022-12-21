@@ -176,9 +176,9 @@ export class TestColumn extends MapColumn<number[]> {
 
   toCompareValue(row: IDataRow): number {
     const data = this.getValue(row);
-    const value_list = data[0].value;
+    const valueList = data[0].value;
     const method = this.getSortMethod();
-    return this.get_advanced_value(method, value_list);
+    return this.get_advanced_value(method, valueList);
   }
 
   toCompareValueType() {

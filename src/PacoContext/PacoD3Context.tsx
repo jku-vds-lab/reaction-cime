@@ -27,32 +27,29 @@ const downloadConstraints = (dimensions, columns) => {
   if (constraintDimensions.length <= 0) return;
 
   const allConstraints = [];
-  for (const i in constraintDimensions) {
-    const constDimension = constraintDimensions[i];
+  constraintDimensions.forEach((constDimension) => {
     let constraintarray = constDimension.constraintrange;
     if (!Array.isArray(constraintarray[0])) {
       // check, if it is a 1-dimensional array and transform it into a 2-d array
       constraintarray = [constraintarray];
     }
-    for (const j in constraintarray) {
-      const constraint = constraintarray[j];
-
+    constraintarray.forEach((constraint) => {
       // handle numeric data
       if (columns[constDimension.label].isNumeric) {
-        const constraint_object = { col: constDimension.label, operator: 'BETWEEN', val1: constraint[0], val2: constraint[1] };
-        allConstraints.push(constraint_object);
+        const constraintObject = { col: constDimension.label, operator: 'BETWEEN', val1: constraint[0], val2: constraint[1] };
+        allConstraints.push(constraintObject);
       } else {
         // handle categorical data
         const lower = Math.ceil(constraint[0]);
         const upper = Math.floor(constraint[1]);
         for (let n = lower; n <= upper; n++) {
           // iterate over all real valued indices and add them to the constraints
-          const constraint_object = { col: constDimension.label, operator: 'EQUALS', val1: constDimension.ticktext[n], val2: constDimension.ticktext[n] };
-          allConstraints.push(constraint_object);
+          const constraintObject = { col: constDimension.label, operator: 'EQUALS', val1: constDimension.ticktext[n], val2: constDimension.ticktext[n] };
+          allConstraints.push(constraintObject);
         }
       }
-    }
-  }
+    });
+  });
   downloadArrayAsCSV(allConstraints, Object.keys(allConstraints[0]));
 };
 const uploadConstraints = (files, setConstraints) => {

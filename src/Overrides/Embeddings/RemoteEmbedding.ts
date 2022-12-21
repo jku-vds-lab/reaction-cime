@@ -30,7 +30,7 @@ export class RemoteEmbedding {
 
   initializeFit(callback_fn: (emb, step, msg) => void) {
     // https://stackoverflow.com/questions/62121310/how-to-handle-streaming-data-using-fetch
-    const read_stream = async (reader) => {
+    const readStream = async (reader) => {
       let done;
       let value;
       while (!done) {
@@ -39,10 +39,10 @@ export class RemoteEmbedding {
           console.log('The stream is closed!');
         } else {
           try {
-            const res_obj = JSON.parse(new TextDecoder().decode(value));
-            if (parseInt(res_obj.step)) this.current_steps = parseInt(res_obj.step);
-            if (res_obj.emb && res_obj.emb.length > 0) this.embedding = res_obj.emb;
-            if (res_obj.msg) this.msg = res_obj.msg;
+            const resObj = JSON.parse(new TextDecoder().decode(value));
+            if (parseInt(resObj.step, 10)) this.current_steps = parseInt(resObj.step, 10);
+            if (resObj.emb && resObj.emb.length > 0) this.embedding = resObj.emb;
+            if (resObj.msg) this.msg = resObj.msg;
             callback_fn(this.embedding, this.current_steps, this.msg);
           } catch (error) {
             console.log(error);
@@ -54,7 +54,7 @@ export class RemoteEmbedding {
 
     ReactionCIMEBackendFromEnv.project_dataset(this.dataset, this.params, this.selected_feature_info, this.abort_controller).then((response) => {
       const reader = response.body.getReader();
-      read_stream(reader);
+      readStream(reader);
     });
   }
 

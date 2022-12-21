@@ -37,9 +37,7 @@ export const SetFiltersToItemFeatures = connector(({ handleClose, globalLabels, 
           return dataset.columns[key].project && !EXCLUDED_COLUMNS_ALL.includes(key);
         });
         const constraints = {};
-        for (const i in cols) {
-          const col = cols[i];
-
+        cols.forEach((col) => {
           const val = [];
           if (dataset.columns[col].isNumeric) {
             const eps = menuTarget[col] * 0.01;
@@ -50,7 +48,7 @@ export const SetFiltersToItemFeatures = connector(({ handleClose, globalLabels, 
           }
 
           constraints[col] = { val, isNum: dataset.columns[col].isNumeric };
-        }
+        });
 
         updateBackendConstraints(constraints, dataset, triggerDatasetUpdate, state);
         handleClose();
