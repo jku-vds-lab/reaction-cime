@@ -1,23 +1,25 @@
-import { Box, Button, Tooltip } from '@mui/material';
-import { Dataset } from 'projection-space-explorer';
-import React from 'react';
-import FilterAltIcon from '@mui/icons-material/FilterAlt';
+import { Box, Button, Tooltip } from "@mui/material";
+import { Dataset } from "projection-space-explorer";
+import React from "react";
 import { ReactionCIMEBackendFromEnv } from "../../Backend/ReactionCIMEBackend";
 import { CategoryFilter } from "./CategoryFilter";
 import { RangeFilter } from "./RangeFilter";
+import FilterAltIcon from '@mui/icons-material/FilterAlt';
 import RotateLeftIcon from '@mui/icons-material/RotateLeft';
-import { CategoryFilterChart } from './CategoryFilterChart';
+import { CategoryFilterChart } from "./CategoryFilterChart";
+
+
 
 type Props = {
-  dataset: Dataset;
-  removeFilter: (col) => void;
-  constraintCols: string[];
-  constraints: { col: string; operator: string; val1: string; val2: string }[];
-  triggerDatasetUpdate;
-  state;
+    dataset: Dataset,
+    removeFilter: (col) => void,
+    constraintCols: string[],
+    constraints: {col:string, operator:string, val1:string, val2:string}[],
+    triggerDatasetUpdate,
+    state
 };
 
-export function FilterSettings({dataset, removeFilter, constraintCols, constraints, triggerDatasetUpdate, state}:Props) {
+export const FilterSettings = ({dataset, removeFilter, constraintCols, constraints, triggerDatasetUpdate, state}:Props) => {
     const [filterValues, setFilterValues] = React.useState({});
 
     React.useEffect(() => {
@@ -55,6 +57,7 @@ export function FilterSettings({dataset, removeFilter, constraintCols, constrain
             }
             setFilterValues(tempFilterValues);
         }
+        // eslint-disable-next-line
     }, [constraints])
 
     React.useEffect(() => {
@@ -80,6 +83,7 @@ export function FilterSettings({dataset, removeFilter, constraintCols, constrain
             }
             setFilterValues(tempFilterValues);
         }
+        // eslint-disable-next-line
     }, [constraintCols, dataset.columns])
     
 
@@ -136,39 +140,37 @@ export function FilterSettings({dataset, removeFilter, constraintCols, constrain
         </Box>
         </div>
 }
-};
+
 
 export const updateBackendConstraints = (dimensions: {}, dataset, triggerDatasetUpdate, state) => {
-  const constraint_dimensions = dimensions;
-  let all_constraints = [];
-  for (const i in constraint_dimensions) {
-    const const_dimension = constraint_dimensions[i];
-    if (const_dimension.isNum) {
-      let constraint_object = { col: i, operator: 'BETWEEN', val1: const_dimension.val[0], val2: const_dimension.val[1] };
-      all_constraints.push(constraint_object);
-    } else {
-      const constraintarray = const_dimension.val;
-      for (const j in constraintarray) {
-        let constraint_object = { col: i, operator: 'EQUALS', val1: constraintarray[j], val2: constraintarray[j] };
-        all_constraints.push(constraint_object);
-      }
+    const constraint_dimensions = dimensions;
+    let all_constraints = []
+    for(const i in constraint_dimensions){
+        const const_dimension = constraint_dimensions[i];
+        if(const_dimension.isNum){
+            let constraint_object = { col: i, operator: "BETWEEN", val1: const_dimension.val[0], val2: const_dimension.val[1] };
+            all_constraints.push(constraint_object);
+        }else{
+            let constraintarray = const_dimension.val;
+            for(const j in constraintarray){
+                let constraint_object = { col: i, operator: "EQUALS", val1: constraintarray[j], val2: constraintarray[j] };
+                all_constraints.push(constraint_object);
+            }
+        }
     }
-  }
-
-  ReactionCIMEBackendFromEnv.updatePOIConstraints(dataset.info.path, all_constraints).then((res) => {
-    if (res.msg !== 'ok') {
-      alert(res.msg);
-    }
-    if (triggerDatasetUpdate != null) {
-      triggerDatasetUpdate(
-        {
-          display: dataset.info.path,
-          path: dataset.info.path,
-          type: dataset.info.type,
-          uploaded: true,
-        },
-        state,
-      );
-    }
-  });
-};
+    
+    ReactionCIMEBackendFromEnv.updatePOIConstraints(dataset.info.path, all_constraints).then((res) => {
+        if(res.msg !== "ok"){
+            alert(res.msg)
+        }
+        if(triggerDatasetUpdate != null){
+            triggerDatasetUpdate({
+                display: dataset.info.path,
+                path: dataset.info.path,
+                type: dataset.info.type,
+                uploaded: true
+            }, state)
+        }
+    })
+    
+}

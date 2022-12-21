@@ -1,17 +1,19 @@
-import { Box, Divider, Grid, IconButton, Tooltip, Typography } from '@mui/material';
-import { Dataset } from 'projection-space-explorer';
-import React from 'react';
-import DeleteIcon from '@mui/icons-material/Delete';
+import { Box, Divider, Grid, IconButton, Tooltip, Typography } from "@mui/material";
+import { Dataset } from "projection-space-explorer";
+import React from "react";
 import { ReactionCIMEBackendFromEnv } from "../../Backend/ReactionCIMEBackend";
-import { formatLabel } from '../../Utility/Utils';
+import DeleteIcon from '@mui/icons-material/Delete';
+import { formatLabel } from "../../Utility/Utils";
+
+
 
 type Props = {
-  dataset: Dataset;
-  triggerDatasetUpdate;
-  state;
+    dataset: Dataset,
+    triggerDatasetUpdate,
+    state
 };
 
-export function ExceptionSettings({dataset, triggerDatasetUpdate, state}:Props) {
+export const ExceptionSettings = ({dataset, triggerDatasetUpdate, state}:Props) => {
     const [exceptions, setExceptions] = React.useState([]);
 
     const dropException = (index, state) => {
@@ -63,4 +65,4 @@ export function ExceptionSettings({dataset, triggerDatasetUpdate, state}:Props) 
             )}
         </div>
 }
-};
+

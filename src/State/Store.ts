@@ -1,38 +1,38 @@
-import { createAction } from '@reduxjs/toolkit';
-import { createRootReducer, createViewDuckReducer, RootActionTypes, RootState } from 'projection-space-explorer';
-import { combineReducers } from 'redux';
-import aggregateSettings, { AggregateInitStates } from './AggregateSettingsDuck';
-import { handleDataset } from './HandleDatasetDuck';
+import { createAction } from "@reduxjs/toolkit";
+import { createRootReducer, createViewDuckReducer, RootActionTypes, RootState } from "projection-space-explorer";
+import { combineReducers } from "redux";
+import aggregateSettings, { AggregateInitStates } from "./AggregateSettingsDuck";
+import { handleDataset } from "./HandleDatasetDuck";
 // import Dataset from "projection-space-explorer/dist/components/Ducks/DatasetDuck";
 // import cimeBackgroundSelection from "projection-space-explorer/dist/components/Ducks/CimeBackgroundSelectionDuck";
-import lineUpInput from './LineUpInputDuck';
-import { mouseInteractionHooks } from './MouseInteractionHooksDuck';
-import { pacoSettings } from './PacoSettingsDuck';
-import { selection } from './SelectionDuck';
+import lineUpInput from "./LineUpInputDuck";
+import { mouseInteractionHooks } from "./MouseInteractionHooksDuck";
+import { pacoSettings } from "./PacoSettingsDuck";
+import { selection } from "./SelectionDuck";
 
 const resetViews = createAction<void>('view/resetView');
 
 export const CIME4RViewActions = {
-  resetViews,
-};
+  resetViews
+}
 
 export const CIMEReducers = {
-  lineUpInput,
+  lineUpInput: lineUpInput,
   // cimeBackgroundSelection: cimeBackgroundSelection,
   // dataset: Dataset,
   // aggregateSettings: aggregateSettings,
   multiples: createViewDuckReducer({ aggregateSettings }, (builder) => {
     builder.addCase(resetViews, (state, action) => {
-      for (const i in state.multiples.ids) {
-        const id = state.multiples.ids[i];
-        state.multiples.entities[id].attributes.aggregateSettings = AggregateInitStates.all;
+      for(let i in state.multiples.ids){
+        const id = state.multiples.ids[i]
+        state.multiples.entities[id].attributes.aggregateSettings = AggregateInitStates.all
       }
-    });
+    })
   }).reducer,
-  mouseInteractionHooks,
-  selection,
-  handleDataset,
-  pacoSettings,
+  mouseInteractionHooks: mouseInteractionHooks,
+  selection: selection,
+  handleDataset: handleDataset,
+  pacoSettings: pacoSettings
 };
 
 const cimeCombined = combineReducers(CIMEReducers);
@@ -45,19 +45,19 @@ export type CimeState = ReturnType<typeof cimeCombined>;
 export type AppState = RootState & CimeState;
 
 export function createCIMERootReducer() {
-  const pseRootReducer = createRootReducer(CIMEReducers);
-
+  const pseRootReducer = createRootReducer(CIMEReducers)
+  
   return (state: Parameters<typeof pseRootReducer>[0], action: Parameters<typeof pseRootReducer>[1]) => {
-    const newState = pseRootReducer(state, action);
+    const newState = pseRootReducer(state, action)
     // console.log(action.type)
     if (action.type === RootActionTypes.DATASET) {
       // initialize pacoAttributes when dataset changes
       // TODO: might not be necessary
-      if (newState.dataset != null) {
+      if(newState.dataset != null){
         const newPacoAttributes = Object.keys(newState.dataset.columns).map((col) => {
-          return { feature: col, show: newState.dataset.columns[col].metaInformation.paco as boolean };
-        });
-        Object.assign(newState, { pacoSettings: { ...state.pacoSettings, pacoAttributes: newPacoAttributes } });
+          return {feature: col, show: newState.dataset.columns[col].metaInformation.paco as boolean};
+        })
+        Object.assign(newState, {pacoSettings: {...state.pacoSettings, pacoAttributes: newPacoAttributes}});
       }
     }
 
