@@ -45,7 +45,7 @@ export function FeatureTooltipTitle({ feature, count, isSmiles }) {
       {isSmiles && <div>Short name: {mapSmilesToShortname(feature)}</div>}
       {smilesImg && (
         <div
-          id="smiles_${value.category}"
+          id={`smiles_${feature}`}
           style={{
             width: '100%',
             height: '100px',

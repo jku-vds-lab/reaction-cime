@@ -34,6 +34,7 @@ export class RemoteEmbedding {
       let done;
       let value;
       while (!done) {
+        // eslint-disable-next-line no-await-in-loop
         ({ value, done } = await reader.read());
         if (done) {
           console.log('The stream is closed!');

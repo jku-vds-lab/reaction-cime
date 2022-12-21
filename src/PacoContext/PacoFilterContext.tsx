@@ -23,7 +23,7 @@ const connector = connect(mapStateToProps, mapDispatchToProps);
 
 type PropsFromRedux = ConnectedProps<typeof connector>;
 
-type Props = PropsFromRedux & {};
+type Props = PropsFromRedux;
 
 const loadingArea = 'loading_indicator_paco';
 export const PacoContext = connector(function ({ dataset, triggerDatasetUpdate }: Props) {
@@ -222,6 +222,7 @@ export const PacoContext = connector(function ({ dataset, triggerDatasetUpdate }
         );
       });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dataset, pacoAttributes]);
 
   return (

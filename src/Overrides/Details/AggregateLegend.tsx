@@ -1,3 +1,4 @@
+/* eslint-disable no-await-in-loop */
 import { Table, TableBody, TableCell, TableHead, TableRow } from '@mui/material';
 import { makeStyles } from '@mui/styles';
 import { Dataset, FeatureType, IProjection } from 'projection-space-explorer';

@@ -19,8 +19,6 @@ import { PacoTabPanel } from './Overrides/PacoTabPanel/PacoTabPanel';
 import { AddRegionExceptionMenuItem } from './Overrides/ContextMenu/AddRegionException';
 import { SetFiltersToItemFeatures } from './Overrides/ContextMenu/SetFiltersToItemFeatures';
 
-export const DEMO = false;
-
 PluginRegistry.getInstance().registerPlugin(new ReactionsPlugin());
 
 const mapStateToProps = (state: AppState) => ({

@@ -4,7 +4,7 @@ import { DatasetType, useCancellablePromise } from 'projection-space-explorer';
 import React from 'react';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import { trackPromise } from 'react-promise-tracker';
-import { DEMO } from '../../ReactionCIMEApp';
+import { DEMO } from '../../constants';
 import { ReactionCIMEBackendFromEnv } from '../../Backend/ReactionCIMEBackend';
 import { LoadingIndicatorView } from './LoadingIndicatorDialog';
 

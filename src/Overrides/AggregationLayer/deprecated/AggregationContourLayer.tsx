@@ -162,21 +162,23 @@ export const AggregationContourLayer = connector(
         abortController,
         loadingArea,
       );
+      // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [aggregateColor, poiDataset.info.path]);
 
     React.useEffect(() => {
       if (aggregateDataset && aggregateDataset.vectors) {
         retrieveColorscale(aggregateDataset, aggregateColor.value_col, aggregateColor.uncertainty_col, setAggregateColorMapScale, aggregateSettings);
       }
+      // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [aggregateDataset, aggregateColor, aggregateSettings?.colormapSettings.colorscale, aggregateSettings?.colormapSettings.useVSUP]);
 
     React.useEffect(() => {
       if (aggregateSettings?.colormapSettings.scale_obj != null && aggregateDataset && aggregateDataset.vectors) {
-        const lines = createContours(aggregateDataset, aggregateColor.value_col, aggregateSettings?.colormapSettings.scale_obj);
-        setLines(lines);
+        setLines(createContours(aggregateDataset, aggregateColor.value_col, aggregateSettings?.colormapSettings.scale_obj));
       } else {
         setLines(null);
       }
+      // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [aggregateSettings?.colormapSettings.scale_obj, aggregateSettings?.colormapSettings.valueFilter]);
 
     return (

@@ -52,6 +52,7 @@ export function ExceptionSettings({ dataset, triggerDatasetUpdate, state }: Prop
           </Typography>
         </Box>
         {exceptions.map((exc, i) => (
+          // eslint-disable-next-line react/no-array-index-key
           <Grid key={`exception${i}`} container paddingTop={0}>
             <Grid item xs={3} textAlign="right">
               <Tooltip title="Remove exception">

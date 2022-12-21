@@ -1,3 +1,4 @@
+/* eslint-disable guard-for-in */
 import { Box, Button, Tooltip } from '@mui/material';
 import { Dataset } from 'projection-space-explorer';
 import React from 'react';
@@ -7,7 +8,7 @@ import { ReactionCIMEBackendFromEnv } from '../../Backend/ReactionCIMEBackend';
 import { CategoryFilter } from './CategoryFilter';
 import { RangeFilter } from './RangeFilter';
 
-export const updateBackendConstraints = (dimensions: {}, dataset, triggerDatasetUpdate, state) => {
+export const updateBackendConstraints = (dimensions: Record<string, any>, dataset, triggerDatasetUpdate, state) => {
   const constraintDimensions = dimensions;
   const allConstraints = [];
   for (const i in constraintDimensions) {
@@ -18,8 +19,8 @@ export const updateBackendConstraints = (dimensions: {}, dataset, triggerDataset
     } else {
       const constraintarray = constDimension.val;
       for (const j in constraintarray) {
-        const constraint_object = { col: i, operator: 'EQUALS', val1: constraintarray[j], val2: constraintarray[j] };
-        allConstraints.push(constraint_object);
+        const constraintObject = { col: i, operator: 'EQUALS', val1: constraintarray[j], val2: constraintarray[j] };
+        allConstraints.push(constraintObject);
       }
     }
   }
