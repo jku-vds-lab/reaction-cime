@@ -1,9 +1,8 @@
-black~=22.3.0
-debugpy~=1.5.1
-flake8~=4.0.1
-isort~=5.10.1
-mkdocs-material~=8.2.8
-pep8-naming~=0.12.1
+black~=22.12.0
+debugpy~=1.6.4
+flake8~=6.0.0
+isort~=5.11.3
+pep8-naming~=0.13.3
+pyright~=1.1.285
 pytest-runner~=6.0.0
-pytest~=7.1.1
-recommonmark~=0.7.1
+pytest~=7.2.0
