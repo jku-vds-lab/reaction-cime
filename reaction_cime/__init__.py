@@ -8,7 +8,7 @@ from flask_sqlalchemy import SQLAlchemy
 from pydantic import BaseModel
 from tdp_core.plugin.model import AVisynPlugin, RegHelper
 
-from .settings import ReactionCimeSettings
+from .settings import ReactionCimeSettings, get_settings
 
 
 class VisynPlugin(AVisynPlugin):
@@ -34,21 +34,21 @@ class VisynPlugin(AVisynPlugin):
 
     def init_app(self, app: FastAPI):
 
+        # TODO: Flask app and bundle are actually separate in the deployment
         flask_app = Flask(
             __name__,
-            template_folder="../../build",
-            static_folder="../../build/jku-vds-lab/reaction-cime/static",
+            template_folder="../build",
+            static_folder="../build/jku-vds-lab/reaction-cime/static",
             static_url_path="/jku-vds-lab/reaction-cime/static",
         )  # , static_folder="../../build/static", template_folder="../../build")
         # CORS(app)
 
-        basedir = os.path.abspath(os.path.dirname(__file__))
-        temp_dir = os.path.join(basedir, "../../temp-files/")
-        flask_app.config["tempdir"] = temp_dir
-        if not os.path.exists(temp_dir):
-            os.makedirs(temp_dir)
-        flask_app.config["SQLALCHEMY_DATABASE_URI"] = (
-            "sqlite:///" + temp_dir + "app.sqlite"
+        tmp_dir = get_settings().tmp_dir
+        flask_app.config["tempdir"] = tmp_dir
+        if not os.path.exists(tmp_dir):
+            os.makedirs(tmp_dir)
+        flask_app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///" + os.path.join(
+            tmp_dir, "app.sqlite"
         )  # 'sqlite://' + app.config['REACTION_CIME_FILES_DIRECTORY'] + "//app.sqlite"
 
         db = SQLAlchemy(flask_app)
