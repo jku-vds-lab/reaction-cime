@@ -70,7 +70,7 @@ export class ReactionCIMEBackend {
   };
 
   public deleteFile = async (filename): Promise<{ deleted: any }> => {
-    const path = `${this.baseUrl}/delete_file/${filename}`;
+    const path = `${this.baseUrl}/delete_file/${encodeURIComponent(filename)}`;
 
     return fetch(path, {
       ...this.fetchParams,
@@ -188,7 +188,7 @@ export class ReactionCIMEBackend {
   };
 
   public terminate_projection = async (filename): Promise<{ response: any }> => {
-    const path = `${this.baseUrl}/terminate_projection_thread/${filename}`;
+    const path = `${this.baseUrl}/terminate_projection_thread/${encodeURIComponent(filename)}`;
 
     return fetch(path, {
       ...this.fetchParams,
@@ -214,7 +214,7 @@ export class ReactionCIMEBackend {
   public getkNearestData = async (filename: string, x: string, y: string, k: string) => {
     // TODO consider accepting integer parameters and converting them here to append them to the path string
     // console.log('calling get_nearest_data: filename, x, y, k :>> ', filename, x, y, k);
-    const path = `${this.baseUrl}/get_k_nearest_from_csv/${filename}/${x}/${y}/${k}`;
+    const path = `${this.baseUrl}/get_k_nearest_from_csv/${encodeURIComponent(filename)}/${x}/${y}/${k}`;
     // window.location.href = path;
     window.open(path);
   };
@@ -268,7 +268,7 @@ export class ReactionCIMEBackend {
   };
 
   public loadNODatapoints = async (filename: string) => {
-    return fetch(`${this.baseUrl}/get_no_datapoints/${filename}`, {
+    return fetch(`${this.baseUrl}/get_no_datapoints/${encodeURIComponent(filename)}`, {
       ...this.fetchParams,
       method: 'GET',
     })
@@ -281,7 +281,7 @@ export class ReactionCIMEBackend {
   };
 
   public loadValueRange = async (filename: string, col_name: string) => {
-    return fetch(`${this.baseUrl}/get_value_range/${filename}/${col_name}`, {
+    return fetch(`${this.baseUrl}/get_value_range/${encodeURIComponent(filename)}/${encodeURIComponent(col_name)}`, {
       ...this.fetchParams,
       method: 'GET',
     })
@@ -294,7 +294,7 @@ export class ReactionCIMEBackend {
   };
 
   public loadCategoryValues = async (filename: string, col_name: string) => {
-    return fetch(`${this.baseUrl}/get_category_values/${filename}/${col_name}`, {
+    return fetch(`${this.baseUrl}/get_category_values/${encodeURIComponent(filename)}/${encodeURIComponent(col_name)}`, {
       ...this.fetchParams,
       method: 'GET',
     })
@@ -310,10 +310,10 @@ export class ReactionCIMEBackend {
     let cacheColsString = '';
     if (cacheCols != null) {
       cacheCols.forEach((col) => {
-        cacheColsString += `&cache_cols=${col}`;
+        cacheColsString += `&cache_cols=${encodeURIComponent(col)}`;
       });
     }
-    return fetch(`${this.baseUrl}/update_cache/${filename}?dummy=1${cacheColsString}`, {
+    return fetch(`${this.baseUrl}/update_cache/${encodeURIComponent(filename)}?dummy=1${cacheColsString}`, {
       ...this.fetchParams,
       method: 'GET',
     })
@@ -326,7 +326,7 @@ export class ReactionCIMEBackend {
   };
 
   public loadCategoryCount = async (filename: string, col_name: string) => {
-    return fetch(`${this.baseUrl}/get_category_count/${filename}/${col_name}`, {
+    return fetch(`${this.baseUrl}/get_category_count/${encodeURIComponent(filename)}/${encodeURIComponent(col_name)}`, {
       ...this.fetchParams,
       method: 'GET',
     })
@@ -346,10 +346,15 @@ export class ReactionCIMEBackend {
       yChannel = 'y';
     }
 
-    return fetch(`${this.baseUrl}/get_category_count_of_hex/${filename}/${col_name}/${xChannel}/${yChannel}?x=${x}&y=${y}&circ_radius=${circ_radius}`, {
-      ...this.fetchParams,
-      method: 'GET',
-    })
+    return fetch(
+      `${this.baseUrl}/get_category_count_of_hex/${encodeURIComponent(filename)}/${encodeURIComponent(
+        col_name,
+      )}/${xChannel}/${yChannel}?x=${x}&y=${y}&circ_radius=${circ_radius}`,
+      {
+        ...this.fetchParams,
+        method: 'GET',
+      },
+    )
       .then(this.handleErrors)
       .then((response) => response.json())
       .then(this.handleJSONErrors)
@@ -359,7 +364,7 @@ export class ReactionCIMEBackend {
   };
 
   public loadDensity = async (filename: string, col_name: string) => {
-    return fetch(`${this.baseUrl}/get_density/${filename}/${col_name}`, {
+    return fetch(`${this.baseUrl}/get_density/${encodeURIComponent(filename)}/${encodeURIComponent(col_name)}`, {
       ...this.fetchParams,
       method: 'GET',
     })
@@ -379,10 +384,15 @@ export class ReactionCIMEBackend {
       yChannel = 'y';
     }
 
-    return fetch(`${this.baseUrl}/get_density_of_hex/${filename}/${col_name}/${xChannel}/${yChannel}?x=${x}&y=${y}&circ_radius=${circ_radius}`, {
-      ...this.fetchParams,
-      method: 'GET',
-    })
+    return fetch(
+      `${this.baseUrl}/get_density_of_hex/${encodeURIComponent(filename)}/${encodeURIComponent(
+        col_name,
+      )}/${xChannel}/${yChannel}?x=${x}&y=${y}&circ_radius=${circ_radius}`,
+      {
+        ...this.fetchParams,
+        method: 'GET',
+      },
+    )
       .then(this.handleErrors)
       .then((response) => response.json())
       .then(this.handleJSONErrors)
@@ -505,7 +515,7 @@ export class ReactionCIMEBackend {
       let cacheColsString = '';
       if (cache_cols != null) {
         cache_cols.forEach((col) => {
-          cacheColsString += `&cache_cols=${col}`;
+          cacheColsString += `&cache_cols=${encodeURIComponent(col)}`;
         });
       }
 
@@ -574,7 +584,7 @@ export class ReactionCIMEBackend {
       let cacheColsString = '';
       if (cache_cols != null) {
         cache_cols.forEach((col) => {
-          cacheColsString += `&cache_cols=${col}`;
+          cacheColsString += `&cache_cols=${encodeURIComponent(col)}`;
         });
       }
 
@@ -623,10 +633,10 @@ export class ReactionCIMEBackend {
   ) {
     let colsString = '?dummy=0';
     cols.forEach((col) => {
-      colsString += `&cols=${col}`;
+      colsString += `&cols=${encodeURIComponent(col)}`;
     });
 
-    const path = `${env.baseUrl}/get_csv_by_columns/${filename}${colsString}`;
+    const path = `${env.baseUrl}/get_csv_by_columns/${encodeURIComponent(filename)}${colsString}`;
 
     const promise = cancellablePromise
       ? cancellablePromise(d3v5.csv(path, { ...env.fetchParams, signal: controller?.signal }), controller)
@@ -650,7 +660,7 @@ export class ReactionCIMEBackend {
   }
 
   public loadPOIExceptions = async (filename: string) => {
-    return fetch(`${this.baseUrl}/get_poi_exceptions/${filename}`, {
+    return fetch(`${this.baseUrl}/get_poi_exceptions/${encodeURIComponent(filename)}`, {
       ...this.fetchParams,
       method: 'GET',
     })
@@ -663,7 +673,7 @@ export class ReactionCIMEBackend {
   };
 
   public loadPOIConstraints = async (filename: string) => {
-    return fetch(`${this.baseUrl}/get_poi_constraints/${filename}`, {
+    return fetch(`${this.baseUrl}/get_poi_constraints/${encodeURIComponent(filename)}`, {
       ...this.fetchParams,
       method: 'GET',
     })
@@ -676,7 +686,7 @@ export class ReactionCIMEBackend {
   };
 
   public resetPOIConstraints = async (filename: string) => {
-    return fetch(`${this.baseUrl}/reset_poi_constraints/${filename}`, {
+    return fetch(`${this.baseUrl}/reset_poi_constraints/${encodeURIComponent(filename)}`, {
       ...this.fetchParams,
       method: 'GET',
     })
@@ -740,7 +750,7 @@ export class ReactionCIMEBackend {
   };
 
   public downloadPOIConstraints = async (filename: string) => {
-    const path = `${this.baseUrl}/download_poi_constraints/${filename}`;
+    const path = `${this.baseUrl}/download_poi_constraints/${encodeURIComponent(filename)}`;
     // window.location.href = path;
     window.open(path);
   };
