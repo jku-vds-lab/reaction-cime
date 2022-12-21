@@ -27,7 +27,7 @@ const spec: VisualizationSpec = {
   data: { name: 'values' },
 };
 
-export default function VegaDate (props: Omit<VegaLiteProps, 'spec'>) {
+export default function VegaDate(props: Omit<VegaLiteProps, 'spec'>) {
   return <VegaLite {...props} spec={spec} />;
 }
 

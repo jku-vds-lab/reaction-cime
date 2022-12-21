@@ -3,80 +3,82 @@ import { VisualizationSpec, VegaLite } from 'react-vega';
 import { VegaLiteProps } from 'react-vega/lib/VegaLite';
 
 const spec: VisualizationSpec = {
-  "width": 50,
-  "height": 50,
-  "transform": [
-    {"filter": "datum.id < 10"}
-  ],
-  "layer": [
+  width: 50,
+  height: 50,
+  transform: [{ filter: 'datum.id < 10' }],
+  layer: [
     {
-      "transform": [{
-        "filter": "datum.selection == 'selection'"
-      }],
-      "mark": {"type": "bar", "tooltip": true},
-      "encoding": {
-        "x": {
-          "field": "category",
-          "type": "ordinal",
-          "axis": null,
-          "sort": {"field": "id", "order": "ascending"}
+      transform: [
+        {
+          filter: "datum.selection == 'selection'",
         },
-        "y": {
-          "field": "count",
-          "type": "quantitative",
-          "axis": null,
-          "stack": null
+      ],
+      mark: { type: 'bar', tooltip: true },
+      encoding: {
+        x: {
+          field: 'category',
+          type: 'ordinal',
+          axis: null,
+          sort: { field: 'id', order: 'ascending' },
         },
-        "color": {
-          "condition": {
-            "test": "indexof(['null', 'undefined', 'unknown', 'none', 'Null', 'Undefined', 'Unknown', 'None', 'NULL', 'UNDEFINED', 'UNKNOWN', 'NONE'], datum.category) >= 0 || datum.category === null",
-            "value": "#aaaaaa"
+        y: {
+          field: 'count',
+          type: 'quantitative',
+          axis: null,
+          stack: null,
+        },
+        color: {
+          condition: {
+            test: "indexof(['null', 'undefined', 'unknown', 'none', 'Null', 'Undefined', 'Unknown', 'None', 'NULL', 'UNDEFINED', 'UNKNOWN', 'NONE'], datum.category) >= 0 || datum.category === null",
+            value: '#aaaaaa',
           },
-          "value": "#007dad"
+          value: '#007dad',
         },
-        "tooltip": [
-          {"field": "selection", "type": "nominal", title: 'subset'},
-          {"field": "category", "type": "nominal"},
-          {"field": "count", "type": "quantitative", title: 'feature'}
-        ]
-      }
+        tooltip: [
+          { field: 'selection', type: 'nominal', title: 'subset' },
+          { field: 'category', type: 'nominal' },
+          { field: 'count', type: 'quantitative', title: 'feature' },
+        ],
+      },
     },
     {
-      "transform": [{
-        "filter": "datum.selection == 'all'"
-      }],
-      "mark": {"type": "bar", "tooltip": true, "stroke": "black", "fillOpacity": 0},
-      "encoding": {
-        "x": {
-          "field": "category",
-          "type": "ordinal",
-          "axis": null,
-          "sort": {"field": "id", "order": "ascending"}
+      transform: [
+        {
+          filter: "datum.selection == 'all'",
         },
-        "y": {
-          "field": "count",
-          "type": "quantitative",
-          "axis": null,
-          "stack": null
+      ],
+      mark: { type: 'bar', tooltip: true, stroke: 'black', fillOpacity: 0 },
+      encoding: {
+        x: {
+          field: 'category',
+          type: 'ordinal',
+          axis: null,
+          sort: { field: 'id', order: 'ascending' },
         },
-        "color": {
-          "condition": {
-            "test": "indexof(['null', 'undefined', 'unknown', 'none', 'Null', 'Undefined', 'Unknown', 'None', 'NULL', 'UNDEFINED', 'UNKNOWN', 'NONE'], datum.category) >= 0 || datum.category === null",
-            "value": "#aaaaaa"
+        y: {
+          field: 'count',
+          type: 'quantitative',
+          axis: null,
+          stack: null,
+        },
+        color: {
+          condition: {
+            test: "indexof(['null', 'undefined', 'unknown', 'none', 'Null', 'Undefined', 'Unknown', 'None', 'NULL', 'UNDEFINED', 'UNKNOWN', 'NONE'], datum.category) >= 0 || datum.category === null",
+            value: '#aaaaaa',
           },
         },
-        "tooltip": [
-          {"field": "selection", "type": "nominal", title: 'subset'},
-          {"field": "category", "type": "nominal"},
-          {"field": "count", "type": "quantitative", title: 'feature'}
-        ]
-      }
-    }
+        tooltip: [
+          { field: 'selection', type: 'nominal', title: 'subset' },
+          { field: 'category', type: 'nominal' },
+          { field: 'count', type: 'quantitative', title: 'feature' },
+        ],
+      },
+    },
   ],
   data: { name: 'values' },
 };
 
-export default function BarChart (props: Omit<VegaLiteProps, 'spec'>) {
+export default function BarChart(props: Omit<VegaLiteProps, 'spec'>) {
   return <VegaLite {...props} spec={spec} />;
 }
 

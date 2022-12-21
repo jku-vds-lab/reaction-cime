@@ -1,76 +1,66 @@
-import { ReactionCIMEBackendFromEnv } from "../Backend/ReactionCIMEBackend";
-import * as d3v5 from "d3v5";
+import * as d3v5 from 'd3v5';
+import { ReactionCIMEBackendFromEnv } from '../Backend/ReactionCIMEBackend';
 
-export const PSE_BLUE = "#007dad" // "#1f77b4"
-export const LIGHT_GREY = "#DDDDDD"
-export const PSE_GREEN = "#7fc97f"
-export const RED = "#ff0000"
-export const GREEN = "#67D934"
-
+export const PSE_BLUE = '#007dad'; // "#1f77b4"
+export const LIGHT_GREY = '#DDDDDD';
+export const PSE_GREEN = '#7fc97f';
+export const RED = '#ff0000';
+export const GREEN = '#67D934';
 
 export const formatLabel = (value: number) => {
-    if(value < 0.01){
-        return d3v5.format(".2e")(value);
-    }
-    if(value >= 100){
-        return Math.round(value)
-    }
-    
-    return Math.round(value*100)/100;
-}
-
-export const formatLabelWithRange = (value, min, max) => {
-    if(max == null || min == null)
-        return Math.round(value)
-
-    const step_size = (max-min)/100;
-    if(step_size < 0.01){
-        // https://github.com/d3/d3-format
-        return d3v5.format(".2e")(value);
-    }
-    if(step_size >= 1)
-        return Math.round(value)
-    
-    return Math.round(value*100)/100
-}
-
-export function arrayEquals(a, b) {
-    return (
-      Array.isArray(a) &&
-      Array.isArray(b) &&
-      a.length === b.length &&
-      a.every((val, index) => val === b[index])
-    );
+  if (value < 0.01) {
+    return d3v5.format('.2e')(value);
+  }
+  if (value >= 100) {
+    return Math.round(value);
   }
 
-export function save_smiles_lookup_table(files:FileList){
-    if (files == null || files.length <= 0) {
-        return;
-    }
-    var file = files[0];
+  return Math.round(value * 100) / 100;
+};
 
-    const fileReader = new FileReader()
-    fileReader.onload = (e) => {
-        localStorage.setItem("smiles_lookup", e.target.result.toString());
-        alert("Successfuly uploaded")
-    }
-    fileReader.readAsBinaryString(file)
+export const formatLabelWithRange = (value, min, max) => {
+  if (max == null || min == null) return Math.round(value);
+
+  const step_size = (max - min) / 100;
+  if (step_size < 0.01) {
+    // https://github.com/d3/d3-format
+    return d3v5.format('.2e')(value);
+  }
+  if (step_size >= 1) return Math.round(value);
+
+  return Math.round(value * 100) / 100;
+};
+
+export function arrayEquals(a, b) {
+  return Array.isArray(a) && Array.isArray(b) && a.length === b.length && a.every((val, index) => val === b[index]);
 }
 
-export function map_smiles_to_shortname(smiles:string):string {
-    const smiles_lookup_str = localStorage.getItem("smiles_lookup");
-    if(smiles_lookup_str == null)
-        return smiles
-    const smiles_lookup = d3v5.csvParse(smiles_lookup_str) as Array<{smiles:string, shortname:string}>;
-    return smiles_lookup.find((pair) => pair.smiles === smiles)?.shortname;
+export function save_smiles_lookup_table(files: FileList) {
+  if (files == null || files.length <= 0) {
+    return;
+  }
+  const file = files[0];
+
+  const fileReader = new FileReader();
+  fileReader.onload = (e) => {
+    localStorage.setItem('smiles_lookup', e.target.result.toString());
+    alert('Successfuly uploaded');
+  };
+  fileReader.readAsBinaryString(file);
 }
 
-export function map_shortname_to_smiles(shortname:string):string {
-    const smiles_lookup_str = localStorage.getItem("smiles_lookup");
-    if(smiles_lookup_str == null)
-        return shortname
-    const smiles_lookup = d3v5.csvParse(smiles_lookup_str) as Array<{smiles:string, shortname:string}>;
-    return smiles_lookup.find((pair) => pair.shortname === shortname)?.smiles;
+export function map_smiles_to_shortname(smiles: string): string {
+  const smiles_lookup_str = localStorage.getItem('smiles_lookup');
+  if (smiles_lookup_str == null) return smiles;
+  const smiles_lookup = d3v5.csvParse(smiles_lookup_str) as Array<{ smiles: string; shortname: string }>;
+  return smiles_lookup.find((pair) => pair.smiles === smiles)?.shortname;
+}
+
+export function map_shortname_to_smiles(shortname: string): string {
+  const smiles_lookup_str = localStorage.getItem('smiles_lookup');
+  if (smiles_lookup_str == null) return shortname;
+  const smiles_lookup = d3v5.csvParse(smiles_lookup_str) as Array<{ smiles: string; shortname: string }>;
+  return smiles_lookup.find((pair) => pair.shortname === shortname)?.smiles;
 }
 
 // does not work properly with react
@@ -80,7 +70,7 @@ export function map_shortname_to_smiles(shortname:string):string {
 //     const smiles_lookup_str = localStorage.getItem("smiles_lookup");
 //     if(smiles_lookup_str != null){
 //         const smiles_lookup = d3v5.csvParse(smiles_lookup_str) as Array<{smiles:string, shortname:string}>;
-//         smiles_lookup.forEach((value) => { 
+//         smiles_lookup.forEach((value) => {
 //             el.innerHTML = el.innerHTML.replace(value.smiles, value.shortname);
 //         })
 //     }
@@ -89,7 +79,7 @@ export function map_shortname_to_smiles(shortname:string):string {
 //     const smiles_lookup_str = localStorage.getItem("smiles_lookup");
 //     if(smiles_lookup_str != null){
 //         const smiles_lookup = d3v5.csvParse(smiles_lookup_str) as Array<{smiles:string, shortname:string}>;
-//         smiles_lookup.forEach((value) => { 
+//         smiles_lookup.forEach((value) => {
 //             el.innerHTML = el.innerHTML.replace(value.shortname, value.smiles);
 //         })
 //     }
@@ -105,32 +95,23 @@ export function map_shortname_to_smiles(shortname:string):string {
  * @returns {void} - no return value
  */
 export function handleBackgroundSelectionDownload(coords: any, filename: string) {
-    // if input for checking k-nearest neighbors (x,y coordinates and k) are not undefined
-    if (
-        typeof coords?.x !== "undefined" &&
-        typeof coords?.y !== "undefined" &&
-        (document.getElementById("knn-textfield") as HTMLInputElement)?.value !==
-        "undefined"
-    ) {
-        let k = +(document.getElementById("knn-textfield") as HTMLInputElement)
-        ?.value;
-        // if input k is neither integer nor below 1
-        if (k < 1 || k % 1 !== 0) {
-            // warn user
-            alert("Invalid input for k-nearest neighbors.");
-        } else {
-            // otherwise send request to db and download response in browser
-            ReactionCIMEBackendFromEnv.getkNearestData(
-                filename,
-                coords?.x,
-                coords?.y,
-                (document.getElementById("knn-textfield") as HTMLInputElement)?.value
-            );
-        }
+  // if input for checking k-nearest neighbors (x,y coordinates and k) are not undefined
+  if (
+    typeof coords?.x !== 'undefined' &&
+    typeof coords?.y !== 'undefined' &&
+    (document.getElementById('knn-textfield') as HTMLInputElement)?.value !== 'undefined'
+  ) {
+    const k = +(document.getElementById('knn-textfield') as HTMLInputElement)?.value;
+    // if input k is neither integer nor below 1
+    if (k < 1 || k % 1 !== 0) {
+      // warn user
+      alert('Invalid input for k-nearest neighbors.');
+    } else {
+      // otherwise send request to db and download response in browser
+      ReactionCIMEBackendFromEnv.getkNearestData(filename, coords?.x, coords?.y, (document.getElementById('knn-textfield') as HTMLInputElement)?.value);
     }
+  }
 }
-
-
 
 /**
  * Creates a temporal dummy element and automatically triggers the download of the specified file with the specified content.
@@ -142,36 +123,33 @@ export function handleBackgroundSelectionDownload(coords: any, filename: string)
  * @returns {void} - no return value
  */
 export const downloadImpl = (data: string, name: string, mimetype: string) => {
-    var b = new Blob([data], { type: mimetype });
-    var csvURL = window.URL.createObjectURL(b);
-    let tempLink = document.createElement("a");
-    tempLink.href = csvURL;
-    tempLink.setAttribute("download", name);
-    tempLink.click();
-    // TODO give created element a unique id and remove it again
-  };
+  const b = new Blob([data], { type: mimetype });
+  const csvURL = window.URL.createObjectURL(b);
+  const tempLink = document.createElement('a');
+  tempLink.href = csvURL;
+  tempLink.setAttribute('download', name);
+  tempLink.click();
+  // TODO give created element a unique id and remove it again
+};
 
+export const convert_to_rgb = (value: string | { r: number; g: number; b: number }): { r: number; g: number; b: number } => {
+  if (Object.keys(value).includes('r') && Object.keys(value).includes('g') && Object.keys(value).includes('b')) return { r: value.r, g: value.g, b: value.b };
 
+  value = value.toString();
+  if (value.startsWith('rgb')) {
+    let rgb = value.replace('rgb(', '');
+    rgb = rgb.replace(')', '');
+    rgb = rgb.replace(' ', '');
+    const rgb_arr = rgb.split(',');
+    return { r: parseInt(rgb_arr[0]), g: parseInt(rgb_arr[1]), b: parseInt(rgb_arr[2]) };
+  }
 
-export const convert_to_rgb = (value: string | {r: number, g: number, b: number}):{r: number, g: number, b: number} => {
-    if(Object.keys(value).includes("r") && Object.keys(value).includes("g") && Object.keys(value).includes("b"))
-        return {"r": value["r"], "g": value["g"], "b": value["b"]};
+  if (value.startsWith('#')) {
+    value = value.replace('#', '');
+    const hex = value.match(/.{1,2}/g);
+    return { r: parseInt(hex[0], 16), g: parseInt(hex[1], 16), b: parseInt(hex[2], 16) };
+  }
 
-    value = value.toString()
-    if(value.startsWith("rgb")){
-        var rgb = value.replace("rgb(", "")
-        rgb = rgb.replace(")", "")
-        rgb = rgb.replace(" ", "")
-        var rgb_arr = rgb.split(",")
-        return {"r": parseInt(rgb_arr[0]), "g": parseInt(rgb_arr[1]), "b": parseInt(rgb_arr[2])}
-    }
-
-    if(value.startsWith("#")){
-        value = value.replace("#", "")
-        var hex = value.match(/.{1,2}/g);
-        return {"r": parseInt(hex[0], 16), "g": parseInt(hex[1], 16), "b": parseInt(hex[2], 16)}
-    }
-    
-    console.log("error:", "format unknown ->", value)
-    return {"r": 0, "g": 0, "b": 0};
-}
+  console.log('error:', 'format unknown ->', value);
+  return { r: 0, g: 0, b: 0 };
+};

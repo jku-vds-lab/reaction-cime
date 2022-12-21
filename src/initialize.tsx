@@ -12,10 +12,10 @@
 //   enableProvenanceUrlTracking: false,
 // });
 
-import * as React from "react";
-import ReactDOM from "react-dom";
-import { ReactionCIMEApp } from "./ReactionCIMEApp";
-import "./index.css";
-import "lineupjs/build/LineUpJS.css";
+import * as React from 'react';
+import ReactDOM from 'react-dom';
+import { ReactionCIMEApp } from './ReactionCIMEApp';
+import './index.css';
+import 'lineupjs/build/LineUpJS.css';
 
-ReactDOM.render(<ReactionCIMEApp />, document.getElementById("app"));
+ReactDOM.render(<ReactionCIMEApp />, document.getElementById('app'));

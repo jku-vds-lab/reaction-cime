@@ -2,15 +2,15 @@
  * Duck file for the LineUp input data
  */
 
-import { filter } from "lodash";
+import { filter } from 'lodash';
 
 // const SET_DATA = "ducks/lineUpInput/SET_DATA"
 // const SET_COLUMNS = "ducks/lineUpInput/SET_COLUMNS"
-const SET_DUMP = "ducks/lineUpInput/SET_DUMP";
-const SET_FILTER = "ducks/lineUpInput/SET_FILTER";
-const UPDATE_FILTER = "ducks/lineUpInput/UPDATE_FILTER";
-const SET_LINEUP = "ducks/lineUpInput/SET_LINEUP";
-const SET_UPDATE = "ducks/lineUpInput/SET_UPDATE";
+const SET_DUMP = 'ducks/lineUpInput/SET_DUMP';
+const SET_FILTER = 'ducks/lineUpInput/SET_FILTER';
+const UPDATE_FILTER = 'ducks/lineUpInput/UPDATE_FILTER';
+const SET_LINEUP = 'ducks/lineUpInput/SET_LINEUP';
+const SET_UPDATE = 'ducks/lineUpInput/SET_UPDATE';
 
 // export const setLineUpInput_data = input => ({
 //     type: SET_DATA,
@@ -22,36 +22,35 @@ const SET_UPDATE = "ducks/lineUpInput/SET_UPDATE";
 //     input: input
 // });
 
-
 export const setLineUpInput_dump = (input) => ({
   type: SET_DUMP,
-  input: input,
+  input,
 });
 
 export const setLineUpInput_filter = (input) => ({
   type: SET_FILTER,
-  input: input,
+  input,
 });
 
 export const updateLineUpInput_filter = (input) => ({
   type: UPDATE_FILTER,
-  input: input,
+  input,
 });
 
 export const setLineUpInput_lineup = (input) => ({
   type: SET_LINEUP,
-  input: input,
+  input,
 });
 
 export const setLineUpInput_update = (input) => ({
   type: SET_UPDATE,
-  input: input,
+  input,
 });
 
 const initialState: LineUpType = {
   // data: null,
   // columns: null,
-  dump: "",
+  dump: '',
   filter: null,
   previousfilter: null,
   lineup: null,
@@ -79,13 +78,10 @@ const lineUpInput = (state = initialState, action): LineUpType => {
       const prev_filter = { ...state.filter };
       return { ...state, previousfilter: prev_filter, filter: action.input };
     case UPDATE_FILTER:
-      if (
-        state.filter &&
-        Object.keys(state.filter).includes(action.input["key"])
-      ) {
-        if (state.filter[action.input["key"]] === action.input["val_old"]) {
+      if (state.filter && Object.keys(state.filter).includes(action.input.key)) {
+        if (state.filter[action.input.key] === action.input.val_old) {
           const filter_new = { ...filter };
-          filter_new[action.input["key"]] = action.input["val_new"];
+          filter_new[action.input.key] = action.input.val_new;
           return { ...state, filter: filter_new };
         }
       }
