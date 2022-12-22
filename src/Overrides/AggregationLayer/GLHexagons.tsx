@@ -27,20 +27,24 @@ type Props = PropsFromRedux & {
 export const GLHexagons = connector(({ smallMultiples, hexagons, hoverElement, selectElement, multipleId }: Props) => {
   const { viewTransform } = smallMultiples[multipleId].attributes;
   const ref = React.useRef<any>();
+  const canvasRef = React.useRef<HTMLCanvasElement>();
 
-  const [renderer] = useState(
-    () =>
-      new THREE.WebGLRenderer({
-        antialias: true,
-        alpha: true,
-      }),
-  );
+  const [dim, setDim] = useState({ width: 0, height: 0 });
+
+  const [renderer, setRenderer] = useState<THREE.WebGLRenderer>();
   const [scene] = useState(() => new THREE.Scene());
   const [rerender, setRerender] = useState(0);
 
   useEffect(() => {
-    ref.current.appendChild(renderer.domElement);
+    // ref.current.appendChild(renderer.domElement);
     // eslint-disable-next-line
+    setRenderer(
+      new THREE.WebGLRenderer({
+        antialias: true,
+        alpha: true,
+        canvas: canvasRef.current,
+      }),
+    );
   }, []);
 
   useEffect(() => {
@@ -51,6 +55,44 @@ export const GLHexagons = connector(({ smallMultiples, hexagons, hoverElement, s
     setRerender(rerender + 1);
     // eslint-disable-next-line
   }, [hexagons]);
+
+  useEffect(() => {
+    if (!renderer) return () => {};
+
+    const container = canvasRef.current;
+
+    const observer = new ResizeObserver(() => {
+      const w = container.offsetWidth;
+      const h = container.offsetHeight;
+
+      setDim({ width: w, height: h });
+
+      renderer?.setSize(container.offsetWidth, container.offsetHeight);
+
+      const camera = new THREE.OrthographicCamera(w / -2, w / 2, h / 2, h / -2, 1, 1000);
+
+      camera.position.z = 1;
+      camera.lookAt(new THREE.Vector3(0, 0, 0));
+
+      camera.position.x = viewTransform.centerX;
+      camera.position.y = viewTransform.centerY;
+      camera.zoom = viewTransform.zoom;
+
+      camera.updateProjectionMatrix();
+
+      try {
+        renderer.render(scene, camera);
+      } catch (e) {
+        console.log(e);
+      }
+    });
+
+    observer.observe(container);
+
+    return () => {
+      observer.unobserve(container);
+    };
+  }, [renderer, canvasRef, scene, viewTransform]);
 
   useEffect(() => {
     const selectedObject = scene.getObjectByName('hoverElement');
@@ -77,12 +119,12 @@ export const GLHexagons = connector(({ smallMultiples, hexagons, hoverElement, s
   }, [selectElement]);
 
   useEffect(() => {
-    if (viewTransform) {
+    if (viewTransform && renderer) {
       const w = viewTransform.width;
       const h = viewTransform.height;
 
       renderer.setPixelRatio(window.devicePixelRatio);
-      renderer.setSize(w, h);
+      // renderer.setSize(w - 16, h - 16);
       renderer.setClearColor(0x000000, 0);
 
       // Create orthographic camera
@@ -106,5 +148,5 @@ export const GLHexagons = connector(({ smallMultiples, hexagons, hoverElement, s
     // eslint-disable-next-line
   }, [viewTransform, scene, scene.children, rerender]);
 
-  return <div style={{}} ref={ref} />;
+  return <canvas ref={canvasRef} style={{ width: '100%', height: '100%' }} width={dim.width} height={dim.height} />;
 });
