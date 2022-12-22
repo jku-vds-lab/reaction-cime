@@ -17,7 +17,7 @@ class VisynPlugin(AVisynPlugin):
     def register(self, registry: RegHelper):
         # registry.append("namespace", "cime_api", "reaction_cime.api", {"namespace": "/api/cime"})
 
-        # registry.append("tdp-sql-database-definition", "reaction_cime", "reaction_cime.db_connector", {"configKey": "reaction_cime"})
+        # registry.append("tdp-sql-database-definition", "reaction_cime", "", {"configKey": "reaction_cime"})
 
         # registry.append(
         #     "tdp-sql-database-migration",
