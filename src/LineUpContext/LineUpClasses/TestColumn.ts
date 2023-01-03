@@ -64,7 +64,11 @@ export declare function sortMethodChangedNMC(previous: EAdvancedSortMethod, curr
  */
 export declare function filterChangedNMC(previous: INumberFilter | null, current: INumberFilter | null): void;
 
-export declare type ITestColumnDesc = INumbersDesc & IMapColumnDesc<number[]>;
+export declare type ITestColumnDesc = INumbersDesc &
+  IMapColumnDesc<number[]> & {
+    min?: number;
+    max?: number;
+  };
 
 @toolbar('rename', 'filterNumber', 'sort', 'sortBy')
 @dialogAddons('sort', 'sortNumbers')

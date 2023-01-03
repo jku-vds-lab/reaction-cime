@@ -62,3 +62,7 @@ As an alternative, you can also user Docker to start the backend. The dockerized
 ```
 docker compose up
 ```
+
+
+
+PSE package: "git+ssh://git@github.com:jku-vds-lab/projection-space-explorer#develop", "portal:../projection-space-explorer"
