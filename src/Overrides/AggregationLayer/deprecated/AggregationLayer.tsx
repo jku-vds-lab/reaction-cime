@@ -256,7 +256,7 @@ const AggregationLayer = connector(
             // texture={new THREE.TextureLoader().load('https://threejsfundamentals.org/threejs/resources/images/wall.jpg')}
             textures={textures}
             sizes={sizes}
-         />}
+         />)}
       </div>
     );
   },

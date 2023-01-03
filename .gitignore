@@ -47,6 +47,7 @@ yarn.lock
 /venv/
 
 # dev stack
+.yo-rc-workspace.json
 projection-space-explorer
 
 # Datasets
