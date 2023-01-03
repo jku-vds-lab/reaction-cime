@@ -36,7 +36,7 @@
     "lint": "visyn_scripts lint",
     "prepack": "yarn run build",
     "start:fast": "visyn_scripts start --env workspace_mode=single fast=true",
-    "start": "NODE_OPTIONS=--preserve-symlinks visyn_scripts start --env workspace_mode=single",
+    "start": "visyn_scripts start --env workspace_mode=single",
     "storybook:build": "NODE_OPTIONS=--max_old_space_size=4096 build-storybook",
     "storybook": "NODE_OPTIONS=--max_old_space_size=4096 start-storybook -p 6006",
     "test": "visyn_scripts test",
