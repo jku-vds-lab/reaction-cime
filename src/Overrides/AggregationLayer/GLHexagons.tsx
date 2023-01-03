@@ -65,8 +65,6 @@ export const GLHexagons = connector(({ smallMultiples, hexagons, hoverElement, s
       const w = container.offsetWidth;
       const h = container.offsetHeight;
 
-      console.log(w, h);
-
       setDim({ width: w, height: h });
 
       renderer?.setSize(container.offsetWidth, container.offsetHeight, false);
