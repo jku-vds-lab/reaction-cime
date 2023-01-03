@@ -46,6 +46,9 @@ yarn.lock
 /.venv*/
 /venv/
 
+# dev stack
+projection-space-explorer
+
 # Datasets
 /public/datasets
 /reaction_cime/temp-files
