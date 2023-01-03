@@ -8,28 +8,31 @@ on:
         required: false
         type: boolean
         default: false
+      build_docker_image:
+        description: 'Builder docker image'
+        required: false
+        type: boolean
+        default: false
   push:
 
 jobs:
   build:
     uses: datavisyn/github-workflows/.github/workflows/build-node-python.yml@new_deployment
     secrets: inherit
-
-  cypress:
-    needs: build
-    if: inputs.cypress == true || github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' || startsWith(github.ref, 'release-')
-    uses: datavisyn/github-workflows/.github/workflows/cypress.yml@new_deployment
-    secrets: inherit
+    with:
+      cypress_enable: true
+      cypress_run_because_flag: ${{ inputs.cypress == true }}
 
   build-docker:
     # needs: [build]
+    if: inputs.build_docker_image == true
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v3
       - name: Set up node version
         uses: actions/setup-node@v3
         with:
-          node-version: "16.16"
+          node-version: '16.16'
       - name: Show node and npm version
         run: |
           corepack enable

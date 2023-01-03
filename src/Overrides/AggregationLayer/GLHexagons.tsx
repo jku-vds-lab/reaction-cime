@@ -65,9 +65,11 @@ export const GLHexagons = connector(({ smallMultiples, hexagons, hoverElement, s
       const w = container.offsetWidth;
       const h = container.offsetHeight;
 
+      console.log(w, h);
+
       setDim({ width: w, height: h });
 
-      renderer?.setSize(container.offsetWidth, container.offsetHeight);
+      renderer?.setSize(container.offsetWidth, container.offsetHeight, false);
 
       const camera = new THREE.OrthographicCamera(w / -2, w / 2, h / 2, h / -2, 1, 1000);
 
