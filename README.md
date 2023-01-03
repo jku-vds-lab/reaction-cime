@@ -63,6 +63,31 @@ As an alternative, you can also user Docker to start the backend. The dockerized
 docker compose up
 ```
 
+## Linking PSE and Reaction-CIME Frontend
 
+If you want to make changes to PSE and view the changes without having to push to the repo and reinstalling dependencies, the recommended way is to use the yarn link/portal and/or our webpack resolveAliases feature.
 
-PSE package: "git+ssh://git@github.com:jku-vds-lab/projection-space-explorer#develop", "portal:../projection-space-explorer"
+First, clone `projection-space-explorer` into the current directory (i.e. into the reaction-cime directory). Do not install `projection-space-explorer`, as we do not want any `node_modules` within that folder, as it should use the ones from the reaction-cime directory.
+
+Add a portal to the local `projection-space-explorer` in the reaction-cime package.json (**this is a local change and should not be committed!**):
+
+```json
+  "resolutions": {
+    ...
+    "projection-space-explorer": "portal:./projection-space-explorer"
+  },
+```
+
+Now, install everything via `yarn install`.
+
+To now include `projection-space-explorer` to your webpack build, add a `.yo-rc-workspace.json` and update the `resolveAliases` (note the single `.`, i.e. using the current folder):
+
+```json
+{
+  "resolveAliases": {
+    "projection-space-explorer": "./projection-space-explorer/src/index.ts"
+  }
+}
+```
+
+With that, you can now edit all files of `projection-space-explorer`, including auto-completion (as the node_modules of the application will be used as main lookup), and get hot-reloading.

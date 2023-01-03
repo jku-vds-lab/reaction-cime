@@ -17,7 +17,7 @@ class VisynPlugin(AVisynPlugin):
     def register(self, registry: RegHelper):
         # registry.append("namespace", "cime_api", "reaction_cime.api", {"namespace": "/api/cime"})
 
-        # registry.append("tdp-sql-database-definition", "reaction_cime", "reaction_cime.db_connector", {"configKey": "reaction_cime"})
+        # registry.append("tdp-sql-database-definition", "reaction_cime", "", {"configKey": "reaction_cime"})
 
         # registry.append(
         #     "tdp-sql-database-migration",
@@ -61,15 +61,17 @@ class VisynPlugin(AVisynPlugin):
 
         flask_app.register_blueprint(reaction_cime_api)
 
-        app.mount("/api/reaction_cime", WSGIMiddleware(init_legacy_app(flask_app)))
+        init_legacy_app(flask_app)
+        app.mount("/api/reaction_cime", WSGIMiddleware(flask_app))
 
         @app.on_event("startup")
         async def startup():
             # Add the / path at the very end to match all other routes before
-            if get_settings().bundles_dir:
+            bundles_dir = get_settings().bundles_dir
+            if bundles_dir:
                 # Mount the bundles directory as static file to enable the frontend (required in single Dockerfile mode)
-                _log.info(f"Mounting bundles dir: {get_settings().bundles_dir}")
-                app.mount("/", StaticFiles(directory=get_settings().bundles_dir, html=True), name="reaction_cime_bundles")
+                _log.info(f"Mounting bundles dir: {bundles_dir}")
+                app.mount("/", StaticFiles(directory=bundles_dir, html=True), name="reaction_cime_bundles")
 
     @property
     def setting_class(self) -> Type[BaseModel]:

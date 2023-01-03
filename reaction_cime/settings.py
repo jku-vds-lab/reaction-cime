@@ -15,4 +15,4 @@ class ReactionCimeSettings(BaseModel):
 
 # TODO: We can now actually use the type-safe settings...
 def get_settings() -> ReactionCimeSettings:
-    return manager.settings.reaction_cime
+    return manager.settings.reaction_cime  # type: ignore

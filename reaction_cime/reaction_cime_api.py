@@ -6,13 +6,15 @@ import os
 import threading
 import time
 from io import BytesIO, StringIO
+from typing import Optional
 
 import gower
 import numpy as np
 import pandas as pd
 import umap
-from flask import Blueprint, Response, abort, current_app, jsonify, request, stream_with_context
+from flask import Blueprint, abort, current_app, jsonify, request, stream_with_context
 from flask.helpers import make_response, send_file
+from flask.wrappers import Response
 from openTSNE import TSNE
 from rdkit import Chem
 from rdkit.Chem import Draw
@@ -24,7 +26,7 @@ from .helper_functions import (
     cycle_column,
     get_mcs,
     hex_aggregate_by_col,
-    isInsideHex,
+    is_inside_hex,
     preprocess_dataset,
     rescale_and_encode,
     smiles_to_base64,
@@ -72,11 +74,11 @@ dataset_cache = (
 )  # structure: {"filename": dataset} # if "retrieve_cols" are contained in dataset.columns then the dataset is returned, otherwise dataset with all "cache_cols" are loaded into the cache
 
 
-def handle_dataset_cache(filename, cols=[], xChannel="x", yChannel="y"):
+def handle_dataset_cache(filename, cols=[], x_channel="x", y_channel="y"):
     if filename not in dataset_cache.keys():
         dataset_cache[filename] = None
 
-    all_cols = list(set(cols + [xChannel, yChannel, "x", "y"]))
+    all_cols = list(set(cols + [x_channel, y_channel, "x", "y"]))
     # dataset is not cached and has to be loaded
     if dataset_cache[filename] is None or not set(all_cols).issubset(set(dataset_cache[filename].columns)):
         print("---dataset is not cached and has to be loaded to memory")
@@ -115,22 +117,22 @@ def update_dataset_cache(filename):
 def upload_csv():
     start_time = time.time()
     _log.info("Received new csv to upload")
-    fileUpload = request.files.get("myFile")
+    file_upload = request.files.get("myFile")
 
     # --- check if file is corrupt
-    if not fileUpload or fileUpload.filename == "":
-        abort("No valid file provided")
-    fileUpload.seek(0, 2)  # sets file's current position at 0th offset from the end (2)
-    file_length = fileUpload.tell()  # get absolute offset of current position
-    supposed_file_size = int(request.form.get("file_size"))
+    if not file_upload or file_upload.filename == "":
+        abort(500, "No valid file provided")
+    file_upload.seek(0, 2)  # sets file's current position at 0th offset from the end (2)
+    file_length = file_upload.tell()  # get absolute offset of current position
+    supposed_file_size = int(request.form["file_size"])
     if file_length != supposed_file_size:  # the uploaded file does not correspond to the original file
         # abort("there was a problem with the file upload. please try again") # not working?
         return {"error": "there was a problem with the file upload. please try again"}
-    fileUpload.seek(0, 0)  # resets file's current position at 0th offset from start (0)
+    file_upload.seek(0, 0)  # resets file's current position at 0th offset from start (0)
     # ---
 
-    _log.info(f"Uploading file {fileUpload.filename}")
-    df = pd.read_csv(request.files.get("myFile"))
+    _log.info(f"Uploading file {file_upload.filename}")
+    df = pd.read_csv(request.files["myFile"].stream)
 
     if "x" not in df.columns or "y" not in df.columns:
         print("--- randomly init x and y coordinates")
@@ -138,7 +140,7 @@ def upload_csv():
         df["y"] = np.random.uniform(-50, 50, len(df))
 
     print("--- save file to database")
-    filename = fileUpload.filename
+    filename = file_upload.filename or ""
     filename = "_".join(filename.split(".")[0:-1])
     if filename in get_cime_dbo().get_table_names():
         filename = "%s%i" % (filename, time.time())
@@ -154,7 +156,7 @@ def upload_csv():
     print("--- took %i min %f s to upload file %s" % (delta_time / 60, delta_time % 60, filename))
 
     return {
-        "filename": fileUpload.filename,
+        "filename": file_upload.filename,
         "id": filename,
     }
 
@@ -214,7 +216,7 @@ def load_poi_exceptions(filename):
     return df_exceptions
 
 
-def load_poi_constraints(filename):
+def load_poi_constraints(filename) -> pd.DataFrame:
     path = f'{current_app.config["tempdir"]}{filename}_constraints.csv'
     if not os.path.exists(path):  # if there is no constraints file yet, create a default one
         save_poi_constraints(filename)
@@ -236,7 +238,7 @@ def reset_poi_constraints(filename):
 def add_poi_exceptions():
     if request.method == "POST":
         filename = request.form.get("filename")
-        new_exceptions = json.loads(request.form.get("exceptions"))
+        new_exceptions = json.loads(request.form["exceptions"])
         new_exceptions_df = pd.DataFrame(new_exceptions)
 
         if (
@@ -275,7 +277,7 @@ def add_poi_exceptions():
 def update_poi_exceptions():
     if request.method == "POST":
         filename = request.form.get("filename")
-        exceptions = json.loads(request.form.get("exceptions"))
+        exceptions = json.loads(request.form["exceptions"])
         exceptions_df = pd.DataFrame(exceptions)
 
         if (
@@ -310,7 +312,7 @@ def update_poi_exceptions():
 def update_poi_constraints():
     if request.method == "POST":
         filename = request.form.get("filename")
-        constraints = json.loads(request.form.get("constraints"))
+        constraints = json.loads(request.form["constraints"])
         constraints_df = pd.DataFrame(constraints)
 
         if (
@@ -385,7 +387,7 @@ def map_exceptions_filter(row):
     return f'("{row.x_col}" BETWEEN {x_lower} AND {x_upper}) AND ("{row.y_col}" BETWEEN {y_lower} AND {y_upper})'
 
 
-def get_poi_constraints_filter(filename, df_constraints=None, df_exceptions=None):
+def get_poi_constraints_filter(filename, df_constraints: Optional[pd.DataFrame] = None, df_exceptions: Optional[pd.DataFrame] = None):
     if df_constraints is None:
         df_constraints = load_poi_constraints(filename)
 
@@ -579,10 +581,10 @@ def get_aggregated_dataset_cached(filename):
     )  # if value col or uncertainty col are not cached, we use this list of columns to prepare the new cached dataset
     sample_size = request.args.get("sample_size", default=200, type=int)
     range = {
-        "x_min": float(request.args.get("x_min")),
-        "x_max": float(request.args.get("x_max")),
-        "y_min": float(request.args.get("y_min")),
-        "y_max": float(request.args.get("y_max")),
+        "x_min": float(request.args["x_min"]),
+        "x_max": float(request.args["x_max"]),
+        "y_min": float(request.args["y_min"]),
+        "y_max": float(request.args["y_max"]),
     }
 
     agg_domain = handle_dataset_cache(filename, retrieve_cols + cache_cols)
@@ -602,8 +604,8 @@ def get_aggregated_dataset_cached(filename):
     return csv_buffer.getvalue()
 
 
-@reaction_cime_api.route("/get_hex_agg/<filename>/<xChannel>/<yChannel>", methods=["GET"])
-def get_hexagonal_aggregation(filename, xChannel="x", yChannel="y"):
+@reaction_cime_api.route("/get_hex_agg/<filename>/<x_channel>/<y_channel>", methods=["GET"])
+def get_hexagonal_aggregation(filename, x_channel="x", y_channel="y"):
 
     retrieve_cols = request.args.getlist("retrieve_cols")
     aggregation_methods = request.args.getlist("aggregation_methods")
@@ -612,25 +614,25 @@ def get_hexagonal_aggregation(filename, xChannel="x", yChannel="y"):
     )  # if value col or uncertainty col are not cached, we use this list of columns to prepare the new cached dataset
     sample_size = 20  # request.args.get("sample_size", default=20, type=int)
     range = {
-        "x_min": float(request.args.get("x_min")),
-        "x_max": float(request.args.get("x_max")),
-        "y_min": float(request.args.get("y_min")),
-        "y_max": float(request.args.get("y_max")),
+        "x_min": float(request.args["x_min"]),
+        "x_max": float(request.args["x_max"]),
+        "y_min": float(request.args["y_min"]),
+        "y_max": float(request.args["y_max"]),
     }
 
-    agg_domain = handle_dataset_cache(filename, retrieve_cols + cache_cols, xChannel=xChannel, yChannel=yChannel)
+    agg_domain = handle_dataset_cache(filename, retrieve_cols + cache_cols, x_channel=x_channel, y_channel=y_channel)
     agg_domain = agg_domain[
-        (agg_domain[xChannel] < range["x_max"])
-        * (agg_domain[xChannel] > range["x_min"])
-        * (agg_domain[yChannel] < range["y_max"])
-        * (agg_domain[yChannel] > range["y_min"])
+        (agg_domain[x_channel] < range["x_max"])
+        * (agg_domain[x_channel] > range["x_min"])
+        * (agg_domain[y_channel] < range["y_max"])
+        * (agg_domain[y_channel] > range["y_min"])
     ]
 
     agg_df, wrong_points = hex_aggregate_by_col(
-        agg_domain, retrieve_cols, aggregation_methods, range=None, sample_size=sample_size, xChannel=xChannel, yChannel=yChannel
+        agg_domain, retrieve_cols, aggregation_methods, range=None, sample_size=sample_size, x_channel=x_channel, y_channel=y_channel
     )  # TODO: what works better: range set to the boundaries of the dataset, or range set to the boundaries of the screen i.e. range=range
 
-    wrong_df = wrong_points[list(set(retrieve_cols + [xChannel, yChannel]))]
+    wrong_df = wrong_points[list(set(retrieve_cols + [x_channel, y_channel]))]
     wrong_df["hex"] = False
 
     agg_df["hex"] = True
@@ -667,17 +669,17 @@ def get_category_count(filename, col_name):
     return json.dumps(cat_count.to_dict("records")).encode("utf-8")
 
 
-@reaction_cime_api.route("/get_category_count_of_hex/<filename>/<col_name>/<xChannel>/<yChannel>", methods=["GET"])
-def get_category_count_of_hex(filename, col_name, xChannel, yChannel):
-    hex_x = float(request.args.get("x"))
-    hex_y = float(request.args.get("y"))
-    hex_circ_radius = float(request.args.get("circ_radius"))
+@reaction_cime_api.route("/get_category_count_of_hex/<filename>/<col_name>/<x_channel>/<y_channel>", methods=["GET"])
+def get_category_count_of_hex(filename, col_name, x_channel, y_channel):
+    hex_x = float(request.args["x"])
+    hex_y = float(request.args["y"])
+    hex_circ_radius = float(request.args["circ_radius"])
 
-    # df = get_cime_dbo().get_dataframe_from_table(filename, columns=[xChannel, yChannel, col_name])
-    df = handle_dataset_cache(filename, [xChannel, yChannel, col_name])
+    # df = get_cime_dbo().get_dataframe_from_table(filename, columns=[x_channel, y_channel, col_name])
+    df = handle_dataset_cache(filename, [x_channel, y_channel, col_name])
 
-    window = isInsideHex(
-        df[xChannel], df[yChannel], hex_x=hex_x, hex_y=hex_y, radius=circ_radius_to_radius(hex_circ_radius), circ_radius=hex_circ_radius
+    window = is_inside_hex(
+        df[x_channel], df[y_channel], hex_x=hex_x, hex_y=hex_y, radius=circ_radius_to_radius(hex_circ_radius), circ_radius=hex_circ_radius
     )
     df = df[window][[col_name]]
     df["count"] = 0  # dummy column, such that it can be aggregated by count
@@ -705,17 +707,17 @@ def get_density(filename, col_name):
     return {"x_vals": list(x_vals), "y_vals": list(y_vals), "norm_sd": np.std((data - data_min) / data_range)}
 
 
-@reaction_cime_api.route("/get_density_of_hex/<filename>/<col_name>/<xChannel>/<yChannel>", methods=["GET"])
-def get_density_of_hex(filename, col_name, xChannel="x", yChannel="y"):
-    hex_x = float(request.args.get("x"))
-    hex_y = float(request.args.get("y"))
-    hex_circ_radius = float(request.args.get("circ_radius"))
+@reaction_cime_api.route("/get_density_of_hex/<filename>/<col_name>/<x_channel>/<y_channel>", methods=["GET"])
+def get_density_of_hex(filename, col_name, x_channel="x", y_channel="y"):
+    hex_x = float(request.args["x"])
+    hex_y = float(request.args["y"])
+    hex_circ_radius = float(request.args["circ_radius"])
 
-    # df = get_cime_dbo().get_dataframe_from_table(filename, columns=[xChannel, yChannel, col_name])
-    df = handle_dataset_cache(filename, [xChannel, yChannel, col_name])
+    # df = get_cime_dbo().get_dataframe_from_table(filename, columns=[x_channel, y_channel, col_name])
+    df = handle_dataset_cache(filename, [x_channel, y_channel, col_name])
 
-    window = isInsideHex(
-        df[xChannel], df[yChannel], hex_x=hex_x, hex_y=hex_y, radius=circ_radius_to_radius(hex_circ_radius), circ_radius=hex_circ_radius
+    window = is_inside_hex(
+        df[x_channel], df[y_channel], hex_x=hex_x, hex_y=hex_y, radius=circ_radius_to_radius(hex_circ_radius), circ_radius=hex_circ_radius
     )
     data = df[window][col_name]
 
@@ -743,8 +745,8 @@ def get_density_of_hex(filename, col_name, xChannel="x", yChannel="y"):
 @reaction_cime_api.route("/project_dataset", methods=["OPTIONS", "POST"])
 def project_dataset():
     filename = request.form.get("filename")
-    params = json.loads(request.form.get("params"))
-    selected_feature_info = json.loads(request.form.get("selected_feature_info"))
+    params = json.loads(request.form["params"])
+    selected_feature_info = json.loads(request.form["selected_feature_info"])
     proj_df = get_cime_dbo().get_dataframe_from_table(filename, columns=list(selected_feature_info.keys()))
 
     # TODO: if params["useSelection"]: only project selected points --> do this in front-end? do this at all?
@@ -800,7 +802,7 @@ def project_dataset():
 
     # update the coordinates in the dataset
     start_time = time.time()
-    get_cime_dbo().update_row_bulk(filename, proj_df.index, {"x": proj_data[:, 0], "y": proj_data[:, 1]})
+    get_cime_dbo().update_row_bulk(filename, proj_df.index, {"x": proj_data[:, 0], "y": proj_data[:, 1]})  # type: ignore
     delta_time = time.time() - start_time
     print("--- took", time.strftime("%H:%M:%S", time.gmtime(delta_time)), "to update database")
     print("--- took %i min %f s to update database" % (delta_time / 60, delta_time % 60))
@@ -833,19 +835,19 @@ class ProjectionThread(threading.Thread):
     def run(self):
         try:
             if self.params["embedding_method"] == "rmOverlap":
-                proj_data, proj_df = self.runRMOverlap()
+                proj_data, proj_df = self.run_rm_overlap()
             else:
-                metric, normalized_values, proj_df, initialization = self.preprocessDataset()
+                metric, normalized_values, proj_df, initialization = self.preprocess_dataset()
 
                 self.msg = "calc embedding..."
                 # project the data
                 # --- umap
                 if self.params["embedding_method"] == "umap":
-                    proj_data = self.runUMAP(metric, normalized_values, initialization)
+                    proj_data = self.run_umap(metric, normalized_values, initialization)
 
                 # --- tsne
                 elif self.params["embedding_method"] == "tsne":
-                    proj_data = self.runTSNE(metric, normalized_values, initialization)
+                    proj_data = self.run_tsne(metric, normalized_values, initialization)
 
                 # --- pca
                 else:
@@ -857,7 +859,7 @@ class ProjectionThread(threading.Thread):
             self.msg = "save embedding..."
             # update the coordinates in the dataset
             start_time = time.time()
-            self.cime_dbo.update_row_bulk(self.filename, proj_df.index, {"x": proj_data[:, 0], "y": proj_data[:, 1]})
+            self.cime_dbo.update_row_bulk(self.filename, proj_df.index, {"x": proj_data[:, 0], "y": proj_data[:, 1]})  # type: ignore
             reset_dataset_cache(self.filename)  # reset cached data
             delta_time = time.time() - start_time
             print("--- took", time.strftime("%H:%M:%S", time.gmtime(delta_time)), "to update database")
@@ -873,7 +875,7 @@ class ProjectionThread(threading.Thread):
         finally:
             self.done = True
 
-    def preprocessDataset(self):
+    def preprocess_dataset(self):
         self.msg = "load dataset..."
         proj_df = self.cime_dbo.get_dataframe_from_table(self.filename, columns=list(self.selected_feature_info.keys()))
 
@@ -910,7 +912,7 @@ class ProjectionThread(threading.Thread):
 
         return metric, normalized_values, proj_df, initialization
 
-    def runTSNE(self, metric, normalized_values, initialization):
+    def run_tsne(self, metric, normalized_values, initialization):
         # https://github.com/pavlin-policar/openTSNE/blob/master/openTSNE/callbacks.py
         from openTSNE.callbacks import Callback
 
@@ -950,7 +952,7 @@ class ProjectionThread(threading.Thread):
         proj_data = proj.fit(normalized_values)
         return proj_data
 
-    def runUMAP(self, metric, normalized_values, initialization):
+    def run_umap(self, metric, normalized_values, initialization):
         if initialization is None:
             initialization = "spectral"
 
@@ -982,7 +984,7 @@ class ProjectionThread(threading.Thread):
         proj_data = proj.fit_transform(normalized_values)
         return proj_data
 
-    def runRMOverlap(self):
+    def run_rm_overlap(self):
         self.msg = "load dataset..."
         proj_df = self.cime_dbo.get_dataframe_from_table(self.filename, columns=["x", "y"])
 
@@ -1016,8 +1018,8 @@ class ProjectionThread(threading.Thread):
 
         # returns id of the respective thread
         if hasattr(self, "_thread_id"):
-            return self._thread_id
-        for id, thread in threading._active.items():
+            return self._thread_id  # type: ignore
+        for id, thread in threading._active.items():  # type: ignore
             if thread is self:
                 return id
 
@@ -1035,9 +1037,9 @@ class ProjectionThread(threading.Thread):
 # differnt approach could have been with sockets: https://www.shanelynn.ie/asynchronous-updates-to-a-webpage-with-flask-and-socket-io/
 @reaction_cime_api.route("/project_dataset_async", methods=["OPTIONS", "POST"])
 def project_dataset_async():
-    filename = request.form.get("filename")
-    params = json.loads(request.form.get("params"))
-    selected_feature_info = json.loads(request.form.get("selected_feature_info"))
+    filename = request.form["filename"]
+    params = json.loads(request.form["params"])
+    selected_feature_info = json.loads(request.form["selected_feature_info"])
     cime_dbo = get_cime_dbo()
 
     current_app.config["TERMINATE_PROJECTION_" + filename] = False
@@ -1094,7 +1096,7 @@ def smiles_list_to_common_substructure_img():
         mol_lst = []
         error_smiles = []
         for smiles in smiles_list:
-            mol = Chem.MolFromSmiles(smiles)
+            mol = Chem.MolFromSmiles(smiles)  # type: ignore
             if mol:
                 mol_lst.append(mol)
             else:
@@ -1103,10 +1105,12 @@ def smiles_list_to_common_substructure_img():
         m = get_mcs(mol_lst)
         pil_img = Draw.MolToImage(m)
 
-        buffered = BytesIO()
-        pil_img.save(buffered, format="JPEG")
-        img_str = base64.b64encode(buffered.getvalue())
-        return {"data": img_str.decode("utf-8"), "smiles": Chem.MolToSmiles(m)}
+        if pil_img:
+            buffered = BytesIO()
+            pil_img.save(buffered, format="JPEG")  # type: ignore
+            img_str = base64.b64encode(buffered.getvalue())
+            return {"data": img_str.decode("utf-8"), "smiles": Chem.MolToSmiles(m)}  # type: ignore
+        return {}
     else:
         return {}
 
@@ -1114,18 +1118,18 @@ def smiles_list_to_common_substructure_img():
 @reaction_cime_api.route("/get_substructure_count", methods=["OPTIONS", "POST"])
 def smiles_list_to_substructure_count():
     if request.method == "POST":
-        smiles_list = request.form.get("smiles_list").split(",")
+        smiles_list = request.form["smiles_list"].split(",")
         filter_smiles = request.form.get("filter_smiles")
 
         if len(smiles_list) == 0:
             return {"error": "empty SMILES list"}
 
-        patt = Chem.MolFromSmiles(filter_smiles)
+        patt = Chem.MolFromSmiles(filter_smiles)  # type: ignore
         if patt:
             substructure_counts = [
-                (smiles, len(Chem.MolFromSmiles(smiles).GetSubstructMatch(patt)))
+                (smiles, len(Chem.MolFromSmiles(smiles).GetSubstructMatch(patt)))  # type: ignore
                 for smiles in smiles_list
-                if Chem.MolFromSmiles(smiles) is not None
+                if Chem.MolFromSmiles(smiles) is not None  # type: ignore
             ]
             return {"substructure_counts": substructure_counts}
         return {"error": "invalid SMILES filter"}

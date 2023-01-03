@@ -58,19 +58,19 @@ def generate_global_ranges(domain):
 def get_time_series_modifier(col, modifier, global_ranges):
     split_name = col.split("_")
     timestep = split_name.pop(-1)
-    featureLabel = "_".join(split_name)
+    feature_label = "_".join(split_name)
 
     # -- column is a tuple time series feature
     if len([ele for ele in time_series_tuples if ele in col]) > 0:
-        featureVal = split_name.pop(-1)
-        timeSeriesGroup = (
-            "_".join(split_name) + ":" + featureVal
+        feature_val = split_name.pop(-1)
+        time_series_group = (
+            "_".join(split_name) + ":" + feature_val
         )  # for pred_mean and pred_var we need to add a colon because lineup uses the colon to find time series with 2 variables
         modifier += '"paco":false,'  # show column in parallel coordinates
     else:
-        timeSeriesGroup = "_".join(split_name)
+        time_series_group = "_".join(split_name)
 
-    modifier += '"featureLabel":"%s", "timeSeriesGroup":"%s", "timestep":%s, "project":false' % (featureLabel, timeSeriesGroup, timestep)
+    modifier += '"featureLabel":"%s", "timeSeriesGroup":"%s", "timestep":%s, "project":false' % (feature_label, time_series_group, timestep)
 
     # -- column is a diverging time series feature
     ts_col_sub_lst = [ele for ele in time_series_cols_diverging if ele in col]
@@ -145,14 +145,14 @@ def generate_rename_list(domain):
         elif col == "groupLabel":
             groups = list(set(domain[domain[col] != "-1"][col]))
             groups.sort()
-            clusterEdges = []
+            cluster_edges = []
             indices = range(0, len(groups) - 1)
             for i in indices:
-                clusterEdges.append([i, groups[i], groups[i + 1], ""])
+                cluster_edges.append([i, groups[i], groups[i + 1], ""])
             # need double quotes for javascript json parsing
             modifier = '"project":false,"paco":false,"edges":{"columns":["id","source","destination","name"],"index":%s,"data":%s}' % (
                 str(list(indices)),
-                str(clusterEdges).replace("'", '"'),
+                str(cluster_edges).replace("'", '"'),
             )
         else:
             # -- column should not be shown in lineup or in the summary view
@@ -186,9 +186,9 @@ def get_grid_data(x, y, sample_size=200):
     # Create grid values
     xi = np.linspace(x.min(), x.max(), sample_size)
     yi = np.linspace(y.min(), y.max(), sample_size)
-    Xi, Yi = np.meshgrid(xi, yi)
+    grid_x_i, grid_y_i = np.meshgrid(xi, yi)
 
-    return xi, yi, Xi, Yi
+    return xi, yi, grid_x_i, grid_y_i
 
 
 # deprecated
@@ -198,9 +198,9 @@ def aggregate_by_col_interpolate(df, value_cols, sample_size=200):
     x = df["x"]
     y = df["y"]
 
-    xi, yi, Xi, Yi = get_grid_data(x, y, sample_size)
+    xi, yi, grid_x_i, grid_y_i = get_grid_data(x, y, sample_size)
 
-    res_df = pd.DataFrame({"x": Xi.flatten(), "y": Yi.flatten()})
+    res_df = pd.DataFrame({"x": grid_x_i.flatten(), "y": grid_y_i.flatten()})
 
     # -----------------------
     # Interpolation on a grid
@@ -215,7 +215,7 @@ def aggregate_by_col_interpolate(df, value_cols, sample_size=200):
 
 
 # test if point is inside hexagon adapted from http://www.playchilla.com/how-to-check-if-a-point-is-inside-a-hexagon
-def isInsideHex(points_x, points_y, hex_x, hex_y, radius, circ_radius):
+def is_inside_hex(points_x, points_y, hex_x, hex_y, radius, circ_radius):
     points_q2x = abs(points_x - hex_x)  # transform the test point locally and to quadrant 2
     points_q2y = abs(points_y - hex_y)  # transform the test point locally and to quadrant 2
     window = (points_q2x <= circ_radius) * (points_q2y <= radius)  # bounding test (since q2 is in quadrant 2 only 2 tests are needed)
@@ -235,11 +235,11 @@ np_agg_methods_dict = {
 }
 
 
-def create_hex(df, hex_x, hex_y, radius, circ_radius, value_cols, aggregation_methods, xChannel, yChannel):
-    window = isInsideHex(df[xChannel], df[yChannel], hex_x, hex_y, radius, circ_radius)
+def create_hex(df, hex_x, hex_y, radius, circ_radius, value_cols, aggregation_methods, x_channel, y_channel):
+    window = is_inside_hex(df[x_channel], df[y_channel], hex_x, hex_y, radius, circ_radius)
     window_df = df[window]
     if len(window_df) > 0:
-        res = {xChannel: hex_x, yChannel: hex_y, "circ_radius": circ_radius}
+        res = {x_channel: hex_x, y_channel: hex_y, "circ_radius": circ_radius}
         for i in range(len(value_cols)):
             value_col = value_cols[i]
             aggregation_method = aggregation_methods[i]
@@ -258,9 +258,9 @@ def circ_radius_to_radius(circ_radius):
     return (3 ** (1 / 2)) * circ_radius / 2
 
 
-def hex_aggregate_by_col(df, value_cols, aggregation_methods, range=None, sample_size=20, xChannel="x", yChannel="y"):
-    x = df[xChannel]
-    y = df[yChannel]
+def hex_aggregate_by_col(df, value_cols, aggregation_methods, range=None, sample_size=20, x_channel="x", y_channel="y"):
+    x = df[x_channel]
+    y = df[y_channel]
 
     if range is None:  # set range to be the maximum and minimum of the available dataset points
         x_min = x.min()
@@ -299,7 +299,7 @@ def hex_aggregate_by_col(df, value_cols, aggregation_methods, range=None, sample
     range_y = np.arange(y_min, y_max, radius * 2)
     for i in range_x:
         for j in range_y:
-            hex, window = create_hex(df, i, j, radius, circ_radius, value_cols, aggregation_methods, xChannel, yChannel)
+            hex, window = create_hex(df, i, j, radius, circ_radius, value_cols, aggregation_methods, x_channel, y_channel)
             test_points_used += window
             if hex is not None:
                 hexes.append(hex)
@@ -309,7 +309,7 @@ def hex_aggregate_by_col(df, value_cols, aggregation_methods, range=None, sample
     range_y = np.arange(y_min - radius, y_max + radius, radius * 2)
     for i in range_x:
         for j in range_y:
-            hex, window = create_hex(df, i, j, radius, circ_radius, value_cols, aggregation_methods, xChannel, yChannel)
+            hex, window = create_hex(df, i, j, radius, circ_radius, value_cols, aggregation_methods, x_channel, y_channel)
             test_points_used += window
             if hex is not None:
                 hexes.append(hex)
@@ -328,12 +328,12 @@ def hex_aggregate_by_col(df, value_cols, aggregation_methods, range=None, sample
 def aggregate_by_col(df, value_cols, sample_size=20):
     x = df["x"]
     y = df["y"]
-    xi, yi, Xi, Yi = get_grid_data(x, y, sample_size)  # (200,) (200,) (200, 200) (200, 200)
+    xi, yi, grid_x_i, grid_y_i = get_grid_data(x, y, sample_size)  # (200,) (200,) (200, 200) (200, 200)
     # delta gives difference between two steps i.e. stepsize
     delta_x = (xi[1] - xi[0]) / 2
     delta_y = (yi[1] - yi[0]) / 2
 
-    res_df = pd.DataFrame({"x": Xi.flatten(), "y": Yi.flatten()})
+    res_df = pd.DataFrame({"x": grid_x_i.flatten(), "y": grid_y_i.flatten()})
 
     for value_col in value_cols:
         z = df[value_col]
@@ -418,16 +418,16 @@ def rescale_and_encode(proj_df, params, selected_feature_info):
 def get_mcs(mol_list):
 
     if len(mol_list) <= 1:
-        return Chem.MolFromSmiles("*")
+        return Chem.MolFromSmiles("*")  # type: ignore
 
     if type(mol_list[0]) == str:
         # TODO: handle invalid smiles
-        mol_list = [Chem.MolFromSmiles(sm) for sm in mol_list]
+        mol_list = [Chem.MolFromSmiles(sm) for sm in mol_list]  # type: ignore
 
     # completeRingsOnly=True # there are different settings possible here
     res = rdFMCS.FindMCS(mol_list, timeout=60, matchValences=False, ringMatchesRingOnly=True, completeRingsOnly=True)
     if res.canceled:
-        patt = Chem.MolFromSmiles("*")
+        patt = Chem.MolFromSmiles("*")  # type: ignore
     else:
         patt = res.queryMol
 
@@ -435,7 +435,7 @@ def get_mcs(mol_list):
 
 
 def smiles_to_base64(smiles):
-    m = Chem.MolFromSmiles(smiles)
+    m = Chem.MolFromSmiles(smiles)  # type: ignore
     if m:
         return mol_to_base64(m)
     else:
@@ -446,7 +446,7 @@ def mol_to_base64(m):
     pil_img = Draw.MolToImage(m)
 
     buffered = BytesIO()
-    pil_img.save(buffered, format="JPEG")
+    pil_img.save(buffered, format="JPEG")  # type: ignore
     img_str = base64.b64encode(buffered.getvalue())
     buffered.close()
     return img_str.decode("utf-8")
