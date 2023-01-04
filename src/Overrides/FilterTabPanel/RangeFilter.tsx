@@ -54,7 +54,7 @@ export function RangeFilter({ col, value, setValue, remove, dataset }: Props) {
           min={min}
           max={max}
           step={max == null || min == null || Math.floor(max) === max || Math.floor(min) === min ? 1 : (max - min) / 100} // use step of 1 for natural numbers;
-          valueLabelFormat={(value) => formatLabel(value, min, max)}
+          valueLabelFormat={(newValue) => formatLabel(newValue, min, max)}
           marks={[
             { value: min || 0, label: formatLabel(min || 0, min, max) },
             { value: max || 1, label: formatLabel(max || 1, min, max) },

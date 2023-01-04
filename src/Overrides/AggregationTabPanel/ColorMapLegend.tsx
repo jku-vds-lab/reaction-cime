@@ -3,15 +3,7 @@ import { connect, ConnectedProps } from 'react-redux';
 import { Button, InputLabel, MenuItem, Select } from '@mui/material';
 import * as vsup from 'vsup';
 import * as d3 from 'd3v5';
-import {
-  D3_CONTINUOUS_COLOR_SCALE_LIST,
-  setAggregateColorScale,
-  addValueFilter,
-  removeValueFilter,
-  toggleUseVSUP,
-  clearValueFilter,
-  setAggregateColorMapScale,
-} from '../../State/AggregateSettingsDuck';
+import { D3_CONTINUOUS_COLOR_SCALE_LIST, AggregateActions } from '../../State/AggregateSettingsDuck';
 import { AppState } from '../../State/Store';
 import { PSE_BLUE } from '../../Utility/Utils';
 
@@ -22,19 +14,19 @@ const mapStateToProps = (state: AppState) => ({
 });
 
 const mapDispatchToProps = (dispatch) => ({
-  setAggregateColorScale: (value) => dispatch(setAggregateColorScale(value)),
-  toggleUseVSUP: () => dispatch(toggleUseVSUP()),
-  addValueFilter: (value) => dispatch(addValueFilter(value)),
-  removeValueFilter: (value) => dispatch(removeValueFilter(value)),
-  clearValueFilter: () => dispatch(clearValueFilter()),
-  setAggregateColorMapScale: (scale) => dispatch(setAggregateColorMapScale(scale)),
+  setAggregateColorScale: (value) => dispatch(AggregateActions.setAggregateColorScale(value)),
+  toggleUseVSUP: () => dispatch(AggregateActions.toggleUseVSUP()),
+  addValueFilter: (value) => dispatch(AggregateActions.addValueFilter(value)),
+  removeValueFilter: (value) => dispatch(AggregateActions.removeValueFilter(value)),
+  clearValueFilter: () => dispatch(AggregateActions.clearValueFilter()),
+  setAggregateColorMapScale: (scale) => dispatch(AggregateActions.setAggregateColorMapScale(scale)),
 });
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
 
 type PropsFromRedux = ConnectedProps<typeof connector>;
 
-type Props = PropsFromRedux & {};
+type Props = PropsFromRedux;
 
 export const ColorMapLegend = connector(
   ({
@@ -52,7 +44,7 @@ export const ColorMapLegend = connector(
       return null;
     }
 
-    const discrete_steps = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1];
+    const discreteSteps = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1];
 
     const handleChange = (event) => {
       setAggregateColorScale(event.target.value);
@@ -118,30 +110,37 @@ export const ColorMapLegend = connector(
         setAggregateColorMapScale(scale);
       }
       // eslint-disable-next-line
-    }, [activeId, aggregateSettings.colormapSettings.useVSUP, aggregateSettings.advancedSettings.valueRange, aggregateSettings.advancedSettings.uncertaintyRange, aggregateSettings.colormapSettings.colorscale, aggregateSettings.colormapSettings.aggregateColor])
+    }, [
+      activeId,
+      aggregateSettings.colormapSettings.useVSUP,
+      aggregateSettings.advancedSettings.valueRange,
+      aggregateSettings.advancedSettings.uncertaintyRange,
+      aggregateSettings.colormapSettings.colorscale,
+      aggregateSettings.colormapSettings.aggregateColor,
+    ]);
 
     React.useEffect(() => {
       if (legend != null && gRef.current && svgRef.current) {
-        const rel_width = 250;
-        legend.size(rel_width);
+        const relWidth = 250;
+        legend.size(relWidth);
 
-        let padding_left;
-        let padding_top;
-        let padding_right;
-        let padding_bottom;
-        let rel_height;
+        let paddingLeft;
+        let paddingTop;
+        let paddingRight;
+        let paddingBottom;
+        let relHeight;
         if (legend.height == null) {
-          rel_height = rel_width;
-          padding_left = rel_width * 0.1;
-          padding_top = padding_left * 2;
-          padding_right = padding_left * 3;
-          padding_bottom = padding_left * 3;
+          relHeight = relWidth;
+          paddingLeft = relWidth * 0.1;
+          paddingTop = paddingLeft * 2;
+          paddingRight = paddingLeft * 3;
+          paddingBottom = paddingLeft * 3;
         } else {
-          rel_height = legend.height();
-          padding_left = rel_width * 0.05;
-          padding_top = 0;
-          padding_right = padding_left * 2;
-          padding_bottom = rel_height * 1.2;
+          relHeight = legend.height();
+          paddingLeft = relWidth * 0.05;
+          paddingTop = 0;
+          paddingRight = paddingLeft * 2;
+          paddingBottom = relHeight * 1.2;
         }
 
         const gElement = d3.select(gRef.current);
@@ -149,41 +148,41 @@ export const ColorMapLegend = connector(
         gElement.call(legend); // draw color legend
 
         const svgElement = d3.select(svgRef.current);
-        svgElement.attr('viewBox', `-${padding_left} -${padding_top} ${rel_width + padding_right} ${rel_height + padding_bottom}`);
+        svgElement.attr('viewBox', `-${paddingLeft} -${paddingTop} ${relWidth + paddingRight} ${relHeight + paddingBottom}`);
 
         // --- add interaction with legend
-        const legend_container = svgElement.select('.legend > g:last-child');
-        let color_sections = legend_container.selectAll('path');
-        if (color_sections.nodes().length <= 0) {
+        const legendContainer = svgElement.select('.legend > g:last-child');
+        let newColorSections = legendContainer.selectAll('path');
+        if (newColorSections.nodes().length <= 0) {
           // if there are no path elements, we look for rect elements
-          color_sections = gElement.selectAll('rect');
+          newColorSections = gElement.selectAll('rect');
         }
-        setColorSections(color_sections.nodes());
+        setColorSections(newColorSections.nodes());
 
-        color_sections.on('mouseover', (d, i) => {
+        newColorSections.on('mouseover', (d, i) => {
           // TODO: add hover interaction --> highlight areas in background somehow (e.g. have a component that draws a border around the selected areas)
-          legend_container.select('.hover_clone').remove();
-          const hover_el = d3.select(color_sections.nodes()[i]).clone();
-          hover_el.attr('class', 'hover_clone');
-          hover_el.attr('fill', PSE_BLUE);
+          legendContainer.select('.hover_clone').remove();
+          const hoverEl = d3.select(newColorSections.nodes()[i]).clone();
+          hoverEl.attr('class', 'hover_clone');
+          hoverEl.attr('fill', PSE_BLUE);
 
           // remove temporary hover element when we leave it
-          hover_el.on('mouseout', () => {
-            hover_el.remove();
+          hoverEl.on('mouseout', () => {
+            hoverEl.remove();
           });
 
           // when clicking, we want to select the underlying section
-          hover_el.on('click', () => {
+          hoverEl.on('click', () => {
             // color_sections.attr("stroke", "none")
-            const cur_node = d3.select(color_sections.nodes()[i]);
-            if (cur_node.attr('stroke') == null) {
-              cur_node.attr('stroke', PSE_BLUE);
-              cur_node.attr('stroke-width', '3px');
-              addValueFilter(cur_node.attr('fill'));
+            const curNode = d3.select(newColorSections.nodes()[i]);
+            if (curNode.attr('stroke') == null) {
+              curNode.attr('stroke', PSE_BLUE);
+              curNode.attr('stroke-width', '3px');
+              addValueFilter(curNode.attr('fill'));
             } else {
-              cur_node.attr('stroke', null);
-              cur_node.attr('stroke-width', '0px');
-              removeValueFilter(cur_node.attr('fill'));
+              curNode.attr('stroke', null);
+              curNode.attr('stroke-width', '0px');
+              removeValueFilter(curNode.attr('fill'));
             }
           });
         });
@@ -193,7 +192,7 @@ export const ColorMapLegend = connector(
         // });
       }
       // eslint-disable-next-line
-    }, [legend, gRef, svgRef])
+    }, [legend, gRef, svgRef]);
 
     return (
       <>
@@ -206,7 +205,7 @@ export const ColorMapLegend = connector(
                   width: '100%',
                   minWidth: '13rem',
                   height: '1rem',
-                  backgroundImage: `linear-gradient(to right, ${discrete_steps.map((step) => d3[colorscale](step)).join(',')})`,
+                  backgroundImage: `linear-gradient(to right, ${discreteSteps.map((step) => d3[colorscale](step)).join(',')})`,
                 }}
               />
             </MenuItem>

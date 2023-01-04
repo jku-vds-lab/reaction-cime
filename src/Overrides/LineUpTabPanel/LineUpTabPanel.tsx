@@ -3,7 +3,7 @@ import { connect, ConnectedProps } from 'react-redux';
 import GetAppIcon from '@mui/icons-material/GetApp';
 import React from 'react';
 import { DetailViewActions } from 'projection-space-explorer';
-import { setLineUpInput_filter } from '../../State/LineUpInputDuck';
+import { setLineUpInputFilter } from '../../State/LineUpInputDuck';
 import { AppState } from '../../State/Store';
 import { downloadImpl } from '../../Utility/Utils';
 
@@ -14,7 +14,7 @@ const mapStateToProps = (state: AppState) => ({
 
 const mapDispatchToProps = (dispatch) => ({
   setDetailVisibility: (value) => dispatch(DetailViewActions.setDetailVisibility(value)),
-  setLineUpInput_filter: (value) => dispatch(setLineUpInput_filter(value)),
+  setLineUpInput_filter: (value) => dispatch(setLineUpInputFilter(value)),
 });
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
@@ -32,9 +32,9 @@ export const LineUpTabPanel = connector(({ setDetailVisibility, setLineUpInput_f
     setDetailVisibility(true);
     setLineUpInput_filter(filter);
 
-    const curr_sizes = splitRef.current.split.getSizes();
-    if (curr_sizes[1] < 2) {
-      splitRef.current.split.setSizes([curr_sizes[0], 70]);
+    const currSizes = splitRef.current.split.getSizes();
+    if (currSizes[1] < 2) {
+      splitRef.current.split.setSizes([currSizes[0], 70]);
     }
   };
 
@@ -59,7 +59,7 @@ export const LineUpTabPanel = connector(({ setDetailVisibility, setLineUpInput_f
     }
   };
 
-  const [cell_value_vis, set_cell_value_vis] = React.useState(false);
+  const [cellValueVis, setCellValueVis] = React.useState(false);
 
   React.useEffect(() => {
     let style = document.getElementById('cell_value_vis');
@@ -71,7 +71,7 @@ export const LineUpTabPanel = connector(({ setDetailVisibility, setLineUpInput_f
       head.appendChild(style);
     }
 
-    const css = cell_value_vis ? '.lu-hover-only { visibility: visible; }' : '.lu-hover-only { visibility: hidden; }';
+    const css = cellValueVis ? '.lu-hover-only { visibility: visible; }' : '.lu-hover-only { visibility: hidden; }';
     // @ts-ignore
     if (style.styleSheet) {
       // This is required for IE8 and below.
@@ -81,11 +81,11 @@ export const LineUpTabPanel = connector(({ setDetailVisibility, setLineUpInput_f
       style.innerHTML = '';
       style.appendChild(document.createTextNode(css));
     }
-  }, [cell_value_vis]);
+  }, [cellValueVis]);
 
   const toggleVis = () => {
-    set_cell_value_vis(() => {
-      return !cell_value_vis;
+    setCellValueVis(() => {
+      return !cellValueVis;
     });
   };
 
@@ -116,7 +116,7 @@ export const LineUpTabPanel = connector(({ setDetailVisibility, setLineUpInput_f
           control={
             <Switch
               color="primary"
-              value={cell_value_vis}
+              value={cellValueVis}
               onChange={(event) => {
                 toggleVis();
               }}

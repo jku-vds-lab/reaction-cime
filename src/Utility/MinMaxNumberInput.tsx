@@ -24,7 +24,7 @@ export function MinMaxNumberInput({ title, target, setRange, range }: Props) {
         onChange={(event) => {
           const newVal = parseFloat(event.target.value);
           const current = { ...range };
-          if (!isNaN(newVal) && newVal < range.max) {
+          if (!Number.isNaN(newVal) && newVal < range.max) {
             current.min = newVal;
             setRange(current);
           } else {
@@ -45,7 +45,7 @@ export function MinMaxNumberInput({ title, target, setRange, range }: Props) {
         onChange={(event) => {
           const newVal = parseFloat(event.target.value);
           const current = { ...range };
-          if (!isNaN(newVal) && newVal > range.min) {
+          if (!Number.isNaN(newVal) && newVal > range.min) {
             current.max = newVal;
             setRange(current);
           } else {

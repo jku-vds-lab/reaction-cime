@@ -171,7 +171,7 @@ def get_no_datapoints(filename):
 
 # region --------------- Points of Interest ------------------
 
-MAX_POINTS = 500  # 10000
+MAX_POINTS = 10000
 
 
 def delete_poi_exceptions(filename):

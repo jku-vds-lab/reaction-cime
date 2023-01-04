@@ -5,10 +5,10 @@ import { RemoteEmbedding } from './RemoteEmbedding';
 /* eslint-disable-next-line no-restricted-globals */
 const ctx = self;
 
-const callback_fn_step = (emb, step, msg) => {
+const callbackFnStep = (emb, step, msg) => {
   ctx.postMessage({ messageType: 'step', embedding: emb, step, msg });
 };
-const callback_fn_terminated = () => {
+const callbackFnTerminated = () => {
   ctx.postMessage({ messageType: 'terminated' });
 };
 
@@ -17,7 +17,7 @@ ctx.addEventListener(
   function (e) {
     if (e.data.messageType === 'init') {
       const embedding = new RemoteEmbedding(e.data.path, e.data.params, e.data.init_coordinates, e.data.selected_feature_info);
-      embedding.initializeFit(callback_fn_step);
+      embedding.initializeFit(callbackFnStep);
       // embedding.step(callback_fn)
 
       // @ts-ignore
@@ -25,7 +25,7 @@ ctx.addEventListener(
     } else if (e.data.messageType === 'abort') {
       // @ts-ignore
       const { embedding } = ctx;
-      embedding.abort(callback_fn_terminated);
+      embedding.abort(callbackFnTerminated);
     }
     // else {
     //     // @ts-ignore

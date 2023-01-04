@@ -1,4 +1,4 @@
-import { format } from 'd3v5';
+import { format as d3format } from 'd3v5';
 import {
   Column,
   dialogAddons,
@@ -42,29 +42,33 @@ import { DEFAULT_FORMATTER, isDummyNumberFilter, noNumberFilter, restoreMapping,
  * @asMemberOf NumberMapColumn
  * @event
  */
-export declare function mappingChanged_NMC(previous: IMappingFunction, current: IMappingFunction): void;
+export declare function mappingChangedNMC(previous: IMappingFunction, current: IMappingFunction): void;
 /**
  * emitted when the color mapping property changes
  * @asMemberOf NumberMapColumn
  * @event
  */
-export declare function colorMappingChanged_NMC(previous: IColorMappingFunction, current: IColorMappingFunction): void;
+export declare function colorMappingChangedNMC(previous: IColorMappingFunction, current: IColorMappingFunction): void;
 
 /**
  * emitted when the sort method property changes
  * @asMemberOf NumberMapColumn
  * @event
  */
-export declare function sortMethodChanged_NMC(previous: EAdvancedSortMethod, current: EAdvancedSortMethod): void;
+export declare function sortMethodChangedNMC(previous: EAdvancedSortMethod, current: EAdvancedSortMethod): void;
 
 /**
  * emitted when the filter property changes
  * @asMemberOf NumberMapColumn
  * @event
  */
-export declare function filterChanged_NMC(previous: INumberFilter | null, current: INumberFilter | null): void;
+export declare function filterChangedNMC(previous: INumberFilter | null, current: INumberFilter | null): void;
 
-export declare type ITestColumnDesc = INumbersDesc & IMapColumnDesc<number[]>;
+export declare type ITestColumnDesc = INumbersDesc &
+  IMapColumnDesc<number[]> & {
+    min?: number;
+    max?: number;
+  };
 
 @toolbar('rename', 'filterNumber', 'sort', 'sortBy')
 @dialogAddons('sort', 'sortNumbers')
@@ -109,7 +113,7 @@ export class TestColumn extends MapColumn<number[]> {
     this.colorMapping = factory.colorMappingFunction(desc.colorMapping || desc.color);
 
     if (desc.numberFormat) {
-      this.numberFormat = format(desc.numberFormat);
+      this.numberFormat = d3format(desc.numberFormat);
     }
 
     // TODO: infer min and max if it is not given
@@ -176,9 +180,9 @@ export class TestColumn extends MapColumn<number[]> {
 
   toCompareValue(row: IDataRow): number {
     const data = this.getValue(row);
-    const value_list = data[0].value;
+    const valueList = data[0].value;
     const method = this.getSortMethod();
-    return this.get_advanced_value(method, value_list);
+    return this.get_advanced_value(method, valueList);
   }
 
   toCompareValueType() {
@@ -336,9 +340,9 @@ export class TestColumn extends MapColumn<number[]> {
     return super.createEventList().concat([TestColumn.EVENT_MAPPING_CHANGED, TestColumn.EVENT_SORTMETHOD_CHANGED, TestColumn.EVENT_FILTER_CHANGED]);
   }
 
-  on(type: typeof TestColumn.EVENT_MAPPING_CHANGED, listener: typeof mappingChanged_NMC | null): this;
-  on(type: typeof TestColumn.EVENT_SORTMETHOD_CHANGED, listener: typeof sortMethodChanged_NMC | null): this;
-  on(type: typeof TestColumn.EVENT_FILTER_CHANGED, listener: typeof filterChanged_NMC | null): this;
+  on(type: typeof TestColumn.EVENT_MAPPING_CHANGED, listener: typeof mappingChangedNMC | null): this;
+  on(type: typeof TestColumn.EVENT_SORTMETHOD_CHANGED, listener: typeof sortMethodChangedNMC | null): this;
+  on(type: typeof TestColumn.EVENT_FILTER_CHANGED, listener: typeof filterChangedNMC | null): this;
   on(type: typeof ValueColumn.EVENT_DATA_LOADED, listener: typeof dataLoaded | null): this;
   on(type: typeof Column.EVENT_WIDTH_CHANGED, listener: typeof widthChanged | null): this;
   on(type: typeof Column.EVENT_LABEL_CHANGED, listener: typeof labelChanged | null): this;
@@ -399,7 +403,7 @@ export class TestColumn extends MapColumn<number[]> {
     if (Number.isNaN(value)) {
       return !filter.filterMissing;
     }
-    return !((isFinite(filter.min) && value < filter.min) || (isFinite(filter.max) && value > filter.max));
+    return !((Number.isFinite(filter.min) && value < filter.min) || (Number.isFinite(filter.max) && value > filter.max));
   }
 
   /**
