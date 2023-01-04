@@ -1142,14 +1142,17 @@ def smiles_list_to_substructure_count():
 
 # region --------- clustering ---------
 import json
+import hdbscan
 @reaction_cime_api.route('/segmentation', methods=['OPTIONS', 'POST'])
 def segmentation():
     if request.method == 'POST':
         #clusterVal = request.forms.get("clusterVal")
-        min_cluster_size_arg = request.forms.get("min_cluster_size")
-        min_cluster_samples_arg = request.forms.get("min_cluster_samples")
-        allow_single_cluster_arg = request.forms.get("allow_single_cluster")
-        X = np.array(request.forms.get("X").split(","), dtype=np.float64)[:,np.newaxis].reshape((-1,2))
+        min_cluster_size_arg = request.form.get("min_cluster_size")
+        min_cluster_samples_arg = request.form.get("min_cluster_samples")
+        allow_single_cluster_arg = request.form.get("allow_single_cluster")
+        X = request.form.get("X")
+        assert X is not None
+        X = np.array(X.split(","), dtype=np.float64)[:,np.newaxis].reshape((-1,2))
 
         # many small clusters
         min_cluster_size = 5
