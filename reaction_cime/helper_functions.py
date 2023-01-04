@@ -369,7 +369,8 @@ def rescale_and_encode(proj_df, params, selected_feature_info):
             print("featureType: String --> TODO: handle")
 
         elif info["featureType"] == "Quantitative":
-            if info["normalize"]:
+            # TODO: This is not included in the PSE params anymore
+            if info.get("normalize"):
                 if params["normalizationMethod"] == "normalize01":  # scale values between [0;1]
                     # upper = info["range"]["max"] # do not use this! it is info from the front-end that only has POI dataset
                     # lower = info["range"]["min"] # do not use this! it is info from the front-end that only has POI dataset

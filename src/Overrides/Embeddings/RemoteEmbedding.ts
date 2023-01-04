@@ -40,6 +40,8 @@ export class RemoteEmbedding {
           console.log('The stream is closed!');
         } else {
           try {
+            // TODO: This fails because we receive multiple JSON objects in one chunk?
+            // Maybe the switch to FastAPI changed something in the chunked streaming?
             const resObj = JSON.parse(new TextDecoder().decode(value));
             if (parseInt(resObj.step, 10)) this.current_steps = parseInt(resObj.step, 10);
             if (resObj.emb && resObj.emb.length > 0) this.embedding = resObj.emb;

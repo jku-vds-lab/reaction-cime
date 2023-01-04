@@ -868,10 +868,9 @@ class ProjectionThread(threading.Thread):
 
             self.msg = "finished!"
 
-        except Exception as e:
+        except Exception:
             self.msg = "error during projection"
-            print("--Exception:--")
-            print(e)
+            logging.getLogger().exception("Error during projection")
 
         finally:
             self.done = True
