@@ -251,6 +251,15 @@ function genRows(vectors, aggregation, legendAttributes, dataset) {
         } else {
           barChart = null;
         }
+        barData.values.sort((a, b) => {
+          if (a.selection === 'all') {
+            return 1;
+          }
+          if (b.selection === 'all') {
+            return -1;
+          }
+          return b.count - a.count;
+        });
         rows.push([key, barData.values[0].category, getMaxMean(barData), barChart]);
       } else if (dataset.columns[key]?.featureType === FeatureType.Date) {
         // date feature
