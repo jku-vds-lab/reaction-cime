@@ -4,6 +4,7 @@ pkg_src = reaction_cime
 flake8 = flake8 $(pkg_src) setup.py
 isort = isort $(pkg_src) setup.py
 black = black --line-length 140 $(pkg_src) setup.py
+pyright = pyright $(pkg_src)
 
 .PHONY: all  ## Perform the most common development-time rules
 all: format lint test
@@ -21,16 +22,17 @@ check-format:
 	$(isort) --check-only
 	$(black) --check
 
-.PHONY: lint  ## Run flake8
+.PHONY: lint  ## Run flake8 and pyright
 lint:
 	$(flake8)
+	$(pyright)
 
 .PHONY: test  ## Run tests
 test:
 	pytest $(pkg_src)
 
 .PHONEY: documentation ## Generate docs
-documentation: 
+documentation:
 	mkdocs build
 
 .PHONY: install  ## Install the requirements

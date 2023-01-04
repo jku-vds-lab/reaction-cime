@@ -63,6 +63,7 @@ const ApplicationWrapper = connector(({ setMouseMoveFn, dataset_path, setMouseCl
           initOnMount: false, // should default dataset be loaded? could specify url to default // TODO: define a default dataset that is already uploaded (e.g. domain.csv)
           // url: DATASETCONFIG[0].path
         },
+        baseUrl: ReactionCIMEBackendFromEnv.baseUrl,
       }}
       features={{
         embeddings: [
@@ -118,25 +119,25 @@ const ApplicationWrapper = connector(({ setMouseMoveFn, dataset_path, setMouseCl
         ],
         tabs: [
           {
-            name: 'aggregatDS',
-            tab: AggregationTabPanel,
-            title: 'Aggregate',
-            description: 'Aggregated Dataset that should be shown in the background',
-            icon: ReactionCIMEIcons.Aggregate,
-          },
-          {
             name: 'filterDS',
             tab: FilterTabPanel,
             title: 'Filter',
             description: 'Filter subset of dataset that should be shown in the main visualization views',
             icon: ReactionCIMEIcons.Filter,
           },
+          {
+            name: 'aggregatDS',
+            tab: AggregationTabPanel,
+            title: 'Aggregate',
+            description: 'Aggregated Dataset that should be shown in the background',
+            icon: ReactionCIMEIcons.Aggregate,
+          },
           // {
           //   name: "lineup",
-          //   tab: LineUpTabPanel,
+          //   tab: <ViewsTabPanel overrideComponents={this.props.overrideComponents} splitRef={this.splitRef} />,
           //   title: "LineUp Integration",
           //   description: "Settings for LineUp Integration",
-          //   icon: PSEIcons.PseLineup,
+          //   icon: ReactionCIMEIcons.Table,
           // },
         ],
         layers: [

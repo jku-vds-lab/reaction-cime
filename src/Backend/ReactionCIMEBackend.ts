@@ -167,26 +167,6 @@ export class ReactionCIMEBackend {
       });
   };
 
-  public calculateHDBScanClusters = async (X, min_cluster_size, min_cluster_samples, allow_single_cluster) => {
-    const formData = new FormData();
-    formData.append('min_cluster_size', min_cluster_size);
-    formData.append('min_cluster_samples', min_cluster_samples);
-    formData.append('allow_single_cluster', allow_single_cluster);
-    formData.append('X', X);
-    return fetch(`${this.baseUrl}/segmentation`, {
-      ...this.fetchParams,
-      method: 'POST',
-      body: formData,
-    })
-      .then(this.handleErrors)
-      .then((response) => response.json())
-      .then(this.handleJSONErrors)
-      .catch((error) => {
-        alert('error when calculating clusters');
-        console.log(error);
-      });
-  };
-
   public terminate_projection = async (filename): Promise<{ response: any }> => {
     const path = `${this.baseUrl}/terminate_projection_thread/${encodeURIComponent(filename)}`;
 

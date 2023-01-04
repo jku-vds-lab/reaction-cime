@@ -72,11 +72,11 @@ export const FilterTabPanel = connector(({ dataset, triggerDatasetUpdate, state 
     dataset && (
       <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflowY: 'auto' }}>
         <Box paddingLeft={2} paddingTop={1} paddingRight={2}>
+          {/* TODO: always show info about NO items */}
+          <NOItemsInfo variant="filterOutOfTotal" />
           <Typography variant="subtitle2" gutterBottom>
             Filter Settings
           </Typography>
-          {/* TODO: always show info about NO items */}
-          <NOItemsInfo variant="filterOutOfTotal" />
         </Box>
         <Box paddingLeft={2} paddingTop={1} paddingRight={2}>
           <SelectFeatureComponent
