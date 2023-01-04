@@ -27,7 +27,7 @@
     "compile": "visyn_scripts compile",
     "copy": "visyn_scripts copy",
     "cy:open": "cypress open",
-    "cy:run": "cypress run",
+    "cy:run": "cypress run --e2e && cypress run --component",
     "delete-dependencies": "visyn_scripts clean node_modules",
     "predist": "yarn run lint && yarn run test && yarn run build",
     "dist": "mkdir lib && cd dist && tar cvzf ../lib/reaction_cime.tar.gz *",
