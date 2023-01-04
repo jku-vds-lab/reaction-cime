@@ -1141,9 +1141,9 @@ def smiles_list_to_substructure_count():
 
 # endregion
 
-
-
 # region --------- clustering ---------
+
+
 @reaction_cime_api.route('/segmentation', methods=['OPTIONS', 'POST'])
 def segmentation():
     if request.method == 'POST':
@@ -1171,7 +1171,7 @@ def segmentation():
             min_cluster_size=min_cluster_size,
             min_samples=min_cluster_samples,
             # prediction_data=True, # needed for soft clustering, or if we want to add points to the clustering afterwards
-            allow_single_cluster=allow_single_cluster # maybe disable again
+            allow_single_cluster=allow_single_cluster  # maybe disable again
             )
 
         clusterer.fit_predict(x)
@@ -1185,5 +1185,6 @@ def segmentation():
 
     else:
         return {}
+
 
 # endregion
