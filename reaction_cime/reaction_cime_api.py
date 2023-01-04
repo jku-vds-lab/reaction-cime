@@ -9,10 +9,10 @@ from io import BytesIO, StringIO
 from typing import Optional
 
 import gower
+import hdbscan
 import numpy as np
 import pandas as pd
 import umap
-import hdbscan
 from flask import Blueprint, abort, current_app, jsonify, request, stream_with_context
 from flask.helpers import make_response, send_file
 from flask.wrappers import Response
@@ -1143,9 +1143,9 @@ def smiles_list_to_substructure_count():
 # region --------- clustering ---------
 
 
-@reaction_cime_api.route('/segmentation', methods=['OPTIONS', 'POST'])
+@reaction_cime_api.route("/segmentation", methods=["OPTIONS", "POST"])
 def segmentation():
-    if request.method == 'POST':
+    if request.method == "POST":
         # clusterVal = request.forms.get("clusterVal")
         min_cluster_size_arg = request.form.get("min_cluster_size")
         min_cluster_samples_arg = request.form.get("min_cluster_samples")
@@ -1170,17 +1170,15 @@ def segmentation():
             min_cluster_size=min_cluster_size,
             min_samples=min_cluster_samples,
             # prediction_data=True, # needed for soft clustering, or if we want to add points to the clustering afterwards
-            allow_single_cluster=allow_single_cluster  # maybe disable again
-            )
+            allow_single_cluster=allow_single_cluster,  # maybe disable again
+        )
 
         clusterer.fit_predict(x)
 
         # print(clusterer.labels_)
         # clusterer.probabilities_ = np.array(len(x))
 
-        return {
-            'result': [int(label) for label in clusterer.labels_]
-        }
+        return {"result": [int(label) for label in clusterer.labels_]}
 
     else:
         return {}
