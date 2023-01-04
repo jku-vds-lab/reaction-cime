@@ -12,6 +12,7 @@ import gower
 import numpy as np
 import pandas as pd
 import umap
+import hdbscan
 from flask import Blueprint, abort, current_app, jsonify, request, stream_with_context
 from flask.helpers import make_response, send_file
 from flask.wrappers import Response
@@ -19,8 +20,6 @@ from openTSNE import TSNE
 from rdkit import Chem
 from rdkit.Chem import Draw
 from sklearn.decomposition import PCA
-
-import hdbscan
 
 from .helper_functions import (
     aggregate_by_col_interpolate,
