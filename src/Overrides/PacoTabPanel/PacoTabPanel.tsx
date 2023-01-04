@@ -100,7 +100,7 @@ export const PacoTabPanel = connector(({ pacoAttributes, setPacoConstraints, pac
       </Box>
       <Box paddingLeft={2} paddingTop={1} paddingRight={2}>
         {/* TODO: also save chosen attributes? */}
-        <AttributeSelectionTable attributes={pacoAttributes} setAttributes={PacoActions.setPacoAttributes}></AttributeSelectionTable>
+        <AttributeSelectionTable attributes={pacoAttributes} setAttributes={PacoActions.setPacoAttributes} />
       </Box>
       <Box paddingLeft={2} paddingTop={1} paddingRight={2}>
         <Tooltip title="Reset constraints to initial state">
