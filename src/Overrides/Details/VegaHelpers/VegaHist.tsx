@@ -1,4 +1,5 @@
-import { createClassFromSpec, VisualizationSpec, VegaLite } from 'react-vega';
+import * as React from 'react';
+import { VisualizationSpec, VegaLite } from 'react-vega';
 import { VegaLiteProps } from 'react-vega/lib/VegaLite';
 
 const spec: VisualizationSpec = {
@@ -24,7 +25,7 @@ const spec: VisualizationSpec = {
   },
 };
 
-export default function (props: Omit<VegaLiteProps, 'spec'>) {
+export default function hist(props: Omit<VegaLiteProps, 'spec'>) {
   return <VegaLite {...props} spec={spec} />;
 }
 

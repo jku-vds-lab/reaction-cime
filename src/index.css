@@ -4,7 +4,7 @@ body {
   overflow: hidden;
 }
 
-#root {
+#app {
   top: 0px;
   bottom: 0px;
   left: 0px;

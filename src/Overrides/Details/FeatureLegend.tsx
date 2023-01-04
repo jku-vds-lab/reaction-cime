@@ -1,3 +1,4 @@
+import * as React from 'react';
 // adapted from PSEs CoralLegend
 import { connect, ConnectedProps } from 'react-redux';
 import { Handler } from 'vega-tooltip';
@@ -9,39 +10,33 @@ import { DefaultLegend, FeatureType, IVector, RootState } from 'projection-space
 import VegaDensity from './VegaHelpers/VegaDensity';
 import BarChart from './VegaHelpers/BarChart';
 import VegaDate from './VegaHelpers/VegaDate';
-import { map_smiles_to_shortname } from '../../Utility/Utils';
+import { mapSmilesToShortname } from '../../Utility/Utils';
 import { ReactionCIMEBackendFromEnv } from '../../Backend/ReactionCIMEBackend';
 
-
 export function formatSMILESTooltip(value: any, valueToHtml: (value: any) => string, maxDepth: number): string {
-  
-    let content = '';
+  let content = '';
 
-    content += '<table>';
-    content += `<tr><td class="key">ratio:</td><td class="value">${valueToHtml(value.feature)}</td></tr>`;
-    content += `<tr><td class="key">short name:</td><td class="value">${valueToHtml(map_smiles_to_shortname(value.category))}</td></tr>`;
-    content += `<tr><td class="key">smiles:</td><td class="value">${valueToHtml(value.category)}</td></tr>`;
-    content += `<tr><td class="key">subset:</td><td class="value">${valueToHtml(value.subset)}</td></tr>`;
-    content += `</table>`;
-    content += `<div id="smiles_${value.category}" style="width:100%; height:100px; background-size: contain; background-position: center; background-repeat: no-repeat;"></div>`;
-    
-    let smiles = value.category;
-    ReactionCIMEBackendFromEnv.getStructureFromSmiles(
-      smiles,
-      false,
-      null
-    ).then((x) => {
-      const n = document.getElementById(`smiles_${value.category}`)
-      if(n != null){
-        if (x && x.length > 100) {
-          // check if it is actually long enogh to be an img
-          n.style.backgroundImage = `url('data:image/jpg;base64,${x}')`;
-        } else {
-          n.innerHTML = x;
-        }
-        n.title = smiles;
+  content += '<table>';
+  content += `<tr><td class="key">ratio:</td><td class="value">${valueToHtml(value.feature)}</td></tr>`;
+  content += `<tr><td class="key">short name:</td><td class="value">${valueToHtml(mapSmilesToShortname(value.category))}</td></tr>`;
+  content += `<tr><td class="key">smiles:</td><td class="value">${valueToHtml(value.category)}</td></tr>`;
+  content += `<tr><td class="key">subset:</td><td class="value">${valueToHtml(value.subset)}</td></tr>`;
+  content += `</table>`;
+  content += `<div id="smiles_${value.category}" style="width:100%; height:100px; background-size: contain; background-position: center; background-repeat: no-repeat;"></div>`;
+
+  const smiles = value.category;
+  ReactionCIMEBackendFromEnv.getStructureFromSmiles(smiles, false, null).then((x) => {
+    const n = document.getElementById(`smiles_${value.category}`);
+    if (n != null) {
+      if (x && x.length > 100) {
+        // check if it is actually long enogh to be an img
+        n.style.backgroundImage = `url('data:image/jpg;base64,${x}')`;
+      } else {
+        n.innerHTML = x;
       }
-    });
+      n.title = smiles;
+    }
+  });
   return content;
 }
 
@@ -100,9 +95,11 @@ function mapBarChartData(allData, selectedData, feature) {
 
   const selectedBarChartData = [];
   for (const key in selectedCounts) {
-    let count = selectedCounts[key] / selectedData.length;
-    count = isFinite(count) ? count : 0;
-    selectedBarChartData.push({ selection: 'selection', category: key, count: count });
+    if (Object.prototype.hasOwnProperty.call(selectedCounts, key)) {
+      let count = selectedCounts[key] / selectedData.length;
+      count = Number.isFinite(count) ? count : 0;
+      selectedBarChartData.push({ selection: 'selection', category: key, count });
+    }
   }
   selectedBarChartData.sort(sortCountDesc);
 
@@ -113,21 +110,23 @@ function mapBarChartData(allData, selectedData, feature) {
     x.id = i;
   });
   const l = selectedBarChartData.length;
-  var idxCounter = l;
+  let idxCounter = l;
 
   const allBarChartData = [];
   for (const key in allCounts) {
-    let count = allCounts[key] / allData.length;
-    count = isFinite(count) ? count : 0;
-    // apply that mapping to allBarChartData without actually having to sort it
-    // make sure to check whether category in allBarChartData even exists in map, otherwise create new entry in map for new id
-    var i = categoryMap[key];
-    if (i == null) {
-      i = idxCounter;
-      categoryMap[key] = i;
-      idxCounter++;
+    if (Object.prototype.hasOwnProperty.call(allCounts, key)) {
+      let count = allCounts[key] / allData.length;
+      count = Number.isFinite(count) ? count : 0;
+      // apply that mapping to allBarChartData without actually having to sort it
+      // make sure to check whether category in allBarChartData even exists in map, otherwise create new entry in map for new id
+      let i = categoryMap[key];
+      if (i == null) {
+        i = idxCounter;
+        categoryMap[key] = i;
+        idxCounter++;
+      }
+      allBarChartData.push({ selection: 'all', category: key, count, id: i });
     }
-    allBarChartData.push({ selection: 'all', category: key, count: count, id: i });
   }
 
   const barChartData = [...allBarChartData, ...selectedBarChartData];
@@ -140,16 +139,16 @@ const getSTD = (data) => {
     return a + b;
   });
   let mean = total / data.length;
-  mean = isFinite(mean) ? mean : 0;
-  function var_numerator(value) {
+  mean = Number.isFinite(mean) ? mean : 0;
+  function varNumerator(value) {
     return (value - mean) * (value - mean);
   }
-  let variance = data.map(var_numerator);
+  let variance = data.map(varNumerator);
   variance = variance.reduce(function (a, b) {
     return a + b;
   });
   variance /= data.length;
-  variance = isFinite(variance) ? variance : 1;
+  variance = Number.isFinite(variance) ? variance : 1;
   const std = Math.sqrt(variance);
   return std;
 };
@@ -186,7 +185,6 @@ function sortByScore(a, b) {
 
   return a.score < b.score ? 1 : -1;
 }
-
 
 function getProjectionColumns(legendAttributes) {
   if (legendAttributes === null) {
@@ -237,29 +235,30 @@ function genRows(vectors, aggregation, legendAttributes, dataset) {
           key,
           '',
           1 - getNormalizedSTD(dictOfArrays[key], dataset.columns[key].range.min, dataset.columns[key].range.max),
-          <VegaDensity logLevel={vegaImport.Error} data={densityData} actions={false} tooltip={new Handler().call} />,
+          <VegaDensity key={key} logLevel={vegaImport.Error} data={densityData} actions={false} tooltip={new Handler().call} />,
         ]);
       } else if (dataset.columns[key]?.featureType === FeatureType.Categorical) {
         // categorical feature
         const barData = mapBarChartData(dataset.vectors, vectors, key);
-        var barChart;
+        let barChart;
         if (Object.keys(barData.values).length !== 1) {
           // logLevel={vegaImport.Debug} | {vegaImport.Warn} | {vegaImport.Error} | {vegaImport.None} | {vegaImport.Info}
-          let tooltip_options = {}
-          if(dataset.columns[key]?.metaInformation.imgSmiles){
-            tooltip_options = { formatTooltip: formatSMILESTooltip }
+          let tooltipOptions = {};
+          if (dataset.columns[key]?.metaInformation.imgSmiles) {
+            tooltipOptions = { formatTooltip: formatSMILESTooltip };
           }
-          barChart = <BarChart logLevel={vegaImport.Error} data={barData} actions={false} tooltip={new Handler(tooltip_options).call} />;
+          barChart = <BarChart logLevel={vegaImport.Error} data={barData} actions={false} tooltip={new Handler(tooltipOptions).call} />;
         } else {
           barChart = null;
         }
         barData.values.sort((a, b) => {
-          if(a.selection === 'all'){
-            return 1
-          }if(b.selection === 'all'){
-            return -1
+          if (a.selection === 'all') {
+            return 1;
           }
-          return b.count - a.count
+          if (b.selection === 'all') {
+            return -1;
+          }
+          return b.count - a.count;
         });
         rows.push([key, barData.values[0].category, getMaxMean(barData), barChart]);
       } else if (dataset.columns[key]?.featureType === FeatureType.Date) {
@@ -269,7 +268,7 @@ function genRows(vectors, aggregation, legendAttributes, dataset) {
           key,
           '',
           1 - getNormalizedSTD(dictOfArrays[key], dataset.columns[key].range.min, dataset.columns[key].range.max),
-          <VegaDate data={histData} actions={false} tooltip={new Handler().call} />,
+          <VegaDate key={key} data={histData} actions={false} tooltip={new Handler().call} />,
         ]);
       }
     }
@@ -297,7 +296,7 @@ function getTable(vectors, aggregation, legendAttributes, dataset) {
     },
   })();
   const rows = genRows(vectors, aggregation, legendAttributes, dataset);
-  
+
   return (
     <div style={{ width: '100%', maxHeight: '100%', overflowY: 'scroll' }}>
       <div
@@ -315,7 +314,7 @@ function getTable(vectors, aggregation, legendAttributes, dataset) {
                   <div style={{ maxWidth: 200 }}>
                     {row.feature}
                     <br />
-                    <b>{map_smiles_to_shortname(row.category)}</b>
+                    <b>{mapSmilesToShortname(row.category)}</b>
                   </div>
                 </TableCell>
                 <TableCell>{row.char}</TableCell>
@@ -346,9 +345,9 @@ type Props = PropsFromRedux & {
   selection: IVector[];
 };
 
-export var FeatureLegend = connector(({ selection, aggregate, legendAttributes, dataset }: Props) => {
+export const FeatureLegend = connector(({ selection, aggregate, legendAttributes, dataset }: Props) => {
   if (selection.length <= 0) {
-    return <DefaultLegend></DefaultLegend>;
+    return <DefaultLegend />;
   }
   return getTable(selection, aggregate, legendAttributes, dataset);
 });

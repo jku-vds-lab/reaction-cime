@@ -1,10 +1,11 @@
+import * as React from 'react';
 import { VisualizationSpec, VegaLite } from 'react-vega';
 import { VegaLiteProps } from 'react-vega/lib/VegaLite';
 
 const spec: VisualizationSpec = {
   width: 50,
   height: 50,
-  transform: [{ density: 'feature', groupby: ['selection']}],
+  transform: [{ density: 'feature', groupby: ['selection'] }],
   mark: { type: 'area', tooltip: true },
   encoding: {
     x: { field: 'value', title: 'feature', type: 'quantitative', axis: null },
@@ -12,16 +13,16 @@ const spec: VisualizationSpec = {
     color: { field: 'selection', type: 'nominal', legend: null, scale: { range: ['(170,170,170,0)', '#007dad'] } },
     // "fillOpacity": {"field": "selection", "type": "nominal", "legend": null, "scale": {"range": ["0", "1.0"]}},
     stroke: { field: 'selection', type: 'nominal', legend: null, scale: { range: ['#000000', '#007dad'] } },
-    "tooltip": [
-      {"field": "selection", "type": "nominal", title: 'subset'},
-      {"field": "density", "type": "quantitative"},
-      {"field": "value", "type": "quantitative", title: 'feature'}
-    ]
+    tooltip: [
+      { field: 'selection', type: 'nominal', title: 'subset' },
+      { field: 'density', type: 'quantitative' },
+      { field: 'value', type: 'quantitative', title: 'feature' },
+    ],
   },
   data: { name: 'values' },
 };
 
-export default function VegaDensity (props: Omit<VegaLiteProps, 'spec'>) {
+export default function VegaDensity(props: Omit<VegaLiteProps, 'spec'>) {
   return <VegaLite {...props} spec={spec} />;
 }
 

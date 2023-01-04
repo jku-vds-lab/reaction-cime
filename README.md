@@ -1,84 +1,93 @@
-# Cime4R
+# CIME4R
 
 This is the repository for the public cime4r library (as discussed in the paper). It builds upon the PSE library found under the following repository https://github.com/jku-vds-lab/projection-space-explorer.
 
+## Development
+
+The repository is split into frontend (`src`, `package.json`, ...) and backend (`reaction_cime`, `Makefile`, `requirements.txt`, ...). Make sure you have the latest yarn version installed (`corepack enable` when using Node 16).
+
 ## Installation
 
-First clone this repository, preferably using ssh.
-
-```
-git clone git@github.com:jku-vds-lab/reaction-cime.git
-```
-
-After this step you can install the dependencies using
-
-```
-npm install # or: npm i --legacy-peer-deps
+```bash
+git clone https://github.com/jku-vds-lab/reaction-cime.git
+cd reaction-cime
 ```
 
-Run the application with the following command
+### Frontend
 
-```
-npm run start
-```
+First install the required dependencies
 
-Note that PSE has several peer dependencies which also need to be installed (material ui, react, reactdom etc). Either look them up in the package.json and install them, or use a library which automatically manages that.
-
-## Linking PSE
-
-If you want to make changes to PSE and view the changes without having to push to the repo and reinstalling dependencies, the recommended way is to use the npm-link feature. For this to work you first need to clone the PSE repository using
-
-```
-git clone git@github.com:jku-vds-lab/projection-space-explorer.git
+```bash
+yarn install
 ```
 
-Then navigate to the root folder and create a symlink using
+and launch the webpack-dev-server via
 
-```
-npm link
-```
-
-After this you can navigate to your cime folder and link to your local PSE version using
-
-```
-npm link projection-space-explorer
+```bash
+yarn start
 ```
 
-(Note that you need to to this step AFTER the npm install step)
+### Backend
 
-After this step you can run your changes in PSE, then build them using the commands provided in the PSE repository.
+First, create a new virtual environment for the dependencies
 
-
-## run backend
-
-in "backend" folder execute: 
-
-for Windows:
-
-```
-pip install -e .
-set FLASK_APP=reaction_cime
-set FLASK_ENV=development
-python -m flask run
+```bash
+python -m venv .venv
 ```
 
-for Linux:
+and activate it
 
-```
-pip install -e .
-export FLASK_APP=reaction_cime
-export FLASK_ENV=development
-python -m flask run
-```
+```bash
+# Ubuntu
+source .venv/bin/activate
 
-with Docker (production version):
-```
-docker build -f Dockerfile -t reaction_cime .
-docker run -d -p 5000:5000 --detach reaction_cime
+# Windows (cmd)
+.\.venv\Scripts\activate
 ```
 
-with Docker (development version):
+Then install all dependencies (including dev dependencies)
+
+```bash
+make develop
 ```
-docker build -f Dockerfile -t reaction_cime .
-docker run -d -p 5000:5000 -v "{absolute path to backend folder}:/app/backend" -v "{absolute path to temp-files folder}:/app/temp-files"  --detach reaction_cime
+
+and finally start the server
+
+```bash
+python reaction_cime
 ```
+
+As an alternative, you can also user Docker to start the backend. The dockerized backend is managed by `docker compose`:
+
+```
+docker compose up
+```
+
+## Linking PSE and Reaction-CIME Frontend
+
+If you want to make changes to PSE and view the changes without having to push to the repo and reinstalling dependencies, the recommended way is to use the yarn link/portal and/or our webpack resolveAliases feature.
+
+First, clone `projection-space-explorer` into the current directory (i.e. into the reaction-cime directory). Do not install `projection-space-explorer`, as we do not want any `node_modules` within that folder, as it should use the ones from the reaction-cime directory.
+
+Add a portal to the local `projection-space-explorer` in the reaction-cime package.json (**this is a local change and should not be committed!**):
+
+```json
+  "resolutions": {
+    ...
+    "projection-space-explorer": "portal:./projection-space-explorer"
+  },
+```
+
+Now, install everything via `yarn install`.
+
+To now include `projection-space-explorer` to your webpack build, add a `.yo-rc-workspace.json` and update the `resolveAliases` (note the single `.`, i.e. using the current folder):
+
+```json
+{
+  "resolveAliases": {
+    "projection-space-explorer": "./projection-space-explorer/src/index.ts"
+  }
+}
+```
+
+With that, you can now edit all files of `projection-space-explorer`, including auto-completion (as the node_modules of the application will be used as main lookup), and get hot-reloading.

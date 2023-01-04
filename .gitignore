@@ -1,34 +1,56 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
-
-# dependencies
-/node_modules
-/.pnp
-.pnp.js
-
-# testing
-/coverage
-
-# misc
-.DS_Store
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
-.vscode/
-
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# Backend
-__pycache__/
+# general things to ignore
+/.tscache
+/.eslintcache
+/.idea
+/lib/
+/dist/
+/build/
+/dist/tsBuildInfoFile
+/dist_python/
 *.egg-info/
 *.egg
+*.py[cod]
+__pycache__/
+*.so
+*~
+*.log
+*.pot
+*.pyc
+*.swp
+*.lock
+# due to using tox and pytest
+.tox
+.cache
+node_modules/
+*.log
+/.awcache
+/.cache-loader
+/bundles/
+package-lock.json
+yarn.lock
+# yarn
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/sdks
+!.yarn/versions
+
+yarn.lock
+
+# pyenv
+.python-version
+
+# env
+/.venv*/
+/venv/
+
+# dev stack
+.yo-rc-workspace.json
+projection-space-explorer
 
 # Datasets
 /public/datasets
-/backend/reaction_cime/temp-files
+/reaction_cime/temp-files
 /temp-files/*
-
-# TODO: Remove
-# build

@@ -1,4 +1,4 @@
-import { format } from "d3v5";
+import { format as d3format } from 'd3v5';
 import {
   Column,
   dialogAddons,
@@ -19,10 +19,8 @@ import {
   SortByDefault,
   toolbar,
   ValueColumn,
-} from "lineupjs";
-import {
-  IEventListener,
-} from "lineupjs/build/src/internal";
+} from 'lineupjs';
+import { IEventListener } from 'lineupjs/build/src/internal';
 import {
   dirty,
   dirtyCaches,
@@ -35,75 +33,66 @@ import {
   summaryRendererChanged,
   visibilityChanged,
   widthChanged,
-} from "lineupjs/build/src/model/Column";
-import { dataLoaded } from "lineupjs/build/src/model/ValueColumn";
-import {
-  DEFAULT_FORMATTER,
-  isDummyNumberFilter,
-  noNumberFilter,
-  restoreMapping,
-  restoreNumberFilter,
-} from "./helper_methods";
+} from 'lineupjs/build/src/model/Column';
+import { dataLoaded } from 'lineupjs/build/src/model/ValueColumn';
+import { DEFAULT_FORMATTER, isDummyNumberFilter, noNumberFilter, restoreMapping, restoreNumberFilter } from './helper_methods';
 
 /**
  * emitted when the mapping property changes
  * @asMemberOf NumberMapColumn
  * @event
  */
-export declare function mappingChanged_NMC(
-  previous: IMappingFunction,
-  current: IMappingFunction
-): void;
+export declare function mappingChangedNMC(previous: IMappingFunction, current: IMappingFunction): void;
 /**
  * emitted when the color mapping property changes
  * @asMemberOf NumberMapColumn
  * @event
  */
-export declare function colorMappingChanged_NMC(
-  previous: IColorMappingFunction,
-  current: IColorMappingFunction
-): void;
+export declare function colorMappingChangedNMC(previous: IColorMappingFunction, current: IColorMappingFunction): void;
 
 /**
  * emitted when the sort method property changes
  * @asMemberOf NumberMapColumn
  * @event
  */
-export declare function sortMethodChanged_NMC(
-  previous: EAdvancedSortMethod,
-  current: EAdvancedSortMethod
-): void;
+export declare function sortMethodChangedNMC(previous: EAdvancedSortMethod, current: EAdvancedSortMethod): void;
 
 /**
  * emitted when the filter property changes
  * @asMemberOf NumberMapColumn
  * @event
  */
-export declare function filterChanged_NMC(
-  previous: INumberFilter | null,
-  current: INumberFilter | null
-): void;
+export declare function filterChangedNMC(previous: INumberFilter | null, current: INumberFilter | null): void;
 
-export declare type ITestColumnDesc = INumbersDesc & IMapColumnDesc<number[]>;
+export declare type ITestColumnDesc = INumbersDesc &
+  IMapColumnDesc<number[]> & {
+    min?: number;
+    max?: number;
+  };
 
-@toolbar("rename", "filterNumber", "sort", "sortBy")
-@dialogAddons("sort", "sortNumbers")
-@SortByDefault("descending")
-//@ts-ignore
+@toolbar('rename', 'filterNumber', 'sort', 'sortBy')
+@dialogAddons('sort', 'sortNumbers')
+@SortByDefault('descending')
+// @ts-ignore
 export class TestColumn extends MapColumn<number[]> {
   static readonly EVENT_MAPPING_CHANGED = NumberColumn.EVENT_MAPPING_CHANGED;
-  static readonly EVENT_COLOR_MAPPING_CHANGED =
-    NumberColumn.EVENT_COLOR_MAPPING_CHANGED;
-  static readonly EVENT_SORTMETHOD_CHANGED =
-    NumberColumn.EVENT_SORTMETHOD_CHANGED;
+
+  static readonly EVENT_COLOR_MAPPING_CHANGED = NumberColumn.EVENT_COLOR_MAPPING_CHANGED;
+
+  static readonly EVENT_SORTMETHOD_CHANGED = NumberColumn.EVENT_SORTMETHOD_CHANGED;
+
   static readonly EVENT_FILTER_CHANGED = NumberColumn.EVENT_FILTER_CHANGED;
 
   private readonly numberFormat: (n: number) => string = DEFAULT_FORMATTER;
 
   private sort: EAdvancedSortMethod;
+
   private mapping: IMappingFunction;
+
   private original: IMappingFunction;
+
   private colorMapping: IColorMappingFunction;
+
   /**
    * currently active filter
    * @type {{min: number, max: number}}
@@ -111,34 +100,25 @@ export class TestColumn extends MapColumn<number[]> {
    */
   private currentFilter: INumberFilter = noNumberFilter();
 
-  private min: number = 0;
-  private max: number = 1;
+  private min = 0;
 
-  constructor(
-    id: string,
-    desc: Readonly<ITestColumnDesc>,
-    factory: ITypeFactory
-  ) {
+  private max = 1;
+
+  constructor(id: string, desc: Readonly<ITestColumnDesc>, factory: ITypeFactory) {
     super(id, desc);
     // this.mapping = restoreMapping(desc, factory); // TODO: check, if desc.range and desc.domain can be infered
-    this.mapping = new ScaleMappingFunction(
-      [desc["min"], desc["max"]],
-      "linear",
-      [0, 1]
-    );
+    this.mapping = new ScaleMappingFunction([desc.min, desc.max], 'linear', [0, 1]);
     this.original = this.mapping.clone();
     this.sort = desc.sort || EAdvancedSortMethod.median;
-    this.colorMapping = factory.colorMappingFunction(
-      desc.colorMapping || desc.color
-    );
+    this.colorMapping = factory.colorMappingFunction(desc.colorMapping || desc.color);
 
     if (desc.numberFormat) {
-      this.numberFormat = format(desc.numberFormat);
+      this.numberFormat = d3format(desc.numberFormat);
     }
 
-    //TODO: infer min and max if it is not given
-    this.min = desc["min"];
-    this.max = desc["max"];
+    // TODO: infer min and max if it is not given
+    this.min = desc.min;
+    this.max = desc.max;
   }
 
   getMin() {
@@ -162,7 +142,7 @@ export class TestColumn extends MapColumn<number[]> {
       return a - b;
     });
 
-    var half = Math.floor(values.length * q);
+    const half = Math.floor(values.length * q);
 
     if (values.length % 2) return values[half];
 
@@ -171,18 +151,15 @@ export class TestColumn extends MapColumn<number[]> {
 
   // https://www.sitepoint.com/community/t/calculating-the-average-mean/7302/2
   private mean(numbers) {
-    var total = 0,
-      i;
+    let total = 0;
+    let i;
     for (i = 0; i < numbers.length; i += 1) {
       total += numbers[i];
     }
     return total / numbers.length;
   }
 
-  private get_advanced_value(
-    method: EAdvancedSortMethod,
-    value_list: number[]
-  ): number {
+  private get_advanced_value(method: EAdvancedSortMethod, value_list: number[]): number {
     switch (method) {
       case EAdvancedSortMethod.min:
         return Math.min(...value_list);
@@ -202,19 +179,17 @@ export class TestColumn extends MapColumn<number[]> {
   }
 
   toCompareValue(row: IDataRow): number {
-    let data = this.getValue(row);
-    let value_list = data[0]["value"];
+    const data = this.getValue(row);
+    const valueList = data[0].value;
     const method = this.getSortMethod();
-    return this.get_advanced_value(method, value_list);
+    return this.get_advanced_value(method, valueList);
   }
 
   toCompareValueType() {
     return ECompareValueType.FLOAT;
   }
 
-  private getBoxPlotDataFromValueList(
-    data: number[]
-  ): IAdvancedBoxPlotData | null {
+  private getBoxPlotDataFromValueList(data: number[]): IAdvancedBoxPlotData | null {
     return {
       mean: this.get_advanced_value(EAdvancedSortMethod.mean, data),
       missing: 0,
@@ -224,13 +199,13 @@ export class TestColumn extends MapColumn<number[]> {
       median: this.get_advanced_value(EAdvancedSortMethod.median, data),
       q1: this.get_advanced_value(EAdvancedSortMethod.q1, data),
       q3: this.get_advanced_value(EAdvancedSortMethod.q3, data),
-      kdePoints: [{v: 0, p: 0}] // TODO: what is this argument?
+      kdePoints: [{ v: 0, p: 0 }], // TODO: what is this argument?
     };
   }
 
   getBoxPlotData(row: IDataRow): IAdvancedBoxPlotData | null {
-    console.log("getBoxPlotData");
-    const data = this.getValue(row)[0]["value"];
+    console.log('getBoxPlotData');
+    const data = this.getValue(row)[0].value;
     if (data == null) {
       return null;
     }
@@ -238,8 +213,8 @@ export class TestColumn extends MapColumn<number[]> {
   }
 
   getRawBoxPlotData(row: IDataRow): IAdvancedBoxPlotData | null {
-    console.log("getRawBoxPlotData");
-    const data = this.getRawValue(row)[0]["value"];
+    console.log('getRawBoxPlotData');
+    const data = this.getRawValue(row)[0].value;
     if (data == null) {
       return null;
     }
@@ -247,12 +222,12 @@ export class TestColumn extends MapColumn<number[]> {
   }
 
   getRange() {
-    console.log("getRange");
+    console.log('getRange');
     return this.mapping.getRange(this.numberFormat);
   }
 
   getColorMapping() {
-    console.log("getColorMapping");
+    console.log('getColorMapping');
     return this.colorMapping.clone();
   }
 
@@ -271,7 +246,7 @@ export class TestColumn extends MapColumn<number[]> {
     const r = this.getValue(row);
     // return r ? r.map((d) => d.value) : [NaN];
     // return r ? r[0]["value"] : [NaN];
-    return [this.get_advanced_value(EAdvancedSortMethod.median, r[0]["value"])];
+    return [this.get_advanced_value(EAdvancedSortMethod.median, r[0].value)];
   }
 
   iterRawNumber(row: IDataRow) {
@@ -279,25 +254,22 @@ export class TestColumn extends MapColumn<number[]> {
     const r = this.getRawValue(row);
     // return r ? r.map((d) => d.value) : [NaN];
     // return r ? r[0]["value"] : [NaN];
-    return [this.get_advanced_value(EAdvancedSortMethod.median, r[0]["value"])];
+    return [this.get_advanced_value(EAdvancedSortMethod.median, r[0].value)];
   }
 
   getValue(row: IDataRow): IKeyValue<number[]>[] {
     const values = this.getRawValue(row);
 
     if (values.length === 0) {
-      //@ts-ignore
+      // @ts-ignore
       return null;
     }
 
-    //@ts-ignore
+    // @ts-ignore
     return values.map(({ key, value }) => {
       return {
         key,
-        value:
-          value.length === 0
-            ? null
-            : value.map((val) => this.mapping.apply(val)),
+        value: value.length === 0 ? null : value.map((val) => this.mapping.apply(val)),
       };
     });
   }
@@ -315,19 +287,17 @@ export class TestColumn extends MapColumn<number[]> {
     // });
   }
 
-  getExportValue(row: IDataRow, format: "text" | "json"): any {
-    return format === "json"
-      ? this.getRawValue(row)
-      : super.getExportValue(row, format);
+  getExportValue(row: IDataRow, format: 'text' | 'json'): any {
+    return format === 'json' ? this.getRawValue(row) : super.getExportValue(row, format);
   }
 
-  getFormatedLabelArray(arr): string{
-    return "[" + arr.map(item => this.numberFormat(item)).toString() + "]";
+  getFormatedLabelArray(arr): string {
+    return `[${arr.map((item) => this.numberFormat(item)).toString()}]`;
   }
 
   getLabels(row: IDataRow) {
     const v = this.getRawValue(row);
-    return v.map(({key, value}) => ({key, value: this.getFormatedLabelArray(value)}));
+    return v.map(({ key, value }) => ({ key, value: this.getFormatedLabelArray(value) }));
   }
 
   getSortMethod() {
@@ -338,11 +308,7 @@ export class TestColumn extends MapColumn<number[]> {
     if (this.sort === sort) {
       return;
     }
-    this.fire(
-      [TestColumn.EVENT_SORTMETHOD_CHANGED],
-      this.sort,
-      (this.sort = sort)
-    );
+    this.fire([TestColumn.EVENT_SORTMETHOD_CHANGED], this.sort, (this.sort = sort));
     // sort by me if not already sorted by me
     if (!this.isSortedByMe().asc) {
       this.sortByMe();
@@ -352,9 +318,7 @@ export class TestColumn extends MapColumn<number[]> {
   dump(toDescRef: (desc: any) => any): any {
     const r = super.dump(toDescRef);
     r.sortMethod = this.getSortMethod();
-    r.filter = !isDummyNumberFilter(this.currentFilter)
-      ? this.currentFilter
-      : null;
+    r.filter = !isDummyNumberFilter(this.currentFilter) ? this.currentFilter : null;
     r.map = this.mapping.toJSON();
     return r;
   }
@@ -373,72 +337,24 @@ export class TestColumn extends MapColumn<number[]> {
   }
 
   protected createEventList() {
-    return super
-      .createEventList()
-      .concat([
-        TestColumn.EVENT_MAPPING_CHANGED,
-        TestColumn.EVENT_SORTMETHOD_CHANGED,
-        TestColumn.EVENT_FILTER_CHANGED,
-      ]);
+    return super.createEventList().concat([TestColumn.EVENT_MAPPING_CHANGED, TestColumn.EVENT_SORTMETHOD_CHANGED, TestColumn.EVENT_FILTER_CHANGED]);
   }
 
-  on(
-    type: typeof TestColumn.EVENT_MAPPING_CHANGED,
-    listener: typeof mappingChanged_NMC | null
-  ): this;
-  on(
-    type: typeof TestColumn.EVENT_SORTMETHOD_CHANGED,
-    listener: typeof sortMethodChanged_NMC | null
-  ): this;
-  on(
-    type: typeof TestColumn.EVENT_FILTER_CHANGED,
-    listener: typeof filterChanged_NMC | null
-  ): this;
-  on(
-    type: typeof ValueColumn.EVENT_DATA_LOADED,
-    listener: typeof dataLoaded | null
-  ): this;
-  on(
-    type: typeof Column.EVENT_WIDTH_CHANGED,
-    listener: typeof widthChanged | null
-  ): this;
-  on(
-    type: typeof Column.EVENT_LABEL_CHANGED,
-    listener: typeof labelChanged | null
-  ): this;
-  on(
-    type: typeof Column.EVENT_METADATA_CHANGED,
-    listener: typeof metaDataChanged | null
-  ): this;
+  on(type: typeof TestColumn.EVENT_MAPPING_CHANGED, listener: typeof mappingChangedNMC | null): this;
+  on(type: typeof TestColumn.EVENT_SORTMETHOD_CHANGED, listener: typeof sortMethodChangedNMC | null): this;
+  on(type: typeof TestColumn.EVENT_FILTER_CHANGED, listener: typeof filterChangedNMC | null): this;
+  on(type: typeof ValueColumn.EVENT_DATA_LOADED, listener: typeof dataLoaded | null): this;
+  on(type: typeof Column.EVENT_WIDTH_CHANGED, listener: typeof widthChanged | null): this;
+  on(type: typeof Column.EVENT_LABEL_CHANGED, listener: typeof labelChanged | null): this;
+  on(type: typeof Column.EVENT_METADATA_CHANGED, listener: typeof metaDataChanged | null): this;
   on(type: typeof Column.EVENT_DIRTY, listener: typeof dirty | null): this;
-  on(
-    type: typeof Column.EVENT_DIRTY_HEADER,
-    listener: typeof dirtyHeader | null
-  ): this;
-  on(
-    type: typeof Column.EVENT_DIRTY_VALUES,
-    listener: typeof dirtyValues | null
-  ): this;
-  on(
-    type: typeof Column.EVENT_DIRTY_CACHES,
-    listener: typeof dirtyCaches | null
-  ): this;
-  on(
-    type: typeof Column.EVENT_RENDERER_TYPE_CHANGED,
-    listener: typeof rendererTypeChanged | null
-  ): this;
-  on(
-    type: typeof Column.EVENT_GROUP_RENDERER_TYPE_CHANGED,
-    listener: typeof groupRendererChanged | null
-  ): this;
-  on(
-    type: typeof Column.EVENT_SUMMARY_RENDERER_TYPE_CHANGED,
-    listener: typeof summaryRendererChanged | null
-  ): this;
-  on(
-    type: typeof Column.EVENT_VISIBILITY_CHANGED,
-    listener: typeof visibilityChanged | null
-  ): this;
+  on(type: typeof Column.EVENT_DIRTY_HEADER, listener: typeof dirtyHeader | null): this;
+  on(type: typeof Column.EVENT_DIRTY_VALUES, listener: typeof dirtyValues | null): this;
+  on(type: typeof Column.EVENT_DIRTY_CACHES, listener: typeof dirtyCaches | null): this;
+  on(type: typeof Column.EVENT_RENDERER_TYPE_CHANGED, listener: typeof rendererTypeChanged | null): this;
+  on(type: typeof Column.EVENT_GROUP_RENDERER_TYPE_CHANGED, listener: typeof groupRendererChanged | null): this;
+  on(type: typeof Column.EVENT_SUMMARY_RENDERER_TYPE_CHANGED, listener: typeof summaryRendererChanged | null): this;
+  on(type: typeof Column.EVENT_VISIBILITY_CHANGED, listener: typeof visibilityChanged | null): this;
   on(type: string | string[], listener: IEventListener | null): this; // required for correct typings in *.d.ts
   on(type: string | string[], listener: IEventListener | null): this {
     return super.on(type as any, listener);
@@ -456,15 +372,7 @@ export class TestColumn extends MapColumn<number[]> {
     if (this.mapping.eq(mapping)) {
       return;
     }
-    this.fire(
-      [
-        TestColumn.EVENT_MAPPING_CHANGED,
-        Column.EVENT_DIRTY_VALUES,
-        Column.EVENT_DIRTY,
-      ],
-      this.mapping.clone(),
-      (this.mapping = mapping)
-    );
+    this.fire([TestColumn.EVENT_MAPPING_CHANGED, Column.EVENT_DIRTY_VALUES, Column.EVENT_DIRTY], this.mapping.clone(), (this.mapping = mapping));
   }
 
   getColor(row: IDataRow) {
@@ -495,10 +403,7 @@ export class TestColumn extends MapColumn<number[]> {
     if (Number.isNaN(value)) {
       return !filter.filterMissing;
     }
-    return !(
-      (isFinite(filter.min) && value < filter.min) ||
-      (isFinite(filter.max) && value > filter.max)
-    );
+    return !((Number.isFinite(filter.min) && value < filter.min) || (Number.isFinite(filter.max) && value > filter.max));
   }
 
   /**
@@ -510,10 +415,7 @@ export class TestColumn extends MapColumn<number[]> {
   filter(row: IDataRow) {
     // currently it checks, if the median is within the range
     // const value = this.getRawNumber(row);
-    const value = this.get_advanced_value(
-      EAdvancedSortMethod.median,
-      this.getRawValue(row)[0]["value"]
-    );
+    const value = this.get_advanced_value(EAdvancedSortMethod.median, this.getRawValue(row)[0].value);
 
     return this.isNumberIncluded(this.getFilter(), value);
   }

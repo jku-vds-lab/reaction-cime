@@ -1,107 +1,107 @@
 {
   "name": "reaction-cime",
-  "version": "0.1.4",
-  "private": false,
-  "homepage": "https://github.com/jku-vds-lab/reaction-cime",
-  "module": "./lib/export.js",
-  "types": "./lib/export.d.ts",
-  "directories": {
-    "lib": "lib"
+  "description": "",
+  "version": "0.1.4-SNAPSHOT",
+  "author": {
+    "name": "datavisyn GmbH",
+    "email": "contact@datavisyn.io",
+    "url": "https://datavisyn.io"
   },
-  "files": [
-    "lib"
-  ],
+  "license": "SEE LICENSE IN LICENSE",
+  "homepage": "https://datavisyn.io",
+  "bugs": {
+    "url": "https://github.com/jku-vds-lab/reaction-cime/issues"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/jku-vds-lab/reaction-cime.git"
   },
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "all": "yarn run lint:fix && yarn run test && yarn run build && yarn run dist",
+    "build": "yarn run clean && yarn run compile && yarn run copy",
+    "clean": "visyn_scripts clean build dist lib",
+    "codegen": "graphql-codegen --config codegen.yml",
+    "compile:watch": "visyn_scripts compile --watch",
+    "compile": "visyn_scripts compile",
+    "copy": "visyn_scripts copy",
+    "cy:open": "cypress open",
+    "cy:run": "cypress run",
+    "delete-dependencies": "visyn_scripts clean node_modules",
+    "predist": "yarn run lint && yarn run test && yarn run build",
+    "dist": "mkdir lib && cd dist && tar cvzf ../lib/reaction_cime.tar.gz *",
+    "docs": "visyn_scripts docs",
+    "lint:fix": "visyn_scripts lint --fix",
+    "lint": "visyn_scripts lint",
+    "prepack": "yarn run build",
+    "start:fast": "visyn_scripts start --env workspace_mode=single fast=true",
+    "start": "visyn_scripts start --env workspace_mode=single",
+    "storybook:build": "NODE_OPTIONS=--max_old_space_size=4096 build-storybook",
+    "storybook": "NODE_OPTIONS=--max_old_space_size=4096 start-storybook -p 6006",
+    "test": "visyn_scripts test",
+    "webpack:dev": "visyn_scripts build --mode development --env workspace_mode=single",
+    "webpack:prod": "visyn_scripts build --mode production --env workspace_mode=single"
+  },
+  "files": [
+    "dist",
+    "src",
+    "reaction_cime",
+    "requirements.txt",
+    "requirements_dev.txt"
+  ],
+  "engines": {
+    "npm": ">=8",
+    "node": ">=16"
+  },
   "dependencies": {
     "@emotion/react": "^11.4.1",
     "@emotion/styled": "^11.3.0",
-    "@material-ui/icons": "^4.11.2",
-    "@mui/icons-material": "^5.0.5",
     "@mui/material": "^5.0.6",
     "@mui/styles": "^5.0.2",
     "@reduxjs/toolkit": "^1.7.1",
-    "@types/d3": "^5.7.2",
-    "@types/jest": "^26.0.24",
-    "@types/node": "^12.20.36",
-    "@types/react": "^16.9.19",
-    "@types/react-dom": "^17.0.9",
-    "customize-cra": "^1.0.0",
-    "d3v5": "npm:d3@5.16.0",
+    "@types/react": "^16.9.23",
+    "@types/react-dom": "^16.9.5",
     "lineupjs": "^4.7.0",
     "lodash": "^4.17.21",
     "lodash.isequal": "^4.5.0",
-    "node-sass": "^6.0.1",
     "parcoord-es": "^2.2.10",
-    "projection-space-explorer": "git+https://github.com/jku-vds-lab/projection-space-explorer.git#develop-cime",
     "plotly.js-dist": "^2.11.1",
-    "react": "^17.0.2",
-    "react-dom": "^17.0.2",
+    "projection-space-explorer": "git+ssh://git@github.com:jku-vds-lab/projection-space-explorer#develop",
+    "react": "^16.13.0",
+    "react-dom": "^16.13.0",
     "react-inlinesvg": "^2.3.0",
     "react-loader-spinner": "^4.0.0",
     "react-promise-tracker": "^2.1.0",
     "react-redux": "^7.2.6",
-    "react-scripts": "5.0.1",
     "react-vega": "^7.6.0",
     "redux": "^4.1.2",
-    "three": "^0.134.0",
-    "typescript": "^4.4.3",
-    "vega": "^5.22.1",
-    "vega-lite": "^5.6.0",
+    "visyn_scripts": "git+ssh://git@github.com/datavisyn/visyn_scripts#develop",
     "vsup": "^1.1.0",
-    "web-vitals": "^1.1.2"
-  },
-  "scripts": {
-    "start-linux": "NODE_OPTIONS=--max-old-space-size=8192 PORT=8080 react-app-rewired start",
-    "start": "react-app-rewired --max_old_space_size=8192 start",
-    "build-linux": "NODE_OPTIONS=--max-old-space-size=8192 react-app-rewired build",
-    "build": "react-app-rewired --max_old_space_size=8192 build",
-    "test": "react-app-rewired test",
-    "eject": "react-app-rewired eject",
-    "predeploy": "NODE_OPTIONS=--max-old-space-size=8192 npm run build",
-    "deploy": "NODE_OPTIONS=--max-old-space-size=8192 gh-pages -d build",
-    "precompile:lib": "rm -rf ./lib",
-    "compile:lib": "tsc --build ./tsconfig.lib.json",
-    "copy-files:lib": "copyfiles -u 1 \"src/**/*.scss\" \"src/**/*.svg\" lib/",
-    "postcompile:lib": "npm run copy-files:lib"
-  },
-  "eslintConfig": {
-    "extends": [
-      "react-app",
-      "react-app/jest"
-    ]
-  },
-  "browserslist": {
-    "production": [
-      ">0.2%",
-      "not dead",
-      "not op_mini all"
-    ],
-    "development": [
-      "last 1 chrome version",
-      "last 1 firefox version",
-      "last 1 safari version"
-    ]
+    "worker-loader": "^3.0.8"
   },
   "devDependencies": {
-    "@types/babel__generator": "^7.6.3",
-    "@types/three": "^0.134.0",
-    "@typescript-eslint/eslint-plugin": "^4.33.0",
-    "@typescript-eslint/parser": "^4.33.0",
-    "babel-eslint": "^10.1.0",
-    "copyfiles": "^2.4.1",
-    "eslint": "^7.32.0",
-    "eslint-config-react-app": "^6.0.0",
-    "eslint-plugin-flowtype": "^5.10.0",
-    "eslint-plugin-import": "^2.25.2",
-    "eslint-plugin-jest": "^24.7.0",
-    "eslint-plugin-jsx-a11y": "^6.4.1",
-    "eslint-plugin-react": "^7.26.1",
-    "eslint-plugin-react-hooks": "^4.2.0",
-    "gh-pages": "^3.2.3",
-    "react-app-rewired": "^2.1.8",
-    "worker-loader": "^3.0.8"
-  }
+    "cypress": "^11.1.0"
+  },
+  "resolutions": {
+    "@types/react": "^16.9.23",
+    "@types/react-dom": "^16.9.5",
+    "react": "^16.13.0",
+    "react-dom": "^16.13.0",
+    "react-data-grid": "7.0.0-beta.20",
+    "visyn_scripts": "git+ssh://git@github.com/datavisyn/visyn_scripts#swc_and_sass_embedded",
+    "vega-lite@4.16.8": "patch:vega-lite@npm:4.16.8#.yarn/patches/vega-lite-npm-4.16.8-2acecf824b.patch"
+  },
+  "visyn": {
+    "entries": {
+      "app": {
+        "js": "src/initialize.tsx",
+        "html": "index.html",
+        "template": "src/index.template.ejs",
+        "chunkName": "app",
+        "excludeChunks": []
+      }
+    }
+  },
+  "packageManager": "yarn@3.2.2"
 }

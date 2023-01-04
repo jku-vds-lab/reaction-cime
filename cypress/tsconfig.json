@@ -1,0 +1,15 @@
+{
+  "extends": "visyn_scripts/config/tsconfig.template.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "types": [
+      "cypress"
+    ]
+  },
+  "include": [
+    "../cypress.config.ts",
+    "./**/*.ts",
+    "./**/*.tsx",
+    "../tsd.d.ts"
+  ]
+}

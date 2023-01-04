@@ -1,38 +1,29 @@
-
-# define our environment
-FROM python:3.7-buster
-
+# This Dockerfile is used as standalone container for simple deployments, it will be built and pushed to https://github.com/orgs/jku-vds-lab/packages?repo_name=reaction-cime automatically by GH Actions in the build.yml
+FROM python:3.10-buster
 
 # copy everything from our backend to our app folder # need to copy backend because we have to install the python packages
-COPY backend/ /app/backend/
+COPY reaction_cime/ /app/reaction_cime/
+COPY Makefile MANIFEST.in README.md setup.py setup.cfg package.json requirements.txt requirements_dev.txt /app/
 
 # define target folder
-WORKDIR /app/backend
+WORKDIR /app/
 
-# RUN pip install --upgrade pip
+# Install some build tools and finally python dependencies (numpy is required to build opentsne)
+RUN pip install numpy && make install
 
-RUN pip install -e .
-ENV FLASK_APP reaction_cime
-ENV FLASK_ENV development
+# Override the setttings.py to use include the bundled frontend
+ENV REACTION_CIME__BUNDLES_DIR /app/bundles
 
 # copy the pre-built front-end --> comment for development because we mount the volume anyway
-# CONSTANTS
-# COPY build/ /app/build/jku-vds-lab/reaction-cime
+COPY bundles/ /app/bundles/
 
+# expose default port
+EXPOSE 9000
 
-# copy everything from temp-files folder that includes the database --> comment for development because we mount the volume anyway
-# CONSTANTS
-# COPY temp-files/ /app/temp-files/
-
-
-
-
-EXPOSE 5000
-
-CMD [ "python3", "-m", "flask", "run", "--host=0.0.0.0", "--eager-loading"] 
+CMD ["uvicorn", "tdp_core.server.main:app", "--host", "0.0.0.0", "--port", "9000"]
 
 # Running
 # docker build -f Dockerfile -t reaction_cime .
-# docker run -d -p 5000:5000 --detach reaction_cime
-# use this for development (file sharing); first -v contains the "backend" folder; second -v contains the "temp-files" folder where our database is; third -v contains the "build" folder where the front-end gets compiled to
-# docker run -d -p 5000:5000 -v "C:/Users/Christina/Repositories/ICG/bayer/reaction-cime/backend:/app/backend" -v "C:/Users/Christina/Repositories/ICG/bayer/reaction-cime/temp-files:/app/temp-files" -v "C:/Users/Christina/Repositories/ICG/bayer/reaction-cime/build:/app/build/jku-vds-lab/reaction-cime"  --detach reaction_cime
+# docker run --rm -it -p 9000:9000 reaction_cime
+# use this for development (file sharing); first -v contains the "backend" folder; second -v contains the "build" folder where the front-end gets compiled to
+# docker run --rm -it -p 9000:9000 -v "$PWD/reaction_cime/:/app/reaction_cime/" -v "$PWD/bundles/:/app/bundles/" reaction_cime

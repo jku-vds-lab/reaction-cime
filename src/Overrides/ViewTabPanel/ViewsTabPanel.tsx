@@ -31,8 +31,8 @@ export function ViewsTabPanel({ overrideComponents, splitRef }: DetailViewChoose
 
   const view = overrideComponents.detailViews[detailView.active].settings;
 
-  const onViewChange = (view: string) => {
-    dispatch(DetailViewActions.setDetailView(overrideComponents.detailViews.findIndex((e) => e.name === view)));
+  const onViewChange = (v: string) => {
+    dispatch(DetailViewActions.setDetailView(overrideComponents.detailViews.findIndex((e) => e.name === v)));
   };
 
   return (
