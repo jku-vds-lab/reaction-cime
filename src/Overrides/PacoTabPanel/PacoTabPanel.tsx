@@ -77,7 +77,6 @@ const mapStateToProps = (state: AppState) => ({
 });
 
 const mapDispatchToProps = (dispatch) => ({
-  setPacoAttributes: (atts) => dispatch(PacoActions.setPacoAttributes(atts)),
   setPacoConstraints: (consts) => dispatch(PacoActions.setPacoConstraints(consts)),
 });
 
@@ -89,7 +88,7 @@ type Props = PropsFromRedux & {
   splitRef: any;
 };
 
-export const PacoTabPanel = connector(({ setPacoAttributes, pacoAttributes, setPacoConstraints, pacoConstraints, pacoRef, dataset }: Props) => {
+export const PacoTabPanel = connector(({ pacoAttributes, setPacoConstraints, pacoConstraints, pacoRef, dataset }: Props) => {
   const fileInput = React.useRef<any>();
 
   return (
@@ -101,7 +100,7 @@ export const PacoTabPanel = connector(({ setPacoAttributes, pacoAttributes, setP
       </Box>
       <Box paddingLeft={2} paddingTop={1} paddingRight={2}>
         {/* TODO: also save chosen attributes? */}
-        <AttributeSelectionTable attributes={pacoAttributes} setAttributes={setPacoAttributes} />
+        <AttributeSelectionTable attributes={pacoAttributes} setAttributes={PacoActions.setPacoAttributes} />
       </Box>
       <Box paddingLeft={2} paddingTop={1} paddingRight={2}>
         <Tooltip title="Reset constraints to initial state">
