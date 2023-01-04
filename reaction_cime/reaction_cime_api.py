@@ -20,6 +20,8 @@ from rdkit import Chem
 from rdkit.Chem import Draw
 from sklearn.decomposition import PCA
 
+import hdbscan
+
 from .helper_functions import (
     aggregate_by_col_interpolate,
     circ_radius_to_radius,
@@ -1140,19 +1142,18 @@ def smiles_list_to_substructure_count():
 # endregion
 
 
+
 # region --------- clustering ---------
-import json
-import hdbscan
 @reaction_cime_api.route('/segmentation', methods=['OPTIONS', 'POST'])
 def segmentation():
     if request.method == 'POST':
-        #clusterVal = request.forms.get("clusterVal")
+        # clusterVal = request.forms.get("clusterVal")
         min_cluster_size_arg = request.form.get("min_cluster_size")
         min_cluster_samples_arg = request.form.get("min_cluster_samples")
         allow_single_cluster_arg = request.form.get("allow_single_cluster")
-        X = request.form.get("X")
-        assert X is not None
-        X = np.array(X.split(","), dtype=np.float64)[:,np.newaxis].reshape((-1,2))
+        x = request.form.get("X")
+        assert x is not None
+        x = np.array(x.split(","), dtype=np.float64)[:, np.newaxis].reshape((-1, 2))
 
         # many small clusters
         min_cluster_size = 5
@@ -1166,25 +1167,23 @@ def segmentation():
         if allow_single_cluster_arg == "true":
             allow_single_cluster = bool(allow_single_cluster_arg)
 
-
         clusterer = hdbscan.HDBSCAN(
             min_cluster_size=min_cluster_size,
             min_samples=min_cluster_samples,
-            #prediction_data=True, # needed for soft clustering, or if we want to add points to the clustering afterwards
+            # prediction_data=True, # needed for soft clustering, or if we want to add points to the clustering afterwards
             allow_single_cluster=allow_single_cluster # maybe disable again
             )
 
-        clusterer.fit_predict(X)
+        clusterer.fit_predict(x)
 
-        #print(clusterer.labels_)
-        #clusterer.probabilities_ = np.array(len(X))
+        # print(clusterer.labels_)
+        # clusterer.probabilities_ = np.array(len(x))
 
         return {
-            'result': [ int(label) for label in clusterer.labels_]
+            'result': [int(label) for label in clusterer.labels_]
         }
 
     else:
         return {}
-
 
 # endregion
