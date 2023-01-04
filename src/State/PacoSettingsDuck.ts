@@ -26,4 +26,5 @@ const pacoSettingsSlice = createSlice({
 });
 
 export const { setPacoAttributes, setPacoConstraints, setPacoRef } = pacoSettingsSlice.actions;
+export const PacoActions = { ...pacoSettingsSlice.actions };
 export const pacoSettings = pacoSettingsSlice.reducer;

@@ -19,26 +19,7 @@ import { PacoTabPanel } from './Overrides/PacoTabPanel/PacoTabPanel';
 import { AddRegionExceptionMenuItem } from './Overrides/ContextMenu/AddRegionException';
 import { SetFiltersToItemFeatures } from './Overrides/ContextMenu/SetFiltersToItemFeatures';
 
-export const DEMO = false;
-
 PluginRegistry.getInstance().registerPlugin(new ReactionsPlugin());
-
-export function ReactionCIMEApp() {
-  // const [context] = useState(new API<RootState>(null, rootReducer))
-
-  const [context] = useState(
-    // new API<AppState>(null, createRootReducer(CIMEReducers))
-    new API<AppState>(null, createCIMERootReducer()),
-  );
-  context.store.dispatch(setItemLabel({ label: 'experiment', label_plural: 'experiments' }));
-  // context.store.dispatch(setDatasetEntriesAction(DATASETCONFIG))
-  // context.store.getState().dataset...
-  return (
-    <PSEContextProvider context={context}>
-      <ApplicationWrapper />
-    </PSEContextProvider>
-  );
-}
 
 const mapStateToProps = (state: AppState) => ({
   dataset_path: state.dataset?.info?.path,
@@ -56,10 +37,10 @@ const connector = connect(mapStateToProps, mapDispatchToProps);
 
 type PropsFromRedux = ConnectedProps<typeof connector>;
 
-type Props = PropsFromRedux & {};
+type Props = PropsFromRedux;
 
 const ApplicationWrapper = connector(({ setMouseMoveFn, dataset_path, setMouseClickFn, legendAttributes, globalLabels, resetViews }: Props) => {
-  const start_projection = (msg: string) => {
+  const startProjection = (msg: string) => {
     if (msg === 'init') {
       resetViews();
     }
@@ -82,18 +63,19 @@ const ApplicationWrapper = connector(({ setMouseMoveFn, dataset_path, setMouseCl
           initOnMount: false, // should default dataset be loaded? could specify url to default // TODO: define a default dataset that is already uploaded (e.g. domain.csv)
           // url: DATASETCONFIG[0].path
         },
+        baseUrl: ReactionCIMEBackendFromEnv.baseUrl
       }}
       features={{
         embeddings: [
           // {id:"umap", name:"UMAP", settings: DEFAULT_UMAP_SETTINGS},
-          { id: 'umapRemote', name: 'UMAP', settings: { nneighbors: true }, embController: new RemoteEmbeddingController('umap', start_projection) },
-          { id: 'tsneRemote', name: 't-SNE', settings: { perplexity: true }, embController: new RemoteEmbeddingController('tsne', start_projection) },
-          { id: 'pcaRemote', name: 'PCA', settings: {}, embController: new RemoteEmbeddingController('pca', start_projection) },
+          { id: 'umapRemote', name: 'UMAP', settings: { nneighbors: true }, embController: new RemoteEmbeddingController('umap', startProjection) },
+          { id: 'tsneRemote', name: 't-SNE', settings: { perplexity: true }, embController: new RemoteEmbeddingController('tsne', startProjection) },
+          { id: 'pcaRemote', name: 'PCA', settings: {}, embController: new RemoteEmbeddingController('pca', startProjection) },
           {
             id: 'rmOverlap',
             name: 'Overlap Removal',
             settings: { hideSettings: true },
-            embController: new RemoteEmbeddingController('rmOverlap', start_projection),
+            embController: new RemoteEmbeddingController('rmOverlap', startProjection),
           },
         ],
       }}
@@ -137,25 +119,25 @@ const ApplicationWrapper = connector(({ setMouseMoveFn, dataset_path, setMouseCl
         ],
         tabs: [
           {
-            name: 'aggregatDS',
-            tab: AggregationTabPanel,
-            title: 'Aggregate',
-            description: 'Aggregated Dataset that should be shown in the background',
-            icon: ReactionCIMEIcons.Aggregate,
-          },
-          {
             name: 'filterDS',
             tab: FilterTabPanel,
             title: 'Filter',
             description: 'Filter subset of dataset that should be shown in the main visualization views',
             icon: ReactionCIMEIcons.Filter,
           },
+          {
+            name: 'aggregatDS',
+            tab: AggregationTabPanel,
+            title: 'Aggregate',
+            description: 'Aggregated Dataset that should be shown in the background',
+            icon: ReactionCIMEIcons.Aggregate,
+          },
           // {
           //   name: "lineup",
-          //   tab: LineUpTabPanel,
+          //   tab: <ViewsTabPanel overrideComponents={this.props.overrideComponents} splitRef={this.splitRef} />,
           //   title: "LineUp Integration",
           //   description: "Settings for LineUp Integration",
-          //   icon: PSEIcons.PseLineup,
+          //   icon: ReactionCIMEIcons.Table,
           // },
         ],
         layers: [
@@ -168,3 +150,20 @@ const ApplicationWrapper = connector(({ setMouseMoveFn, dataset_path, setMouseCl
     />
   );
 });
+
+export function ReactionCIMEApp() {
+  // const [context] = useState(new API<RootState>(null, rootReducer))
+
+  const [context] = useState(
+    // new API<AppState>(null, createRootReducer(CIMEReducers))
+    new API<AppState>(null, createCIMERootReducer()),
+  );
+  context.store.dispatch(setItemLabel({ label: 'experiment', label_plural: 'experiments' }));
+  // context.store.dispatch(setDatasetEntriesAction(DATASETCONFIG))
+  // context.store.getState().dataset...
+  return (
+    <PSEContextProvider context={context}>
+      <ApplicationWrapper />
+    </PSEContextProvider>
+  );
+}

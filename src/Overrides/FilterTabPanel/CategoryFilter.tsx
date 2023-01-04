@@ -3,7 +3,7 @@ import React from 'react';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { Dataset } from 'projection-space-explorer';
 import { ReactionCIMEBackendFromEnv } from '../../Backend/ReactionCIMEBackend';
-import { map_smiles_to_shortname } from '../../Utility/Utils';
+import { mapSmilesToShortname } from '../../Utility/Utils';
 
 type Props = {
   col: string;
@@ -59,7 +59,7 @@ export function CategoryFilter({ col, value, setValue, remove, dataset }: Props)
                     }
                   }}
                 >
-                  &nbsp;{dataset.columns[col].metaInformation.imgSmiles ? map_smiles_to_shortname(val) : val} (
+                  &nbsp;{dataset.columns[col].metaInformation.imgSmiles ? mapSmilesToShortname(val) : val} (
                   {dataset.vectors.filter((vector) => vector[col] === val).length})&nbsp;
                 </ToggleButton>
               </Tooltip>

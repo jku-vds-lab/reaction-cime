@@ -7,9 +7,67 @@ import RotateLeftIcon from '@mui/icons-material/RotateLeft';
 import FileUploadIcon from '@mui/icons-material/FileUpload';
 import SettingsIcon from '@mui/icons-material/Settings';
 import * as d3v5 from 'd3v5';
-import { downloadImpl, map_shortname_to_smiles } from '../../Utility/Utils';
-import { setPacoAttributes, setPacoConstraints } from '../../State/PacoSettingsDuck';
+import { downloadImpl, mapShortnameToSmiles } from '../../Utility/Utils';
+import { PacoActions } from '../../State/PacoSettingsDuck';
 import { AppState } from '../../State/Store';
+
+const downloadArrayAsCSV = (array, header) => {
+  const csvLines = array.map((row) => {
+    return Object.values(row).join(',');
+  });
+  let csvContent = `${header.join(',')}\n`;
+  csvContent += csvLines.join('\n');
+  downloadImpl(csvContent, 'parallel_coordinates_constraints.csv', 'text/csv');
+};
+
+const downloadConstraints = (dimensions, columns) => {
+  const constraintDimensions = dimensions.filter((dim) => dim.constraintrange != null && dim.constraintrange.length > 0);
+  if (constraintDimensions.length <= 0) return;
+
+  const allConstraints = [];
+  constraintDimensions.forEach((const_dimension) => {
+    let constraintarray = const_dimension.constraintrange;
+    if (!Array.isArray(constraintarray[0])) {
+      // check, if it is a 1-dimensional array and transform it into a 2-d array
+      constraintarray = [constraintarray];
+    }
+    constraintarray.forEach((constraint) => {
+      // handle numeric data
+      if (columns[const_dimension.label].isNumeric) {
+        const constraintObject = { col: const_dimension.label, operator: 'BETWEEN', val1: constraint[0], val2: constraint[1] };
+        allConstraints.push(constraintObject);
+      } else {
+        // handle categorical data
+        const lower = Math.ceil(constraint[0]);
+        const upper = Math.floor(constraint[1]);
+        for (let n = lower; n <= upper; n++) {
+          // iterate over all real valued indices and add them to the constraints
+          let val = const_dimension.ticktext[n];
+          if (columns[const_dimension.label].metaInformation.imgSmiles) {
+            val = mapShortnameToSmiles(val);
+          }
+          const constraintObject = { col: const_dimension.label, operator: 'EQUALS', val1: val, val2: val };
+          allConstraints.push(constraintObject);
+        }
+      }
+    });
+  });
+
+  downloadArrayAsCSV(allConstraints, Object.keys(allConstraints[0]));
+};
+const uploadConstraints = (files, setConstraints) => {
+  if (files == null || files.length <= 0) {
+    return;
+  }
+  const file = files[0];
+
+  const fileReader = new FileReader();
+  fileReader.onload = (e) => {
+    const data = d3v5.csvParse(e.target.result as string);
+    setConstraints(data);
+  };
+  fileReader.readAsBinaryString(file);
+};
 
 const mapStateToProps = (state: AppState) => ({
   pacoAttributes: state.pacoSettings?.pacoAttributes,
@@ -19,8 +77,8 @@ const mapStateToProps = (state: AppState) => ({
 });
 
 const mapDispatchToProps = (dispatch) => ({
-  setPacoAttributes: (atts) => dispatch(setPacoAttributes(atts)),
-  setPacoConstraints: (consts) => dispatch(setPacoConstraints(consts)),
+  setPacoAttributes: (atts) => dispatch(PacoActions.setPacoAttributes(atts)),
+  setPacoConstraints: (consts) => dispatch(PacoActions.setPacoConstraints(consts)),
 });
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
@@ -43,10 +101,7 @@ export const PacoTabPanel = connector(({ setPacoAttributes, pacoAttributes, setP
       </Box>
       <Box paddingLeft={2} paddingTop={1} paddingRight={2}>
         {/* TODO: also save chosen attributes? */}
-        <AttributeSelectionTable attributes={pacoAttributes} setAttributes={setPacoAttributes} btnFullWidth>
-          <SettingsIcon />
-          &nbsp;Choose Attributes
-        </AttributeSelectionTable>
+        <AttributeSelectionTable attributes={pacoAttributes} setAttributes={setPacoAttributes}></AttributeSelectionTable>
       </Box>
       <Box paddingLeft={2} paddingTop={1} paddingRight={2}>
         <Tooltip title="Reset constraints to initial state">
@@ -103,64 +158,3 @@ export const PacoTabPanel = connector(({ setPacoAttributes, pacoAttributes, setP
     </div>
   );
 });
-
-const downloadArrayAsCSV = (array, header) => {
-  const csv_lines = array.map((row) => {
-    return Object.values(row).join(',');
-  });
-  let csv_content = `${header.join(',')}\n`;
-  csv_content += csv_lines.join('\n');
-  downloadImpl(csv_content, 'parallel_coordinates_constraints.csv', 'text/csv');
-};
-
-const downloadConstraints = (dimensions, columns) => {
-  debugger;
-  const constraint_dimensions = dimensions.filter((dim) => dim.constraintrange != null && dim.constraintrange.length > 0);
-  if (constraint_dimensions.length <= 0) return;
-
-  const all_constraints = [];
-  for (const i in constraint_dimensions) {
-    const const_dimension = constraint_dimensions[i];
-    let constraintarray = const_dimension.constraintrange;
-    if (!Array.isArray(constraintarray[0])) {
-      // check, if it is a 1-dimensional array and transform it into a 2-d array
-      constraintarray = [constraintarray];
-    }
-    for (const j in constraintarray) {
-      const constraint = constraintarray[j];
-
-      // handle numeric data
-      if (columns[const_dimension.label].isNumeric) {
-        const constraint_object = { col: const_dimension.label, operator: 'BETWEEN', val1: constraint[0], val2: constraint[1] };
-        all_constraints.push(constraint_object);
-      } else {
-        // handle categorical data
-        const lower = Math.ceil(constraint[0]);
-        const upper = Math.floor(constraint[1]);
-        for (let n = lower; n <= upper; n++) {
-          // iterate over all real valued indices and add them to the constraints
-          let val = const_dimension.ticktext[n];
-          if (columns[const_dimension.label].metaInformation.imgSmiles) {
-            val = map_shortname_to_smiles(val);
-          }
-          const constraint_object = { col: const_dimension.label, operator: 'EQUALS', val1: val, val2: val };
-          all_constraints.push(constraint_object);
-        }
-      }
-    }
-  }
-  downloadArrayAsCSV(all_constraints, Object.keys(all_constraints[0]));
-};
-const uploadConstraints = (files, setConstraints) => {
-  if (files == null || files.length <= 0) {
-    return;
-  }
-  const file = files[0];
-
-  const fileReader = new FileReader();
-  fileReader.onload = (e) => {
-    const data = d3v5.csvParse(e.target.result as string);
-    setConstraints(data);
-  };
-  fileReader.readAsBinaryString(file);
-};

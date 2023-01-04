@@ -4,11 +4,11 @@ import { DatasetType, useCancellablePromise } from 'projection-space-explorer';
 import React from 'react';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import { trackPromise } from 'react-promise-tracker';
-import { DEMO } from '../../ReactionCIMEApp';
+import { DEMO } from '../../constants';
 import { ReactionCIMEBackendFromEnv } from '../../Backend/ReactionCIMEBackend';
-import { LoadingIndicatorView } from './DatasetTabPanel';
+import { LoadingIndicatorView } from './LoadingIndicatorDialog';
 
-const loading_area = 'update_uploaded_files_list';
+const loadingArea = 'update_uploaded_files_list';
 export function UploadedFiles({ onChange, refresh }) {
   const [files, setFiles] = React.useState<string[]>([]);
   const { cancellablePromise } = useCancellablePromise();
@@ -20,14 +20,14 @@ export function UploadedFiles({ onChange, refresh }) {
           setFiles(data ?? []);
         })
         .catch((error) => console.log(error)),
-      loading_area,
+      loadingArea,
     );
   };
 
   React.useEffect(() => {
     updateFiles();
     // eslint-disable-next-line
-    }, [refresh]);
+  }, [refresh]);
 
   const handleClick = (entry) => {
     onChange(entry);
@@ -83,7 +83,7 @@ export function UploadedFiles({ onChange, refresh }) {
               </ListItem>
             ))}
           </List>
-          <LoadingIndicatorView area={loading_area} />
+          <LoadingIndicatorView area={loadingArea} />
         </Grid>
       </div>
     )

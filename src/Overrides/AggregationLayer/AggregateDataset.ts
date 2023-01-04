@@ -17,6 +17,17 @@ type ColumnType = {
   range?: any;
 };
 
+export function std(array) {
+  const n = array.length;
+  const v = array.reduce((a, b) => a + b) / n;
+  return Math.sqrt(array.map((x) => (x - v) ** 2).reduce((a, b) => a + b) / n);
+}
+
+export function mean(array) {
+  const n = array.length;
+  return array.reduce((a, b) => a + b) / n;
+}
+
 export class AggregateDataset {
   vectors: IVector[];
 
@@ -42,7 +53,7 @@ export class AggregateDataset {
   }
 
   getFeatureType(x) {
-    if (typeof x === 'number' || !isNaN(Number(x))) {
+    if (typeof x === 'number' || !Number.isNaN(Number(x))) {
       return 'number';
     }
     if (`${new Date(x)}` !== 'Invalid Date') {
@@ -110,10 +121,10 @@ export class AggregateDataset {
     });
   }
 
-  private retrieveFeatureTypes(metaInformation: {}, key: string) {
-    const col_meta = metaInformation[key];
-    if (col_meta?.dtype) {
-      switch (col_meta.dtype) {
+  private retrieveFeatureTypes(metaInformation, key: string) {
+    const colMeta = metaInformation[key];
+    if (colMeta?.dtype) {
+      switch (colMeta.dtype) {
         case 'numerical':
           this.columns[key].featureType = FeatureType.Quantitative;
           break;
@@ -136,24 +147,24 @@ export class AggregateDataset {
     } else {
       // TODO: enhance this by automatic derivation of other featuretypes as well
       // infer for each feature whether it contains numeric, date, or arbitrary values
-      const contains_number = {};
-      const contains_date = {};
-      const contains_arbitrary = {};
+      const containsNumber = {};
+      const containsDate = {};
+      const containsArbitrary = {};
       this.vectors.forEach((r) => {
         const type = this.getFeatureType(r[key]);
         if (type === 'number') {
-          contains_number[key] = true;
+          containsNumber[key] = true;
         } else if (type === 'date') {
-          contains_date[key] = true;
+          containsDate[key] = true;
         } else {
-          contains_arbitrary[key] = true;
+          containsArbitrary[key] = true;
         }
       });
 
-      if (contains_number[key] && !contains_date[key] && !contains_arbitrary[key]) {
+      if (containsNumber[key] && !containsDate[key] && !containsArbitrary[key]) {
         // only numbers -> quantitative type
         this.columns[key].featureType = FeatureType.Quantitative;
-      } else if (!contains_number[key] && contains_date[key] && !contains_arbitrary[key]) {
+      } else if (!containsNumber[key] && containsDate[key] && !containsArbitrary[key]) {
         // only date -> date type
         this.columns[key].featureType = FeatureType.Date;
       } else {
@@ -164,7 +175,7 @@ export class AggregateDataset {
   }
 
   calculateRange(colName) {
-    const vector = this.vectors.map((vector) => parseFloat(vector[colName])).filter((item) => !isNaN(item));
+    const vector = this.vectors.map((v) => parseFloat(v[colName])).filter((item) => !Number.isNaN(item));
     const min = Math.min(...vector);
     const max = Math.max(...vector);
     return { min, max };
@@ -201,16 +212,4 @@ export class AggregateDataset {
 
     return { result: (+vector[colName] - m) / s, lookup };
   }
-}
-
-export function std(array) {
-  const n = array.length;
-  const mean = array.reduce((a, b) => a + b) / n;
-  return Math.sqrt(array.map((x) => (x - mean) ** 2).reduce((a, b) => a + b) / n);
-}
-
-export function mean(array) {
-  const n = array.length;
-  const mean = array.reduce((a, b) => a + b) / n;
-  return mean;
 }

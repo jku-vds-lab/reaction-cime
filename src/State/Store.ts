@@ -23,10 +23,9 @@ export const CIMEReducers = {
   // aggregateSettings: aggregateSettings,
   multiples: createViewDuckReducer({ aggregateSettings }, (builder) => {
     builder.addCase(resetViews, (state, action) => {
-      for (const i in state.multiples.ids) {
-        const id = state.multiples.ids[i];
+      state.multiples.ids.forEach((id) => {
         state.multiples.entities[id].attributes.aggregateSettings = AggregateInitStates.all;
-      }
+      });
     });
   }).reducer,
   mouseInteractionHooks,

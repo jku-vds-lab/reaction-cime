@@ -22,7 +22,6 @@ import {
 } from 'lineupjs';
 import * as _ from 'lodash';
 import {
-  ACluster,
   AStorytelling,
   DiscreteMapping,
   EXCLUDED_COLUMNS,
@@ -33,14 +32,13 @@ import {
   mapValueToColor,
 } from 'projection-space-explorer';
 import * as d3v5 from 'd3v5';
-import { arrayEquals, map_smiles_to_shortname } from '../Utility/Utils';
+import isEqual from 'lodash.isequal';
+import { arrayEquals, mapSmilesToShortname } from '../Utility/Utils';
 
 import { ReactionCIMEBackendFromEnv } from '../Backend/ReactionCIMEBackend';
 import { TestColumn } from './LineUpClasses/TestColumn';
-import { setLineUpInput_lineup } from '../State/LineUpInputDuck';
+import { setLineUpInputLineup } from '../State/LineUpInputDuck';
 import { AppState } from '../State/Store';
-
-const isEqual = require('lodash.isequal');
 
 /**
  * Declares a function which maps application state to component properties (by name)
@@ -67,7 +65,7 @@ const mapStateToProps = (state: AppState) => ({
  */
 const mapDispatchToProps = (dispatch) => ({
   setCurrentAggregation: (samples: number[]) => dispatch(selectVectors(samples)),
-  setLineUpInput_lineup: (input) => dispatch(setLineUpInput_lineup(input)),
+  setLineUpInput_lineup: (input) => dispatch(setLineUpInputLineup(input)),
   setHoverstate: (state, updater) => dispatch(setHoverState(state, updater)),
 });
 
@@ -98,6 +96,435 @@ type Props = PropsFromRedux & {
 const UPDATER = 'lineup';
 export const UNIQUE_ID = 'unique_ID';
 
+const WIDTH_HEIGHT_RATIO = 2;
+const smilesStructureColumns = new Array<any>();
+const customChartColumns = new Array<any>();
+
+const baseColor = '#c1c1c1';
+
+export class MyLineChartRenderer implements ICellRendererFactory {
+  readonly title: string = 'Line Chart';
+
+  canRender(col: TestColumn, mode: ERenderMode): boolean {
+    // return col instanceof NumberColumn && (mode === ERenderMode.CELL);
+    return mode === ERenderMode.CELL;
+  }
+
+  create(col: TestColumn): ICellRenderer {
+    return {
+      template: `<div class="svg-container">
+        <svg class="svg-content" preserveAspectRatio="xMidYMid meet">
+          <g>
+            <path class="areaChart"></path>
+            <path class="lineChart" fill="none" stroke="${baseColor}" stroke-width="0.02px"></path>
+            <g>
+              <line class="focus-line"></line>
+              <line class="value-line-marker"></line>
+            </g>
+            <g>
+              <text style="font-size:0.2px; opacity:0;" class="marker-text">-</text>
+              <text style="font-size:0.2px;" class="focus-text"></text>
+            </g>
+            <rect class="hover-rect"></rect>
+          </g>
+        </svg></div>`,
+      update: (n: HTMLImageElement, dataRow: IDataRow) => {
+        if (renderMissingDOM(n, col, dataRow)) {
+          return;
+        }
+
+        // get data
+        const row = col.getMap(dataRow);
+        const dataMeanList = row[0].value;
+        const dataVarList = row[1].value;
+        // const data_max = col.getMax();
+        let dataMax =
+          d3v5.max(dataMeanList, function (d) {
+            return +d;
+          }) + 1;
+        // const data_min = col.getMin();
+        let dataMin =
+          d3v5.min(dataMeanList, function (d) {
+            return +d;
+          }) - 1;
+
+        let measurementValue = null;
+        let measurementStep = null;
+        if (`${col.desc.label}_value` in dataRow.v && `${col.desc.label}_step` in dataRow.v) {
+          measurementValue = dataRow.v[`${col.desc.label}_value`];
+          measurementStep = dataRow.v[`${col.desc.label}_step`];
+
+          dataMin = Math.min(dataMin, measurementValue - measurementValue * 0.1);
+          dataMax = Math.max(dataMax, measurementValue + measurementValue * 0.1);
+        }
+
+        // this is the ratio that the chart should have
+        const relWidth = WIDTH_HEIGHT_RATIO; // data_mean_list.length/4;
+        const relHeight = 1;
+
+        const div = d3v5.select(n);
+        const svg = div.select('svg');
+        svg.attr('viewBox', `0 0 ${relWidth} ${relHeight}`);
+
+        // define x and y scales
+        const x = d3v5.scaleTime().domain([0, dataMeanList.length]).range([0, relWidth]);
+
+        const y = d3v5.scaleLinear().domain([dataMin, dataMax]).range([relHeight, 0]);
+
+        // Show confidence interval
+        svg
+          .select('.areaChart')
+          .datum(dataVarList)
+          .attr('fill', '#c1c1c14d')
+          .attr('stroke', 'none')
+          .attr(
+            'd',
+            d3v5
+              .area<number>()
+              .x((d, i) => {
+                return x(i);
+              })
+              .y0((d, i: number) => {
+                return y(dataMeanList[i] - d);
+              })
+              .y1((d, i: number) => {
+                return y(dataMeanList[i] + d);
+              }),
+          );
+
+        // draw the line chart
+        const path = svg.select('.lineChart');
+        path.datum(dataMeanList).attr(
+          'd',
+          d3v5
+            .line<number>()
+            .x((d, i: number) => {
+              return x(i);
+            }) // i/data_list.length
+            .y((d) => {
+              return y(d);
+            }), // 1-(d/data_max)
+        );
+
+        if (measurementValue != null && measurementStep != null) {
+          // create the marker that marks an actual measurement
+
+          svg
+            .select('.value-line-marker')
+            .style('fill', 'none')
+            .attr('stroke', '#007dad')
+            .attr('stroke-width', '0.5%')
+            .attr('y1', '0')
+            .attr('y2', relHeight)
+            .attr('x1', x(measurementStep))
+            .attr('x2', x(measurementStep))
+            .style('opacity', 1);
+
+          svg
+            .select('.marker-text')
+            .style('opacity', 1)
+            .style('color', '#007dad')
+            .attr('text-anchor', 'middle')
+            .attr('alignment-baseline', 'middle')
+            .attr('letter-spacing', '0px')
+            .attr('x', x(measurementStep))
+            .attr('y', y(measurementValue));
+        }
+
+        // add tooltips
+        // https://www.d3-graph-gallery.com/graph/line_cursor.html
+        // This allows to find the closest X index of the mouse:
+        // var bisect = d3v5.bisector(function(d, i) { return i; }).left;
+
+        // Create the line that travels along the x-axis of chart
+        const focus = svg
+          .select('.focus-line')
+          .style('fill', 'none')
+          .attr('stroke', 'black')
+          .attr('stroke-width', '1%')
+          .attr('y1', '0')
+          .attr('y2', relHeight)
+          .attr('x1', '0')
+          .attr('x2', '0')
+          .style('opacity', 0);
+
+        // Create the text that travels along the curve of chart
+        const focusText = svg
+          .select('.focus-text')
+          .style('opacity', 0)
+          .attr('text-anchor', 'left')
+          .attr('alignment-baseline', 'middle')
+          .attr('letter-spacing', '0px');
+
+        // What happens when the mouse move -> show the annotations at the right positions.
+        function mouseover() {
+          focus.style('opacity', 1);
+          focusText.style('opacity', 1);
+        }
+
+        function mousemove() {
+          // recover coordinate we need
+          const x0 = d3v5.mouse(this)[0];
+
+          // @ts-expect-error invert is wronlgy typed in d3
+          let i = Math.round(x.invert(x0));
+
+          i = Math.max(i, 0);
+          i = Math.min(dataMeanList.length - 1, i);
+
+          focus
+            .attr('x1', x(i)) // i/data_list.length
+            .attr('x2', x(i)); // i/data_list.length
+
+          // // position the text in a way that it is always readable
+          // if(x0 > rel_width/2){
+          //     x0 = x0-rel_width/2;
+          // }
+          let measurementTxt = '';
+          if (i === measurementStep) {
+            measurementTxt = `<tspan x='0' dy='1.2em'>measured: ${Math.round(measurementValue * 100) / 100}</tspan>`;
+          }
+          focusText
+            .html(
+              `<tspan x='0' dy='1.2em'>step: ${i}</tspan><tspan x='0' dy='1.2em'>mean: ${
+                Math.round(dataMeanList[i] * 100) / 100
+              }</tspan><tspan x='0' dy='1.2em'>var: ${Math.round(dataVarList[i] * 100) / 100}</tspan>${measurementTxt}`,
+            )
+            .attr('x', 0) // x0
+            .attr('y', 0); // y0
+        }
+
+        function mouseout() {
+          focus.style('opacity', 0);
+          focusText.style('opacity', 0);
+        }
+
+        // Create a rect on top of the svg area: this rectangle recovers mouse position
+        svg
+          .select('.hover-rect')
+          .style('fill', 'none')
+          .style('pointer-events', 'all')
+          .attr('width', '100%')
+          .attr('height', '100%')
+          .on('mouseover', mouseover)
+          .on('mousemove', mousemove)
+          .on('mouseout', mouseout);
+      },
+    };
+  }
+}
+
+export class StructureImageColumn extends StringColumn {
+  protected structureFilter: IStructureFilter | null = null;
+
+  filter(row: IDataRow): boolean {
+    if (!this.isFiltered()) {
+      return true;
+    }
+    return this.structureFilter!.valid.has(this.getLabel(row));
+  }
+
+  isFiltered(): boolean {
+    return this.structureFilter != null && this.structureFilter.valid?.size > 0;
+  }
+
+  getFilter() {
+    return this.structureFilter;
+  }
+
+  setFilter(filter: IStructureFilter | null) {
+    if (isEqual(filter, this.structureFilter)) {
+      return;
+    }
+    this.fire([StringColumn.EVENT_FILTER_CHANGED, Column.EVENT_DIRTY_VALUES, Column.EVENT_DIRTY], this.structureFilter, (this.structureFilter = filter));
+  }
+}
+
+export class MySmilesStructureRenderer implements ICellRendererFactory {
+  readonly title: string = 'Compound Structure';
+
+  // better with background image, because with img tag the user might drag the img when they actually want to select several rows
+  readonly template = '<div style="background-size: contain; background-position: center; background-repeat: no-repeat;"></div>';
+
+  canRender(col: StructureImageColumn, mode: ERenderMode): boolean {
+    return col instanceof StructureImageColumn && (mode === ERenderMode.CELL || mode === ERenderMode.GROUP);
+  }
+
+  create(col: StructureImageColumn): ICellRenderer {
+    return {
+      template: this.template,
+      update: (n: HTMLImageElement, d: IDataRow) => {
+        // @ts-ignore
+        const smiles = d.v[col.desc.column];
+        ReactionCIMEBackendFromEnv.getStructureFromSmiles(smiles, false, null).then((x) => {
+          if (x && x.length > 100) {
+            // check if it is actually long enogh to be an img
+            n.style.backgroundImage = `url('data:image/jpg;base64,${x}')`;
+          } else {
+            n.innerHTML = x;
+          }
+          n.title = `${mapSmilesToShortname(smiles)}: ${smiles}`;
+          // n.alt = smiles;
+        });
+      },
+    };
+  }
+
+  createGroup(col: StructureImageColumn, context: IRenderContext): IGroupCellRenderer {
+    return {
+      template: this.template,
+      update: (n: HTMLImageElement, group: IOrderedGroup) => {
+        const formData = new FormData();
+        return context.tasks
+          .groupRows(col, group, 'string', (rows) => {
+            rows.every((row) => {
+              const v = col.getLabel(row);
+              formData.append('smiles_list', v);
+              return true;
+            });
+          })
+          .then(() => {
+            ReactionCIMEBackendFromEnv.getMCSFromSmilesList(formData).then((x) => {
+              n.style.backgroundImage = `url('data:image/jpg;base64,${x}')`;
+              n.alt = formData.getAll('smiles_list').toString();
+            });
+          });
+      },
+    };
+  }
+}
+
+function myDynamicHeight(data: IGroupItem[], ranking: Ranking): IDynamicHeight {
+  if (smilesStructureColumns.length > 0) {
+    const cols = ranking.children.filter((x) => smilesStructureColumns.includes(x.label) || customChartColumns.includes(x.label));
+
+    if (!cols || cols.length === 0) return { defaultHeight: 25, height: () => 25, padding: () => 0 };
+
+    const colHeights = cols.map((x) => {
+      if (customChartColumns.includes(x.label)) return x.getWidth() / WIDTH_HEIGHT_RATIO; // for chart, the width should be bigger than the height
+      return x.getWidth(); // for images it is square
+    });
+    const colHeight = Math.max(Math.max(...colHeights), 25); // col.getWidth();
+
+    const height = function (item: IGroupItem | Readonly<IOrderedGroup>): number {
+      return colHeight;
+    };
+    const padding = function (item: IGroupItem | Readonly<IOrderedGroup>): number {
+      return 0;
+    };
+    return { defaultHeight: colHeight, height, padding };
+  }
+  return { defaultHeight: 25, height: () => 25, padding: () => 0 };
+}
+
+function buildLineup(cols, data, pointColorScale, channelColor) {
+  // console.log(channelColor) //TODO: update lineup colorscale, if sth changes; TODO: do this for all columns, not just groupLabel
+  let groupLabelCatColor;
+  if (channelColor?.key === PrebuiltFeatures.ClusterLabel) {
+    const groupLabelMapping = {
+      scale: pointColorScale,
+      values: AShallowSet.create(data.map((vector) => vector[PrebuiltFeatures.ClusterLabel])),
+      type: 'categorical',
+    } as DiscreteMapping;
+    groupLabelCatColor = groupLabelMapping.values
+      .filter((cat) => cat && cat !== '')
+      .map((cat) => {
+        return { name: cat, color: mapValueToColor(groupLabelMapping, cat).hex };
+      });
+  }
+
+  const builder = LineUpJS.builder(data);
+
+  // eslint-disable-next-line guard-for-in
+  for (const i in cols) {
+    const col = cols[i];
+    const show = true; //! (typeof col.metaInformation.hideLineUp !== 'undefined' && col.metaInformation.hideLineUp); // hide column if "hideLineUp" is specified -> there is a lineup bug with that option
+
+    // if (!EXCLUDED_COLUMNS.includes(i) && (Object.keys(col.metaInformation).length <= 0 || !col.metaInformation.noLineUp)) { // only if there is a "noLineUp" modifier at this column or thix column is excluded, we don't do anything
+    if (col.metaInformation.imgSmiles) {
+      const smilesCol = `Structure: ${i}`;
+      smilesStructureColumns.push(smilesCol);
+      builder.column(
+        LineUpJS.buildColumn('mySmilesStructureColumn', i)
+          .label(smilesCol)
+          .renderer('mySmilesStructureRenderer', 'mySmilesStructureRenderer')
+          .width(50)
+          .build([]),
+      );
+      // uncomment if you also want to show the smiles string, not just the structure
+      // builder.column(LineUpJS.buildStringColumn(i).width(50).custom("visible", show).color(base_color));
+    } else if (col.metaInformation.customLineChart) {
+      // builder.column(LineUpJS.buildNumberColumn(i).label(i).asMap().renderer("myLineChartRenderer", "myLineChartRenderer").width(50).build([]));
+      builder.column(
+        LineUpJS.buildColumn('myLineChartColumn', i)
+          .label(i)
+          .custom('min', col.metaInformation.globalMin)
+          .custom('max', col.metaInformation.globalMax)
+          .renderer('myLineChartRenderer', 'myLineChartRenderer')
+          .width(150)
+          .build([]),
+      );
+      customChartColumns.push(i);
+    } else if (i === PrebuiltFeatures.ClusterLabel) {
+      const clustCol = LineUpJS.buildCategoricalColumn(i, groupLabelCatColor).custom('visible', show).width(70); // .asSet(',')
+      builder.column(clustCol);
+    } else if (col.metaInformation.listData) {
+      // builder.column(LineUpJS.buildNumberColumn(i, [-10,10]).asArray().width(100));
+      const columnDesc = deriveColumnDescriptions(data, { columns: [i] })[0];
+      console.log({ ...columnDesc });
+      if (col.metaInformation.range) {
+        // TODO: fix lineup errors
+        // @ts-expect-error the typings of lineup seem to not include domain
+        columnDesc.domain = col.metaInformation.range;
+      }
+
+      if (col.metaInformation.colorMapping) {
+        if (Array.isArray(col.metaInformation.colorMapping)) {
+          // TODO: fix lineup errors
+          // @ts-expect-error the typings of lineup seem to not include colorMapping
+          columnDesc.colorMapping = {
+            type: 'custom',
+            entries: col.metaInformation.colorMapping.map((item, index) => {
+              return { color: item, value: index / (col.metaInformation.colorMapping.length - 1) };
+            }),
+          };
+        } else {
+          // TODO: fix lineup errors
+          // @ts-expect-error the typings of lineup seem to not include colorMapping
+          columnDesc.colorMapping = col.metaInformation.colorMapping;
+        }
+        // column_desc["colorMapping"] = "interpolateBrBG";
+      }
+      builder.column(columnDesc);
+    } else if (col.metaInformation.hide) {
+      // don't show the column if e.g. it is only meta_data
+    } else {
+      builder.deriveColumns(i);
+    }
+  }
+
+  // builder.deriveColumns([]);
+
+  builder.column(LineUpJS.buildStringColumn('Annotations').editable().color(baseColor));
+  builder.column(LineUpJS.buildStringColumn(UNIQUE_ID).width(50).color(baseColor)); // we need this to be able to filter by all indices; this ID corresponds to the mesh index
+
+  builder.defaultRanking(true);
+  // builder.deriveColors();
+  builder.registerRenderer('mySmilesStructureRenderer', new MySmilesStructureRenderer());
+  builder.registerRenderer('myLineChartRenderer', new MyLineChartRenderer());
+  // builder.registerRenderer("myBarCellRenderer", new BarCellRenderer(true));
+  builder.registerColumnType('mySmilesStructureColumn', StructureImageColumn);
+  builder.registerColumnType('myLineChartColumn', TestColumn);
+  builder.sidePanel(true, true); // collapse side panel by default
+  builder.livePreviews({
+    filter: false,
+  });
+  builder.dynamicHeight(myDynamicHeight);
+  builder.animated(false);
+
+  return builder;
+}
+
 /**
  * Our component definition, by declaring our props with 'Props' we have static types for each of our property
  */
@@ -120,7 +547,7 @@ export const LineUpContext = connector(function ({
     // splitRef?.current?.setSizes([100, 0])
     return null;
   }
-  const lineup_ref = React.useRef<any>();
+  const lineupRef = React.useRef<any>();
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const debouncedHighlight = React.useCallback(
@@ -128,13 +555,13 @@ export const LineUpContext = connector(function ({
     [],
   );
 
-  const preprocess_lineup_data = (data) => {
+  const preprocessLineupData = (data) => {
     // if (activeStory)
     //   ACluster.deriveVectorLabelsFromClusters(
     //     data,
     //     Object.values(activeStory.clusters.entities)
     //   );
-    const lineup_data = new Array<any>();
+    const lineupData = new Array<any>();
     const columns = {};
     data.forEach((element) => {
       // if(element[PrebuiltFeatures.ClusterLabel].length <= 0){
@@ -143,65 +570,67 @@ export const LineUpContext = connector(function ({
       const row = {};
 
       for (const i in lineUpInput_columns) {
-        const col = lineUpInput_columns[i];
+        if (Object.prototype.hasOwnProperty.call(lineUpInput_columns, i)) {
+          const col = lineUpInput_columns[i];
 
-        if (!EXCLUDED_COLUMNS.includes(i) && (Object.keys(col.metaInformation).length <= 0 || !col.metaInformation.noLineUp)) {
-          if (Object.keys(col.metaInformation).length > 0 && col.metaInformation.timeSeriesGroup) {
-            // if(col.metaInformation.timeSeriesGroup.endsWith(""))
-            const split = col.metaInformation.timeSeriesGroup.split(':');
-            if (split.length <= 1) {
-              // if the string is separated with a colon, only the first part of the string is considered as the group. the second part of the string determines a sub value of this group
-              if (Object.keys(row).includes(col.metaInformation.timeSeriesGroup)) {
-                row[col.metaInformation.timeSeriesGroup].push(element[i]);
-              } else {
-                row[col.metaInformation.timeSeriesGroup] = [element[i]];
-                columns[col.metaInformation.timeSeriesGroup] = col;
-                columns[col.metaInformation.timeSeriesGroup].metaInformation.listData = true;
-                columns[col.metaInformation.timeSeriesGroup].metaInformation.range = col.metaInformation.globalRange; // TODO: iterate over all columns and derive global min/max
-                columns[col.metaInformation.timeSeriesGroup].metaInformation.colorMapping = col.metaInformation.colorMapping;
-              }
-            } else {
-              const group_name = split[0];
-              const var_name = split[1];
-              if (Object.keys(row).includes(group_name)) {
-                if (Object.keys(row[group_name]).includes(var_name)) {
-                  row[group_name][var_name].push(element[i]);
+          if (!EXCLUDED_COLUMNS.includes(i) && (Object.keys(col.metaInformation).length <= 0 || !col.metaInformation.noLineUp)) {
+            if (Object.keys(col.metaInformation).length > 0 && col.metaInformation.timeSeriesGroup) {
+              // if(col.metaInformation.timeSeriesGroup.endsWith(""))
+              const split = col.metaInformation.timeSeriesGroup.split(':');
+              if (split.length <= 1) {
+                // if the string is separated with a colon, only the first part of the string is considered as the group. the second part of the string determines a sub value of this group
+                if (Object.keys(row).includes(col.metaInformation.timeSeriesGroup)) {
+                  row[col.metaInformation.timeSeriesGroup].push(element[i]);
                 } else {
-                  row[group_name][var_name] = [element[i]];
+                  row[col.metaInformation.timeSeriesGroup] = [element[i]];
+                  columns[col.metaInformation.timeSeriesGroup] = col;
+                  columns[col.metaInformation.timeSeriesGroup].metaInformation.listData = true;
+                  columns[col.metaInformation.timeSeriesGroup].metaInformation.range = col.metaInformation.globalRange; // TODO: iterate over all columns and derive global min/max
+                  columns[col.metaInformation.timeSeriesGroup].metaInformation.colorMapping = col.metaInformation.colorMapping;
                 }
               } else {
-                row[group_name] = {};
-                row[group_name][var_name] = [element[i]];
-              }
+                const groupName = split[0];
+                const varName = split[1];
+                if (Object.keys(row).includes(groupName)) {
+                  if (Object.keys(row[groupName]).includes(varName)) {
+                    row[groupName][varName].push(element[i]);
+                  } else {
+                    row[groupName][varName] = [element[i]];
+                  }
+                } else {
+                  row[groupName] = {};
+                  row[groupName][varName] = [element[i]];
+                }
 
-              // update column metaInformation
-              if (Object.keys(columns).includes(group_name)) {
-                columns[group_name].metaInformation.globalMin = Math.min(columns[group_name].metaInformation.globalMin, element[i]);
-                columns[group_name].metaInformation.globalMax = Math.max(columns[group_name].metaInformation.globalMax, element[i]);
-              } else {
-                columns[group_name] = col;
-                columns[group_name].metaInformation.customLineChart = true;
-                columns[group_name].metaInformation.globalMin = element[i];
-                columns[group_name].metaInformation.globalMax = element[i];
+                // update column metaInformation
+                if (Object.keys(columns).includes(groupName)) {
+                  columns[groupName].metaInformation.globalMin = Math.min(columns[groupName].metaInformation.globalMin, element[i]);
+                  columns[groupName].metaInformation.globalMax = Math.max(columns[groupName].metaInformation.globalMax, element[i]);
+                } else {
+                  columns[groupName] = col;
+                  columns[groupName].metaInformation.customLineChart = true;
+                  columns[groupName].metaInformation.globalMin = element[i];
+                  columns[groupName].metaInformation.globalMax = element[i];
+                }
               }
+            } else if (Object.keys(col.metaInformation).length > 0 && col.metaInformation.lineup_meta_column) {
+              // add meta column, that can be used by other columns
+              row[i] = element[i];
+              columns[i] = col;
+
+              row[col.metaInformation.lineup_meta_column] = element[i];
+              columns[col.metaInformation.lineup_meta_column] = { metaInformation: { hide: true } };
+            } else {
+              row[i] = element[i];
+              columns[i] = col;
             }
-          } else if (Object.keys(col.metaInformation).length > 0 && col.metaInformation.lineup_meta_column) {
-            // add meta column, that can be used by other columns
-            row[i] = element[i];
-            columns[i] = col;
-
-            row[col.metaInformation.lineup_meta_column] = element[i];
-            columns[col.metaInformation.lineup_meta_column] = { metaInformation: { hide: true } };
-          } else {
-            row[i] = element[i];
-            columns[i] = col;
           }
         }
       }
 
       row[PrebuiltFeatures.ClusterLabel] = element[PrebuiltFeatures.ClusterLabel].toString();
       row[UNIQUE_ID] = element.__meta__.meshIndex;
-      lineup_data.push(row);
+      lineupData.push(row);
 
       // console.log(element)
       // let row = Object.assign({}, element)
@@ -209,32 +638,34 @@ export const LineUpContext = connector(function ({
       // row[UNIQUE_ID] = element["__meta__"]["meshIndex"];
       // lineup_data.push(row);
     });
-    return [lineup_data, columns];
+    return [lineupData, columns];
   };
 
-  const clear_automatic_filters = (lineUpInput, filter) => {
+  const clearAutomaticFilters = (lineUpInputObj, filter) => {
     if (filter) {
       for (const key in filter) {
-        const { lineup } = lineUpInput;
-        const ranking = lineup.data.getFirstRanking();
-        if (key === 'selection') {
-          const filter_col = ranking.children.find((x) => {
-            return x.desc.column === UNIQUE_ID;
-          });
-          filter_col?.clearFilter();
-        } else {
-          const filter_col = ranking.children.find((x) => {
-            return x.desc.column === key;
-          });
-          filter_col?.clearFilter();
+        if (Object.prototype.hasOwnProperty.call(filter, key)) {
+          const { lineup } = lineUpInputObj;
+          const ranking = lineup.data.getFirstRanking();
+          if (key === 'selection') {
+            const filterCol = ranking.children.find((x) => {
+              return x.desc.column === UNIQUE_ID;
+            });
+            filterCol?.clearFilter();
+          } else {
+            const filterCol = ranking.children.find((x) => {
+              return x.desc.column === key;
+            });
+            filterCol?.clearFilter();
+          }
         }
       }
     }
   };
-  const get_lineup_dump = (lineUpInput) => {
-    if (lineUpInput.lineup) {
-      clear_automatic_filters(lineUpInput, lineUpInput.filter);
-      const dump = lineUpInput.lineup.dump();
+  const getLineupDump = (lineUpInputObj) => {
+    if (lineUpInputObj.lineup) {
+      clearAutomaticFilters(lineUpInputObj, lineUpInputObj.filter);
+      const dump = lineUpInputObj.lineup.dump();
       return dump;
     }
     return null;
@@ -256,16 +687,15 @@ export const LineUpContext = connector(function ({
     //     }
     // }
 
-    const temp_data = preprocess_lineup_data(lineUpInput_data);
-    const lineup_data = temp_data[0];
-    const columns = temp_data[1];
+    const tempData = preprocessLineupData(lineUpInput_data);
+    const lineupData = tempData[0];
+    const columns = tempData[1];
 
-    const builder = buildLineup(columns, lineup_data, pointColorScale, channelColor); // lineUpInput_data
-    const dump = get_lineup_dump(lineUpInput);
+    const builder = buildLineup(columns, lineupData, pointColorScale, channelColor); // lineUpInput_data
+    const dump = getLineupDump(lineUpInput);
 
     lineUpInput.lineup?.destroy();
-    let lineup;
-    lineup = builder.buildTaggle(lineup_ref.current);
+    const lineup = builder.buildTaggle(lineupRef.current);
     if (dump) {
       lineup.restore(dump);
     }
@@ -273,11 +703,11 @@ export const LineUpContext = connector(function ({
     const ranking = lineup.data.getFirstRanking();
 
     // add selection checkbox column
-    let selection_col = ranking.children.find((x) => x.label === 'Selection Checkboxes');
-    if (!selection_col) {
-      selection_col = lineup.data.create(createSelectionDesc());
-      if (selection_col) {
-        ranking.insert(selection_col, 1);
+    let selectionCol = ranking.children.find((x) => x.label === 'Selection Checkboxes');
+    if (!selectionCol) {
+      selectionCol = lineup.data.create(createSelectionDesc());
+      if (selectionCol) {
+        ranking.insert(selectionCol, 1);
       }
     }
 
@@ -304,14 +734,14 @@ export const LineUpContext = connector(function ({
     lineup.on('selectionChanged', (currentSelection_lineup) => {
       // if(currentSelection_lineup.length == 0) return; // selectionChanged is called during creation of lineup, before the current aggregation was set; therefore, it would always set the current aggregation to nothing because in the lineup table nothing was selected yet
 
-      const currentSelection_scatter = lineUpInput_data
+      const currentSelectionCcatter = lineUpInput_data
         .map((x, i) => {
           if (x.__meta__.selected) return i;
           return undefined;
         })
         .filter((x) => x !== undefined);
 
-      if (!arrayEquals(currentSelection_lineup, currentSelection_scatter)) {
+      if (!arrayEquals(currentSelection_lineup, currentSelectionCcatter)) {
         // need to check, if the current lineup selection is already the current aggregation
         const agg = new Array<number>();
         currentSelection_lineup.forEach((index) => {
@@ -323,26 +753,25 @@ export const LineUpContext = connector(function ({
     });
 
     lineup.on('highlightChanged', (idx) => {
-      let hover_item;
+      let hoverItem;
       if (idx >= 0) {
-        hover_item = lineUpInput_data[idx];
+        hoverItem = lineUpInput_data[idx];
       }
-      debouncedHighlight(hover_item);
+      debouncedHighlight(hoverItem);
     });
 
     // update lineup when smiles_column width changes
-    if (smiles_structure_columns.length > 0 || custom_chart_columns.length > 0) {
-      const custom_chart_cols = ranking.children.filter((x: any) => custom_chart_columns.includes(x.label));
-      for (const i in custom_chart_cols) {
-        const custom_chart_col = custom_chart_cols[i];
-        custom_chart_col.on('widthChanged', (prev, current) => {
+    if (smilesStructureColumns.length > 0 || customChartColumns.length > 0) {
+      const customChartCols = ranking.children.filter((x: any) => customChartColumns.includes(x.label));
+      customChartCols.forEach((customChartCol) => {
+        customChartCol.on('widthChanged', (prev, current) => {
           lineup.update();
         });
-      }
+      });
 
-      const lineup_smiles_cols = ranking.children.filter((x: any) => smiles_structure_columns.includes(x.label));
-      for (const i in lineup_smiles_cols) {
-        const lineup_smiles_col = lineup_smiles_cols[i];
+      const lineupSmilesCols = ranking.children.filter((x: any) => smilesStructureColumns.includes(x.label)) as StructureImageColumn[];
+      console.log(lineupSmilesCols);
+      lineupSmilesCols.forEach((lineup_smiles_col) => {
         lineup_smiles_col.on('widthChanged', (prev, current) => {
           lineup.update();
         });
@@ -354,6 +783,8 @@ export const LineUpContext = connector(function ({
             const filter = typeof cur?.filter === 'string' ? cur?.filter : null; // only allow string filters -> no regex (TODO: remove regex checkbox)
             if (lineup_smiles_col && filter) {
               ReactionCIMEBackendFromEnv.getSubstructureCount(
+                // TODO: fix lineup errors
+                // @ts-expect-error the typings of lineup seem to not include column
                 lineUpInput_data.map((d) => d[lineup_smiles_col.desc.column]),
                 filter,
               )
@@ -372,7 +803,7 @@ export const LineUpContext = connector(function ({
           }
         };
         lineup_smiles_col.on(StringColumn.EVENT_FILTER_CHANGED, filterChanged);
-      }
+      });
     }
 
     setLineUpInput_lineup(lineup);
@@ -419,13 +850,13 @@ export const LineUpContext = connector(function ({
     if (lineUpInput.lineup != null) {
       // select those instances that are also selected in the scatter plot view
       if (currentAggregation.aggregation && currentAggregation.aggregation.length > 0) {
-        const currentSelection_scatter = lineUpInput_data
+        const currentSelectionCcatter = lineUpInput_data
           .map((x, i) => {
             if (x.__meta__.selected) return i;
             return undefined;
           })
           .filter((x) => x !== undefined);
-        lineUpInput.lineup.setSelection(currentSelection_scatter);
+        lineUpInput.lineup.setSelection(currentSelectionCcatter);
 
         // const lineup_idx = lineup.renderer?.rankings[0]?.findNearest(currentSelection_scatter);
         // lineup.renderer?.rankings[0]?.scrollIntoView(lineup_idx);
@@ -445,38 +876,40 @@ export const LineUpContext = connector(function ({
   React.useEffect(() => {
     if (lineUpInput.lineup && lineUpInput.lineup.data) {
       const ranking = lineUpInput.lineup.data.getFirstRanking();
-      clear_automatic_filters(lineUpInput, lineUpInput.previousfilter);
+      clearAutomaticFilters(lineUpInput, lineUpInput.previousfilter);
       if (lineUpInput.filter) {
         for (const key in lineUpInput.filter) {
-          const cur_filter = lineUpInput.filter[key];
+          if (Object.prototype.hasOwnProperty.call(lineUpInput.filter, key)) {
+            const curFilter = lineUpInput.filter[key];
 
-          if (key === 'reset' && cur_filter) {
-            ranking.clearFilters();
-          } else if (key === 'selection') {
-            const filter_col = ranking.children.find((x) => {
-              return x.desc.column === UNIQUE_ID;
-            });
+            if (key === 'reset' && curFilter) {
+              ranking.clearFilters();
+            } else if (key === 'selection') {
+              const filterCol = ranking.children.find((x) => {
+                return x.desc.column === UNIQUE_ID;
+              });
 
-            let regex_str = '';
-            lineUpInput.filter[key].forEach((element) => {
-              regex_str += '|';
-              regex_str += element; // ["__meta__"]["meshIndex"];
-            });
-            regex_str = regex_str.substr(1); // remove the leading "|"
-            const my_regex = new RegExp(`^(${regex_str})$`, 'i'); // i modifier says that it's not case sensitive; ^ means start of string; $ means end of string
-            filter_col?.setFilter({
-              filter: my_regex,
-              filterMissing: true,
-            });
-          } else {
-            const filter_col = ranking.children.find((x) => {
-              return x.desc.column === key;
-            });
-            const my_regex = new RegExp(`^(.+,)?${cur_filter}(,.+)?$`, 'i'); // i modifier says that it's not case sensitive; ^ means start of string; $ means end of string
-            filter_col?.setFilter({
-              filter: my_regex,
-              filterMissing: true,
-            });
+              let regexStr = '';
+              lineUpInput.filter[key].forEach((element) => {
+                regexStr += '|';
+                regexStr += element; // ["__meta__"]["meshIndex"];
+              });
+              regexStr = regexStr.substr(1); // remove the leading "|"
+              const myRegex = new RegExp(`^(${regexStr})$`, 'i'); // i modifier says that it's not case sensitive; ^ means start of string; $ means end of string
+              filterCol?.setFilter({
+                filter: myRegex,
+                filterMissing: true,
+              });
+            } else {
+              const filterCol = ranking.children.find((x) => {
+                return x.desc.column === key;
+              });
+              const myRegex = new RegExp(`^(.+,)?${curFilter}(,.+)?$`, 'i'); // i modifier says that it's not case sensitive; ^ means start of string; $ means end of string
+              filterCol?.setFilter({
+                filter: myRegex,
+                filterMissing: true,
+              });
+            }
           }
         }
       }
@@ -497,475 +930,14 @@ export const LineUpContext = connector(function ({
           right: 0,
           padding: 0,
         }}
-        ref={lineup_ref}
+        ref={lineupRef}
         id="lineup_view"
       />
     </div>
   );
 });
 
-const WIDTH_HEIGHT_RATIO = 2;
-let smiles_structure_columns = new Array<any>();
-let custom_chart_columns = new Array<any>();
-function myDynamicHeight(data: IGroupItem[], ranking: Ranking): IDynamicHeight {
-  if (smiles_structure_columns.length > 0) {
-    const cols = ranking.children.filter((x) => smiles_structure_columns.includes(x.label) || custom_chart_columns.includes(x.label));
-
-    if (!cols || cols.length === 0) return { defaultHeight: 25, height: () => 25, padding: () => 0 };
-
-    const col_heights = cols.map((x) => {
-      if (custom_chart_columns.includes(x.label)) return x.getWidth() / WIDTH_HEIGHT_RATIO; // for chart, the width should be bigger than the height
-      return x.getWidth(); // for images it is square
-    });
-    const col_height = Math.max(Math.max(...col_heights), 25); // col.getWidth();
-
-    const height = function (item: IGroupItem | Readonly<IOrderedGroup>): number {
-      return col_height;
-    };
-    const padding = function (item: IGroupItem | Readonly<IOrderedGroup>): number {
-      return 0;
-    };
-    return { defaultHeight: col_height, height, padding };
-  }
-  return { defaultHeight: 25, height: () => 25, padding: () => 0 };
-}
-
-// const base_color = undefined;
-const base_color = '#c1c1c1';
-// const base_color = "#1f77b4";
-function buildLineup(cols, data, pointColorScale, channelColor) {
-  // console.log(channelColor) //TODO: update lineup colorscale, if sth changes; TODO: do this for all columns, not just groupLabel
-  let groupLabel_cat_color;
-  if (channelColor?.key === PrebuiltFeatures.ClusterLabel) {
-    // TODO: update colormapping code; does not work since colormapping of PSE changed...
-    // let groupLabel_mapping = new DiscreteMapping(
-    //   pointColorScale,
-    //   new ShallowSet(
-    //     data.map((vector) => vector[PrebuiltFeatures.ClusterLabel])
-    //   )
-    // );
-    const groupLabel_mapping = {
-      scale: pointColorScale,
-      values: AShallowSet.create(data.map((vector) => vector[PrebuiltFeatures.ClusterLabel])),
-      type: 'categorical',
-    } as DiscreteMapping;
-    groupLabel_cat_color = groupLabel_mapping.values
-      .filter((cat) => cat && cat !== '')
-      .map((cat) => {
-        return { name: cat, color: mapValueToColor(groupLabel_mapping, cat).hex };
-      });
-  }
-
-  const builder = LineUpJS.builder(data);
-
-  for (const i in cols) {
-    const col = cols[i];
-    const show = true; //! (typeof col.metaInformation.hideLineUp !== 'undefined' && col.metaInformation.hideLineUp); // hide column if "hideLineUp" is specified -> there is a lineup bug with that option
-
-    // if (!EXCLUDED_COLUMNS.includes(i) && (Object.keys(col.metaInformation).length <= 0 || !col.metaInformation.noLineUp)) { // only if there is a "noLineUp" modifier at this column or thix column is excluded, we don't do anything
-    if (col.metaInformation.imgSmiles) {
-      const smiles_col = `Structure: ${i}`;
-      smiles_structure_columns.push(smiles_col);
-      builder.column(
-        LineUpJS.buildColumn('mySmilesStructureColumn', i)
-          .label(smiles_col)
-          .renderer('mySmilesStructureRenderer', 'mySmilesStructureRenderer')
-          .width(50)
-          .build([]),
-      );
-      // uncomment if you also want to show the smiles string, not just the structure
-      // builder.column(LineUpJS.buildStringColumn(i).width(50).custom("visible", show).color(base_color));
-    } else if (col.metaInformation.customLineChart) {
-      // builder.column(LineUpJS.buildNumberColumn(i).label(i).asMap().renderer("myLineChartRenderer", "myLineChartRenderer").width(50).build([]));
-      builder.column(
-        LineUpJS.buildColumn('myLineChartColumn', i)
-          .label(i)
-          .custom('min', col.metaInformation.globalMin)
-          .custom('max', col.metaInformation.globalMax)
-          .renderer('myLineChartRenderer', 'myLineChartRenderer')
-          .width(150)
-          .build([]),
-      );
-      custom_chart_columns.push(i);
-    } else if (i === PrebuiltFeatures.ClusterLabel) {
-      const clust_col = LineUpJS.buildCategoricalColumn(i, groupLabel_cat_color).custom('visible', show).width(70); // .asSet(',')
-      builder.column(clust_col);
-    } else if (col.metaInformation.listData) {
-      // builder.column(LineUpJS.buildNumberColumn(i, [-10,10]).asArray().width(100));
-      const column_desc = deriveColumnDescriptions(data, { columns: [i] })[0];
-      if (col.metaInformation.range) {
-        column_desc.domain = col.metaInformation.range;
-      }
-
-      if (col.metaInformation.colorMapping) {
-        if (Array.isArray(col.metaInformation.colorMapping)) {
-          column_desc.colorMapping = {
-            type: 'custom',
-            entries: col.metaInformation.colorMapping.map((item, index) => {
-              return { color: item, value: index / (col.metaInformation.colorMapping.length - 1) };
-            }),
-          };
-        } else {
-          column_desc.colorMapping = col.metaInformation.colorMapping;
-        }
-        // column_desc["colorMapping"] = "interpolateBrBG";
-      }
-      builder.column(column_desc);
-    } else if (col.metaInformation.hide) {
-      // don't show the column if e.g. it is only meta_data
-    } else {
-      builder.deriveColumns(i);
-    }
-
-    // else if (typeof col.featureType !== 'undefined') {
-    //     switch (col.featureType) {
-    //         case FeatureType.Categorical:
-    //             if (data && col.distinct && col.distinct.length / data.length <= 0.5) {
-    //                 builder.column(LineUpJS.buildCategoricalColumn(i).custom("visible", show));
-    //             } else {
-    //                 builder.column(LineUpJS.buildStringColumn(i).width(50).custom("visible", show));
-    //             }
-    //             break;
-    //         case FeatureType.Quantitative:
-    //             builder.column(LineUpJS.buildNumberColumn(i).numberFormat(".2f").custom("visible", show).color(base_color));//.renderer("myBarCellRenderer")); //.renderer("numberWithValues")
-    //             break;
-    //         case FeatureType.Date:
-    //             builder.column(LineUpJS.buildDateColumn(i).custom("visible", show).color(base_color));
-    //             break;
-    //         default:
-    //             builder.column(LineUpJS.buildStringColumn(i).width(50).custom("visible", show).color(base_color));
-    //             break;
-
-    //     }
-    // } else {
-    //     if (col.isNumeric) {
-    //         builder.column(LineUpJS.buildNumberColumn(i, [col.range.min, col.range.max]).numberFormat(".2f").custom("visible", show).color(base_color));//.renderer("myBarCellRenderer"));
-    //     } else if (col.distinct)
-    //         if (data && col.distinct.length / data.length <= 0.5) // if the ratio between distinct categories and nr of data points is less than 1:2, the column is treated as a string
-    //             builder.column(LineUpJS.buildCategoricalColumn(i).custom("visible", show));
-    //         else
-    //             builder.column(LineUpJS.buildStringColumn(i).width(50).custom("visible", show).color(base_color));
-    //     else
-    //         builder.column(LineUpJS.buildStringColumn(i).width(50).custom("visible", show).color(base_color));
-    // }
-    // }
-  }
-
-  // builder.deriveColumns([]);
-
-  builder.column(LineUpJS.buildStringColumn('Annotations').editable().color(base_color));
-  builder.column(LineUpJS.buildStringColumn(UNIQUE_ID).width(50).color(base_color)); // we need this to be able to filter by all indices; this ID corresponds to the mesh index
-
-  builder.defaultRanking(true);
-  // builder.deriveColors();
-  builder.registerRenderer('mySmilesStructureRenderer', new MySmilesStructureRenderer());
-  builder.registerRenderer('myLineChartRenderer', new MyLineChartRenderer());
-  // builder.registerRenderer("myBarCellRenderer", new BarCellRenderer(true));
-  builder.registerColumnType('mySmilesStructureColumn', StructureImageColumn);
-  builder.registerColumnType('myLineChartColumn', TestColumn);
-  builder.sidePanel(true, true); // collapse side panel by default
-  builder.livePreviews({
-    filter: false,
-  });
-  builder.dynamicHeight(myDynamicHeight);
-  builder.animated(false);
-
-  return builder;
-}
-
 export interface IStructureFilter extends IStringFilter {
   filter: string;
   valid: Set<string>;
-}
-export class StructureImageColumn extends StringColumn {
-  protected structureFilter: IStructureFilter | null = null;
-
-  filter(row: IDataRow): boolean {
-    if (!this.isFiltered()) {
-      return true;
-    }
-    return this.structureFilter!.valid.has(this.getLabel(row));
-  }
-
-  isFiltered(): boolean {
-    return this.structureFilter != null && this.structureFilter.valid?.size > 0;
-  }
-
-  getFilter() {
-    return this.structureFilter;
-  }
-
-  setFilter(filter: IStructureFilter | null) {
-    if (isEqual(filter, this.structureFilter)) {
-      return;
-    }
-    this.fire([StringColumn.EVENT_FILTER_CHANGED, Column.EVENT_DIRTY_VALUES, Column.EVENT_DIRTY], this.structureFilter, (this.structureFilter = filter));
-  }
-}
-
-export class MyLineChartRenderer implements ICellRendererFactory {
-  readonly title: string = 'Line Chart';
-
-  canRender(col: TestColumn, mode: ERenderMode): boolean {
-    // return col instanceof NumberColumn && (mode === ERenderMode.CELL);
-    return mode === ERenderMode.CELL;
-  }
-
-  create(col: TestColumn): ICellRenderer {
-    return {
-      template: `<div class="svg-container">
-        <svg class="svg-content" preserveAspectRatio="xMidYMid meet">
-          <g>
-            <path class="areaChart"></path>
-            <path class="lineChart" fill="none" stroke="${base_color}" stroke-width="0.02px"></path>
-            <g>
-              <line class="focus-line"></line>
-              <line class="value-line-marker"></line>
-            </g>
-            <g>
-              <text style="font-size:0.2px; opacity:0;" class="marker-text">-</text>
-              <text style="font-size:0.2px;" class="focus-text"></text>
-            </g>
-            <rect class="hover-rect"></rect>
-          </g>
-        </svg></div>`,
-      update: (n: HTMLImageElement, d: IDataRow) => {
-        if (renderMissingDOM(n, col, d)) {
-          return;
-        }
-
-        // get data
-        const row = col.getMap(d);
-        const data_mean_list = row[0].value;
-        const data_var_list = row[1].value;
-        // const data_max = col.getMax();
-        let data_max =
-          d3v5.max(data_mean_list, function (d) {
-            return +d;
-          }) + 1;
-        // const data_min = col.getMin();
-        let data_min =
-          d3v5.min(data_mean_list, function (d) {
-            return +d;
-          }) - 1;
-
-        let measurement_value = null;
-        let measurement_step = null;
-        if (`${col.desc.label}_value` in d.v && `${col.desc.label}_step` in d.v) {
-          measurement_value = d.v[`${col.desc.label}_value`];
-          measurement_step = d.v[`${col.desc.label}_step`];
-
-          data_min = Math.min(data_min, measurement_value - measurement_value * 0.1);
-          data_max = Math.max(data_max, measurement_value + measurement_value * 0.1);
-        }
-
-        // this is the ratio that the chart should have
-        const rel_width = WIDTH_HEIGHT_RATIO; // data_mean_list.length/4;
-        const rel_height = 1;
-
-        const div = d3v5.select(n);
-        const svg = div.select('svg');
-        svg.attr('viewBox', `0 0 ${rel_width} ${rel_height}`);
-
-        // define x and y scales
-        const x = d3v5.scaleTime().domain([0, data_mean_list.length]).range([0, rel_width]);
-
-        const y = d3v5.scaleLinear().domain([data_min, data_max]).range([rel_height, 0]);
-
-        // Show confidence interval
-        svg
-          .select('.areaChart')
-          .datum(data_var_list)
-          .attr('fill', '#c1c1c14d')
-          .attr('stroke', 'none')
-          .attr(
-            'd',
-            d3v5
-              .area<number>()
-              .x((d, i) => {
-                return x(i);
-              })
-              .y0((d, i: number) => {
-                return y(data_mean_list[i] - d);
-              })
-              .y1((d, i: number) => {
-                return y(data_mean_list[i] + d);
-              }),
-          );
-
-        // draw the line chart
-        const path = svg.select('.lineChart');
-        path.datum(data_mean_list).attr(
-          'd',
-          d3v5
-            .line<number>()
-            .x((d, i: number) => {
-              return x(i);
-            }) // i/data_list.length
-            .y((d) => {
-              return y(d);
-            }), // 1-(d/data_max)
-        );
-
-        if (measurement_value != null && measurement_step != null) {
-          // create the marker that marks an actual measurement
-
-          svg
-            .select('.value-line-marker')
-            .style('fill', 'none')
-            .attr('stroke', '#007dad')
-            .attr('stroke-width', '0.5%')
-            .attr('y1', '0')
-            .attr('y2', rel_height)
-            .attr('x1', x(measurement_step))
-            .attr('x2', x(measurement_step))
-            .style('opacity', 1);
-
-          svg
-            .select('.marker-text')
-            .style('opacity', 1)
-            .style('color', '#007dad')
-            .attr('text-anchor', 'middle')
-            .attr('alignment-baseline', 'middle')
-            .attr('letter-spacing', '0px')
-            .attr('x', x(measurement_step))
-            .attr('y', y(measurement_value));
-        }
-
-        // add tooltips
-        // https://www.d3-graph-gallery.com/graph/line_cursor.html
-        // This allows to find the closest X index of the mouse:
-        // var bisect = d3v5.bisector(function(d, i) { return i; }).left;
-
-        // Create the line that travels along the x-axis of chart
-        const focus = svg
-          .select('.focus-line')
-          .style('fill', 'none')
-          .attr('stroke', 'black')
-          .attr('stroke-width', '1%')
-          .attr('y1', '0')
-          .attr('y2', rel_height)
-          .attr('x1', '0')
-          .attr('x2', '0')
-          .style('opacity', 0);
-
-        // Create the text that travels along the curve of chart
-        const focusText = svg
-          .select('.focus-text')
-          .style('opacity', 0)
-          .attr('text-anchor', 'left')
-          .attr('alignment-baseline', 'middle')
-          .attr('letter-spacing', '0px');
-
-        // Create a rect on top of the svg area: this rectangle recovers mouse position
-        svg
-          .select('.hover-rect')
-          .style('fill', 'none')
-          .style('pointer-events', 'all')
-          .attr('width', '100%')
-          .attr('height', '100%')
-          .on('mouseover', mouseover)
-          .on('mousemove', mousemove)
-          .on('mouseout', mouseout);
-
-        // What happens when the mouse move -> show the annotations at the right positions.
-        function mouseover() {
-          focus.style('opacity', 1);
-          focusText.style('opacity', 1);
-        }
-
-        function mousemove() {
-          // recover coordinate we need
-          const x0 = d3v5.mouse(this)[0];
-          // var y0 = d3v5.mouse(this)[1];
-          // var i = bisect(data, x0, 1);
-          // var x0 = x.invert(d3v5.mouse(this)[0]);
-          let i = Math.round(x.invert(x0)); // x0*data_list.length
-
-          i = Math.max(i, 0);
-          i = Math.min(data_mean_list.length - 1, i);
-
-          focus
-            .attr('x1', x(i)) // i/data_list.length
-            .attr('x2', x(i)); // i/data_list.length
-
-          // // position the text in a way that it is always readable
-          // if(x0 > rel_width/2){
-          //     x0 = x0-rel_width/2;
-          // }
-          let measurement_txt = '';
-          if (i === measurement_step) {
-            measurement_txt = `<tspan x='0' dy='1.2em'>measured: ${Math.round(measurement_value * 100) / 100}</tspan>`;
-          }
-          focusText
-            .html(
-              `<tspan x='0' dy='1.2em'>step: ${i}</tspan><tspan x='0' dy='1.2em'>mean: ${
-                Math.round(data_mean_list[i] * 100) / 100
-              }</tspan><tspan x='0' dy='1.2em'>var: ${Math.round(data_var_list[i] * 100) / 100}</tspan>${measurement_txt}`,
-            )
-            .attr('x', 0) // x0
-            .attr('y', 0); // y0
-        }
-
-        function mouseout() {
-          focus.style('opacity', 0);
-          focusText.style('opacity', 0);
-        }
-      },
-    };
-  }
-}
-
-export class MySmilesStructureRenderer implements ICellRendererFactory {
-  readonly title: string = 'Compound Structure';
-
-  // better with background image, because with img tag the user might drag the img when they actually want to select several rows
-  readonly template = '<div style="background-size: contain; background-position: center; background-repeat: no-repeat;"></div>';
-
-  canRender(col: StructureImageColumn, mode: ERenderMode): boolean {
-    return col instanceof StructureImageColumn && (mode === ERenderMode.CELL || mode === ERenderMode.GROUP);
-  }
-
-  create(col: StructureImageColumn): ICellRenderer {
-    return {
-      template: this.template,
-      update: (n: HTMLImageElement, d: IDataRow) => {
-        // @ts-ignore
-        const smiles = d.v[col.desc.column];
-        ReactionCIMEBackendFromEnv.getStructureFromSmiles(smiles, false, null).then((x) => {
-          if (x && x.length > 100) {
-            // check if it is actually long enogh to be an img
-            n.style.backgroundImage = `url('data:image/jpg;base64,${x}')`;
-          } else {
-            n.innerHTML = x;
-          }
-          n.title = `${map_smiles_to_shortname(smiles)}: ${smiles}`;
-          // n.alt = smiles;
-        });
-      },
-    };
-  }
-
-  createGroup(col: StructureImageColumn, context: IRenderContext): IGroupCellRenderer {
-    return {
-      template: this.template,
-      update: (n: HTMLImageElement, group: IOrderedGroup) => {
-        const formData = new FormData();
-        return context.tasks
-          .groupRows(col, group, 'string', (rows) => {
-            rows.every((row) => {
-              const v = col.getLabel(row);
-              formData.append('smiles_list', v);
-              return true;
-            });
-          })
-          .then(() => {
-            ReactionCIMEBackendFromEnv.getMCSFromSmilesList(formData).then((x) => {
-              n.style.backgroundImage = `url('data:image/jpg;base64,${x}')`;
-              n.alt = formData.getAll('smiles_list').toString();
-            });
-          });
-      },
-    };
-  }
 }

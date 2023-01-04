@@ -35,7 +35,7 @@ export function CategoryFilterChart({ col, value, setValue, remove, dataset }: P
     //     })
     //     setCatValuesTotal(data)
     // })
-  }, [col, dataset.info.path]);
+  }, [col, dataset]);
 
   return (
     <Grid container paddingTop={0}>

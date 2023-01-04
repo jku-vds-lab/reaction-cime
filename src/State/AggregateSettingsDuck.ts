@@ -73,7 +73,7 @@ export interface AggregateSettingsState {
   advancedSettings: AdvancedSettingsType;
 
   selectAttribute: string;
-  selectAttributeInfo: {};
+  selectAttributeInfo;
 }
 
 const initialState = {
@@ -95,7 +95,7 @@ const aggregateSettingsSlice = createSlice({
   name: 'aggregateSettings',
   initialState,
   reducers: {
-    setSelectAttribute(state, action: PayloadAction<{ attribute_name: string; attribute_info: {} }>) {
+    setSelectAttribute(state, action: PayloadAction<{ attribute_name: string; attribute_info }>) {
       state.selectAttribute = action.payload.attribute_name;
       state.selectAttributeInfo = action.payload.attribute_info;
     },
@@ -183,4 +183,9 @@ export const {
   setVariableIndex,
   setAggregationMethod,
 } = aggregateSettingsSlice.actions;
+
+export const AggregateActions = {
+  ...aggregateSettingsSlice.actions,
+};
+
 export default aggregateSettingsSlice.reducer;

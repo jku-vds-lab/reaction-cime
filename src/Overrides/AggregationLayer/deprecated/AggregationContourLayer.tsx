@@ -8,11 +8,11 @@ import * as d3 from 'd3v5';
 import { ReactionCIMEBackendFromEnv } from '../../../Backend/ReactionCIMEBackend';
 import { AppState } from '../../../State/Store';
 import { AggregateDataset } from '../AggregateDataset';
-import { LoadingIndicatorDialog } from '../../Dataset/DatasetTabPanel';
+import { LoadingIndicatorDialog } from '../../Dataset/LoadingIndicatorDialog';
 import { GLContour } from './GLContour';
-import { setAggregateColorMapScale } from '../../../State/AggregateSettingsDuck';
+import { AggregateActions } from '../../../State/AggregateSettingsDuck';
 
-const retrieve_colorscale = (
+const retrieveColorscale = (
   aggregateDataset: AggregateDataset,
   value_col: string,
   uncertainty_col: string,
@@ -52,7 +52,7 @@ const createContours = (dataset, value_col, scale) => {
   //     var uncertainty_arr = dataset.vectors.map((row) => row[uncertainty_col]);
   // }
 
-  const value_arr = dataset.vectors.map((row) => row[value_col]);
+  const valueArr = dataset.vectors.map((row) => row[value_col]);
   // console.log(value_arr)
   // let [width, height, x, y] = [100,100,0,0];
   // if(dataset.bounds){
@@ -66,55 +66,48 @@ const createContours = (dataset, value_col, scale) => {
 
   const xAxis = d3
     .scaleLinear()
-    .range([0, Math.sqrt(value_arr.length)])
+    .range([0, Math.sqrt(valueArr.length)])
     .domain([dataset.bounds.x.min, dataset.bounds.x.max]);
 
   const yAxis = d3
     .scaleLinear()
-    .range([0, Math.sqrt(value_arr.length)])
+    .range([0, Math.sqrt(valueArr.length)])
     .domain([dataset.bounds.y.min, dataset.bounds.y.max]);
 
-  const min = Math.min(...value_arr);
-  const max = Math.max(...value_arr);
+  const min = Math.min(...valueArr);
+  const max = Math.max(...valueArr);
   console.log(min, max);
-  const noNanArr = value_arr.map((val) => (isNaN(parseFloat(val)) ? -Number.MAX_VALUE : val));
+  const noNanArr = valueArr.map((val) => (Number.isNaN(parseFloat(val)) ? -Number.MAX_VALUE : val));
   console.log(noNanArr);
   const contours = d3
     .contours()
     // .thresholds(11)
     .thresholds(d3.range(min, max, (max - min) / 11))
     .smooth(true)
-    .size([Math.sqrt(value_arr.length), Math.sqrt(value_arr.length)])(noNanArr);
+    .size([Math.sqrt(valueArr.length), Math.sqrt(valueArr.length)])(noNanArr);
 
   const lines = [];
   contours.forEach((contour) => {
     // const coordinates = contour.coordinates[0][0]
-    const coordinates_list = contour.coordinates;
+    const coordinatesList = contour.coordinates;
     const { value } = contour;
     // let material = new THREE.LineBasicMaterial({ color: scale(value) })
     const material = new THREE.MeshBasicMaterial({ color: scale(value), side: THREE.DoubleSide });
-    for (const key in coordinates_list) {
-      const coordinates = coordinates_list[key][0];
-      const points = [];
+    coordinatesList.forEach((arr) => {
+      const coordinates = arr[0];
       const shape = new THREE.Shape();
       shape.moveTo(xAxis.invert(coordinates[0][0]), yAxis.invert(coordinates[0][1]));
       for (let i = 0; i < coordinates.length; i++) {
         const cur = coordinates[i];
         shape.lineTo(xAxis.invert(cur[0]), yAxis.invert(cur[1]));
-        // points.push(new THREE.Vector2(xAxis.invert(cur[0]), yAxis.invert(cur[1])))
       }
 
-      // var shape = new THREE.Shape()
-      // shape.moveTo(xAxis.invert(coordinates[0][0]), yAxis.invert(coordinates[0][1]))
-      // shape.splineThru(points)
-      // var geo = new THREE.ShapeGeometry(shape);
-      // let line = new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(points), material)
       const geo = new THREE.ShapeGeometry(shape);
       const line = new THREE.Mesh(geo, material);
 
       line.visible = true;
       lines.push(line);
-    }
+    });
   });
 
   return lines;
@@ -130,15 +123,15 @@ const mapStateToProps = (state: AppState) => ({
 });
 const mapDispatchToProps = (dispatch: any) => ({
   // setAggregateDataset: dataset => dispatch(setAggregateDatasetAction(dataset)),
-  setAggregateColorMapScale: (legend) => dispatch(setAggregateColorMapScale(legend)),
+  setAggregateColorMapScale: (legend) => dispatch(AggregateActions.setAggregateColorMapScale(legend)),
 });
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
 type PropsFromRedux = ConnectedProps<typeof connector>;
 
-type AggregationLayerProps = PropsFromRedux & {};
+type AggregationLayerProps = PropsFromRedux;
 
-const loading_area = 'global_loading_indicator_aggregation_ds';
+const loadingArea = 'global_loading_indicator_aggregation_ds';
 export const AggregationContourLayer = connector(
   ({ aggregateColor, poiDataset, viewTransform, setAggregateColorMapScale, aggregateSettings }: AggregationLayerProps) => {
     if (poiDataset == null || poiDataset.info == null || aggregateColor == null || aggregateColor.value_col == null || aggregateColor.value_col === 'None') {
@@ -153,7 +146,7 @@ export const AggregationContourLayer = connector(
 
     React.useEffect(() => {
       // setAggregateDataset(null)
-      const abort_controller = new AbortController(); // TODO: reiterate where AbortController needs to be instantiated --> can it be moved inside the loadAggCSV function?
+      const abortController = new AbortController(); // TODO: reiterate where AbortController needs to be instantiated --> can it be moved inside the loadAggCSV function?
       // load the basic aggregateDataset with the high-level overview information
       ReactionCIMEBackendFromEnv.loadAggCSV(
         (dataset) => {
@@ -166,24 +159,26 @@ export const AggregationContourLayer = connector(
         0,
         null,
         cancellablePromise,
-        abort_controller,
-        loading_area,
+        abortController,
+        loadingArea,
       );
+      // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [aggregateColor, poiDataset.info.path]);
 
     React.useEffect(() => {
       if (aggregateDataset && aggregateDataset.vectors) {
-        retrieve_colorscale(aggregateDataset, aggregateColor.value_col, aggregateColor.uncertainty_col, setAggregateColorMapScale, aggregateSettings);
+        retrieveColorscale(aggregateDataset, aggregateColor.value_col, aggregateColor.uncertainty_col, setAggregateColorMapScale, aggregateSettings);
       }
+      // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [aggregateDataset, aggregateColor, aggregateSettings?.colormapSettings.colorscale, aggregateSettings?.colormapSettings.useVSUP]);
 
     React.useEffect(() => {
       if (aggregateSettings?.colormapSettings.scale_obj != null && aggregateDataset && aggregateDataset.vectors) {
-        const lines = createContours(aggregateDataset, aggregateColor.value_col, aggregateSettings?.colormapSettings.scale_obj);
-        setLines(lines);
+        setLines(createContours(aggregateDataset, aggregateColor.value_col, aggregateSettings?.colormapSettings.scale_obj));
       } else {
         setLines(null);
       }
+      // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [aggregateSettings?.colormapSettings.scale_obj, aggregateSettings?.colormapSettings.valueFilter]);
 
     return (
@@ -192,7 +187,7 @@ export const AggregationContourLayer = connector(
           handleClose={() => {
             cancelPromises();
           }}
-          area={loading_area}
+          area={loadingArea}
         />
         {lines && lines.length > 0 && <GLContour lines={lines} />}
       </div>
