@@ -119,18 +119,18 @@ const ApplicationWrapper = connector(({ setMouseMoveFn, dataset_path, setMouseCl
         ],
         tabs: [
           {
-            name: 'filterDS',
-            tab: FilterTabPanel,
-            title: 'Filter',
-            description: 'Filter subset of dataset that should be shown in the main visualization views',
-            icon: ReactionCIMEIcons.Filter,
-          },
-          {
             name: 'aggregatDS',
             tab: AggregationTabPanel,
             title: 'Aggregate',
             description: 'Aggregated Dataset that should be shown in the background',
             icon: ReactionCIMEIcons.Aggregate,
+          },
+          {
+            name: 'filterDS',
+            tab: FilterTabPanel,
+            title: 'Filter',
+            description: 'Filter subset of dataset that should be shown in the main visualization views',
+            icon: ReactionCIMEIcons.Filter,
           },
           // {
           //   name: "lineup",
