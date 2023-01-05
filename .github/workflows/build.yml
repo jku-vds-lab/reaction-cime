@@ -22,6 +22,7 @@ jobs:
     with:
       cypress_enable: true
       cypress_run_because_flag: ${{ inputs.cypress == true }}
+      node_run_webpack: true
 
   build-docker:
     # needs: [build]
