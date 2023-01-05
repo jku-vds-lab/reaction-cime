@@ -18,7 +18,6 @@ import { FilterTabPanel } from './Overrides/FilterTabPanel/FilterTabPanel';
 import { PacoTabPanel } from './Overrides/PacoTabPanel/PacoTabPanel';
 import { AddRegionExceptionMenuItem } from './Overrides/ContextMenu/AddRegionException';
 import { SetFiltersToItemFeatures } from './Overrides/ContextMenu/SetFiltersToItemFeatures';
-import 'react-data-grid/lib/styles.css';
 
 PluginRegistry.getInstance().registerPlugin(new ReactionsPlugin());
 
