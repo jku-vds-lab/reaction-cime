@@ -28,6 +28,28 @@ export class RemoteEmbedding {
   //     callback_fn(this.embedding, this.current_steps, this.msg); //this.params["iterations"])
   // }
 
+  jsonParseMultiple = (ss: string) => {
+    ss = ss
+      .split('\n')
+      .map((l) => l.trim())
+      .join('');
+    let start = ss.indexOf('{');
+    let open = 0;
+    const res = [];
+    for (let i = start; i < ss.length; i++) {
+      if (ss[i] === '{' && (i < 2 || ss.slice(i - 2, i) !== '\\"')) {
+        open++;
+      } else if (ss[i] === '}' && (i < 2 || ss.slice(i - 2, i) !== '\\"')) {
+        open--;
+        if (open === 0) {
+          res.push(JSON.parse(ss.substring(start, i + 1)));
+          start = i + 1;
+        }
+      }
+    }
+    return res;
+  };
+
   initializeFit(callback_fn: (emb, step, msg) => void) {
     // https://stackoverflow.com/questions/62121310/how-to-handle-streaming-data-using-fetch
     const readStream = async (reader) => {
@@ -40,9 +62,10 @@ export class RemoteEmbedding {
           console.log('The stream is closed!');
         } else {
           try {
-            // TODO: This fails because we receive multiple JSON objects in one chunk?
-            // Maybe the switch to FastAPI changed something in the chunked streaming?
-            const resObj = JSON.parse(new TextDecoder().decode(value));
+            const valueString = new TextDecoder().decode(value);
+            // In case multiple JSON objects are received at once, we need to parse them all
+            const splitValue = this.jsonParseMultiple(valueString);
+            const resObj = splitValue.at(-1);
             if (parseInt(resObj.step, 10)) this.current_steps = parseInt(resObj.step, 10);
             if (resObj.emb && resObj.emb.length > 0) this.embedding = resObj.emb;
             if (resObj.msg) this.msg = resObj.msg;

@@ -43,7 +43,6 @@ class VisynPlugin(AVisynPlugin):
         # CORS(app)
 
         tmp_dir = get_settings().tmp_dir
-        flask_app.config["tempdir"] = tmp_dir
         if not os.path.exists(tmp_dir):
             os.makedirs(tmp_dir)
         flask_app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///" + os.path.join(tmp_dir, "app.sqlite")
@@ -55,9 +54,15 @@ class VisynPlugin(AVisynPlugin):
 
         from .ReactionCIMEDBO import ReactionCIMEDBO
 
-        flask_app.config["REACTION_CIME_DBO"] = ReactionCIMEDBO(db)
+        dbo = ReactionCIMEDBO(db)
 
-        from .reaction_cime_api import reaction_cime_api
+        # Make DBO accessible in FastAPI
+        app.state.reaction_cime_dbo = dbo
+        app.state.tempdir = tmp_dir
+
+        from .reaction_cime_api import reaction_cime_api, router
+
+        app.include_router(router, prefix="/api/reaction_cime/v2")
 
         flask_app.register_blueprint(reaction_cime_api)
 

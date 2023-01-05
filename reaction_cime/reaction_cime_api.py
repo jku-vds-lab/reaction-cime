@@ -1,3 +1,4 @@
+import asyncio
 import base64
 import ctypes
 import json
@@ -13,13 +14,15 @@ import hdbscan
 import numpy as np
 import pandas as pd
 import umap
-from flask import Blueprint, abort, current_app, jsonify, request, stream_with_context
+from fastapi import APIRouter, FastAPI, Request
+from fastapi.responses import StreamingResponse
+from flask import Blueprint, abort, jsonify, request
 from flask.helpers import make_response, send_file
-from flask.wrappers import Response
 from openTSNE import TSNE
 from rdkit import Chem
 from rdkit.Chem import Draw
 from sklearn.decomposition import PCA
+from tdp_core.middleware.request_context_plugin import get_request
 
 from .helper_functions import (
     aggregate_by_col_interpolate,
@@ -32,9 +35,11 @@ from .helper_functions import (
     rescale_and_encode,
     smiles_to_base64,
 )
+from .ReactionCIMEDBO import ReactionCIMEDBO
 
 _log = logging.getLogger(__name__)
 
+router = APIRouter(tags=["Reaction-CIME"])
 reaction_cime_api = Blueprint("reaction_cime", __name__)
 
 
@@ -46,8 +51,15 @@ def hello():
 # region --------------- database ---------------
 
 
-def get_cime_dbo():
-    return current_app.config["REACTION_CIME_DBO"]
+def get_app() -> FastAPI:
+    request = get_request()
+    if not request:
+        raise RuntimeError("Request not available, such that the app cannot be retrieved.")
+    return request.app
+
+
+def get_cime_dbo() -> ReactionCIMEDBO:
+    return get_app().state.reaction_cime_dbo
 
 
 @reaction_cime_api.route("/get_uploaded_files_list", methods=["GET"])
@@ -61,8 +73,8 @@ def delete_uploaded_file(filename):
     if deleted:
         delete_poi_exceptions(filename)
         delete_poi_constraints(filename)
-    print("----")
-    print(deleted)
+    _log.info("----")
+    _log.info(deleted)
     # TODO: Refactor to true and false instead of strings
     return {"deleted": "true" if deleted else "false"}
 
@@ -82,14 +94,14 @@ def handle_dataset_cache(filename, cols=[], x_channel="x", y_channel="y"):
     all_cols = list(set(cols + [x_channel, y_channel, "x", "y"]))
     # dataset is not cached and has to be loaded
     if dataset_cache[filename] is None or not set(all_cols).issubset(set(dataset_cache[filename].columns)):
-        print("---dataset is not cached and has to be loaded to memory")
-        print(all_cols)
+        _log.info("---dataset is not cached and has to be loaded to memory")
+        _log.info(all_cols)
         if dataset_cache[filename] is not None:  # add currently cached columns again to cache
             all_cols = list(set(all_cols + list(dataset_cache[filename].columns)))
-        print(all_cols)
+        _log.info(all_cols)
         dataset_cache[filename] = get_cime_dbo().get_dataframe_from_table(filename, columns=all_cols)
     else:
-        print("---dataset cached!")
+        _log.info("---dataset cached!")
     # return cached version of dataset
     return dataset_cache[filename]
 
@@ -136,11 +148,11 @@ def upload_csv():
     df = pd.read_csv(request.files["myFile"].stream)
 
     if "x" not in df.columns or "y" not in df.columns:
-        print("--- randomly init x and y coordinates")
+        _log.info("--- randomly init x and y coordinates")
         df["x"] = np.random.uniform(-50, 50, len(df))
         df["y"] = np.random.uniform(-50, 50, len(df))
 
-    print("--- save file to database")
+    _log.info("--- save file to database")
     filename = file_upload.filename or ""
     filename = "_".join(filename.split(".")[0:-1])
     if filename in get_cime_dbo().get_table_names():
@@ -153,8 +165,7 @@ def upload_csv():
     save_poi_exceptions(filename)
 
     delta_time = time.time() - start_time
-    print("--- took", time.strftime("%H:%M:%S", time.gmtime(delta_time)), "to upload file %s" % filename)
-    print("--- took %i min %f s to upload file %s" % (delta_time / 60, delta_time % 60, filename))
+    _log.info("--- took %i min %f s to upload file %s" % (delta_time / 60, delta_time % 60, filename))
 
     return {
         "filename": file_upload.filename,
@@ -176,19 +187,19 @@ MAX_POINTS = 10000
 
 
 def delete_poi_exceptions(filename):
-    file = f'{current_app.config["tempdir"]}{filename}_exceptions.csv'
+    file = f"{get_app().state.tempdir}{filename}_exceptions.csv"
     if os.path.exists(file):
         os.remove(file)
     else:
-        print("The file does not exist")
+        _log.info("The file does not exist")
 
 
 def delete_poi_constraints(filename):
-    file = f'{current_app.config["tempdir"]}{filename}_constraints.csv'
+    file = f"{get_app().state.tempdir}{filename}_constraints.csv"
     if os.path.exists(file):
         os.remove(file)
     else:
-        print("The file does not exist")
+        _log.info("The file does not exist")
 
 
 # --- save
@@ -199,17 +210,17 @@ def save_poi_exceptions(filename, exceptions=[]):
         exceptions = pd.DataFrame(exceptions)
     else:
         exceptions = pd.DataFrame(columns=["x_col", "y_col", "x_coord", "y_coord", "radius"])
-    exceptions.to_csv(f'{current_app.config["tempdir"]}{filename}_exceptions.csv', index=False)
+    exceptions.to_csv(f"{get_app().state.tempdir}{filename}_exceptions.csv", index=False)
 
 
 def save_poi_constraints(filename, constraints=[{"col": cycle_column, "operator": "BETWEEN", "val1": 0, "val2": 100}]):
     constraints = pd.DataFrame(constraints)
-    constraints.to_csv(f'{current_app.config["tempdir"]}{filename}_constraints.csv', index=False)
+    constraints.to_csv(f"{get_app().state.tempdir}{filename}_constraints.csv", index=False)
 
 
 # --- load
 def load_poi_exceptions(filename):
-    path = f'{current_app.config["tempdir"]}{filename}_exceptions.csv'
+    path = f"{get_app().state.tempdir}{filename}_exceptions.csv"
     if not os.path.exists(path):  # if there is no constraints file yet, create a default one
         save_poi_exceptions(filename)
 
@@ -218,7 +229,7 @@ def load_poi_exceptions(filename):
 
 
 def load_poi_constraints(filename) -> pd.DataFrame:
-    path = f'{current_app.config["tempdir"]}{filename}_constraints.csv'
+    path = f"{get_app().state.tempdir}{filename}_constraints.csv"
     if not os.path.exists(path):  # if there is no constraints file yet, create a default one
         save_poi_constraints(filename)
 
@@ -360,13 +371,13 @@ def get_poi_constraints(filename):
 
 @reaction_cime_api.route("/download_poi_exceptions/<filename>", methods=["GET"])
 def download_poi_exceptions(filename):
-    path = f'{current_app.config["tempdir"]}{filename}_exceptions.csv'
+    path = f"{get_app().state.tempdir}{filename}_exceptions.csv"
     return send_file(path, as_attachment=True)
 
 
 @reaction_cime_api.route("/download_poi_constraints/<filename>", methods=["GET"])
 def download_poi_constraints(filename):
-    path = f'{current_app.config["tempdir"]}{filename}_constraints.csv'
+    path = f"{get_app().state.tempdir}{filename}_constraints.csv"
     return send_file(path, as_attachment=True)
 
 
@@ -415,7 +426,7 @@ def get_poi_constraints_filter(filename, df_constraints: Optional[pd.DataFrame] 
 
     filter_string = f"({constraints_filter_string}) OR ({exceptions_filter_string})"
 
-    print(filter_string)
+    _log.info(filter_string)
 
     return filter_string
 
@@ -438,8 +449,7 @@ def get_points_of_interest(filename):
     poi_domain.to_csv(csv_buffer, index=False)
 
     delta_time = time.time() - start_time
-    print("--- took", time.strftime("%H:%M:%S", time.gmtime(delta_time)), "to load file %s" % filename)
-    print("--- took %i min %f s to load file %s" % (delta_time / 60, delta_time % 60, filename))
+    _log.info("--- took %i min %f s to load file %s" % (delta_time / 60, delta_time % 60, filename))
     return csv_buffer.getvalue()
 
 
@@ -780,7 +790,7 @@ def project_dataset():
             n_components=2,
             metric=metric,
             n_epochs=int(params["iterations"]),
-            init=initialization,
+            init=initialization,  # type: ignore
             verbose=True,
         )  # output_metric="euclidean" --> ? learning_rate=float(params["learningRate"]) --> if we have user input for this, we would need "auto" as an option
         proj_data = proj.fit_transform(normalized_values)
@@ -792,12 +802,12 @@ def project_dataset():
             metric=metric,
             perplexity=int(params["perplexity"]),
             n_iter=int(params["iterations"]),
-            initialization=initialization,
+            initialization=initialization,  # type: ignore
             verbose=True,
         )  # , learning_rate=float(params["learningRate"]) --> if we have user input for this, we would need "auto" as an option
         proj_data = proj.fit(normalized_values)
     else:
-        print("--- defaulting to PCA embedding")
+        _log.info("--- defaulting to PCA embedding")
         pca = PCA(n_components=2)
         proj_data = pca.fit_transform(normalized_values)
 
@@ -805,28 +815,29 @@ def project_dataset():
     start_time = time.time()
     get_cime_dbo().update_row_bulk(filename, proj_df.index, {"x": proj_data[:, 0], "y": proj_data[:, 1]})  # type: ignore
     delta_time = time.time() - start_time
-    print("--- took", time.strftime("%H:%M:%S", time.gmtime(delta_time)), "to update database")
-    print("--- took %i min %f s to update database" % (delta_time / 60, delta_time % 60))
+    _log.info("--- took %i min %f s to update database" % (delta_time / 60, delta_time % 60))
 
-    print("return poi positions")
+    _log.info("return poi positions")
     df = get_poi_df_from_db(filename, get_cime_dbo())[0][["x", "y"]].to_dict("records")
     return {"done": "true", "embedding": df}
 
 
 @reaction_cime_api.route("/terminate_projection_thread/<filename>", methods=["GET"])
 def terminate_projection_thread(filename):
-    current_app.config["TERMINATE_PROJECTION_" + filename] = True
+    app = get_app()
+    setattr(app.state, f"TERMINATE_PROJECTION_{filename}", True)
     return {"msg": "ok"}
 
 
 # https://www.geeksforgeeks.org/python-different-ways-to-kill-a-thread/
 class ProjectionThread(threading.Thread):
-    def __init__(self, filename, params, selected_feature_info, cime_dbo):
+    def __init__(self, filename, params, selected_feature_info, cime_dbo, poi_mask=None):
         threading.Thread.__init__(self)
         self.filename = filename
         self.params = params
         self.selected_feature_info = selected_feature_info
         self.cime_dbo = cime_dbo
+        self.poi_mask = poi_mask
 
         self.current_step = "0"
         self.done = False
@@ -852,7 +863,7 @@ class ProjectionThread(threading.Thread):
 
                 # --- pca
                 else:
-                    print("--- defaulting to PCA embedding")
+                    _log.info("--- defaulting to PCA embedding")
                     pca = PCA(n_components=2)
                     proj_data = pca.fit_transform(normalized_values)
 
@@ -863,8 +874,7 @@ class ProjectionThread(threading.Thread):
             self.cime_dbo.update_row_bulk(self.filename, proj_df.index, {"x": proj_data[:, 0], "y": proj_data[:, 1]})  # type: ignore
             reset_dataset_cache(self.filename)  # reset cached data
             delta_time = time.time() - start_time
-            print("--- took", time.strftime("%H:%M:%S", time.gmtime(delta_time)), "to update database")
-            print("--- took %i min %f s to update database" % (delta_time / 60, delta_time % 60))
+            _log.info("--- took %i min %f s to update database" % (delta_time / 60, delta_time % 60))
 
             self.msg = "finished!"
 
@@ -903,7 +913,7 @@ class ProjectionThread(threading.Thread):
             normalized_values = gower.gower_matrix(proj_df, cat_features=categorical_features)
 
             if initialization == "pca" and self.params["embedding_method"] == "tsne":
-                print("--- calculating PCA for tSNE with Gowers distance")
+                _log.info("--- calculating PCA for tSNE with Gowers distance")
                 pca = PCA(n_components=2)
                 initialization = pca.fit_transform(proj_df.values)
 
@@ -923,11 +933,11 @@ class ProjectionThread(threading.Thread):
 
             def optimization_about_to_start(self):
                 """This is called at the beginning of the optimization procedure."""
-                print("start optimization")
+                _log.info("start optimization")
                 pass
 
             def __call__(self, iteration, error, embedding):  # error is current KL divergence of the given embedding
-                # poi_mask = get_poi_mask(self.parent.filename, self.parent.cime_dbo)
+                # TODO: The iteration will go up to 250, then restart at 0 up to 500 --> causing the frontend to show wrong progress
                 self.parent.current_step = iteration
                 if self.poi_mask is not None:
                     self.parent.emb = [{"x": row[0], "y": row[1]} for row in embedding[self.poi_mask]]
@@ -937,13 +947,11 @@ class ProjectionThread(threading.Thread):
         if initialization is None:
             initialization = "pca"
 
-        # instead of "None" give the poi_mask as parameter, if you want point updates in front-end: get_poi_mask(self.filename, self.cime_dbo)["mask"]
-        # however, there is an error: Working outside of application context. (maybe due to changes in "get_poi_mask"?)
         proj = TSNE(
             2,
             metric=metric,
             callbacks_every_iters=10,
-            callbacks=[CustomCallback(self, None)],
+            callbacks=[CustomCallback(self, self.poi_mask)],
             perplexity=int(self.params["perplexity"]),
             n_iter=int(self.params["iterations"]),
             initialization=initialization,
@@ -967,7 +975,7 @@ class ProjectionThread(threading.Thread):
                     int(str)  # if it is not possible to parse it as int, we reached the end?
                     self.parent.current_step = str
                 except ValueError:
-                    print(str)
+                    _log.info(str)
 
             def flush(self):
                 pass
@@ -1011,7 +1019,7 @@ class ProjectionThread(threading.Thread):
             proj_df[["x", "y"]].values
         )
         delta_time = time.time() - start_time
-        print("--- took", time.strftime("%H:%M:%S", time.gmtime(delta_time)), "calculate remove overlap")
+        _log.info("--- took %i min %f s to calculate remove overlap" % (delta_time / 60, delta_time % 60))
         return proj_data, proj_df
 
     def get_id(self):
@@ -1028,31 +1036,35 @@ class ProjectionThread(threading.Thread):
         res = ctypes.pythonapi.PyThreadState_SetAsyncExc(thread_id, ctypes.py_object(SystemExit))
         if res > 1:
             ctypes.pythonapi.PyThreadState_SetAsyncExc(thread_id, 0)
-            print("Exception raise failure")
+            _log.info("Exception raise failure")
 
         self.done = True
         self.msg = "client-side termination"
 
 
-# differnt approach could have been with sockets: https://www.shanelynn.ie/asynchronous-updates-to-a-webpage-with-flask-and-socket-io/
-@reaction_cime_api.route("/project_dataset_async", methods=["OPTIONS", "POST"])
-def project_dataset_async():
-    filename = request.form["filename"]
-    params = json.loads(request.form["params"])
-    selected_feature_info = json.loads(request.form["selected_feature_info"])
+# different approach could have been with sockets: https://www.shanelynn.ie/asynchronous-updates-to-a-webpage-with-flask-and-socket-io/
+@router.api_route("/project_dataset_async", methods=["POST"])
+async def project_dataset_async_v2(request: Request):
+    # TODO: Use FastAPI/Pydantic models for validation instead of directly using the rqeuest...
+    form_data = await request.form()
+    filename: str = form_data["filename"]  # type: ignore
+    params = json.loads(form_data["params"])  # type: ignore
+    selected_feature_info = json.loads(form_data["selected_feature_info"])  # type: ignore
     cime_dbo = get_cime_dbo()
 
-    current_app.config["TERMINATE_PROJECTION_" + filename] = False
+    app = get_app()
+    setattr(app.state, f"TERMINATE_PROJECTION_{filename}", False)
 
-    def my_generator():
-
-        proj = ProjectionThread(filename, params, selected_feature_info, cime_dbo)
+    async def calculate_embeddings():
+        proj = ProjectionThread(filename, params, selected_feature_info, cime_dbo, get_poi_mask(filename, cime_dbo)["mask"])
         proj.start()
         while True:
-            time.sleep(2)
+            await asyncio.sleep(2)
             terminate = False
-            if "TERMINATE_PROJECTION_" + filename in current_app.config.keys():
-                terminate = current_app.config["TERMINATE_PROJECTION_" + filename]
+            try:
+                terminate = getattr(app.state, f"TERMINATE_PROJECTION_{filename}")
+            except KeyError:
+                pass
 
             # https://stackoverflow.com/questions/41146144/how-to-fix-assertionerror-value-must-be-bytes-error-in-python2-7-with-apache
             yield json.dumps({"step": proj.current_step, "msg": proj.msg, "emb": proj.emb}).encode("utf-8")
@@ -1060,12 +1072,12 @@ def project_dataset_async():
                 proj.raise_exception()
                 proj.join()
             if proj.done:  # proj.current_step >= params["iterations"] or proj.interrupt:
+                await asyncio.sleep(1)
                 df = get_poi_df_from_db(filename, cime_dbo)[0][["x", "y"]].to_dict("records")
                 yield json.dumps({"step": None, "msg": None, "emb": df}).encode("utf-8")
                 break
 
-    # https://flask.palletsprojects.com/en/1.1.x/patterns/streaming/
-    return Response(stream_with_context(my_generator()))
+    return StreamingResponse(calculate_embeddings())
 
 
 # endregion
@@ -1174,7 +1186,7 @@ def segmentation():
 
         clusterer.fit_predict(x)
 
-        # print(clusterer.labels_)
+        # _log.info(clusterer.labels_)
         # clusterer.probabilities_ = np.array(len(x))
 
         return {"result": [int(label) for label in clusterer.labels_]}

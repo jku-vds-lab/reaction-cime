@@ -204,7 +204,7 @@ export class ReactionCIMEBackend {
     formData.append('filename', filename);
     formData.append('params', JSON.stringify(params));
     formData.append('selected_feature_info', JSON.stringify(selected_feature_info));
-    return fetch(`${this.baseUrl}/project_dataset_async`, {
+    return fetch(`${this.baseUrl}/v2/project_dataset_async`, {
       ...this.fetchParams,
       method: 'POST',
       body: formData,
