@@ -1,9 +1,12 @@
+import logging
 import math
 import time
 
 import numba
 import numpy as np
 from sklearn.neighbors import KDTree
+
+_log = logging.getLogger(__name__)
 
 
 @numba.jit(nopython=True, parallel=False)
@@ -68,9 +71,8 @@ class DGrid:
             nr_columns = math.ceil(self.delta_ * nr_columns)
             nr_rows = math.ceil(self.delta_ * nr_rows)
 
-            print(
-                "There is not enough space to remove overlaps! Setting delta to {0}, the smallest possible number "
-                "to fully remove overlaps. Increase it if more empty space is required.".format(self.delta_)
+            _log.info(
+                f"There is not enough space to remove overlaps! Setting delta to {self.delta_}, the smallest possible number to fully remove overlaps. Increase it if more empty space is required."
             )
 
         # add the original points
@@ -84,14 +86,14 @@ class DGrid:
         # add the dummy points
         start_time = time.time()
         self._add_dummy_points(min_coordinates[0], max_coordinates[0], min_coordinates[1], max_coordinates[1], nr_columns, nr_rows)
-        print("--- Add dummy points executed in %s seconds ---" % (time.time() - start_time))
+        _log.info("--- Add dummy points executed in %s seconds ---" % (time.time() - start_time))
 
         # execute
         self._trigger_callbacks("grid assignment")
         start_time = time.time()
         self.grid_ = DGrid._grid_rec(self.grid_, nr_rows, nr_columns, 0, 0)
         self.grid_.sort(key=lambda v: v.get("id"))
-        print("--- Grid assignment executed in %s seconds ---" % (time.time() - start_time))
+        _log.info("--- Grid assignment executed in %s seconds ---" % (time.time() - start_time))
 
         self._trigger_callbacks("transform")
         # returning the overlap free scatterplot
