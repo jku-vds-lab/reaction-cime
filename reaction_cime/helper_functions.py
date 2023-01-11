@@ -363,7 +363,7 @@ def aggregate_by_col(df, value_cols, sample_size=20):
 # --- rescale and encode values
 def rescale_and_encode(proj_df, params, selected_feature_info):
     categorical_feature_list = []
-    for col in selected_feature_info.keys():
+    for col in selected_feature_info:
         info = selected_feature_info[col]
 
         if info["featureType"] == "String":
@@ -429,10 +429,7 @@ def get_mcs(mol_list):
 
     # completeRingsOnly=True # there are different settings possible here
     res = rdFMCS.FindMCS(mol_list, timeout=60, matchValences=False, ringMatchesRingOnly=True, completeRingsOnly=True)
-    if res.canceled:
-        patt = Chem.MolFromSmiles("*")  # type: ignore
-    else:
-        patt = res.queryMol
+    patt = Chem.MolFromSmiles("*") if res.canceled else res.queryMol  # type: ignore
 
     return patt
 

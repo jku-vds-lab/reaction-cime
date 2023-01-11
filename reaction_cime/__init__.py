@@ -1,5 +1,4 @@
 import os
-from typing import Type
 
 from fastapi import FastAPI
 from fastapi.middleware.wsgi import WSGIMiddleware
@@ -79,5 +78,5 @@ class VisynPlugin(AVisynPlugin):
                 app.mount("/", StaticFiles(directory=bundles_dir, html=True), name="reaction_cime_bundles")
 
     @property
-    def setting_class(self) -> Type[BaseModel]:
+    def setting_class(self) -> type[BaseModel]:
         return ReactionCimeSettings

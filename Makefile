@@ -1,10 +1,9 @@
 .DEFAULT_GOAL := help
 pkg_src = reaction_cime
 
-flake8 = flake8 $(pkg_src) setup.py
-isort = isort $(pkg_src) setup.py
 black = black --line-length 140 $(pkg_src) setup.py
-pyright = pyright $(pkg_src)
+pyright = pyright $(pkg_src) setup.py
+ruff = ruff $(pkg_src) setup.py --line-length 140 --select E,W,F,N,I,C,B,UP,PT,SIM,RUF --ignore E501,C901,B008
 
 .PHONY: start  ## Start the development server
 start:
@@ -18,17 +17,16 @@ ci: check-format lint test
 
 .PHONY: format  ## Auto-format the source code
 format:
-	$(isort)
+	$(ruff) --fix
 	$(black)
 
 .PHONY: check-format  ## Check the source code format without changes
 check-format:
-	$(isort) --check-only
 	$(black) --check
 
 .PHONY: lint  ## Run flake8 and pyright
 lint:
-	$(flake8)
+	$(ruff) --format=github
 	$(pyright)
 
 .PHONY: test  ## Run tests
@@ -37,7 +35,7 @@ test:
 
 .PHONEY: documentation ## Generate docs
 documentation:
-	mkdocs build
+	echo "TODO"
 
 .PHONY: install  ## Install the requirements
 install:
@@ -46,6 +44,20 @@ install:
 .PHONY: develop  ## Set up the development environment
 develop:
 	pip install -e .[develop]
+
+.PHONY: env_encrypt ## Encrypts the current ./<app>/.env
+env_encrypt:
+	openssl aes-256-cbc -pbkdf2 -in ./$(pkg_src)/.env -out ./$(pkg_src)/.env.enc
+
+.PHONY: env_decrypt ## Decrypts the ./<app>/.env.enc
+env_decrypt:
+	@if [ -z "${ENV_PASSWORD}" ]; then \
+		echo "No ENV_PASSWORD set, prompting for password..."; \
+		openssl aes-256-cbc -pbkdf2 -d -in ./$(pkg_src)/.env.enc -out ./$(pkg_src)/.env; \
+	else \
+		echo "ENV_PASSWORD set, using it..."; \
+		openssl aes-256-cbc -pbkdf2 -d -in ./$(pkg_src)/.env.enc -out ./$(pkg_src)/.env -pass env:ENV_PASSWORD; \
+	fi
 
 .PHONY: build  ## Build a wheel
 build:

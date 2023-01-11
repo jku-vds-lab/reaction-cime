@@ -35,7 +35,9 @@ def _density_calculation(count_map, mask, mask_size, x_min, x_max, y_min, y_max,
 
 
 class DGrid:
-    def __init__(self, icon_width=1, icon_height=1, delta=None, callbacks=[]):
+    def __init__(self, icon_width=1, icon_height=1, delta=None, callbacks=None):
+        if callbacks is None:
+            callbacks = []
         self.icon_width_ = icon_width
         self.icon_height_ = icon_height
         self.delta_ = delta

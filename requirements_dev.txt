@@ -1,8 +1,5 @@
 black~=22.12.0
-debugpy~=1.6.4
-flake8~=6.0.0
-isort~=5.11.3
-pep8-naming~=0.13.3
 pyright~=1.1.285
 pytest-runner~=6.0.0
 pytest~=7.2.0
+ruff==0.0.218

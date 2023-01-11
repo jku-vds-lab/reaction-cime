@@ -1,5 +1,6 @@
 import asyncio
 import base64
+import contextlib
 import ctypes
 import json
 import logging
@@ -7,7 +8,6 @@ import os
 import threading
 import time
 from io import BytesIO, StringIO
-from typing import Optional
 
 import gower
 import hdbscan
@@ -87,7 +87,9 @@ dataset_cache = (
 )  # structure: {"filename": dataset} # if "retrieve_cols" are contained in dataset.columns then the dataset is returned, otherwise dataset with all "cache_cols" are loaded into the cache
 
 
-def handle_dataset_cache(filename, cols=[], x_channel="x", y_channel="y"):
+def handle_dataset_cache(filename, cols=None, x_channel="x", y_channel="y"):
+    if cols is None:
+        cols = []
     if filename not in dataset_cache.keys():
         dataset_cache[filename] = None
 
@@ -205,15 +207,18 @@ def delete_poi_constraints(filename):
 # --- save
 
 
-def save_poi_exceptions(filename, exceptions=[]):
-    if len(exceptions) > 0:
-        exceptions = pd.DataFrame(exceptions)
-    else:
-        exceptions = pd.DataFrame(columns=["x_col", "y_col", "x_coord", "y_coord", "radius"])
+def save_poi_exceptions(filename, exceptions=None):
+    if exceptions is None:
+        exceptions = []
+    exceptions = (
+        pd.DataFrame(exceptions) if len(exceptions) > 0 else pd.DataFrame(columns=["x_col", "y_col", "x_coord", "y_coord", "radius"])
+    )
     exceptions.to_csv(f"{get_app().state.tempdir}{filename}_exceptions.csv", index=False)
 
 
-def save_poi_constraints(filename, constraints=[{"col": cycle_column, "operator": "BETWEEN", "val1": 0, "val2": 100}]):
+def save_poi_constraints(filename, constraints=None):
+    if constraints is None:
+        constraints = [{"col": cycle_column, "operator": "BETWEEN", "val1": 0, "val2": 100}]
     constraints = pd.DataFrame(constraints)
     constraints.to_csv(f"{get_app().state.tempdir}{filename}_constraints.csv", index=False)
 
@@ -399,7 +404,7 @@ def map_exceptions_filter(row):
     return f'("{row.x_col}" BETWEEN {x_lower} AND {x_upper}) AND ("{row.y_col}" BETWEEN {y_lower} AND {y_upper})'
 
 
-def get_poi_constraints_filter(filename, df_constraints: Optional[pd.DataFrame] = None, df_exceptions: Optional[pd.DataFrame] = None):
+def get_poi_constraints_filter(filename, df_constraints: pd.DataFrame | None = None, df_exceptions: pd.DataFrame | None = None):
     if df_constraints is None:
         df_constraints = load_poi_constraints(filename)
 
@@ -1061,10 +1066,8 @@ async def project_dataset_async_v2(request: Request):
         while True:
             await asyncio.sleep(2)
             terminate = False
-            try:
+            with contextlib.suppress(KeyError):
                 terminate = getattr(app.state, f"TERMINATE_PROJECTION_{filename}")
-            except KeyError:
-                pass
 
             # https://stackoverflow.com/questions/41146144/how-to-fix-assertionerror-value-must-be-bytes-error-in-python2-7-with-apache
             yield json.dumps({"step": proj.current_step, "msg": proj.msg, "emb": proj.emb}).encode("utf-8")

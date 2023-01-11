@@ -68,7 +68,7 @@ class ReactionCIMEDBO:
         for i in range(len(id_list)):
             id = id_list[i]
             update_dict = {}
-            for key in update_dict_list.keys():
+            for key in update_dict_list:
                 update_dict[key] = update_dict_list[key][i]
 
             self.update_row(table, id, update_dict)
@@ -82,7 +82,7 @@ class ReactionCIMEDBO:
         df = pd.DataFrame(update_dict_list)
         df.index = id_list
         self.save_dataframe(df, "temp")
-        for key in update_dict_list.keys():
+        for key in update_dict_list:
             # self.db.session.execute("update %s join temp using(id) set %s.%s = temp.%s"%(table_name,table_name, key, key))
             self.db.session.execute(
                 'update "%s" set "%s" = (SELECT "%s" from temp where id = "%s".id)' % (table_name, key, key, table_name)
