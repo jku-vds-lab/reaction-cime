@@ -66,7 +66,7 @@ export const StepSlider = sliderconnector(({ selectAttribute, setAggregateColor,
   return marks && marks.length > 0 ? (
     <>
       <Typography id="range-slider" gutterBottom>
-        Choose Step
+        Choose step
       </Typography>
       <Slider
         min={0}
