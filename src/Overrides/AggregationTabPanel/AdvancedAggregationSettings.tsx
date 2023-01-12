@@ -67,15 +67,15 @@ export const AdvancedAggregationSettings = connector(
                 onChange={() => {
                   toggleDeriveRange();
                 }}
-                title="Derive Range from Data"
+                title="Derive range from data"
               />
             }
-            label="Derive Range from Data"
+            label="Derive range from data"
           />
 
           {aggregateSettings.advancedSettings.valueRange != null && !aggregateSettings.advancedSettings.deriveRange && (
             <MinMaxNumberInput
-              title={`Customize Range for ${aggregateSettings.colormapSettings.aggregateColor.value_col}`}
+              title={`Customize range for ${aggregateSettings.colormapSettings.aggregateColor.value_col}`}
               target="value"
               range={aggregateSettings.advancedSettings.valueRange}
               setRange={setValueRange}
@@ -83,7 +83,7 @@ export const AdvancedAggregationSettings = connector(
           )}
           {aggregateSettings.advancedSettings.uncertaintyRange != null && !aggregateSettings.advancedSettings.deriveRange && (
             <MinMaxNumberInput
-              title={`Customize Range for ${aggregateSettings.colormapSettings.aggregateColor.uncertainty_col}`}
+              title={`Customize range for ${aggregateSettings.colormapSettings.aggregateColor.uncertainty_col}`}
               target="uncertainty"
               range={aggregateSettings.advancedSettings.uncertaintyRange}
               setRange={setUncertaintyRange}
@@ -97,10 +97,10 @@ export const AdvancedAggregationSettings = connector(
               <Grid container columns={{ xs: 3 }}>
                 <Grid item xs={1} />
                 <Grid item xs={1}>
-                  value
+                  Value
                 </Grid>
                 <Grid item xs={1}>
-                  uncertainty
+                  Uncertainty
                 </Grid>
               </Grid>
               {Object.keys(selectAttributeInfo).map((value, index) => (

@@ -165,7 +165,7 @@ export function FilterSettings({ dataset, removeFilter, constraintCols, constrai
           }}
         >
           <FilterAltIcon />
-          &nbsp;Apply Filter
+          &nbsp;Apply filter
         </Button>
       </Box>
       <Box paddingLeft={2} paddingTop={1}>
@@ -188,7 +188,7 @@ export function FilterSettings({ dataset, removeFilter, constraintCols, constrai
             }}
           >
             <RotateLeftIcon />
-            &nbsp;Reset Filter
+            &nbsp;Reset filter
           </Button>
         </Tooltip>
       </Box>
