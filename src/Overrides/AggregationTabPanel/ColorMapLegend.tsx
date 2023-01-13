@@ -196,7 +196,7 @@ export const ColorMapLegend = connector(
 
     return (
       <>
-        <InputLabel id="colorscale-select-label">Choose Colormap</InputLabel>
+        <InputLabel id="colorscale-select-label">Choose colormap</InputLabel>
         <Select labelId="colorscale-select-label" id="colorscale-select" value={aggregateSettings.colormapSettings.colorscale} onChange={handleChange}>
           {D3_CONTINUOUS_COLOR_SCALE_LIST.map((colorscale) => (
             <MenuItem key={colorscale} value={colorscale} title={colorscale}>
@@ -221,7 +221,7 @@ export const ColorMapLegend = connector(
               toggleUseVSUP();
             }}
           >
-            Switch Encoding
+            Switch encoding
           </Button>
         )}
         {aggregateSettings.colormapSettings.valueFilter != null && aggregateSettings.colormapSettings.valueFilter.length > 0 && (
@@ -231,7 +231,7 @@ export const ColorMapLegend = connector(
               clearFilter(colorSections);
             }}
           >
-            Clear Filter
+            Clear filter
           </Button>
         )}
       </>

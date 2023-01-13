@@ -165,15 +165,15 @@ export function FilterSettings({ dataset, removeFilter, constraintCols, constrai
           }}
         >
           <FilterAltIcon />
-          &nbsp;Apply Filter
+          &nbsp;Apply filter
         </Button>
       </Box>
       <Box paddingLeft={2} paddingTop={1}>
-        <Tooltip title="Reset constraints to initial state">
+        <Tooltip title="Reset filter to initial state">
           <Button
             fullWidth
             variant="outlined"
-            aria-label="Reset constraints to initial state"
+            aria-label="Reset filter to initial state"
             onClick={() => {
               ReactionCIMEBackendFromEnv.resetPOIConstraints(dataset.info.path).then((res_constraints) => {
                 if (triggerDatasetUpdate != null) {
@@ -188,7 +188,7 @@ export function FilterSettings({ dataset, removeFilter, constraintCols, constrai
             }}
           >
             <RotateLeftIcon />
-            &nbsp;Reset Constraints
+            &nbsp;Reset filter
           </Button>
         </Tooltip>
       </Box>
