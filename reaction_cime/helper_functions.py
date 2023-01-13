@@ -1,4 +1,5 @@
 import base64
+import logging
 import re
 from io import BytesIO
 
@@ -7,6 +8,7 @@ import pandas as pd
 from rdkit import Chem
 from rdkit.Chem import Draw, rdFMCS
 
+_log = logging.getLogger(__name__)
 # ---------------- preprocess dataset --------------------
 
 
@@ -315,9 +317,9 @@ def hex_aggregate_by_col(df, value_cols, aggregation_methods, range=None, sample
                 hexes.append(hex)
 
     # ---check that each point is used exactly once
-    # print(test_points_used.min(), test_points_used.max()) # min and max have to be 1
+    # _log.info(test_points_used.min(), test_points_used.max()) # min and max have to be 1
     if (test_points_used - 1).sum() != 0:
-        print(
+        _log.info(
             "--- attention! there is sth wrong with the point assignment of the hexagons (it might be that points are used several times, or points are not used at all) ---"
         )
     wrong_points = df[test_points_used != 1]  # TODO: remove debugging at some point
@@ -361,15 +363,16 @@ def aggregate_by_col(df, value_cols, sample_size=20):
 # --- rescale and encode values
 def rescale_and_encode(proj_df, params, selected_feature_info):
     categorical_feature_list = []
-    for col in selected_feature_info.keys():
+    for col in selected_feature_info:
         info = selected_feature_info[col]
 
         if info["featureType"] == "String":
             proj_df = proj_df.drop(columns=[col])
-            print("featureType: String --> TODO: handle")
+            _log.info("featureType: String --> TODO: handle")
 
         elif info["featureType"] == "Quantitative":
-            if info["normalize"]:
+            # TODO: This is not included in the PSE params anymore
+            if info.get("normalize"):
                 if params["normalizationMethod"] == "normalize01":  # scale values between [0;1]
                     # upper = info["range"]["max"] # do not use this! it is info from the front-end that only has POI dataset
                     # lower = info["range"]["min"] # do not use this! it is info from the front-end that only has POI dataset
@@ -397,18 +400,18 @@ def rescale_and_encode(proj_df, params, selected_feature_info):
 
         elif info["featureType"] == "Date":
             proj_df = proj_df.drop(columns=[col])
-            print("featureType: Date --> TODO: handle")
+            _log.info("featureType: Date --> TODO: handle")
 
         elif info["featureType"] == "Binary":
             proj_df[col] = pd.Categorical(proj_df[col]).codes
 
         elif info["featureType"] == "Ordinal":
             proj_df = proj_df.drop(columns=[col])
-            print("featureType: Ordinal --> TODO: handle")
+            _log.info("featureType: Ordinal --> TODO: handle")
 
         elif info["featureType"] == "Array":
             proj_df = proj_df.drop(columns=[col])
-            print("featureType: Array --> TODO: handle")
+            _log.info("featureType: Array --> TODO: handle")
 
     categorical_features = [col in categorical_feature_list for col in proj_df.columns]  # np.zeros((len(proj_df.columns),), dtype=np.bool)
     return proj_df, categorical_features
@@ -426,10 +429,7 @@ def get_mcs(mol_list):
 
     # completeRingsOnly=True # there are different settings possible here
     res = rdFMCS.FindMCS(mol_list, timeout=60, matchValences=False, ringMatchesRingOnly=True, completeRingsOnly=True)
-    if res.canceled:
-        patt = Chem.MolFromSmiles("*")  # type: ignore
-    else:
-        patt = res.queryMol
+    patt = Chem.MolFromSmiles("*") if res.canceled else res.queryMol  # type: ignore
 
     return patt
 

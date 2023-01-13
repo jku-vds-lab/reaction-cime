@@ -33,7 +33,7 @@ class ReactionCIMEDBO:
         #     index_label="id",
         #     keys="id",
         # )
-        # # print(table.sql_schema())
+        # # _log.info(table.sql_schema())
         # table.create()
         # res = table.insert(chunksize=5000, method=None) # method="multi"
 
@@ -43,20 +43,17 @@ class ReactionCIMEDBO:
         )  # , schema=table.sql_schema()) # method="multi" 'STRING PRIMARY KEY'
         # https://www.sqlitetutorial.net/sqlite-index/
         delta_time = time.time() - start_time
-        print("--- took", time.strftime("%H:%M:%S", time.gmtime(delta_time)), "to save file %s" % table_name)
-        print("--- took %i min %f s to save file %s" % (delta_time / 60, delta_time % 60, table_name))
+        _log.info("--- took %i min %f s to save file %s" % (delta_time / 60, delta_time % 60, table_name))
 
         start_time = time.time()
         self.db.session.execute("DROP INDEX IF EXISTS %s_index;" % table_name)
         delta_time = time.time() - start_time
-        print("--- took", time.strftime("%H:%M:%S", time.gmtime(delta_time)), "to drop index of file %s" % table_name)
-        print("--- took %i min %f s to drop index of file %s" % (delta_time / 60, delta_time % 60, table_name))
+        _log.info("--- took %i min %f s to drop index of file %s" % (delta_time / 60, delta_time % 60, table_name))
 
         start_time = time.time()
         self.db.session.execute("create unique index %s_index on %s(id)" % (table_name, table_name))
         delta_time = time.time() - start_time
-        print("--- took", time.strftime("%H:%M:%S", time.gmtime(delta_time)), "to create index of file %s" % table_name)
-        print("--- took %i min %f s to create index of file %s" % (delta_time / 60, delta_time % 60, table_name))
+        _log.info("--- took %i min %f s to create index of file %s" % (delta_time / 60, delta_time % 60, table_name))
 
         return res
 
@@ -71,7 +68,7 @@ class ReactionCIMEDBO:
         for i in range(len(id_list)):
             id = id_list[i]
             update_dict = {}
-            for key in update_dict_list.keys():
+            for key in update_dict_list:
                 update_dict[key] = update_dict_list[key][i]
 
             self.update_row(table, id, update_dict)
@@ -85,7 +82,7 @@ class ReactionCIMEDBO:
         df = pd.DataFrame(update_dict_list)
         df.index = id_list
         self.save_dataframe(df, "temp")
-        for key in update_dict_list.keys():
+        for key in update_dict_list:
             # self.db.session.execute("update %s join temp using(id) set %s.%s = temp.%s"%(table_name,table_name, key, key))
             self.db.session.execute(
                 'update "%s" set "%s" = (SELECT "%s" from temp where id = "%s".id)' % (table_name, key, key, table_name)
@@ -187,13 +184,13 @@ class ReactionCIMEDBO:
         return pd.read_sql(sql_stmt, self.db.engine)
 
     def drop_table(self, table_name):
-        print("--------drop_table")
+        _log.info("--------drop_table")
         # base = declarative_base()
         self.metadata.reflect(only=[table_name])
         table = self.metadata.tables.get(table_name)
-        # print(base)
-        print(table)
-        # print(base.metadata.tables)
+        # _log.info(base)
+        _log.info(table)
+        # _log.info(base.metadata.tables)
         if table is not None:
             _log.info(f"Deleting {table_name} table")
             # base.metadata.drop_all(self.db.engine, [table], checkfirst=True)

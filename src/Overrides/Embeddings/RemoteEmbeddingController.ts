@@ -1,5 +1,6 @@
 import { Dataset, EmbeddingController, IProjection } from 'projection-space-explorer';
-import RemoteWorker from './remote.worker';
+// @ts-ignore
+import RemoteWorker from 'worker-loader?inline=no-fallback!./remote.worker';
 
 export class RemoteEmbeddingController extends EmbeddingController {
   targetBounds: any;

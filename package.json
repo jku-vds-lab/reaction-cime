@@ -3,12 +3,12 @@
   "description": "",
   "version": "0.1.4-SNAPSHOT",
   "author": {
-    "name": "datavisyn GmbH",
-    "email": "contact@datavisyn.io",
-    "url": "https://datavisyn.io"
+    "name": "JKU Visual Data Science Lab",
+    "email": "contact@jku-vds-lab.at",
+    "url": "https://jku-vds-lab.at/"
   },
   "license": "SEE LICENSE IN LICENSE",
-  "homepage": "https://datavisyn.io",
+  "homepage": "https://jku-vds-lab.at/",
   "bugs": {
     "url": "https://github.com/jku-vds-lab/reaction-cime/issues"
   },
@@ -27,7 +27,7 @@
     "compile": "visyn_scripts compile",
     "copy": "visyn_scripts copy",
     "cy:open": "cypress open",
-    "cy:run": "cypress run",
+    "cy:run": "cypress run --e2e && cypress run --component",
     "delete-dependencies": "visyn_scripts clean node_modules",
     "predist": "yarn run lint && yarn run test && yarn run build",
     "dist": "mkdir lib && cd dist && tar cvzf ../lib/reaction_cime.tar.gz *",
@@ -88,7 +88,6 @@
     "@types/react-dom": "^16.9.5",
     "react": "^16.13.0",
     "react-dom": "^16.13.0",
-    "visyn_scripts": "git+ssh://git@github.com/datavisyn/visyn_scripts#swc_and_sass_embedded",
     "vega-lite@4.16.8": "patch:vega-lite@npm:4.16.8#.yarn/patches/vega-lite-npm-4.16.8-2acecf824b.patch"
   },
   "visyn": {

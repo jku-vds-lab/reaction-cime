@@ -5,7 +5,6 @@ import { AttributeSelectionTable } from 'projection-space-explorer';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import RotateLeftIcon from '@mui/icons-material/RotateLeft';
 import FileUploadIcon from '@mui/icons-material/FileUpload';
-import SettingsIcon from '@mui/icons-material/Settings';
 import * as d3v5 from 'd3v5';
 import { downloadImpl, mapShortnameToSmiles } from '../../Utility/Utils';
 import { PacoActions } from '../../State/PacoSettingsDuck';
