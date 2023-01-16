@@ -1,5 +1,5 @@
 import { Box, Grid, Typography, Button, Tooltip } from '@mui/material';
-import { connect, ConnectedProps } from 'react-redux';
+import { connect, ConnectedProps, useDispatch } from 'react-redux';
 import React from 'react';
 import { AttributeSelectionTable } from 'projection-space-explorer';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
@@ -90,6 +90,8 @@ type Props = PropsFromRedux & {
 export const PacoTabPanel = connector(({ pacoAttributes, setPacoConstraints, pacoConstraints, pacoRef, dataset }: Props) => {
   const fileInput = React.useRef<any>();
 
+  const dispatch = useDispatch();
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       <Box paddingLeft={2} paddingTop={1} paddingRight={2}>
@@ -99,7 +101,14 @@ export const PacoTabPanel = connector(({ pacoAttributes, setPacoConstraints, pac
       </Box>
       <Box paddingLeft={2} paddingTop={1} paddingRight={2}>
         {/* TODO: also save chosen attributes? */}
-        <AttributeSelectionTable attributes={pacoAttributes} setAttributes={PacoActions.setPacoAttributes} />
+        <AttributeSelectionTable
+          attributes={pacoAttributes}
+          setAttributes={(attributes) => {
+            dispatch(PacoActions.setPacoAttributes(attributes));
+          }}
+        >
+          Choose attributes
+        </AttributeSelectionTable>
       </Box>
       <Box paddingLeft={2} paddingTop={1} paddingRight={2}>
         <Tooltip title="Reset constraints to initial state">

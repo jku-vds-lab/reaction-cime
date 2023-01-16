@@ -75,7 +75,7 @@ export const FilterTabPanel = connector(({ dataset, triggerDatasetUpdate, state 
           {/* TODO: always show info about NO items */}
           <NOItemsInfo variant="filterOutOfTotal" />
           <Typography variant="subtitle2" gutterBottom>
-            Filter Settings
+            Filter settings
           </Typography>
         </Box>
         <Box paddingLeft={2} paddingTop={1} paddingRight={2}>
