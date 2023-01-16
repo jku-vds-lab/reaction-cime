@@ -29,6 +29,14 @@ declare global {
   namespace Cypress {
     interface Chainable {
       mount: typeof mount
+      createProject(name: string, path: string);
+      selectSomething();
+      deleteProject();
+      saveSessionAs(name: string);
+      switchTab(name: 'dataset' | 'encoding' | 'projection');
+      chooseNth(nth: number);
+      byId(dataCy: string): Chainable;
+      URLParams(url: string): Chainable;
     }
   }
 }

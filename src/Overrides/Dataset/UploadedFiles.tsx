@@ -58,6 +58,7 @@ export function UploadedFiles({ onChange, refresh }) {
             {files.map((file) => (
               <ListItem
                 key={file}
+                data-cy="uploaded-data-list-item"
                 button
                 onClick={() => {
                   handleClick({

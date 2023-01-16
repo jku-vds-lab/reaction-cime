@@ -78,6 +78,8 @@ const ApplicationWrapper = connector(({ setMouseMoveFn, dataset_path, setMouseCl
             embController: new RemoteEmbeddingController('rmOverlap', startProjection),
           },
         ],
+        showVisibleProjections: false,
+        showTrailSettings: false,
       }}
       overrideComponents={{
         mouseInteractionCallbacks: {
