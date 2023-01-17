@@ -25,10 +25,16 @@ describe('Hydration', () => {
     cy.get('[title="Measured_yield"]').find('[title="Sort"]').filter(':visible').click();
 
     // Create second view
-    cy.byId('split-view-button').click();
+    cy.byId('split-view-button').click().wait(1000);
+
     // Activate it
-    cy.get('#app').click(1700, 500);
+    cy.get('#app').click(1700, 350);
     cy.switchTab('encoding');
     cy.byId('color-encoding-select').click().wait(300).type('measured{downArrow}{enter}');
+
+    cy.byId('custom-tab-1').click();
+    cy.byId('aggregate-select').click().wait(300).type('predict{downArrow}{enter}');
+
+    cy.get('.MuiSlider-root').filter(':visible').get('.MuiSlider-markLabel[data-index="2"]').filter(':visible').click();
   });
 });

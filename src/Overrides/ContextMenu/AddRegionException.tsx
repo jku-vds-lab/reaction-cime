@@ -35,6 +35,7 @@ export const AddRegionExceptionMenuItem = connector(({ handleClose, pos_x, pos_y
 
   return (
     <MenuItem
+      data-cy="show-experiments-context-entry"
       onClick={() => {
         const coords = CameraTransformations.screenToWorld({ x: pos_x, y: pos_y }, viewTransform);
 

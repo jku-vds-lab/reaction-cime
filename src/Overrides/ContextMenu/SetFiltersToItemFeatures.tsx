@@ -32,6 +32,7 @@ export const SetFiltersToItemFeatures = connector(({ handleClose, globalLabels, 
 
   return (
     <MenuItem
+      data-cy="set-filters-context-menu"
       onClick={() => {
         const cols = Object.keys(dataset.columns).filter((key) => {
           return dataset.columns[key].project && !EXCLUDED_COLUMNS_ALL.includes(key);
