@@ -5,6 +5,7 @@ import * as THREE from 'three';
 import * as _ from 'lodash';
 import { Box, CircularProgress, Typography } from '@mui/material';
 import { EntityId } from '@reduxjs/toolkit';
+import { usePromiseTracker } from 'react-promise-tracker';
 import { ReactionCIMEBackendFromEnv } from '../../Backend/ReactionCIMEBackend';
 import { AppState } from '../../State/Store';
 import { AggregateDataset } from './AggregateDataset';
@@ -14,7 +15,6 @@ import { GLHexagons } from './GLHexagons';
 import { PSE_BLUE } from '../../Utility/Utils';
 import { setCurrentAggregateSelection } from '../../State/SelectionDuck';
 import { ReactionVector } from '../../State/interfaces';
-import { usePromiseTracker } from 'react-promise-tracker';
 
 const createHexagons = (
   dataset: AggregateDataset,

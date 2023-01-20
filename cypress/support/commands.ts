@@ -36,7 +36,7 @@
 //   }
 // }
 
-Cypress.Commands.add('createProject', (name: string, path: string) => {
+Cypress.Commands.add('createProject', (path: string) => {
   // Intercept the network request
   cy.intercept('POST', '/api/reaction_cime/upload_csv').as('loginMutation');
 
@@ -59,8 +59,7 @@ Cypress.Commands.add('selectSomething', () => {
     .trigger('mousemove', 100, 600, { button: 0, offsetX: 100, offsetY: 600 })
     .wait(1000)
     .trigger('mouseup', 100, 600, { button: 0, offsetX: 100, offsetY: 600 })
-    .wait(1000)
-    .rightclick();
+    .wait(1000);
 });
 
 Cypress.Commands.add('deleteProject', () => {
@@ -76,8 +75,8 @@ Cypress.Commands.add('saveSessionAs', (name: string) => {
   cy.get('[data-cy="savesessionbtn"]').click();
 });
 
-Cypress.Commands.add('switchTab', (name: 'dataset' | 'encoding' | 'projection') => {
-  cy.get(`[data-cy="${name}-tab"]`).click();
+Cypress.Commands.add('switchTab', (name: 'dataset' | 'encoding' | 'projection' | 'groups') => {
+  cy.get(`[data-cy="${name}-tab"]`).click({ force: true });
 });
 
 Cypress.Commands.add('chooseNth', (nth: number) => {
