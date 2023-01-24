@@ -14,6 +14,8 @@ on:
         type: boolean
         default: false
   push:
+  schedule:
+    - cron: '15 1 * * *'
 
 jobs:
   build:
@@ -22,7 +24,6 @@ jobs:
     with:
       cypress_enable: true
       cypress_run_because_flag: ${{ inputs.cypress == true }}
-      node_run_webpack: true
 
   build-docker:
     # needs: [build]
