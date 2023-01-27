@@ -2,7 +2,6 @@
   "extends": "visyn_scripts/config/tsconfig.template.json",
   "compilerOptions": {
     "outDir": "./dist",
-    "lib": ["DOM", "ES2022"]
   },
   "include": [
     "src/**/*.ts",
