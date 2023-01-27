@@ -65,7 +65,7 @@ export class RemoteEmbedding {
             const valueString = new TextDecoder().decode(value);
             // In case multiple JSON objects are received at once, we need to parse them all
             const splitValue = this.jsonParseMultiple(valueString);
-            const resObj = splitValue.at(-1);
+            const resObj = splitValue[splitValue.length - 1];
             if (parseInt(resObj.step, 10)) this.current_steps = parseInt(resObj.step, 10);
             if (resObj.emb && resObj.emb.length > 0) this.embedding = resObj.emb;
             if (resObj.msg) this.msg = resObj.msg;
