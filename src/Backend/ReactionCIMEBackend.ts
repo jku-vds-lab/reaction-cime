@@ -751,13 +751,19 @@ export class ReactionCIMEBackend {
   };
 }
 
+let backendUrl = process.env.REACT_APP_CIME_BACKEND_URL || '';
+
 // Use the environment variables defined in the .env file
-if (process.env.REACT_APP_CIME_BACKEND_URL == null) {
+if (!backendUrl) {
   console.error('The ENV-variable REACT_APP_CIME_BACKEND_URL must be set.');
 }
 
-env = new ReactionCIMEBackend(process.env.REACT_APP_CIME_BACKEND_URL, {
+if (backendUrl.startsWith('/')) {
+  // starts with /, therefore we need to add the current host. Otherwise, we get an error like:
+  // TypeError: Failed to execute 'fetch' on 'WorkerGlobalScope': Failed to parse URL from /api/reaction_cime/v2/project_dataset_async
+  backendUrl = `${window.location.origin}${backendUrl}`;
+}
+
+export const ReactionCIMEBackendFromEnv = new ReactionCIMEBackend(backendUrl, {
   // credentials: "omit",
 });
-
-export const ReactionCIMEBackendFromEnv = env;
