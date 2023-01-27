@@ -3,7 +3,9 @@ import * as React from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 import * as THREE from 'three';
 import * as _ from 'lodash';
+import { Box, CircularProgress, Typography } from '@mui/material';
 import { EntityId } from '@reduxjs/toolkit';
+import { usePromiseTracker } from 'react-promise-tracker';
 import { ReactionCIMEBackendFromEnv } from '../../Backend/ReactionCIMEBackend';
 import { AppState } from '../../State/Store';
 import { AggregateDataset } from './AggregateDataset';
@@ -136,6 +138,8 @@ export const HexAggregationLayer = connector(
     const [datasetUncertaintyRange, setDatasetUncertaintyRange] = React.useState(null);
 
     const { cancellablePromise, cancelPromises } = useCancellablePromise();
+
+    const { promiseInProgress } = usePromiseTracker({ area: loadingArea });
 
     React.useEffect(() => {
       if (aggregateColor?.value_col != null) {
@@ -321,12 +325,15 @@ export const HexAggregationLayer = connector(
 
     return (
       <div style={{ position: 'absolute', top: '0px', left: '0px', width: '100%', height: '100%' }}>
-        <LoadingIndicatorDialog
-          handleClose={() => {
-            cancelPromises();
-          }}
-          area={loadingArea}
-        />
+        {promiseInProgress ? (
+          <div style={{ top: 4, left: 4, position: 'absolute', display: 'flex', alignItems: 'center', gap: 8 }}>
+            <CircularProgress />
+
+            <Typography variant="caption" component="div" color="text.secondary">
+              fetching new bins ...
+            </Typography>
+          </div>
+        ) : null}
         {hexagons && hexagons.length > 0 && (
           <GLHexagons hexagons={hexagons} hoverElement={hoverElement} selectElement={selectElement} multipleId={multipleId} />
         )}

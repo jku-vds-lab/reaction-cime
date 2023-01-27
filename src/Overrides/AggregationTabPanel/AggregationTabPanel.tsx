@@ -137,29 +137,9 @@ export const AggregationTabPanel = connector(
           {
             // TODO: check, if it makes sense to also include categorical values, or if it is ok to only use numerical values (like for "size")
             categoryOptions != null && (
-              //     <FormControl style={{ width: '100%' }}>
-              //       <FormHelperText>Color by</FormHelperText>
-              //       <Select
-              //       // fullWidth
-              //         displayEmpty
-              //         size='small'
-              //         value={selectAttribute?.key}
-              //         onChange={(event) => {
-              //           let attribute = categoryOptions.filter(opt => opt.key === event.target.value)[0]
-              //           if(attribute == null){
-              //             attribute = {key: "None", name: "None"}
-              //           }
-
-              //           setSelectAttribute(attribute)
-              //           if(selectColumns != null && Object.keys(selectColumns).includes(attribute.key))
-              //           setSelectAttributeInfo(selectColumns[attribute.key])
-              //         }}
-              //       >
-              //       {categoryOptions.map(opt => { return <MenuItem key={opt.key} value={opt.key}>{opt.name}</MenuItem>})}
-              //     </Select>
-              // </FormControl>
               <SelectFeatureComponent
                 column_info={columnInfo}
+                datacy="aggregate-select"
                 label="color"
                 default_val={selectAttribute}
                 categoryOptions={categoryOptions}

@@ -2,8 +2,6 @@ import * as d3v5 from 'd3v5';
 import { useCancellablePromise } from 'projection-space-explorer';
 import { trackPromise } from 'react-promise-tracker';
 
-let env: ReactionCIMEBackend;
-
 export class ReactionCIMEBackend {
   protected smiles_cache = {};
 
@@ -457,7 +455,7 @@ export class ReactionCIMEBackend {
     return null;
   };
 
-  public loadHexAgg(
+  public loadHexAgg = (
     finished: (dataset: any) => void,
     path: string,
     xChannel: string,
@@ -471,7 +469,7 @@ export class ReactionCIMEBackend {
     cancellablePromise?: ReturnType<typeof useCancellablePromise>['cancellablePromise'],
     controller?: AbortController,
     loadingArea?: string,
-  ) {
+  ) => {
     if (xChannel == null) {
       xChannel = 'x';
     }
@@ -509,11 +507,11 @@ export class ReactionCIMEBackend {
       }
       const rangeString = `&x_min=${range.x.min}&x_max=${range.x.max}&y_min=${range.y.min}&y_max=${range.y.max}`;
 
-      const aggPath = `${env.baseUrl}/get_hex_agg/${path}/${xChannel}/${yChannel}?${retrieveCols}${cacheColsString}${sampleSizeStr}${rangeString}`;
+      const aggPath = `${this.baseUrl}/get_hex_agg/${path}/${xChannel}/${yChannel}?${retrieveCols}${cacheColsString}${sampleSizeStr}${rangeString}`;
 
       promise = cancellablePromise
-        ? cancellablePromise(d3v5.csv(aggPath, { ...env.fetchParams, signal: controller?.signal }), controller)
-        : d3v5.csv(aggPath, { ...env.fetchParams, signal: controller?.signal });
+        ? cancellablePromise(d3v5.csv(aggPath, { ...this.fetchParams, signal: controller?.signal }), controller)
+        : d3v5.csv(aggPath, { ...this.fetchParams, signal: controller?.signal });
     }
     trackPromise(
       promise
@@ -533,9 +531,9 @@ export class ReactionCIMEBackend {
         }),
       loadingArea,
     );
-  }
+  };
 
-  public loadAggCSV(
+  public loadAggCSV = (
     finished: (dataset: any) => void,
     path: string,
     value_column: string,
@@ -546,7 +544,7 @@ export class ReactionCIMEBackend {
     cancellablePromise?: ReturnType<typeof useCancellablePromise>['cancellablePromise'],
     controller?: AbortController,
     loadingArea?: string,
-  ) {
+  ) => {
     if (range == null) {
       range = { x: { min: -10000, max: 10000 }, y: { min: -10000, max: 10000 } };
     }
@@ -577,11 +575,11 @@ export class ReactionCIMEBackend {
 
       // request the server to return a csv file using the unique filename
       // const agg_path = ReactionCIMEBackendFromEnv.baseUrl + "/get_agg_csv/" + path + "/" + column + "?x_min=" + range.x.min + "&x_max=" + range.x.max + "&y_min=" + range.y.min + "&y_max="+range.y.max; // TODO: make dynamic
-      const aggPath = `${env.baseUrl}/get_agg_csv_cached/${path}?${retrieveCols}${cacheColsString}${sampleSizeStr}${rangeString}`; // TODO: make dynamic
+      const aggPath = `${this.baseUrl}/get_agg_csv_cached/${path}?${retrieveCols}${cacheColsString}${sampleSizeStr}${rangeString}`; // TODO: make dynamic
 
       promise = cancellablePromise
-        ? cancellablePromise(d3v5.csv(aggPath, { ...env.fetchParams, signal: controller?.signal }), controller)
-        : d3v5.csv(aggPath, { ...env.fetchParams, signal: controller?.signal });
+        ? cancellablePromise(d3v5.csv(aggPath, { ...this.fetchParams, signal: controller?.signal }), controller)
+        : d3v5.csv(aggPath, { ...this.fetchParams, signal: controller?.signal });
     }
     trackPromise(
       promise
@@ -601,26 +599,26 @@ export class ReactionCIMEBackend {
         }),
       loadingArea,
     );
-  }
+  };
 
-  public loadPacoCSV(
+  public loadPacoCSV = (
     finished: (dataset: any) => void,
     filename: string,
     cols: string[],
     cancellablePromise?: ReturnType<typeof useCancellablePromise>['cancellablePromise'],
     controller?: AbortController,
     loadingArea?: string,
-  ) {
+  ) => {
     let colsString = '?dummy=0';
     cols.forEach((col) => {
       colsString += `&cols=${encodeURIComponent(col)}`;
     });
 
-    const path = `${env.baseUrl}/get_csv_by_columns/${encodeURIComponent(filename)}${colsString}`;
+    const path = `${this.baseUrl}/get_csv_by_columns/${encodeURIComponent(filename)}${colsString}`;
 
     const promise = cancellablePromise
-      ? cancellablePromise(d3v5.csv(path, { ...env.fetchParams, signal: controller?.signal }), controller)
-      : d3v5.csv(path, { ...env.fetchParams, signal: controller?.signal });
+      ? cancellablePromise(d3v5.csv(path, { ...this.fetchParams, signal: controller?.signal }), controller)
+      : d3v5.csv(path, { ...this.fetchParams, signal: controller?.signal });
 
     trackPromise(
       promise
@@ -637,7 +635,7 @@ export class ReactionCIMEBackend {
         }),
       loadingArea,
     );
-  }
+  };
 
   public loadPOIExceptions = async (filename: string) => {
     return fetch(`${this.baseUrl}/get_poi_exceptions/${encodeURIComponent(filename)}`, {
@@ -738,7 +736,7 @@ export class ReactionCIMEBackend {
   public uploadPOIConstraints = async (filename: string, file) => {
     const contents = await file.text();
     const data = d3v5.csvParse(contents);
-    return env.updatePOIConstraints(filename, data);
+    return this.updatePOIConstraints(filename, data);
     // var reader = new FileReader();
 
     // reader.onload = function(e) {
@@ -758,7 +756,7 @@ if (!backendUrl) {
   console.error('The ENV-variable REACT_APP_CIME_BACKEND_URL must be set.');
 }
 
-if (backendUrl.startsWith('/')) {
+if (backendUrl.startsWith('/') && typeof window !== 'undefined') {
   // starts with /, therefore we need to add the current host. Otherwise, we get an error like:
   // TypeError: Failed to execute 'fetch' on 'WorkerGlobalScope': Failed to parse URL from /api/reaction_cime/v2/project_dataset_async
   backendUrl = `${window.location.origin}${backendUrl}`;

@@ -60,14 +60,12 @@ const ApplicationWrapper = connector(({ setMouseMoveFn, dataset_path, setMouseCl
     <Application
       config={{
         preselect: {
-          initOnMount: false, // should default dataset be loaded? could specify url to default // TODO: define a default dataset that is already uploaded (e.g. domain.csv)
-          // url: DATASETCONFIG[0].path
+          initOnMount: false,
         },
         baseUrl: ReactionCIMEBackendFromEnv.baseUrl,
       }}
       features={{
         embeddings: [
-          // {id:"umap", name:"UMAP", settings: DEFAULT_UMAP_SETTINGS},
           { id: 'umapRemote', name: 'UMAP', settings: { nneighbors: true }, embController: new RemoteEmbeddingController('umap', startProjection) },
           { id: 'tsneRemote', name: 't-SNE', settings: { perplexity: true }, embController: new RemoteEmbeddingController('tsne', startProjection) },
           { id: 'pcaRemote', name: 'PCA', settings: {}, embController: new RemoteEmbeddingController('pca', startProjection) },
@@ -76,8 +74,12 @@ const ApplicationWrapper = connector(({ setMouseMoveFn, dataset_path, setMouseCl
             name: 'Overlap Removal',
             settings: { hideSettings: true },
             embController: new RemoteEmbeddingController('rmOverlap', startProjection),
+            description:
+              'Removes overlapping items by moving them to the nearest non-overlapping position. This is particularly useful for large datasets after a projection like t-SNE or UMAP has been triggered to reduce visual clutter.',
           },
         ],
+        showVisibleProjections: false,
+        showTrailSettings: false,
       }}
       overrideComponents={{
         mouseInteractionCallbacks: {
@@ -90,21 +92,7 @@ const ApplicationWrapper = connector(({ setMouseMoveFn, dataset_path, setMouseCl
         },
         datasetTab: DatasetTabPanel,
         appBar: () => <div />,
-        contextMenuItems: [
-          // {key:"getkNN", title:"Download k-Nearest", function:(coords) => {
-          //   handleBackgroundSelectionDownload(coords, dataset_path)
-          // }},
-          // {key:"addRegion", title:`Show ${globalLabels.itemLabelPlural} in this region`, function:(coords) => {
-          //   // TODO
-          //     ReactionCIMEBackendFromEnv.addPOIExceptions(dataset_path, [{x_col: "", y_col: "", x_coord: "", y_coord: "", radius: 10}]).then((res) => {
-          //       if(res.msg === "ok"){
-          //         // TODO: reload dataset
-          //       }
-          //     })
-          // }}
-          AddRegionExceptionMenuItem,
-          SetFiltersToItemFeatures,
-        ],
+        contextMenuItems: [AddRegionExceptionMenuItem, SetFiltersToItemFeatures],
         detailViews: [
           {
             name: 'LineUp',
@@ -132,13 +120,6 @@ const ApplicationWrapper = connector(({ setMouseMoveFn, dataset_path, setMouseCl
             description: 'Aggregated Dataset that should be shown in the background',
             icon: ReactionCIMEIcons.Aggregate,
           },
-          // {
-          //   name: "lineup",
-          //   tab: <ViewsTabPanel overrideComponents={this.props.overrideComponents} splitRef={this.splitRef} />,
-          //   title: "LineUp Integration",
-          //   description: "Settings for LineUp Integration",
-          //   icon: ReactionCIMEIcons.Table,
-          // },
         ],
         layers: [
           {
@@ -152,15 +133,9 @@ const ApplicationWrapper = connector(({ setMouseMoveFn, dataset_path, setMouseCl
 });
 
 export function ReactionCIMEApp() {
-  // const [context] = useState(new API<RootState>(null, rootReducer))
-
-  const [context] = useState(
-    // new API<AppState>(null, createRootReducer(CIMEReducers))
-    new API<AppState>(null, createCIMERootReducer()),
-  );
+  const [context] = useState(new API<AppState>(null, createCIMERootReducer()));
   context.store.dispatch(setItemLabel({ label: 'experiment', label_plural: 'experiments' }));
-  // context.store.dispatch(setDatasetEntriesAction(DATASETCONFIG))
-  // context.store.getState().dataset...
+
   return (
     <PSEContextProvider context={context}>
       <ApplicationWrapper />
