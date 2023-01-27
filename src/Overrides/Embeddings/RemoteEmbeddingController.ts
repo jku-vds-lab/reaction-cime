@@ -1,6 +1,7 @@
 import { Dataset, EmbeddingController, IProjection } from 'projection-space-explorer';
 // @ts-ignore
 import RemoteWorker from 'worker-loader?inline=no-fallback!./remote.worker';
+import { ReactionCIMEBackendFromEnv } from '../../Backend';
 
 export class RemoteEmbeddingController extends EmbeddingController {
   targetBounds: any;
@@ -34,6 +35,7 @@ export class RemoteEmbeddingController extends EmbeddingController {
     this.worker = new RemoteWorker();
     this.worker.postMessage({
       messageType: 'init',
+      backendUrl: ReactionCIMEBackendFromEnv.baseUrl,
       init_coordinates: workspace.positions.map((v, i) => {
         return { x: v.x, y: v.y };
       }),

@@ -1,5 +1,5 @@
-import { IBaseProjection } from 'projection-space-explorer';
-import { ReactionCIMEBackendFromEnv } from '../../Backend/ReactionCIMEBackend';
+import type { IBaseProjection } from 'projection-space-explorer';
+import { ReactionCIMEBackend } from '../../Backend/ReactionCIMEBackend';
 
 export class RemoteEmbedding {
   private dataset: string = null;
@@ -16,12 +16,15 @@ export class RemoteEmbedding {
 
   private msg = '';
 
-  constructor(dataset: string, params: object, init_embedding: IBaseProjection, selected_feature_info: object) {
+  private backend: ReactionCIMEBackend;
+
+  constructor(backendUrl: string, dataset: string, params: object, init_embedding: IBaseProjection, selected_feature_info: object) {
     this.dataset = dataset;
     this.params = params;
     this.embedding = init_embedding;
     this.selected_feature_info = selected_feature_info;
     this.abort_controller = new AbortController();
+    this.backend = new ReactionCIMEBackend(backendUrl, {});
   }
 
   // getUpdate(callback_fn:(emb, step, msg)=>void){
@@ -78,7 +81,7 @@ export class RemoteEmbedding {
       }
     };
 
-    ReactionCIMEBackendFromEnv.project_dataset(this.dataset, this.params, this.selected_feature_info, this.abort_controller).then((response) => {
+    this.backend.project_dataset(this.dataset, this.params, this.selected_feature_info, this.abort_controller).then((response) => {
       const reader = response.body.getReader();
       readStream(reader);
     });
@@ -86,7 +89,8 @@ export class RemoteEmbedding {
 
   abort(callback) {
     // this.abort_controller.abort()
-    ReactionCIMEBackendFromEnv.terminate_projection(this.dataset)
+    this.backend
+      .terminate_projection(this.dataset)
       .then((response) => {
         // if(response["msg"] === "ok"){
         this.abort_controller.abort();

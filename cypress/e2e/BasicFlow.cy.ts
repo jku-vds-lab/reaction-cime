@@ -2,7 +2,7 @@ Cypress.on('uncaught:exception', (err, runnable) => {
   return !err.message.includes('scrollLeft');
 });
 
-describe('Hydration', () => {
+describe('domain_5000_v2', () => {
   it('User workflow 1', { scrollBehavior: false }, () => {
     // Upload project
     cy.visit('/');
