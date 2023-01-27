@@ -749,12 +749,7 @@ export class ReactionCIMEBackend {
   };
 }
 
-let backendUrl = process.env.REACT_APP_CIME_BACKEND_URL || '';
-
-// Use the environment variables defined in the .env file
-if (!backendUrl) {
-  console.error('The ENV-variable REACT_APP_CIME_BACKEND_URL must be set.');
-}
+let backendUrl = process.env.REACT_APP_CIME_BACKEND_URL || '/api/reaction_cime';
 
 if (backendUrl.startsWith('/') && typeof window !== 'undefined') {
   // starts with /, therefore we need to add the current host. Otherwise, we get an error like:
