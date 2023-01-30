@@ -133,7 +133,7 @@ export const HexAggregationLayer = connector(
 
     // set ranges for value and uncertainty by values from backend dataset -> use this for all aggregation methods except count
     React.useEffect(() => {
-      if(aggregateSettings.advancedSettings.aggregationMethod.uncertaintyAggregationMethod !== AggregationMethod.COUNT){
+      if (aggregateSettings.advancedSettings.aggregationMethod.uncertaintyAggregationMethod !== AggregationMethod.COUNT) {
         if (aggregateColor?.uncertainty_col != null) {
           ReactionCIMEBackendFromEnv.loadValueRange(poiDataset.info.path, aggregateColor.uncertainty_col).then((response) => {
             setDatasetUncertaintyRange(response);
@@ -142,29 +142,28 @@ export const HexAggregationLayer = connector(
           setDatasetUncertaintyRange(null);
         }
       }
-      if(aggregateSettings.advancedSettings.aggregationMethod.valueAggregationMethod !== AggregationMethod.COUNT){
+      if (aggregateSettings.advancedSettings.aggregationMethod.valueAggregationMethod !== AggregationMethod.COUNT) {
         if (aggregateColor?.value_col != null) {
           ReactionCIMEBackendFromEnv.loadValueRange(poiDataset.info.path, aggregateColor.value_col).then((response) => {
             setDatasetValueRange(response);
           });
-        }else{
+        } else {
           setDatasetValueRange(null);
           setDatasetUncertaintyRange(null);
         }
       }
     }, [aggregateColor, poiDataset.info.path, aggregateSettings.advancedSettings.aggregationMethod]);
 
-    
     // set ranges for value and uncertainty by values from aggregated dataset -> use this for aggregation method count
     React.useEffect(() => {
-      if(aggregateSettings.advancedSettings.aggregationMethod.uncertaintyAggregationMethod === AggregationMethod.COUNT){
+      if (aggregateSettings.advancedSettings.aggregationMethod.uncertaintyAggregationMethod === AggregationMethod.COUNT) {
         if (aggregateDataset && Object.keys(aggregateDataset.columns).includes(aggregateColor.uncertainty_col)) {
           setDatasetUncertaintyRange(aggregateDataset.columns[aggregateColor.uncertainty_col].range);
         } else {
           setDatasetUncertaintyRange(null);
         }
       }
-      if(aggregateSettings.advancedSettings.aggregationMethod.valueAggregationMethod === AggregationMethod.COUNT){
+      if (aggregateSettings.advancedSettings.aggregationMethod.valueAggregationMethod === AggregationMethod.COUNT) {
         if (aggregateDataset && Object.keys(aggregateDataset.columns).includes(aggregateColor.value_col)) {
           setDatasetValueRange(aggregateDataset.columns[aggregateColor.value_col].range);
         } else {
@@ -181,8 +180,7 @@ export const HexAggregationLayer = connector(
           dispatch(AggregateActions.setUncertaintyRange(datasetUncertaintyRange));
         }
       }
-    }, [datasetValueRange, datasetUncertaintyRange, aggregateSettings?.advancedSettings.deriveRange]);
-
+    }, [datasetValueRange, datasetUncertaintyRange, aggregateSettings?.advancedSettings.deriveRange, dispatch]);
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
     const debouncedLoadAggDataset = React.useCallback(
