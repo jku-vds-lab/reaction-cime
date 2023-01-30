@@ -1,16 +1,15 @@
 import { IProjection, useCancellablePromise } from 'projection-space-explorer';
 import * as React from 'react';
-import { connect, ConnectedProps } from 'react-redux';
+import { connect, ConnectedProps, useDispatch } from 'react-redux';
 import * as THREE from 'three';
 import * as _ from 'lodash';
-import { Box, CircularProgress, Typography } from '@mui/material';
+import { CircularProgress, Typography } from '@mui/material';
 import { EntityId } from '@reduxjs/toolkit';
 import { usePromiseTracker } from 'react-promise-tracker';
 import { ReactionCIMEBackendFromEnv } from '../../Backend/ReactionCIMEBackend';
 import { AppState } from '../../State/Store';
 import { AggregateDataset } from './AggregateDataset';
-import { LoadingIndicatorDialog } from '../Dataset/LoadingIndicatorDialog';
-import { AggregateActions } from '../../State/AggregateSettingsDuck';
+import { AggregateActions, AggregationMethod } from '../../State/AggregateSettingsDuck';
 import { GLHexagons } from './GLHexagons';
 import { PSE_BLUE } from '../../Utility/Utils';
 import { setCurrentAggregateSelection } from '../../State/SelectionDuck';
@@ -95,8 +94,6 @@ const mapStateToProps = (state: AppState) => ({
   mouseClick: state.mouseInteractionHooks?.mouseclick,
 });
 const mapDispatchToProps = (dispatch: any) => ({
-  setValueRange: (range) => dispatch(AggregateActions.setValueRange(range)),
-  setUncertaintyRange: (range) => dispatch(AggregateActions.setUncertaintyRange(range)),
   setCurrentAggregateSelectionFn: (selection) => dispatch(setCurrentAggregateSelection(selection)),
 });
 
@@ -109,16 +106,7 @@ type AggregationLayerProps = PropsFromRedux & {
 
 const loadingArea = 'global_loading_indicator_aggregation_ds';
 export const HexAggregationLayer = connector(
-  ({
-    setCurrentAggregateSelectionFn,
-    poiDataset,
-    smallMultiples,
-    setValueRange,
-    setUncertaintyRange,
-    mouseMove,
-    mouseClick,
-    multipleId,
-  }: AggregationLayerProps) => {
+  ({ setCurrentAggregateSelectionFn, poiDataset, smallMultiples, mouseMove, mouseClick, multipleId }: AggregationLayerProps) => {
     const { aggregateSettings } = smallMultiples[multipleId].attributes;
     const aggregateColor = aggregateSettings?.colormapSettings.aggregateColor;
     const { viewTransform } = smallMultiples[multipleId].attributes;
@@ -137,15 +125,15 @@ export const HexAggregationLayer = connector(
     const [datasetValueRange, setDatasetValueRange] = React.useState(null);
     const [datasetUncertaintyRange, setDatasetUncertaintyRange] = React.useState(null);
 
+    const dispatch = useDispatch();
+
     const { cancellablePromise, cancelPromises } = useCancellablePromise();
 
     const { promiseInProgress } = usePromiseTracker({ area: loadingArea });
 
+    // set ranges for value and uncertainty by values from backend dataset -> use this for all aggregation methods except count
     React.useEffect(() => {
-      if (aggregateColor?.value_col != null) {
-        ReactionCIMEBackendFromEnv.loadValueRange(poiDataset.info.path, aggregateColor.value_col).then((response) => {
-          setDatasetValueRange(response);
-        });
+      if (aggregateSettings.advancedSettings.aggregationMethod.uncertaintyAggregationMethod !== AggregationMethod.COUNT) {
         if (aggregateColor?.uncertainty_col != null) {
           ReactionCIMEBackendFromEnv.loadValueRange(poiDataset.info.path, aggregateColor.uncertainty_col).then((response) => {
             setDatasetUncertaintyRange(response);
@@ -154,17 +142,45 @@ export const HexAggregationLayer = connector(
           setDatasetUncertaintyRange(null);
         }
       }
-    }, [aggregateColor, poiDataset.info.path]);
+      if (aggregateSettings.advancedSettings.aggregationMethod.valueAggregationMethod !== AggregationMethod.COUNT) {
+        if (aggregateColor?.value_col != null) {
+          ReactionCIMEBackendFromEnv.loadValueRange(poiDataset.info.path, aggregateColor.value_col).then((response) => {
+            setDatasetValueRange(response);
+          });
+        } else {
+          setDatasetValueRange(null);
+          setDatasetUncertaintyRange(null);
+        }
+      }
+    }, [aggregateColor, poiDataset.info.path, aggregateSettings.advancedSettings.aggregationMethod]);
+
+    // set ranges for value and uncertainty by values from aggregated dataset -> use this for aggregation method count
+    React.useEffect(() => {
+      if (aggregateSettings.advancedSettings.aggregationMethod.uncertaintyAggregationMethod === AggregationMethod.COUNT) {
+        if (aggregateDataset && Object.keys(aggregateDataset.columns).includes(aggregateColor.uncertainty_col)) {
+          setDatasetUncertaintyRange(aggregateDataset.columns[aggregateColor.uncertainty_col].range);
+        } else {
+          setDatasetUncertaintyRange(null);
+        }
+      }
+      if (aggregateSettings.advancedSettings.aggregationMethod.valueAggregationMethod === AggregationMethod.COUNT) {
+        if (aggregateDataset && Object.keys(aggregateDataset.columns).includes(aggregateColor.value_col)) {
+          setDatasetValueRange(aggregateDataset.columns[aggregateColor.value_col].range);
+        } else {
+          setDatasetValueRange(null);
+          setDatasetUncertaintyRange(null);
+        }
+      }
+    }, [aggregateDataset, aggregateColor.value_col, aggregateColor.uncertainty_col, aggregateSettings.advancedSettings.aggregationMethod]);
 
     React.useEffect(() => {
       if (aggregateSettings?.advancedSettings.deriveRange) {
         if (datasetValueRange != null) {
-          setValueRange(datasetValueRange);
-          setUncertaintyRange(datasetUncertaintyRange);
+          dispatch(AggregateActions.setValueRange(datasetValueRange));
+          dispatch(AggregateActions.setUncertaintyRange(datasetUncertaintyRange));
         }
       }
-      // eslint-disable-next-line
-    }, [datasetValueRange, datasetUncertaintyRange, aggregateSettings?.advancedSettings.deriveRange]);
+    }, [datasetValueRange, datasetUncertaintyRange, aggregateSettings?.advancedSettings.deriveRange, dispatch]);
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
     const debouncedLoadAggDataset = React.useCallback(

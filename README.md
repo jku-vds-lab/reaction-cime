@@ -63,6 +63,24 @@ As an alternative, you can also user Docker to start the backend. The dockerized
 docker compose up
 ```
 
+### Deploy with Docker
+
+```bash
+yarn install
+```
+
+```bash
+yarn run webpack:prod
+```
+
+```bash
+docker build -f Dockerfile -t reaction_cime .
+```
+
+```bash
+docker run --rm -it -p 9000:9000 reaction_cime
+```
+
 ## Linking PSE and Reaction-CIME Frontend
 
 If you want to make changes to PSE and view the changes without having to push to the repo and reinstalling dependencies, the recommended way is to use the yarn link/portal and/or our webpack resolveAliases feature.

@@ -234,6 +234,7 @@ np_agg_methods_dict = {
     "max": np.nanmax,
     "mean": np.nanmean,
     "median": np.nanmedian,
+    "count": len,
 }
 
 
