@@ -5,6 +5,7 @@ export enum AggregationMethod {
   MAX = 'max',
   MEDIAN = 'median',
   MEAN = 'mean',
+  COUNT = 'count',
 }
 
 // console.log(Object.keys(d3)) // could also use keys of d3.js that start with "interpolate"

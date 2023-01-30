@@ -134,37 +134,53 @@ export const HexAggregationLayer = connector(
     const [hoverElement, setHoverElement] = React.useState(null);
     const [selectElement, setSelectElement] = React.useState(null);
     const [aggregateDataset, setAggregateDataset] = React.useState<AggregateDataset>(null);
-    const [datasetValueRange, setDatasetValueRange] = React.useState(null);
+    // const [datasetValueRange, setDatasetValueRange] = React.useState(null);
     const [datasetUncertaintyRange, setDatasetUncertaintyRange] = React.useState(null);
 
     const { cancellablePromise, cancelPromises } = useCancellablePromise();
 
     const { promiseInProgress } = usePromiseTracker({ area: loadingArea });
 
-    React.useEffect(() => {
-      if (aggregateColor?.value_col != null) {
-        ReactionCIMEBackendFromEnv.loadValueRange(poiDataset.info.path, aggregateColor.value_col).then((response) => {
-          setDatasetValueRange(response);
-        });
-        if (aggregateColor?.uncertainty_col != null) {
-          ReactionCIMEBackendFromEnv.loadValueRange(poiDataset.info.path, aggregateColor.uncertainty_col).then((response) => {
-            setDatasetUncertaintyRange(response);
-          });
-        } else {
-          setDatasetUncertaintyRange(null);
-        }
-      }
-    }, [aggregateColor, poiDataset.info.path]);
+    // React.useEffect(() => {
+    //   if (aggregateColor?.value_col != null) {
+    //     ReactionCIMEBackendFromEnv.loadValueRange(poiDataset.info.path, aggregateColor.value_col).then((response) => {
+    //       setDatasetValueRange(response);
+    //     });
+    //     if (aggregateColor?.uncertainty_col != null) {
+    //       ReactionCIMEBackendFromEnv.loadValueRange(poiDataset.info.path, aggregateColor.uncertainty_col).then((response) => {
+    //         setDatasetUncertaintyRange(response);
+    //       });
+    //     } else {
+    //       setDatasetUncertaintyRange(null);
+    //     }
+    //   }
+    // }, [aggregateColor, poiDataset.info.path]);
+
+    // React.useEffect(() => {
+    //   if (aggregateSettings?.advancedSettings.deriveRange) {
+    //     if (datasetValueRange != null) {
+    //       setValueRange(datasetValueRange);
+    //       setUncertaintyRange(datasetUncertaintyRange);
+    //     }
+    //   }
+    //   // eslint-disable-next-line
+    // }, [datasetValueRange, datasetUncertaintyRange, aggregateSettings?.advancedSettings.deriveRange]);
 
     React.useEffect(() => {
-      if (aggregateSettings?.advancedSettings.deriveRange) {
-        if (datasetValueRange != null) {
-          setValueRange(datasetValueRange);
-          setUncertaintyRange(datasetUncertaintyRange);
+      console.log(aggregateDataset)
+      if(aggregateDataset && Object.keys(aggregateDataset.columns).includes(aggregateColor.value_col)){
+        setValueRange(aggregateDataset.columns[aggregateColor.value_col].range);
+        if(aggregateDataset && Object.keys(aggregateDataset.columns).includes(aggregateColor.uncertainty_col)){
+          setUncertaintyRange(aggregateDataset.columns[aggregateColor.uncertainty_col].range);
+        }else{
+          setUncertaintyRange(null);
         }
+      }else{
+        setValueRange(null);
+        setUncertaintyRange(null);
       }
-      // eslint-disable-next-line
-    }, [datasetValueRange, datasetUncertaintyRange, aggregateSettings?.advancedSettings.deriveRange]);
+      
+    }, [aggregateDataset]);
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
     const debouncedLoadAggDataset = React.useCallback(
