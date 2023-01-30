@@ -1,6 +1,6 @@
 import { IProjection, useCancellablePromise } from 'projection-space-explorer';
 import * as React from 'react';
-import { connect, ConnectedProps } from 'react-redux';
+import { connect, ConnectedProps, useDispatch } from 'react-redux';
 import * as THREE from 'three';
 import * as _ from 'lodash';
 import { Box, CircularProgress, Typography } from '@mui/material';
@@ -95,8 +95,6 @@ const mapStateToProps = (state: AppState) => ({
   mouseClick: state.mouseInteractionHooks?.mouseclick,
 });
 const mapDispatchToProps = (dispatch: any) => ({
-  setValueRange: (range) => dispatch(AggregateActions.setValueRange(range)),
-  setUncertaintyRange: (range) => dispatch(AggregateActions.setUncertaintyRange(range)),
   setCurrentAggregateSelectionFn: (selection) => dispatch(setCurrentAggregateSelection(selection)),
 });
 
@@ -113,8 +111,6 @@ export const HexAggregationLayer = connector(
     setCurrentAggregateSelectionFn,
     poiDataset,
     smallMultiples,
-    setValueRange,
-    setUncertaintyRange,
     mouseMove,
     mouseClick,
     multipleId,
@@ -135,7 +131,11 @@ export const HexAggregationLayer = connector(
     const [selectElement, setSelectElement] = React.useState(null);
     const [aggregateDataset, setAggregateDataset] = React.useState<AggregateDataset>(null);
     // const [datasetValueRange, setDatasetValueRange] = React.useState(null);
-    const [datasetUncertaintyRange, setDatasetUncertaintyRange] = React.useState(null);
+    // const [datasetUncertaintyRange, setDatasetUncertaintyRange] = React.useState(null);
+    
+    const dispatch = useDispatch();
+    const setValueRange = (range) => dispatch(AggregateActions.setValueRange(range));
+    const setUncertaintyRange = (range) => dispatch(AggregateActions.setUncertaintyRange(range));
 
     const { cancellablePromise, cancelPromises } = useCancellablePromise();
 
@@ -169,7 +169,6 @@ export const HexAggregationLayer = connector(
 
     // set ranges for value and uncertainty by values from aggregated dataset
     React.useEffect(() => {
-      console.log(aggregateDataset);
       if (aggregateDataset && Object.keys(aggregateDataset.columns).includes(aggregateColor.value_col)) {
         setValueRange(aggregateDataset.columns[aggregateColor.value_col].range);
         if (aggregateDataset && Object.keys(aggregateDataset.columns).includes(aggregateColor.uncertainty_col)) {
@@ -181,7 +180,7 @@ export const HexAggregationLayer = connector(
         setValueRange(null);
         setUncertaintyRange(null);
       }
-    }, [aggregateDataset]);
+    }, [aggregateDataset, aggregateColor.value_col, aggregateColor.uncertainty_col]);
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
     const debouncedLoadAggDataset = React.useCallback(
