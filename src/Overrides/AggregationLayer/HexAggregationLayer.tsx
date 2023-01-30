@@ -107,14 +107,7 @@ type AggregationLayerProps = PropsFromRedux & {
 
 const loadingArea = 'global_loading_indicator_aggregation_ds';
 export const HexAggregationLayer = connector(
-  ({
-    setCurrentAggregateSelectionFn,
-    poiDataset,
-    smallMultiples,
-    mouseMove,
-    mouseClick,
-    multipleId,
-  }: AggregationLayerProps) => {
+  ({ setCurrentAggregateSelectionFn, poiDataset, smallMultiples, mouseMove, mouseClick, multipleId }: AggregationLayerProps) => {
     const { aggregateSettings } = smallMultiples[multipleId].attributes;
     const aggregateColor = aggregateSettings?.colormapSettings.aggregateColor;
     const { viewTransform } = smallMultiples[multipleId].attributes;
@@ -132,7 +125,7 @@ export const HexAggregationLayer = connector(
     const [aggregateDataset, setAggregateDataset] = React.useState<AggregateDataset>(null);
     // const [datasetValueRange, setDatasetValueRange] = React.useState(null);
     // const [datasetUncertaintyRange, setDatasetUncertaintyRange] = React.useState(null);
-    
+
     const dispatch = useDispatch();
     const setValueRange = (range) => dispatch(AggregateActions.setValueRange(range));
     const setUncertaintyRange = (range) => dispatch(AggregateActions.setUncertaintyRange(range));
