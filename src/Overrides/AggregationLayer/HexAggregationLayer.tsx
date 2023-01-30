@@ -9,7 +9,7 @@ import { usePromiseTracker } from 'react-promise-tracker';
 import { ReactionCIMEBackendFromEnv } from '../../Backend/ReactionCIMEBackend';
 import { AppState } from '../../State/Store';
 import { AggregateDataset } from './AggregateDataset';
-import { AggregateActions } from '../../State/AggregateSettingsDuck';
+import { AggregateActions, AggregationMethod } from '../../State/AggregateSettingsDuck';
 import { GLHexagons } from './GLHexagons';
 import { PSE_BLUE } from '../../Utility/Utils';
 import { setCurrentAggregateSelection } from '../../State/SelectionDuck';
@@ -122,8 +122,8 @@ export const HexAggregationLayer = connector(
     const [hoverElement, setHoverElement] = React.useState(null);
     const [selectElement, setSelectElement] = React.useState(null);
     const [aggregateDataset, setAggregateDataset] = React.useState<AggregateDataset>(null);
-    // const [datasetValueRange, setDatasetValueRange] = React.useState(null);
-    // const [datasetUncertaintyRange, setDatasetUncertaintyRange] = React.useState(null);
+    const [datasetValueRange, setDatasetValueRange] = React.useState(null);
+    const [datasetUncertaintyRange, setDatasetUncertaintyRange] = React.useState(null);
 
     const dispatch = useDispatch();
 
@@ -131,46 +131,58 @@ export const HexAggregationLayer = connector(
 
     const { promiseInProgress } = usePromiseTracker({ area: loadingArea });
 
-    // set ranges for value and uncertainty by values from backend dataset
-    // React.useEffect(() => {
-    //   if (aggregateColor?.value_col != null) {
-    //     ReactionCIMEBackendFromEnv.loadValueRange(poiDataset.info.path, aggregateColor.value_col).then((response) => {
-    //       setDatasetValueRange(response);
-    //     });
-    //     if (aggregateColor?.uncertainty_col != null) {
-    //       ReactionCIMEBackendFromEnv.loadValueRange(poiDataset.info.path, aggregateColor.uncertainty_col).then((response) => {
-    //         setDatasetUncertaintyRange(response);
-    //       });
-    //     } else {
-    //       setDatasetUncertaintyRange(null);
-    //     }
-    //   }
-    // }, [aggregateColor, poiDataset.info.path]);
-
-    // React.useEffect(() => {
-    //   if (aggregateSettings?.advancedSettings.deriveRange) {
-    //     if (datasetValueRange != null) {
-    //       setValueRange(datasetValueRange);
-    //       setUncertaintyRange(datasetUncertaintyRange);
-    //     }
-    //   }
-    //   // eslint-disable-next-line
-    // }, [datasetValueRange, datasetUncertaintyRange, aggregateSettings?.advancedSettings.deriveRange]);
-
-    // set ranges for value and uncertainty by values from aggregated dataset
+    // set ranges for value and uncertainty by values from backend dataset -> use this for all aggregation methods except count
     React.useEffect(() => {
-      if (aggregateDataset && Object.keys(aggregateDataset.columns).includes(aggregateColor.value_col)) {
-        dispatch(AggregateActions.setValueRange(aggregateDataset.columns[aggregateColor.value_col].range));
-        if (aggregateDataset && Object.keys(aggregateDataset.columns).includes(aggregateColor.uncertainty_col)) {
-          dispatch(AggregateActions.setUncertaintyRange(aggregateDataset.columns[aggregateColor.uncertainty_col].range));
+      if(aggregateSettings.advancedSettings.aggregationMethod.uncertaintyAggregationMethod !== AggregationMethod.COUNT){
+        if (aggregateColor?.uncertainty_col != null) {
+          ReactionCIMEBackendFromEnv.loadValueRange(poiDataset.info.path, aggregateColor.uncertainty_col).then((response) => {
+            setDatasetUncertaintyRange(response);
+          });
         } else {
-          dispatch(AggregateActions.setUncertaintyRange(null));
+          setDatasetUncertaintyRange(null);
         }
-      } else {
-        dispatch(AggregateActions.setValueRange(null));
-        dispatch(AggregateActions.setUncertaintyRange(null));
       }
-    }, [aggregateDataset, aggregateColor.value_col, aggregateColor.uncertainty_col, dispatch]);
+      if(aggregateSettings.advancedSettings.aggregationMethod.valueAggregationMethod !== AggregationMethod.COUNT){
+        if (aggregateColor?.value_col != null) {
+          ReactionCIMEBackendFromEnv.loadValueRange(poiDataset.info.path, aggregateColor.value_col).then((response) => {
+            setDatasetValueRange(response);
+          });
+        }else{
+          setDatasetValueRange(null);
+          setDatasetUncertaintyRange(null);
+        }
+      }
+    }, [aggregateColor, poiDataset.info.path, aggregateSettings.advancedSettings.aggregationMethod]);
+
+    
+    // set ranges for value and uncertainty by values from aggregated dataset -> use this for aggregation method count
+    React.useEffect(() => {
+      if(aggregateSettings.advancedSettings.aggregationMethod.uncertaintyAggregationMethod === AggregationMethod.COUNT){
+        if (aggregateDataset && Object.keys(aggregateDataset.columns).includes(aggregateColor.uncertainty_col)) {
+          setDatasetUncertaintyRange(aggregateDataset.columns[aggregateColor.uncertainty_col].range);
+        } else {
+          setDatasetUncertaintyRange(null);
+        }
+      }
+      if(aggregateSettings.advancedSettings.aggregationMethod.valueAggregationMethod === AggregationMethod.COUNT){
+        if (aggregateDataset && Object.keys(aggregateDataset.columns).includes(aggregateColor.value_col)) {
+          setDatasetValueRange(aggregateDataset.columns[aggregateColor.value_col].range);
+        } else {
+          setDatasetValueRange(null);
+          setDatasetUncertaintyRange(null);
+        }
+      }
+    }, [aggregateDataset, aggregateColor.value_col, aggregateColor.uncertainty_col, aggregateSettings.advancedSettings.aggregationMethod]);
+
+    React.useEffect(() => {
+      if (aggregateSettings?.advancedSettings.deriveRange) {
+        if (datasetValueRange != null) {
+          dispatch(AggregateActions.setValueRange(datasetValueRange));
+          dispatch(AggregateActions.setUncertaintyRange(datasetUncertaintyRange));
+        }
+      }
+    }, [datasetValueRange, datasetUncertaintyRange, aggregateSettings?.advancedSettings.deriveRange]);
+
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
     const debouncedLoadAggDataset = React.useCallback(
