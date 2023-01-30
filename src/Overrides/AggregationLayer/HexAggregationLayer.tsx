@@ -3,13 +3,12 @@ import * as React from 'react';
 import { connect, ConnectedProps, useDispatch } from 'react-redux';
 import * as THREE from 'three';
 import * as _ from 'lodash';
-import { Box, CircularProgress, Typography } from '@mui/material';
+import { CircularProgress, Typography } from '@mui/material';
 import { EntityId } from '@reduxjs/toolkit';
 import { usePromiseTracker } from 'react-promise-tracker';
 import { ReactionCIMEBackendFromEnv } from '../../Backend/ReactionCIMEBackend';
 import { AppState } from '../../State/Store';
 import { AggregateDataset } from './AggregateDataset';
-import { LoadingIndicatorDialog } from '../Dataset/LoadingIndicatorDialog';
 import { AggregateActions } from '../../State/AggregateSettingsDuck';
 import { GLHexagons } from './GLHexagons';
 import { PSE_BLUE } from '../../Utility/Utils';
@@ -127,8 +126,6 @@ export const HexAggregationLayer = connector(
     // const [datasetUncertaintyRange, setDatasetUncertaintyRange] = React.useState(null);
 
     const dispatch = useDispatch();
-    const setValueRange = (range) => dispatch(AggregateActions.setValueRange(range));
-    const setUncertaintyRange = (range) => dispatch(AggregateActions.setUncertaintyRange(range));
 
     const { cancellablePromise, cancelPromises } = useCancellablePromise();
 
@@ -163,17 +160,17 @@ export const HexAggregationLayer = connector(
     // set ranges for value and uncertainty by values from aggregated dataset
     React.useEffect(() => {
       if (aggregateDataset && Object.keys(aggregateDataset.columns).includes(aggregateColor.value_col)) {
-        setValueRange(aggregateDataset.columns[aggregateColor.value_col].range);
+        dispatch(AggregateActions.setValueRange(aggregateDataset.columns[aggregateColor.value_col].range));
         if (aggregateDataset && Object.keys(aggregateDataset.columns).includes(aggregateColor.uncertainty_col)) {
-          setUncertaintyRange(aggregateDataset.columns[aggregateColor.uncertainty_col].range);
+          dispatch(AggregateActions.setUncertaintyRange(aggregateDataset.columns[aggregateColor.uncertainty_col].range));
         } else {
-          setUncertaintyRange(null);
+          dispatch(AggregateActions.setUncertaintyRange(null));
         }
       } else {
-        setValueRange(null);
-        setUncertaintyRange(null);
+        dispatch(AggregateActions.setValueRange(null));
+        dispatch(AggregateActions.setUncertaintyRange(null));
       }
-    }, [aggregateDataset, aggregateColor.value_col, aggregateColor.uncertainty_col]);
+    }, [aggregateDataset, aggregateColor.value_col, aggregateColor.uncertainty_col, dispatch]);
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
     const debouncedLoadAggDataset = React.useCallback(
