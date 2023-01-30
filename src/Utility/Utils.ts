@@ -53,14 +53,14 @@ export function mapSmilesToShortname(smiles: string): string {
   const smilesLookupStr = localStorage.getItem('smiles_lookup');
   if (smilesLookupStr == null) return smiles;
   const smilesLookup = d3v5.csvParse(smilesLookupStr) as Array<{ smiles: string; shortname: string }>;
-  return smilesLookup.find((pair) => pair.smiles === smiles)?.shortname;
+  return smilesLookup.find((pair) => pair.smiles === smiles)?.shortname ?? smiles;
 }
 
 export function mapShortnameToSmiles(shortname: string): string {
   const smilesLookupStr = localStorage.getItem('smiles_lookup');
   if (smilesLookupStr == null) return shortname;
   const smilesLookup = d3v5.csvParse(smilesLookupStr) as Array<{ smiles: string; shortname: string }>;
-  return smilesLookup.find((pair) => pair.shortname === shortname)?.smiles;
+  return smilesLookup.find((pair) => pair.shortname === shortname)?.smiles ?? shortname;
 }
 
 // does not work properly with react

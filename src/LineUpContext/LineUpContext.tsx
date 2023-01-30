@@ -703,7 +703,7 @@ export const LineUpContext = connector(function ({
     const ranking = lineup.data.getFirstRanking();
 
     // add selection checkbox column
-    let selectionCol = ranking.children.find((x) => x.label === 'Selection Checkboxes');
+    let selectionCol = ranking.children.find((x) => x.label === 'Selections');
     if (!selectionCol) {
       selectionCol = lineup.data.create(createSelectionDesc());
       if (selectionCol) {
