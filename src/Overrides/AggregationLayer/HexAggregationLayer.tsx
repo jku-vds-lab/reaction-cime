@@ -141,6 +141,7 @@ export const HexAggregationLayer = connector(
 
     const { promiseInProgress } = usePromiseTracker({ area: loadingArea });
 
+    // set ranges for value and uncertainty by values from backend dataset
     // React.useEffect(() => {
     //   if (aggregateColor?.value_col != null) {
     //     ReactionCIMEBackendFromEnv.loadValueRange(poiDataset.info.path, aggregateColor.value_col).then((response) => {
@@ -166,20 +167,20 @@ export const HexAggregationLayer = connector(
     //   // eslint-disable-next-line
     // }, [datasetValueRange, datasetUncertaintyRange, aggregateSettings?.advancedSettings.deriveRange]);
 
+    // set ranges for value and uncertainty by values from aggregated dataset
     React.useEffect(() => {
-      console.log(aggregateDataset)
-      if(aggregateDataset && Object.keys(aggregateDataset.columns).includes(aggregateColor.value_col)){
+      console.log(aggregateDataset);
+      if (aggregateDataset && Object.keys(aggregateDataset.columns).includes(aggregateColor.value_col)) {
         setValueRange(aggregateDataset.columns[aggregateColor.value_col].range);
-        if(aggregateDataset && Object.keys(aggregateDataset.columns).includes(aggregateColor.uncertainty_col)){
+        if (aggregateDataset && Object.keys(aggregateDataset.columns).includes(aggregateColor.uncertainty_col)) {
           setUncertaintyRange(aggregateDataset.columns[aggregateColor.uncertainty_col].range);
-        }else{
+        } else {
           setUncertaintyRange(null);
         }
-      }else{
+      } else {
         setValueRange(null);
         setUncertaintyRange(null);
       }
-      
     }, [aggregateDataset]);
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
