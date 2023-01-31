@@ -402,7 +402,7 @@ def rescale_and_encode(proj_df, params, selected_feature_info):
 
                 # add weights for each new column
                 for _ in hot_encoded.columns:
-                    feature_weights_end.append(float(info["weight"])/len(hot_encoded.columns) if info["useWeight"] else 1)
+                    feature_weights_end.append(float(info["weight"]) / len(hot_encoded.columns) if info["useWeight"] else 1)
             else:
                 categorical_feature_list.append(col)
                 proj_df[col] = pd.Categorical(proj_df[col]).codes
