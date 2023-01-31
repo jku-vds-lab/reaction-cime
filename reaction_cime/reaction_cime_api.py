@@ -773,7 +773,8 @@ def project_dataset():
         initialization = get_poi_df_from_db(filename, get_cime_dbo())[0][["x", "y"]].values
 
     # rescale numerical values and encode categorical values
-    proj_df, categorical_features = rescale_and_encode(proj_df, params, selected_feature_info)
+    # TODO: currently weighted features is only used with gowers distance -> implement for all
+    proj_df, categorical_features, feature_weights = rescale_and_encode(proj_df, params, selected_feature_info)
 
     # handle custom metrics
     metric = params["distanceMetric"]
@@ -781,7 +782,7 @@ def project_dataset():
         metric = "euclidean"
     if metric == "gower":  # we precompute the similarity matrix with the gower metric
         metric = "precomputed"
-        normalized_values = gower.gower_matrix(proj_df, cat_features=categorical_features)
+        normalized_values = gower.gower_matrix(proj_df, cat_features=categorical_features, weight=feature_weights)
     else:  # otherwise, the similarity can be done by a pre-configured function and we just hand over the values
         normalized_values = proj_df.values
 
@@ -905,7 +906,8 @@ class ProjectionThread(threading.Thread):
 
         self.msg = "rescale and encode..."
         # rescale numerical values and encode categorical values
-        proj_df, categorical_features = rescale_and_encode(proj_df, self.params, self.selected_feature_info)
+        proj_df, categorical_features, feature_weights = rescale_and_encode(proj_df, self.params, self.selected_feature_info)
+        print(feature_weights)
 
         self.msg = "calc metric..."
         # handle custom metrics
@@ -915,7 +917,7 @@ class ProjectionThread(threading.Thread):
 
         if metric == "gower":  # we precompute the similarity matrix with the gower metric
             metric = "precomputed"
-            normalized_values = gower.gower_matrix(proj_df, cat_features=categorical_features)
+            normalized_values = gower.gower_matrix(proj_df, cat_features=categorical_features, weight=feature_weights)
 
             if initialization == "pca" and self.params["embedding_method"] == "tsne":
                 _log.info("--- calculating PCA for tSNE with Gowers distance")

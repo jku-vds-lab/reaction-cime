@@ -23,10 +23,12 @@ export class RemoteEmbeddingController extends EmbeddingController {
     selection.forEach((feature) => {
       if (feature.checked) {
         const featureInfo = {
-          normalize: feature.normalize,
+          normalize: feature.normalized,
           featureType: dataset.columns[feature.name].featureType.toString(),
           range: dataset.columns[feature.name].range,
           distinct: dataset.columns[feature.name].distinct,
+          useWeight: feature.useWeight,
+          weight: feature.weight,
         };
         selectedFeatureInfo[feature.name] = featureInfo;
       }
