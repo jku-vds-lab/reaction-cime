@@ -363,6 +363,8 @@ def aggregate_by_col(df, value_cols, sample_size=20):
 
 # --- rescale and encode values
 def rescale_and_encode(proj_df, params, selected_feature_info):
+    feature_weights = []
+    feature_weights_end = []
     categorical_feature_list = []
     for col in selected_feature_info:
         info = selected_feature_info[col]
@@ -390,14 +392,21 @@ def rescale_and_encode(proj_df, params, selected_feature_info):
                         std = 1
                     proj_df[col] = (proj_df[col] - mean) / std
 
+            feature_weights.append(float(info["weight"]) if info["useWeight"] else 1)
+
         elif info["featureType"] == "Categorical":
             if params["encodingMethod"] == "onehot":
                 hot_encoded = pd.get_dummies(proj_df[col], prefix=col, dummy_na=True)
                 proj_df = proj_df.drop(columns=[col])
                 proj_df = proj_df.join(hot_encoded)
+
+                # add weights for each new column
+                for _ in hot_encoded.columns:
+                    feature_weights_end.append(float(info["weight"]) / len(hot_encoded.columns) if info["useWeight"] else 1)
             else:
                 categorical_feature_list.append(col)
                 proj_df[col] = pd.Categorical(proj_df[col]).codes
+                feature_weights.append(float(info["weight"]) if info["useWeight"] else 1)
 
         elif info["featureType"] == "Date":
             proj_df = proj_df.drop(columns=[col])
@@ -405,6 +414,7 @@ def rescale_and_encode(proj_df, params, selected_feature_info):
 
         elif info["featureType"] == "Binary":
             proj_df[col] = pd.Categorical(proj_df[col]).codes
+            feature_weights.append(float(info["weight"]) if info["useWeight"] else 1)
 
         elif info["featureType"] == "Ordinal":
             proj_df = proj_df.drop(columns=[col])
@@ -415,7 +425,7 @@ def rescale_and_encode(proj_df, params, selected_feature_info):
             _log.info("featureType: Array --> TODO: handle")
 
     categorical_features = [col in categorical_feature_list for col in proj_df.columns]  # np.zeros((len(proj_df.columns),), dtype=np.bool)
-    return proj_df, categorical_features
+    return proj_df, categorical_features, np.array(feature_weights + feature_weights_end)
 
 
 # ----------------- chem functions ----------------------
