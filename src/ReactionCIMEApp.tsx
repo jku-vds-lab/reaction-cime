@@ -81,7 +81,6 @@ const ApplicationWrapper = connector(({ setMouseMoveFn, dataset_path, setMouseCl
         showVisibleProjections: false,
         showTrailSettings: false,
         enableFeatureWeighing: true,
-        
       }}
       overrideComponents={{
         mouseInteractionCallbacks: {
