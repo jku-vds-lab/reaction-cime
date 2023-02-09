@@ -1,3 +1,4 @@
+/* eslint-disable cypress/no-unnecessary-waiting */
 Cypress.on('uncaught:exception', (err, runnable) => {
   return !err.message.includes('scrollLeft');
 });
