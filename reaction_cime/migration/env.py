@@ -1,3 +1,3 @@
-import tdp_core.dbmigration.env
+import visyn_core.dbmigration.env
 
-tdp_core.dbmigration.env.run_migrations_online()
+visyn_core.dbmigration.env.run_migrations_online()

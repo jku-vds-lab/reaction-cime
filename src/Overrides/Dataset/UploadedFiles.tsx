@@ -10,14 +10,16 @@ import { LoadingIndicatorView } from './LoadingIndicatorDialog';
 
 const loadingArea = 'update_uploaded_files_list';
 export function UploadedFiles({ onChange, refresh }) {
-  const [files, setFiles] = React.useState<string[]>([]);
+  const [files, setFiles] = React.useState<{ name: string; id: string }[]>([]);
   const { cancellablePromise } = useCancellablePromise();
 
   const updateFiles = () => {
     trackPromise(
       cancellablePromise(ReactionCIMEBackendFromEnv.getUploadedFiles())
         .then((data) => {
-          setFiles(data ?? []);
+          if (data) {
+            setFiles(data);
+          }
         })
         .catch((error) => console.log(error)),
       loadingArea,
@@ -36,7 +38,7 @@ export function UploadedFiles({ onChange, refresh }) {
   const handleDelete = (file: string) => {
     cancellablePromise(ReactionCIMEBackendFromEnv.deleteFile(file))
       .then((response) => {
-        if (response && response.deleted === 'true') setFiles(files.filter((f) => f !== file));
+        if (response && response.deleted === 'true') setFiles(files.filter((f) => f.id !== file));
       })
       .catch((error) => console.log(error));
   };
@@ -48,7 +50,7 @@ export function UploadedFiles({ onChange, refresh }) {
           <List subheader={<li />} style={{ backgroundColor: 'white' }}>
             {!DEMO && (
               <ListSubheader>
-                Uploaded Files{' '}
+                Uploaded files{' '}
                 <Button onClick={() => updateFiles()}>
                   <RefreshIcon style={{ fontSize: '1.25rem' }} />
                 </Button>
@@ -57,23 +59,23 @@ export function UploadedFiles({ onChange, refresh }) {
             {DEMO && <ListSubheader>Select Dataset</ListSubheader>}
             {files.map((file) => (
               <ListItem
-                key={file}
+                key={file.id}
                 data-cy="uploaded-data-list-item"
                 button
                 onClick={() => {
                   handleClick({
-                    display: file,
-                    path: file,
+                    display: file.name,
+                    path: file.id,
                     type: DatasetType.Chem,
                     uploaded: true, // indicates that file is already uploaded
                   });
                 }}
               >
-                <ListItemText primary={file} />
+                <ListItemText primary={file.name} />
                 {!DEMO && (
                   <ListItemSecondaryAction
                     onClick={() => {
-                      handleDelete(file);
+                      handleDelete(file.id);
                     }}
                   >
                     <IconButton edge="end" aria-label="delete">

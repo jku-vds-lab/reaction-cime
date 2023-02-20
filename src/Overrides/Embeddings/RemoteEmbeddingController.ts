@@ -51,6 +51,7 @@ export class RemoteEmbeddingController extends EmbeddingController {
       (e) => {
         if (e.data.messageType === 'step') {
           this.stepper(e.data.embedding);
+          // @ts-ignore
           this.notifier(e.data.step, e.data.msg);
         } else if (e.data.messageType === 'terminated') {
           this.worker.terminate();

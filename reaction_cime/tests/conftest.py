@@ -3,18 +3,23 @@ import os
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
-from tdp_core.security.manager import SecurityManager
-from tdp_core.security.model import User
-from tdp_core.server.visyn_server import create_visyn_server
+from visyn_core.security.manager import SecurityManager
+from visyn_core.security.model import User
+from visyn_core.server.visyn_server import create_visyn_server
+from visyn_core.tests.fixtures.postgres_db import postgres_db
+
+assert postgres_db
 
 
 @pytest.fixture(scope="session")
-def app() -> FastAPI:
+def app(postgres_db) -> FastAPI:
     server = create_visyn_server(
         workspace_config={
             "_env_file": os.path.join(os.path.dirname(os.path.realpath(__file__)), "../.env"),
-            "tdp_core": {"enabled_plugins": ["reaction_cime"]},
-            "reaction_cime": {},
+            "visyn_core": {"enabled_plugins": ["visyn_core", "reaction_cime"]},
+            "reaction_cime": {
+                "dburl": postgres_db.url,
+            },
         }
     )
 

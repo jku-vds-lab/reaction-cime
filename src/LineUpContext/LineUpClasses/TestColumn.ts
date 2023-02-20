@@ -20,6 +20,7 @@ import {
   toolbar,
   ValueColumn,
 } from 'lineupjs';
+// @ts-ignore
 import { IEventListener } from 'lineupjs/build/src/internal';
 import {
   dirty,
@@ -33,7 +34,9 @@ import {
   summaryRendererChanged,
   visibilityChanged,
   widthChanged,
+  // @ts-ignore
 } from 'lineupjs/build/src/model/Column';
+// @ts-ignore
 import { dataLoaded } from 'lineupjs/build/src/model/ValueColumn';
 import { DEFAULT_FORMATTER, isDummyNumberFilter, noNumberFilter, restoreMapping, restoreNumberFilter } from './helper_methods';
 

@@ -2,7 +2,7 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import React from 'react';
 
 export interface PacoSettingsState {
-  pacoAttributes: { feature: string; show: boolean }[];
+  pacoAttributes: { feature: string; show: boolean; group: string }[];
   pacoConstraints: [];
   pacoRef;
 }
@@ -13,7 +13,7 @@ const pacoSettingsSlice = createSlice({
   name: 'pacoSettings',
   initialState,
   reducers: {
-    setPacoAttributes(state, action: PayloadAction<{ feature: string; show: boolean }[]>) {
+    setPacoAttributes(state, action: PayloadAction<{ feature: string; show: boolean; group: string }[]>) {
       state.pacoAttributes = action.payload;
     },
     setPacoConstraints(state, action: PayloadAction<[]>) {

@@ -1,7 +1,7 @@
 from abc import abstractmethod
 
-from sqlalchemy.orm import Session, scoped_session
-from tdp_core import manager
+from sqlalchemy.orm import Session
+from visyn_core import manager
 
 
 class ACimeDBO:
@@ -30,16 +30,8 @@ class ACimeDBO:
 
 
 def get_engine():
-    return manager.db.engine("dv_reaction_cime")
-
-
-def create_web_session() -> Session:
-    return manager.db.create_web_session(get_engine())
+    return manager.db.engine("reaction_cime")
 
 
 def create_session() -> Session:
     return manager.db.create_session(get_engine())
-
-
-def create_scoped_session() -> Session:
-    return scoped_session(manager.db._sessionmakers[get_engine()])()

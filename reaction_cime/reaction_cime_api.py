@@ -4,7 +4,6 @@ import contextlib
 import ctypes
 import json
 import logging
-import os
 import threading
 import time
 from io import BytesIO, StringIO
@@ -16,13 +15,13 @@ import pandas as pd
 import umap
 from fastapi import APIRouter, FastAPI, Request
 from fastapi.responses import StreamingResponse
-from flask import Blueprint, abort, jsonify, request
-from flask.helpers import make_response, send_file
+from flask import Blueprint, Response, abort, jsonify, request
+from flask.helpers import make_response
 from openTSNE import TSNE
 from rdkit import Chem
 from rdkit.Chem import Draw
 from sklearn.decomposition import PCA
-from tdp_core.middleware.request_context_plugin import get_request
+from visyn_core.middleware.request_context_plugin import get_request
 
 from .helper_functions import (
     aggregate_by_col_interpolate,
@@ -67,14 +66,9 @@ def get_uploaded_files_list():
     return jsonify(get_cime_dbo().get_table_names())
 
 
-@reaction_cime_api.route("/delete_file/<filename>", methods=["GET"])
-def delete_uploaded_file(filename):
-    deleted = get_cime_dbo().drop_table(filename)
-    if deleted:
-        delete_poi_exceptions(filename)
-        delete_poi_constraints(filename)
-    _log.info("----")
-    _log.info(deleted)
+@reaction_cime_api.route("/delete_file/<id>", methods=["GET"])
+def delete_uploaded_file(id):
+    deleted = get_cime_dbo().drop_table(id)
     # TODO: Refactor to true and false instead of strings
     return {"deleted": "true" if deleted else "false"}
 
@@ -87,39 +81,39 @@ dataset_cache = (
 )  # structure: {"filename": dataset} # if "retrieve_cols" are contained in dataset.columns then the dataset is returned, otherwise dataset with all "cache_cols" are loaded into the cache
 
 
-def handle_dataset_cache(filename, cols=None, x_channel="x", y_channel="y"):
+def handle_dataset_cache(id, cols=None, x_channel="x", y_channel="y"):
     if cols is None:
         cols = []
-    if filename not in dataset_cache.keys():
-        dataset_cache[filename] = None
+    if id not in dataset_cache.keys():
+        dataset_cache[id] = None
 
     all_cols = list(set(cols + [x_channel, y_channel, "x", "y"]))
     # dataset is not cached and has to be loaded
-    if dataset_cache[filename] is None or not set(all_cols).issubset(set(dataset_cache[filename].columns)):
+    if dataset_cache[id] is None or not set(all_cols).issubset(set(dataset_cache[id].columns)):
         _log.info("---dataset is not cached and has to be loaded to memory")
         _log.info(all_cols)
-        if dataset_cache[filename] is not None:  # add currently cached columns again to cache
-            all_cols = list(set(all_cols + list(dataset_cache[filename].columns)))
+        if dataset_cache[id] is not None:  # add currently cached columns again to cache
+            all_cols = list(set(all_cols + list(dataset_cache[id].columns)))
         _log.info(all_cols)
-        dataset_cache[filename] = get_cime_dbo().get_dataframe_from_table(filename, columns=all_cols)
+        dataset_cache[id] = get_cime_dbo().get_dataframe_from_table(id, columns=all_cols)
     else:
         _log.info("---dataset cached!")
     # return cached version of dataset
-    return dataset_cache[filename]
+    return dataset_cache[id]
 
 
-def reset_dataset_cache(filename=None):
+def reset_dataset_cache(id=None):
     global dataset_cache
-    if filename is None:
+    if id is None:
         dataset_cache = {}
     else:
-        dataset_cache[filename] = None
+        dataset_cache[id] = None
 
 
-@reaction_cime_api.route("/update_cache/<filename>", methods=["GET"])
-def update_dataset_cache(filename):
+@reaction_cime_api.route("/update_cache/<id>", methods=["GET"])
+def update_dataset_cache(id):
     cache_cols = request.args.getlist("cache_cols")
-    handle_dataset_cache(filename, cache_cols)
+    handle_dataset_cache(id, cache_cols)
     return {"msg": "ok"}
 
 
@@ -157,27 +151,25 @@ def upload_csv():
     _log.info("--- save file to database")
     filename = file_upload.filename or ""
     filename = "_".join(filename.split(".")[0:-1])
-    if filename in get_cime_dbo().get_table_names():
-        filename = "%s%i" % (filename, time.time())
 
-    get_cime_dbo().save_dataframe(df, filename)
+    project = get_cime_dbo().save_dataframe(df, filename)
 
     # create default constraints file
-    save_poi_constraints(filename)
-    save_poi_exceptions(filename)
+    save_poi_constraints(project.id)
+    save_poi_exceptions(project.id)
 
     delta_time = time.time() - start_time
     _log.info("--- took %i min %f s to upload file %s" % (delta_time / 60, delta_time % 60, filename))
 
     return {
         "filename": file_upload.filename,
-        "id": filename,
+        "id": project.id,
     }
 
 
-@reaction_cime_api.route("/get_no_datapoints/<filename>", methods=["GET"])
-def get_no_datapoints(filename):
-    count = get_cime_dbo().get_no_points_from_table(filename)["count"][0]
+@reaction_cime_api.route("/get_no_datapoints/<id>", methods=["GET"])
+def get_no_datapoints(id):
+    count = get_cime_dbo().get_no_points_from_table(id)["count"][0]
     return {"no_datapoints": int(count)}
 
 
@@ -187,66 +179,48 @@ def get_no_datapoints(filename):
 
 MAX_POINTS = 10000
 
-
-def delete_poi_exceptions(filename):
-    file = f"{get_app().state.tempdir}{filename}_exceptions.csv"
-    if os.path.exists(file):
-        os.remove(file)
-    else:
-        _log.info("The file does not exist")
-
-
-def delete_poi_constraints(filename):
-    file = f"{get_app().state.tempdir}{filename}_constraints.csv"
-    if os.path.exists(file):
-        os.remove(file)
-    else:
-        _log.info("The file does not exist")
-
-
 # --- save
 
 
-def save_poi_exceptions(filename, exceptions=None):
+def save_poi_exceptions(id, exceptions=None):
     if exceptions is None:
         exceptions = []
     exceptions = (
         pd.DataFrame(exceptions) if len(exceptions) > 0 else pd.DataFrame(columns=["x_col", "y_col", "x_coord", "y_coord", "radius"])
     )
-    exceptions.to_csv(f"{get_app().state.tempdir}{filename}_exceptions.csv", index=False)
+    return get_cime_dbo().update_project(id, {"file_exceptions": exceptions})
 
 
-def save_poi_constraints(filename, constraints=None):
+def save_poi_constraints(id, constraints=None):
     if constraints is None:
         constraints = [{"col": cycle_column, "operator": "BETWEEN", "val1": 0, "val2": 100}]
     constraints = pd.DataFrame(constraints)
-    constraints.to_csv(f"{get_app().state.tempdir}{filename}_constraints.csv", index=False)
+    return get_cime_dbo().update_project(id, {"file_constraints": constraints})
 
 
 # --- load
-def load_poi_exceptions(filename):
-    path = f"{get_app().state.tempdir}{filename}_exceptions.csv"
-    if not os.path.exists(path):  # if there is no constraints file yet, create a default one
-        save_poi_exceptions(filename)
+def load_poi_exceptions(id) -> pd.DataFrame:
+    project = get_cime_dbo().get_project(id)
+    if project.file_exceptions is not None:
+        save_poi_exceptions(id)
 
-    df_exceptions = pd.read_csv(path)
-    return df_exceptions
+    return get_cime_dbo().get_project(id).file_exceptions  # type: ignore
 
 
-def load_poi_constraints(filename) -> pd.DataFrame:
-    path = f"{get_app().state.tempdir}{filename}_constraints.csv"
-    if not os.path.exists(path):  # if there is no constraints file yet, create a default one
-        save_poi_constraints(filename)
+def load_poi_constraints(id) -> pd.DataFrame:
+    project = get_cime_dbo().get_project(id)
+    if project.file_constraints is None:
+        save_poi_constraints(id)
 
-    df_constraints = pd.read_csv(path)
-    return df_constraints
+    return get_cime_dbo().get_project(id).file_constraints  # type: ignore
+    # TODO:
 
 
 # --- reset
-@reaction_cime_api.route("/reset_poi_constraints/<filename>", methods=["GET"])
-def reset_poi_constraints(filename):
-    save_poi_constraints(filename)
-    save_poi_exceptions(filename)  # TODO: do we want to reset exceptions too?
+@reaction_cime_api.route("/reset_poi_constraints/<id>", methods=["GET"])
+def reset_poi_constraints(id):
+    save_poi_constraints(id)
+    save_poi_exceptions(id)  # TODO: do we want to reset exceptions too?
     return {"msg": "ok"}
 
 
@@ -254,7 +228,7 @@ def reset_poi_constraints(filename):
 @reaction_cime_api.route("/add_poi_exceptions", methods=["OPTIONS", "POST"])
 def add_poi_exceptions():
     if request.method == "POST":
-        filename = request.form.get("filename")
+        id = request.form.get("filename")
         new_exceptions = json.loads(request.form["exceptions"])
         new_exceptions_df = pd.DataFrame(new_exceptions)
 
@@ -266,15 +240,13 @@ def add_poi_exceptions():
             and "radius" in new_exceptions_df.columns
         ):
 
-            exceptions_df = load_poi_exceptions(filename)
+            exceptions_df = load_poi_exceptions(id)
             exceptions_df = exceptions_df.append(new_exceptions_df, ignore_index=True)
 
             poi_count = (
-                get_cime_dbo()
-                .get_filter_mask(filename, get_poi_constraints_filter(filename, load_poi_constraints(filename), exceptions_df))["mask"]
-                .sum()
+                get_cime_dbo().get_filter_mask(id, get_poi_constraints_filter(id, load_poi_constraints(id), exceptions_df))["mask"].sum()
             )  # check if constraints are limited enough
-            save_poi_exceptions(filename, exceptions_df)
+            save_poi_exceptions(id, exceptions_df)
             if poi_count > MAX_POINTS:
                 return {"msg": "Too many experiments within the selected filter. Only a subset of the data will be shown."}
             return {"msg": "ok"}
@@ -293,7 +265,7 @@ def add_poi_exceptions():
 @reaction_cime_api.route("/update_poi_exceptions", methods=["OPTIONS", "POST"])
 def update_poi_exceptions():
     if request.method == "POST":
-        filename = request.form.get("filename")
+        id = request.form.get("filename")
         exceptions = json.loads(request.form["exceptions"])
         exceptions_df = pd.DataFrame(exceptions)
 
@@ -305,17 +277,15 @@ def update_poi_exceptions():
             and "radius" in exceptions_df.columns
         ):
             poi_count = (
-                get_cime_dbo()
-                .get_filter_mask(filename, get_poi_constraints_filter(filename, load_poi_constraints(filename), exceptions_df))["mask"]
-                .sum()
+                get_cime_dbo().get_filter_mask(id, get_poi_constraints_filter(id, load_poi_constraints(id), exceptions_df))["mask"].sum()
             )  # check if constraints are limited enough
-            save_poi_exceptions(filename, exceptions_df)
+            save_poi_exceptions(id, exceptions_df)
             if poi_count > MAX_POINTS:
                 return {"msg": "Too many experiments within the selected filter. Only a subset of the data will be shown."}
             return {"msg": "ok"}
 
         if len(exceptions_df) <= 0:
-            save_poi_exceptions(filename)
+            save_poi_exceptions(id)
             return {"msg": "ok"}
 
         return {
@@ -328,7 +298,7 @@ def update_poi_exceptions():
 @reaction_cime_api.route("/update_poi_constraints", methods=["OPTIONS", "POST"])
 def update_poi_constraints():
     if request.method == "POST":
-        filename = request.form.get("filename")
+        id = request.form.get("filename")
         constraints = json.loads(request.form["constraints"])
         constraints_df = pd.DataFrame(constraints)
 
@@ -339,19 +309,17 @@ def update_poi_constraints():
             and "val2" in constraints_df.columns
         ):
             poi_count = (
-                get_cime_dbo()
-                .get_filter_mask(filename, get_poi_constraints_filter(filename, constraints_df, load_poi_exceptions(filename)))["mask"]
-                .sum()
+                get_cime_dbo().get_filter_mask(id, get_poi_constraints_filter(id, constraints_df, load_poi_exceptions(id)))["mask"].sum()
             )  # check if constraints are limited enough
             if poi_count <= 0:
                 return {"msg": "No experiments are found with this filter. Please adjust the settings."}
-            save_poi_constraints(filename, constraints_df)
+            save_poi_constraints(id, constraints_df)
             if poi_count > MAX_POINTS:
                 return {"msg": "Too many experiments within the selected filter. Only a subset of the data will be shown."}
             return {"msg": "ok"}
 
         if len(constraints_df) <= 0:
-            save_poi_constraints(filename, pd.DataFrame(columns=["col", "operator", "val1", "val2"]))
+            save_poi_constraints(id, pd.DataFrame(columns=["col", "operator", "val1", "val2"]))
             return {"msg": "ok"}
 
         return {
@@ -362,28 +330,32 @@ def update_poi_constraints():
 
 
 # --- load and download
-@reaction_cime_api.route("/get_poi_exceptions/<filename>", methods=["GET"])
-def get_poi_exceptions(filename):
-    exceptions_df = load_poi_exceptions(filename)
+@reaction_cime_api.route("/get_poi_exceptions/<id>", methods=["GET"])
+def get_poi_exceptions(id):
+    exceptions_df = load_poi_exceptions(id)
     return json.dumps(exceptions_df.to_dict("records")).encode("utf-8")
 
 
-@reaction_cime_api.route("/get_poi_constraints/<filename>", methods=["GET"])
-def get_poi_constraints(filename):
-    constraint_df = load_poi_constraints(filename)
+@reaction_cime_api.route("/get_poi_constraints/<id>", methods=["GET"])
+def get_poi_constraints(id):
+    constraint_df = load_poi_constraints(id)
     return json.dumps(constraint_df.to_dict("records")).encode("utf-8")
 
 
-@reaction_cime_api.route("/download_poi_exceptions/<filename>", methods=["GET"])
-def download_poi_exceptions(filename):
-    path = f"{get_app().state.tempdir}{filename}_exceptions.csv"
-    return send_file(path, as_attachment=True)
+@reaction_cime_api.route("/download_poi_exceptions/<id>", methods=["GET"])
+def download_poi_exceptions(id):
+    df = load_poi_exceptions(id)
+    return Response(
+        df.to_csv(index=False), mimetype="text/csv", headers={"Content-disposition": f"attachment; filename={id}_exceptions.csv"}
+    )
 
 
-@reaction_cime_api.route("/download_poi_constraints/<filename>", methods=["GET"])
-def download_poi_constraints(filename):
-    path = f"{get_app().state.tempdir}{filename}_constraints.csv"
-    return send_file(path, as_attachment=True)
+@reaction_cime_api.route("/download_poi_constraints/<id>", methods=["GET"])
+def download_poi_constraints(id):
+    df = load_poi_constraints(id)
+    return Response(
+        df.to_csv(index=False), mimetype="text/csv", headers={"Content-disposition": f"attachment; filename={id}_exceptions.csv"}
+    )
 
 
 # --- filter
@@ -404,12 +376,12 @@ def map_exceptions_filter(row):
     return f'("{row.x_col}" BETWEEN {x_lower} AND {x_upper}) AND ("{row.y_col}" BETWEEN {y_lower} AND {y_upper})'
 
 
-def get_poi_constraints_filter(filename, df_constraints: pd.DataFrame | None = None, df_exceptions: pd.DataFrame | None = None):
+def get_poi_constraints_filter(id, df_constraints: pd.DataFrame | None = None, df_exceptions: pd.DataFrame | None = None):
     if df_constraints is None:
-        df_constraints = load_poi_constraints(filename)
+        df_constraints = load_poi_constraints(id)
 
     if df_exceptions is None:
-        df_exceptions = load_poi_exceptions(filename)
+        df_exceptions = load_poi_exceptions(id)
 
     cols = list(set(df_constraints["col"]))
     col_filters = []
@@ -439,13 +411,11 @@ def get_poi_constraints_filter(filename, df_constraints: pd.DataFrame | None = N
 # --- retrieve
 
 
-@reaction_cime_api.route("/get_poi_csv/<filename>", methods=["GET"])
-def get_points_of_interest(filename):
-    # domain = pd.read_csv("./temp-files/%s"%filename)
-    # domain = get_cime_dbo().get_dataframe_from_table(filename)
+@reaction_cime_api.route("/get_poi_csv/<id>", methods=["GET"])
+def get_points_of_interest(id):
     start_time = time.time()
 
-    poi_domain, is_subsample = get_poi_df_from_db(filename, get_cime_dbo())  # TODO: tell front-end that it is subsampled
+    poi_domain, is_subsample = get_poi_df_from_db(id)  # TODO: tell front-end that it is subsampled
 
     if len(poi_domain) > 0:
         poi_domain = preprocess_dataset(poi_domain)
@@ -454,19 +424,17 @@ def get_points_of_interest(filename):
     poi_domain.to_csv(csv_buffer, index=False)
 
     delta_time = time.time() - start_time
-    _log.info("--- took %i min %f s to load file %s" % (delta_time / 60, delta_time % 60, filename))
+    _log.info("--- took %i min %f s to load file %s" % (delta_time / 60, delta_time % 60, id))
     return csv_buffer.getvalue()
 
 
-def get_poi_df_from_db(filename, cime_dbo):
-    poi_domain, is_subsample = cime_dbo.get_dataframe_from_table_filter(
-        filename, get_poi_constraints_filter(filename), max_datapoints=MAX_POINTS
-    )
+def get_poi_df_from_db(id):
+    poi_domain, is_subsample = get_cime_dbo().get_dataframe_from_table_filter(id, get_poi_constraints_filter(id), max_datapoints=MAX_POINTS)
     return poi_domain, is_subsample
 
 
-def get_poi_mask(filename, cime_dbo):
-    mask = cime_dbo.get_filter_mask(filename, get_poi_constraints_filter(filename))
+def get_poi_mask(id, cime_dbo):
+    mask = cime_dbo.get_filter_mask(id, get_poi_constraints_filter(id))
     return mask
 
 
@@ -475,10 +443,10 @@ def get_poi_mask(filename, cime_dbo):
 # region --------------- Parallel Coordinates ------------------
 
 
-@reaction_cime_api.route("/get_csv_by_columns/<filename>", methods=["GET"])
-def get_csv_by_columns(filename):
+@reaction_cime_api.route("/get_csv_by_columns/<id>", methods=["GET"])
+def get_csv_by_columns(id):
     columns = request.args.getlist("cols")
-    domain = handle_dataset_cache(filename, columns)
+    domain = handle_dataset_cache(id, columns)
     domain = domain[columns]
 
     csv_buffer = StringIO()
@@ -492,15 +460,15 @@ def get_csv_by_columns(filename):
 # region --------------- nearest neighbors ------------------
 
 
-@reaction_cime_api.route("/get_k_nearest_from_csv/<filename>/<x>/<y>/<k>", methods=["GET"])
-def get_k_nearest_points(filename, x, y, k):
+@reaction_cime_api.route("/get_k_nearest_from_csv/<id>/<x>/<y>/<k>", methods=["GET"])
+def get_k_nearest_points(id, x, y, k):
     """
-    k nearest points to the point x,y in the database filename will be returned using a StringIO buffer.
+    k nearest points to the point x,y in the database id will be returned using a StringIO buffer.
     This is implemented via an SQLite query to the database.
 
     Parameters
     ----------
-    filename:
+    id:
         link to the dataset.
 
     x:
@@ -518,23 +486,23 @@ def get_k_nearest_points(filename, x, y, k):
 
     # calculates squared euclidean distance, orders the db table by this distance, and returns k first entries
     nearest_points_domain = get_cime_dbo().get_dataframe_from_table_complete_filter(
-        filename, "ORDER BY ((x-(" + str(x) + "))*(x-(" + str(x) + ")))+((y-(" + str(y) + "))*(y-(" + str(y) + "))) LIMIT " + str(k) + ";"
+        id, "ORDER BY ((x-(" + str(x) + "))*(x-(" + str(x) + ")))+((y-(" + str(y) + "))*(y-(" + str(y) + "))) LIMIT " + str(k) + ";"
     )
 
     response = make_response(nearest_points_domain.to_csv(index=False))
-    response.headers["Content-Disposition"] = "attachment; filename=%s_kNN_%s_%s.csv" % (filename, x, y)
+    response.headers["Content-Disposition"] = "attachment; filename=%s_kNN_%s_%s.csv" % (id, x, y)
     response.headers["Content-type"] = "text/csv"
     return response
 
 
-@reaction_cime_api.route("/get_radius_from_csv/<filename>/<x>/<y>/<d>", methods=["GET"])
-def get_points_given_radius(filename, x, y, r):
+@reaction_cime_api.route("/get_radius_from_csv/<id>/<x>/<y>/<d>", methods=["GET"])
+def get_points_given_radius(id, x, y, r):
     """
-    Returns all points in the database filename that have distance no greater than r to the point at coordinates (x,y).
+    Returns all points in the database id that have distance no greater than r to the point at coordinates (x,y).
 
     Parameters
     ----------
-    filename:
+    id:
         link to the dataset.
 
     x:
@@ -553,11 +521,11 @@ def get_points_given_radius(filename, x, y, r):
     r2 = int(r) * int(r)
     # filters using euclidean distance (squared on both sides since SQLite does not have extended maths enabled for SQRT)
     nearest_points_domain, _ = get_cime_dbo().get_dataframe_from_table_filter(
-        filename, "((x-(" + str(x) + "))*(x-(" + str(x) + ")))+((y-(" + str(y) + "))*(y-(" + str(y) + "))) < " + str(r2)
+        id, "((x-(" + str(x) + "))*(x-(" + str(x) + ")))+((y-(" + str(y) + "))*(y-(" + str(y) + "))) < " + str(r2)
     )
 
     response = make_response(nearest_points_domain.to_csv(index=False))
-    response.headers["Content-Disposition"] = "attachment; filename=%s_kNN_%s_%s.csv" % (filename, x, y)
+    response.headers["Content-Disposition"] = "attachment; filename=%s_kNN_%s_%s.csv" % (id, x, y)
     response.headers["Content-type"] = "text/csv"
     return response
 
@@ -567,8 +535,8 @@ def get_points_given_radius(filename, x, y, r):
 # region --------------- aggregate dataset ------------------
 
 # deprecated
-@reaction_cime_api.route("/get_agg_csv/<filename>/<col_name>", methods=["GET"])
-def get_aggregated_dataset(filename, col_name):
+@reaction_cime_api.route("/get_agg_csv/<id>/<col_name>", methods=["GET"])
+def get_aggregated_dataset(id, col_name):
     range = {
         "x_min": request.args.get("x_min"),
         "x_max": request.args.get("x_max"),
@@ -576,7 +544,7 @@ def get_aggregated_dataset(filename, col_name):
         "y_max": request.args.get("y_max"),
     }
     filter = "x > {x_min} and x < {x_max} and y > {y_min} and y < {y_max}".format(**range)
-    agg_domain, _ = get_cime_dbo().get_dataframe_from_table_filter(filename, filter, columns=["x", "y", col_name])
+    agg_domain, _ = get_cime_dbo().get_dataframe_from_table_filter(id, filter, columns=["x", "y", col_name])
     agg_df = aggregate_by_col_interpolate(agg_domain, col_name, sample_size=200)  # TODO: dynamic sample_size
 
     csv_buffer = StringIO()
@@ -586,8 +554,8 @@ def get_aggregated_dataset(filename, col_name):
 
 
 # deprecated
-@reaction_cime_api.route("/get_agg_csv_cached/<filename>", methods=["GET"])
-def get_aggregated_dataset_cached(filename):
+@reaction_cime_api.route("/get_agg_csv_cached/<id>", methods=["GET"])
+def get_aggregated_dataset_cached(id):
 
     # value_col_name = request.args.get("value_col")
     # uncertainty_col_name = request.args.get("uncertainty_col")
@@ -603,7 +571,7 @@ def get_aggregated_dataset_cached(filename):
         "y_max": float(request.args["y_max"]),
     }
 
-    agg_domain = handle_dataset_cache(filename, retrieve_cols + cache_cols)
+    agg_domain = handle_dataset_cache(id, retrieve_cols + cache_cols)
     agg_domain = agg_domain[
         (agg_domain["x"] < range["x_max"])
         * (agg_domain["x"] > range["x_min"])
@@ -620,8 +588,8 @@ def get_aggregated_dataset_cached(filename):
     return csv_buffer.getvalue()
 
 
-@reaction_cime_api.route("/get_hex_agg/<filename>/<x_channel>/<y_channel>", methods=["GET"])
-def get_hexagonal_aggregation(filename, x_channel="x", y_channel="y"):
+@reaction_cime_api.route("/get_hex_agg/<id>/<x_channel>/<y_channel>", methods=["GET"])
+def get_hexagonal_aggregation(id, x_channel="x", y_channel="y"):
 
     retrieve_cols = request.args.getlist("retrieve_cols")
     aggregation_methods = request.args.getlist("aggregation_methods")
@@ -636,7 +604,7 @@ def get_hexagonal_aggregation(filename, x_channel="x", y_channel="y"):
         "y_max": float(request.args["y_max"]),
     }
 
-    agg_domain = handle_dataset_cache(filename, retrieve_cols + cache_cols, x_channel=x_channel, y_channel=y_channel)
+    agg_domain = handle_dataset_cache(id, retrieve_cols + cache_cols, x_channel=x_channel, y_channel=y_channel)
     agg_domain = agg_domain[
         (agg_domain[x_channel] < range["x_max"])
         * (agg_domain[x_channel] > range["x_min"])
@@ -661,38 +629,38 @@ def get_hexagonal_aggregation(filename, x_channel="x", y_channel="y"):
     return csv_buffer.getvalue()
 
 
-@reaction_cime_api.route("/get_value_range/<filename>/<col_name>", methods=["GET"])
-def get_value_range(filename, col_name):
-    range = get_cime_dbo().get_value_range_from_table(filename, col_name).iloc[0]
+@reaction_cime_api.route("/get_value_range/<id>/<col_name>", methods=["GET"])
+def get_value_range(id, col_name):
+    range = get_cime_dbo().get_value_range_from_table(id, col_name).iloc[0]
     return {"min": float(range["min"]), "max": float(range["max"])}
 
 
-@reaction_cime_api.route("/get_category_values/<filename>/<col_name>", methods=["GET"])
-def get_category_values(filename, col_name):
-    df = handle_dataset_cache(filename, [col_name])
+@reaction_cime_api.route("/get_category_values/<id>/<col_name>", methods=["GET"])
+def get_category_values(id, col_name):
+    df = handle_dataset_cache(id, [col_name])
     distinct_vals = list(set(df[col_name]))
     return {"values": distinct_vals}
 
 
-@reaction_cime_api.route("/get_category_count/<filename>/<col_name>", methods=["GET"])
-def get_category_count(filename, col_name):
-    # cat_count = get_cime_dbo().get_category_count(filename, col_name)
+@reaction_cime_api.route("/get_category_count/<id>/<col_name>", methods=["GET"])
+def get_category_count(id, col_name):
+    # cat_count = get_cime_dbo().get_category_count(id, col_name)
     # return json.dumps(cat_count.to_dict('records')).encode('utf-8')
-    df = handle_dataset_cache(filename, [col_name])
+    df = handle_dataset_cache(id, [col_name])
     df = df[[col_name]]
     df["count"] = 0  # dummy column, such that it can be aggregated by count
     cat_count = df.groupby(col_name, as_index=False).count()
     return json.dumps(cat_count.to_dict("records")).encode("utf-8")
 
 
-@reaction_cime_api.route("/get_category_count_of_hex/<filename>/<col_name>/<x_channel>/<y_channel>", methods=["GET"])
-def get_category_count_of_hex(filename, col_name, x_channel, y_channel):
+@reaction_cime_api.route("/get_category_count_of_hex/<id>/<col_name>/<x_channel>/<y_channel>", methods=["GET"])
+def get_category_count_of_hex(id, col_name, x_channel, y_channel):
     hex_x = float(request.args["x"])
     hex_y = float(request.args["y"])
     hex_circ_radius = float(request.args["circ_radius"])
 
-    # df = get_cime_dbo().get_dataframe_from_table(filename, columns=[x_channel, y_channel, col_name])
-    df = handle_dataset_cache(filename, [x_channel, y_channel, col_name])
+    # df = get_cime_dbo().get_dataframe_from_table(id, columns=[x_channel, y_channel, col_name])
+    df = handle_dataset_cache(id, [x_channel, y_channel, col_name])
 
     window = is_inside_hex(
         df[x_channel], df[y_channel], hex_x=hex_x, hex_y=hex_y, radius=circ_radius_to_radius(hex_circ_radius), circ_radius=hex_circ_radius
@@ -703,10 +671,10 @@ def get_category_count_of_hex(filename, col_name, x_channel, y_channel):
     return json.dumps(cat_count.to_dict("records")).encode("utf-8")
 
 
-@reaction_cime_api.route("/get_density/<filename>/<col_name>", methods=["GET"])
-def get_density(filename, col_name):
-    # data = get_cime_dbo().get_dataframe_from_table(filename, columns=[col_name])[col_name]
-    data = handle_dataset_cache(filename, [col_name])[col_name]
+@reaction_cime_api.route("/get_density/<id>/<col_name>", methods=["GET"])
+def get_density(id, col_name):
+    # data = get_cime_dbo().get_dataframe_from_table(id, columns=[col_name])[col_name]
+    data = handle_dataset_cache(id, [col_name])[col_name]
 
     from scipy.stats import gaussian_kde
 
@@ -723,14 +691,14 @@ def get_density(filename, col_name):
     return {"x_vals": list(x_vals), "y_vals": list(y_vals), "norm_sd": np.std((data - data_min) / data_range)}
 
 
-@reaction_cime_api.route("/get_density_of_hex/<filename>/<col_name>/<x_channel>/<y_channel>", methods=["GET"])
-def get_density_of_hex(filename, col_name, x_channel="x", y_channel="y"):
+@reaction_cime_api.route("/get_density_of_hex/<id>/<col_name>/<x_channel>/<y_channel>", methods=["GET"])
+def get_density_of_hex(id, col_name, x_channel="x", y_channel="y"):
     hex_x = float(request.args["x"])
     hex_y = float(request.args["y"])
     hex_circ_radius = float(request.args["circ_radius"])
 
-    # df = get_cime_dbo().get_dataframe_from_table(filename, columns=[x_channel, y_channel, col_name])
-    df = handle_dataset_cache(filename, [x_channel, y_channel, col_name])
+    # df = get_cime_dbo().get_dataframe_from_table(id, columns=[x_channel, y_channel, col_name])
+    df = handle_dataset_cache(id, [x_channel, y_channel, col_name])
 
     window = is_inside_hex(
         df[x_channel], df[y_channel], hex_x=hex_x, hex_y=hex_y, radius=circ_radius_to_radius(hex_circ_radius), circ_radius=hex_circ_radius
@@ -760,17 +728,17 @@ def get_density_of_hex(filename, col_name, x_channel="x", y_channel="y"):
 # depricated
 @reaction_cime_api.route("/project_dataset", methods=["OPTIONS", "POST"])
 def project_dataset():
-    filename = request.form.get("filename")
+    id = request.form.get("filename")
     params = json.loads(request.form["params"])
     selected_feature_info = json.loads(request.form["selected_feature_info"])
-    proj_df = get_cime_dbo().get_dataframe_from_table(filename, columns=list(selected_feature_info.keys()))
+    proj_df = get_cime_dbo().get_dataframe_from_table(id, columns=list(selected_feature_info.keys()))
 
     # TODO: if params["useSelection"]: only project selected points --> do this in front-end? do this at all?
 
     # handle custom initialization of coordinates
     initialization = None
     if params["seeded"]:  # take custom seed from current coordinates
-        initialization = get_poi_df_from_db(filename, get_cime_dbo())[0][["x", "y"]].values
+        initialization = get_poi_df_from_db(id)[0][["x", "y"]].values
 
     # rescale numerical values and encode categorical values
     # TODO: currently weighted features is only used with gowers distance -> implement for all
@@ -819,30 +787,30 @@ def project_dataset():
 
     # update the coordinates in the dataset
     start_time = time.time()
-    get_cime_dbo().update_row_bulk(filename, proj_df.index, {"x": proj_data[:, 0], "y": proj_data[:, 1]})  # type: ignore
+    get_cime_dbo().update_row_bulk(id, proj_df.index, {"x": proj_data[:, 0], "y": proj_data[:, 1]})  # type: ignore
     delta_time = time.time() - start_time
     _log.info("--- took %i min %f s to update database" % (delta_time / 60, delta_time % 60))
 
     _log.info("return poi positions")
-    df = get_poi_df_from_db(filename, get_cime_dbo())[0][["x", "y"]].to_dict("records")
+    df = get_poi_df_from_db(id)[0][["x", "y"]].to_dict("records")
     return {"done": "true", "embedding": df}
 
 
-@reaction_cime_api.route("/terminate_projection_thread/<filename>", methods=["GET"])
-def terminate_projection_thread(filename):
+@reaction_cime_api.route("/terminate_projection_thread/<id>", methods=["GET"])
+def terminate_projection_thread(id):
     app = get_app()
-    setattr(app.state, f"TERMINATE_PROJECTION_{filename}", True)
+    setattr(app.state, f"TERMINATE_PROJECTION_{id}", True)
     return {"msg": "ok"}
 
 
 # https://www.geeksforgeeks.org/python-different-ways-to-kill-a-thread/
 class ProjectionThread(threading.Thread):
-    def __init__(self, filename, params, selected_feature_info, cime_dbo, poi_mask=None):
+    def __init__(self, id, params, selected_feature_info, cime_dbo, poi_mask=None):
         threading.Thread.__init__(self)
-        self.filename = filename
+        self.id = id
         self.params = params
         self.selected_feature_info = selected_feature_info
-        self.cime_dbo = cime_dbo
+        self.cime_dbo: ReactionCIMEDBO = cime_dbo
         self.poi_mask = poi_mask
 
         self.current_step = "0"
@@ -877,8 +845,8 @@ class ProjectionThread(threading.Thread):
             self.msg = "save embedding..."
             # update the coordinates in the dataset
             start_time = time.time()
-            self.cime_dbo.update_row_bulk(self.filename, proj_df.index, {"x": proj_data[:, 0], "y": proj_data[:, 1]})  # type: ignore
-            reset_dataset_cache(self.filename)  # reset cached data
+            self.cime_dbo.update_row_bulk(self.id, proj_df.index, {"x": proj_data[:, 0], "y": proj_data[:, 1]})  # type: ignore
+            reset_dataset_cache(self.id)  # reset cached data
             delta_time = time.time() - start_time
             _log.info("--- took %i min %f s to update database" % (delta_time / 60, delta_time % 60))
 
@@ -893,13 +861,13 @@ class ProjectionThread(threading.Thread):
 
     def preprocess_dataset(self):
         self.msg = "load dataset..."
-        proj_df = self.cime_dbo.get_dataframe_from_table(self.filename, columns=list(self.selected_feature_info.keys()))
+        proj_df = self.cime_dbo.get_dataframe_from_table(self.id, columns=list(self.selected_feature_info.keys()))
 
         self.msg = "seeding..."
         # handle custom initialization of coordinates
         initialization = None
         if self.params["seeded"]:  # take custom seed from current coordinates
-            # initialization = get_poi_df_from_db(self.filename, self.cime_dbo)[["x","y"]].values # does this make sense?
+            # initialization = get_poi_df_from_db(self.id, self.cime_dbo)[["x","y"]].values # does this make sense?
             initialization = proj_df[["x", "y"]].values
 
         # TODO: if params["useSelection"]: only project selected points --> do this in front-end? do this at all?
@@ -1001,7 +969,7 @@ class ProjectionThread(threading.Thread):
 
     def run_rm_overlap(self):
         self.msg = "load dataset..."
-        proj_df = self.cime_dbo.get_dataframe_from_table(self.filename, columns=["x", "y"])
+        proj_df = self.cime_dbo.get_dataframe_from_table(self.id, columns=["x", "y"])
 
         self.msg = "calc embedding..."
         from .dgrid import DGrid
@@ -1054,22 +1022,22 @@ class ProjectionThread(threading.Thread):
 async def project_dataset_async_v2(request: Request):
     # TODO: Use FastAPI/Pydantic models for validation instead of directly using the rqeuest...
     form_data = await request.form()
-    filename: str = form_data["filename"]  # type: ignore
+    id: str = form_data["filename"]  # type: ignore
     params = json.loads(form_data["params"])  # type: ignore
     selected_feature_info = json.loads(form_data["selected_feature_info"])  # type: ignore
     cime_dbo = get_cime_dbo()
 
     app = get_app()
-    setattr(app.state, f"TERMINATE_PROJECTION_{filename}", False)
+    setattr(app.state, f"TERMINATE_PROJECTION_{id}", False)
 
     async def calculate_embeddings():
-        proj = ProjectionThread(filename, params, selected_feature_info, cime_dbo, get_poi_mask(filename, cime_dbo)["mask"])
+        proj = ProjectionThread(id, params, selected_feature_info, cime_dbo, get_poi_mask(id, cime_dbo)["mask"])
         proj.start()
         while True:
             await asyncio.sleep(2)
             terminate = False
             with contextlib.suppress(KeyError):
-                terminate = getattr(app.state, f"TERMINATE_PROJECTION_{filename}")
+                terminate = getattr(app.state, f"TERMINATE_PROJECTION_{id}")
 
             # https://stackoverflow.com/questions/41146144/how-to-fix-assertionerror-value-must-be-bytes-error-in-python2-7-with-apache
             yield json.dumps({"step": proj.current_step, "msg": proj.msg, "emb": proj.emb}).encode("utf-8")
@@ -1078,7 +1046,7 @@ async def project_dataset_async_v2(request: Request):
                 proj.join()
             if proj.done:  # proj.current_step >= params["iterations"] or proj.interrupt:
                 await asyncio.sleep(1)
-                df = get_poi_df_from_db(filename, cime_dbo)[0][["x", "y"]].to_dict("records")
+                df = get_poi_df_from_db(id)[0][["x", "y"]].to_dict("records")
                 yield json.dumps({"step": None, "msg": None, "emb": df}).encode("utf-8")
                 break
 

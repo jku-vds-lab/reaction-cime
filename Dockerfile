@@ -20,7 +20,7 @@ COPY bundles/ /app/bundles/
 # expose default port
 EXPOSE 9000
 
-CMD ["uvicorn", "tdp_core.server.main:app", "--host", "0.0.0.0", "--port", "9000"]
+CMD ["uvicorn", "visyn_core.server.main:app", "--host", "0.0.0.0", "--port", "9000"]
 
 # Running
 # docker build -f Dockerfile -t reaction_cime .

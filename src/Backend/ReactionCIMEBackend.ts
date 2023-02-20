@@ -51,7 +51,7 @@ export class ReactionCIMEBackend {
     return data;
   };
 
-  public getUploadedFiles = async (): Promise<string[]> => {
+  public getUploadedFiles = async (): Promise<{ name: string; id: string }[]> => {
     const path = `${this.baseUrl}/get_uploaded_files_list`;
 
     return fetch(path, {
