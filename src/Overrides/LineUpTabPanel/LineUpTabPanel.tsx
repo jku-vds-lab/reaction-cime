@@ -93,7 +93,7 @@ export const LineUpTabPanel = connector(({ setDetailVisibility, setLineUpInput_f
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       <Box paddingLeft={2} paddingTop={1} paddingRight={2}>
         <Typography variant="subtitle2" gutterBottom>
-          LineUp Settings
+          LineUp settings
         </Typography>
       </Box>
       <Box paddingLeft={2} paddingTop={1} paddingRight={2}>
@@ -103,12 +103,12 @@ export const LineUpTabPanel = connector(({ setDetailVisibility, setLineUpInput_f
             /> */}
 
         <Button fullWidth style={{ marginRight: 2 }} variant="outlined" onClick={() => onLoad({ reset: true })}>
-          Load All
+          Load all
         </Button>
       </Box>
       <Box paddingLeft={2} paddingTop={1} paddingRight={2}>
         <Button fullWidth variant="outlined" onClick={() => onLoad({ selection: currentAggregation.aggregation })}>
-          Load Selection
+          Load selection
         </Button>
       </Box>
       <Box paddingLeft={2} paddingTop={1} paddingRight={2}>
@@ -122,7 +122,7 @@ export const LineUpTabPanel = connector(({ setDetailVisibility, setLineUpInput_f
               }}
             />
           }
-          label="Show Cell Values"
+          label="Show cell values"
         />
       </Box>
       <Box paddingLeft={2} paddingTop={1} paddingRight={2}>

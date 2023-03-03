@@ -62,7 +62,7 @@ const ApplicationWrapper = connector(({ setMouseMoveFn, setMouseClickFn, resetVi
           { id: 'pcaRemote', name: 'PCA', settings: {}, embController: new RemoteEmbeddingController('pca', startProjection) },
           {
             id: 'rmOverlap',
-            name: 'Overlap Removal',
+            name: 'Overlap removal',
             settings: { hideSettings: true },
             embController: new RemoteEmbeddingController('rmOverlap', startProjection),
             description:
@@ -71,6 +71,7 @@ const ApplicationWrapper = connector(({ setMouseMoveFn, setMouseClickFn, resetVi
         ],
         showVisibleProjections: false,
         showTrailSettings: false,
+        detailViewSplitRatio: [60, 40],
       }}
       overrideComponents={{
         mouseInteractionCallbacks: {
@@ -89,11 +90,13 @@ const ApplicationWrapper = connector(({ setMouseMoveFn, setMouseClickFn, resetVi
             name: 'LineUp',
             view: <LineUpContext key="lineup" />,
             settings: LineUpTabPanel,
+            alwaysRender: true,
           },
           {
             name: 'Parallel Coordinates',
             view: <PacoContext key="paco" />,
             settings: PacoTabPanel,
+            alwaysRender: true,
           },
         ],
         tabs: [

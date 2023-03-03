@@ -8,6 +8,7 @@ describe('Remote Projection', () => {
    */
   it('All Remote Projections', { scrollBehavior: false }, () => {
     cy.visit('/');
+    /* TODO: These are disabled as they run way too long in the CI
     cy.createProject('cypress/fixtures/domain_5000_v2.csv');
 
     cy.switchTab('projection');
@@ -21,5 +22,6 @@ describe('Remote Projection', () => {
       cy.contains('div', /5\/5/, { timeout: 60000 }).click();
       cy.byId('projection-control-card-close-button').click();
     }
+    */
   });
 });

@@ -12,3 +12,7 @@ body {
   position: absolute;
   height: 100vh;
 }
+
+.MuiButtonBase-root {
+  text-transform: none !important;
+}
