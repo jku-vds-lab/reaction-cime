@@ -1,8 +1,9 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { GenericFingerprintAttribute } from 'projection-space-explorer';
 import React from 'react';
 
 export interface PacoSettingsState {
-  pacoAttributes: { feature: string; show: boolean }[];
+  pacoAttributes: GenericFingerprintAttribute[];
   pacoConstraints: [];
   pacoRef;
 }
@@ -13,7 +14,7 @@ const pacoSettingsSlice = createSlice({
   name: 'pacoSettings',
   initialState,
   reducers: {
-    setPacoAttributes(state, action: PayloadAction<{ feature: string; show: boolean }[]>) {
+    setPacoAttributes(state, action: PayloadAction<GenericFingerprintAttribute[]>) {
       state.pacoAttributes = action.payload;
     },
     setPacoConstraints(state, action: PayloadAction<[]>) {

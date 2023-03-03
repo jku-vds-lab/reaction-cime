@@ -1,6 +1,7 @@
 import * as d3v5 from 'd3v5';
 import { useCancellablePromise } from 'projection-space-explorer';
 import { trackPromise } from 'react-promise-tracker';
+import { ISecureItem } from 'visyn_core';
 
 export class ReactionCIMEBackend {
   protected smiles_cache = {};
@@ -51,7 +52,7 @@ export class ReactionCIMEBackend {
     return data;
   };
 
-  public getUploadedFiles = async (): Promise<string[]> => {
+  public getUploadedFiles = async (): Promise<({ name: string; id: string } & ISecureItem)[]> => {
     const path = `${this.baseUrl}/get_uploaded_files_list`;
 
     return fetch(path, {
@@ -273,25 +274,6 @@ export class ReactionCIMEBackend {
 
   public loadCategoryValues = async (filename: string, col_name: string) => {
     return fetch(`${this.baseUrl}/get_category_values/${encodeURIComponent(filename)}/${encodeURIComponent(col_name)}`, {
-      ...this.fetchParams,
-      method: 'GET',
-    })
-      .then(this.handleErrors)
-      .then((response) => response.json())
-      .then(this.handleJSONErrors)
-      .catch((error) => {
-        console.log(error);
-      });
-  };
-
-  public updateBackendCache = async (filename: string, cacheCols: string[]) => {
-    let cacheColsString = '';
-    if (cacheCols != null) {
-      cacheCols.forEach((col) => {
-        cacheColsString += `&cache_cols=${encodeURIComponent(col)}`;
-      });
-    }
-    return fetch(`${this.baseUrl}/update_cache/${encodeURIComponent(filename)}?dummy=1${cacheColsString}`, {
       ...this.fetchParams,
       method: 'GET',
     })

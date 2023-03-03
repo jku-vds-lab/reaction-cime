@@ -1,7 +1,8 @@
 import * as React from 'react';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { PSEContextProvider, API, Application, PluginRegistry, setItemLabel } from 'projection-space-explorer';
 import { connect, ConnectedProps } from 'react-redux';
+import { useVisynAppContext } from 'visyn_core';
 import { LineUpContext } from './LineUpContext';
 import { LineUpTabPanel } from './Overrides/LineUpTabPanel';
 import { AppState, CIME4RViewActions, createCIMERootReducer } from './State/Store';
@@ -39,22 +40,12 @@ type PropsFromRedux = ConnectedProps<typeof connector>;
 
 type Props = PropsFromRedux;
 
-const ApplicationWrapper = connector(({ setMouseMoveFn, dataset_path, setMouseClickFn, legendAttributes, globalLabels, resetViews }: Props) => {
+const ApplicationWrapper = connector(({ setMouseMoveFn, setMouseClickFn, resetViews }: Props) => {
   const startProjection = (msg: string) => {
     if (msg === 'init') {
       resetViews();
     }
   };
-
-  useEffect(() => {
-    if (legendAttributes != null) {
-      // update cache in backend, when legendAttributes are changed
-      const cols = legendAttributes.filter((item) => item.show).map((item) => item.feature);
-      if (cols.length > 0) {
-        ReactionCIMEBackendFromEnv.updateBackendCache(dataset_path, cols);
-      }
-    }
-  }, [legendAttributes, dataset_path]);
 
   return (
     <Application
@@ -135,10 +126,11 @@ const ApplicationWrapper = connector(({ setMouseMoveFn, dataset_path, setMouseCl
 export function ReactionCIMEApp() {
   const [context] = useState(new API<AppState>(null, createCIMERootReducer()));
   context.store.dispatch(setItemLabel({ label: 'experiment', label_plural: 'experiments' }));
+  const { user } = useVisynAppContext();
 
-  return (
+  return user ? (
     <PSEContextProvider context={context}>
       <ApplicationWrapper />
     </PSEContextProvider>
-  );
+  ) : null;
 }

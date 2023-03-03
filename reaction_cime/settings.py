@@ -1,13 +1,10 @@
-import os
-
 from pydantic import BaseModel
-from tdp_core import manager
+from visyn_core import manager
 
 
 class ReactionCimeSettings(BaseModel):
-    # dburl: str = "sqlite:///:memory:"
+    dburl: str = "postgresql://admin:admin@localhost:5432/db"
     # statement_timeout: Any = None
-    tmp_dir: str = os.path.join(os.path.abspath(os.path.dirname(__file__)), "./_data/")
     bundles_dir: str | None = None
     # migration: Dict = {"autoUpgrade": True}
 

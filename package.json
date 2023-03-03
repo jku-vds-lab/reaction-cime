@@ -76,6 +76,7 @@
     "react-redux": "^7.2.6",
     "react-vega": "^7.6.0",
     "redux": "^4.1.2",
+    "visyn_core": "git+ssh://git@github.com/datavisyn/visyn_core#develop",
     "visyn_scripts": "git+ssh://git@github.com/datavisyn/visyn_scripts#develop",
     "vsup": "^1.1.0",
     "worker-loader": "^3.0.8"

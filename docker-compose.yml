@@ -10,5 +10,19 @@ services:
       POSTGRES_USER: admin
       POSTGRES_PASSWORD: admin
       POSTGRES_DB: db
+  pgadmin4:
+    image: dpage/pgadmin4
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=admin@datavisyn.io
+      - PGADMIN_DEFAULT_PASSWORD=admin
+    depends_on:
+      - db_postgres
+    links:
+      - 'db_postgres:hts_hidden'
+    ports:
+      - '5050:80'
+    volumes:
+      - 'pgadmin4_data:/pgadmin'
 volumes:
   db_postgres_data:
+  pgadmin4_data:

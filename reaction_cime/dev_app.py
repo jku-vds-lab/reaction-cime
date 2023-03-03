@@ -1,7 +1,7 @@
 import os
 import sys
 
-from tdp_core.server.visyn_server import create_visyn_server
+from visyn_core.server.visyn_server import create_visyn_server
 
 # This app is either started via the uvicorn runner in __main__.py,
 # or as module to execute commands via `python -m <app>.dev_app db-migration exec ...`
