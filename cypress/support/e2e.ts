@@ -16,5 +16,12 @@
 // Import commands.js using ES2015 syntax:
 import './commands';
 
+beforeEach(() => {
+  cy.viewport(1920, 1200);
+  cy.intercept(`${Cypress.config().baseUrl}/**`, (req) => {
+    req.headers.apiKey = 'admin:admin';
+  });
+});
+
 // Alternatively you can use CommonJS syntax:
 // require('./commands')
