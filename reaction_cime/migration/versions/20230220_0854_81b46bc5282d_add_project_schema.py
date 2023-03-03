@@ -19,9 +19,9 @@ def upgrade():
 
     connection.execute(
         """
-        CREATE SCHEMA reaction_cime_bayer;
+        CREATE SCHEMA cime4r;
 
-        CREATE TABLE reaction_cime_bayer.project
+        CREATE TABLE cime4r.project
         (
             "id" UUID PRIMARY KEY,
             "name" TEXT NOT NULL,
@@ -46,6 +46,6 @@ def downgrade():
 
     connection.execute(
         """
-        DROP SCHEMA reaction_cime_bayer CASCADE;
+        DROP SCHEMA cime4r CASCADE;
         """
     )

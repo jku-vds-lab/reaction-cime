@@ -63,6 +63,14 @@ and finally start the server
 python reaction_cime
 ```
 
+
+Now, if a login screen pops up, you can use admin:admin to login. If you want to disable the login screen and go directly to the application, create a `reaction_cime/.env` with the following contents. After restaring the server, you will be automatically logged in.
+
+```
+VISYN_CORE__SECURITY__STORE__NO_SECURITY_STORE__ENABLE=true
+VISYN_CORE__SECURITY__STORE__NO_SECURITY_STORE__USER=admin
+```
+
 ### Deploy with Docker
 
 ```bash

@@ -11,7 +11,6 @@ import bayerLogo from './assets/bayer_logo.svg';
 ReactDOM.render(
   <VisynAppProvider appName="CIME4R">
     <VisynApp
-      loginMenu={null}
       header={
         <VisynHeader
           components={{

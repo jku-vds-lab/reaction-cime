@@ -1,16 +1,23 @@
 import { Button, Grid, IconButton, List, ListItem, ListItemSecondaryAction, ListItemText, ListSubheader } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { DatasetType, useCancellablePromise } from 'projection-space-explorer';
-import React from 'react';
+import React, { CSSProperties } from 'react';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import { trackPromise } from 'react-promise-tracker';
+import { ISecureItem, userSession } from 'visyn_core';
 import { DEMO } from '../../constants';
 import { ReactionCIMEBackendFromEnv } from '../../Backend/ReactionCIMEBackend';
 import { LoadingIndicatorView } from './LoadingIndicatorDialog';
 
+const textOverflowStyle = {
+  textOverflow: 'ellipsis',
+  overflow: 'hidden',
+  whiteSpace: 'nowrap',
+} satisfies CSSProperties;
+
 const loadingArea = 'update_uploaded_files_list';
 export function UploadedFiles({ onChange, refresh }) {
-  const [files, setFiles] = React.useState<{ name: string; id: string }[]>([]);
+  const [files, setFiles] = React.useState<({ name: string; id: string } & ISecureItem)[]>([]);
   const { cancellablePromise } = useCancellablePromise();
 
   const updateFiles = () => {
@@ -71,8 +78,17 @@ export function UploadedFiles({ onChange, refresh }) {
                   });
                 }}
               >
-                <ListItemText primary={file.name} />
-                {!DEMO && (
+                <ListItemText
+                  primary={file.name}
+                  secondary={`By ${file.creator}`}
+                  primaryTypographyProps={{
+                    style: textOverflowStyle,
+                  }}
+                  secondaryTypographyProps={{
+                    style: textOverflowStyle,
+                  }}
+                />
+                {!DEMO && userSession.canWrite(file) && (
                   <ListItemSecondaryAction
                     onClick={() => {
                       handleDelete(file.id);

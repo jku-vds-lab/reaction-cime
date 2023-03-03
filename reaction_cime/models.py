@@ -24,7 +24,7 @@ class CompressedPickler:
 
 class Project(Base):  # type: ignore
     __tablename__ = "project"
-    __table_args__ = {"schema": "reaction_cime_bayer", "extend_existing": True}
+    __table_args__ = {"schema": "cime4r", "extend_existing": True}
 
     id: UUID_TYPE = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)  # type: ignore
     name = Column(String, nullable=False)

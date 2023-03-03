@@ -21,6 +21,7 @@ from openTSNE import TSNE
 from rdkit import Chem
 from rdkit.Chem import Draw
 from sklearn.decomposition import PCA
+from visyn_core import manager
 from visyn_core.middleware.request_context_plugin import get_request
 
 from .helper_functions import (
@@ -40,6 +41,13 @@ _log = logging.getLogger(__name__)
 
 router = APIRouter(tags=["Reaction-CIME"])
 reaction_cime_api = Blueprint("reaction_cime", __name__)
+
+# TODO: Do not enable this route!
+# @reaction_cime_api.route("/refresh_db", methods=["GET"])
+def migrate():
+    manager.db_migration["reaction_cime"].execute(["downgrade", "base"])
+    manager.db_migration["reaction_cime"].execute(["upgrade", "head"])
+    return {"status": "success"}
 
 
 @reaction_cime_api.route("/hello", methods=["GET"])
@@ -75,49 +83,13 @@ def delete_uploaded_file(id):
 
 # endregion
 
-# region --------------- caching ---------------
-dataset_cache = (
-    {}
-)  # structure: {"filename": dataset} # if "retrieve_cols" are contained in dataset.columns then the dataset is returned, otherwise dataset with all "cache_cols" are loaded into the cache
-
 
 def handle_dataset_cache(id, cols=None, x_channel="x", y_channel="y"):
     if cols is None:
         cols = []
-    if id not in dataset_cache.keys():
-        dataset_cache[id] = None
-
     all_cols = list(set(cols + [x_channel, y_channel, "x", "y"]))
-    # dataset is not cached and has to be loaded
-    if dataset_cache[id] is None or not set(all_cols).issubset(set(dataset_cache[id].columns)):
-        _log.info("---dataset is not cached and has to be loaded to memory")
-        _log.info(all_cols)
-        if dataset_cache[id] is not None:  # add currently cached columns again to cache
-            all_cols = list(set(all_cols + list(dataset_cache[id].columns)))
-        _log.info(all_cols)
-        dataset_cache[id] = get_cime_dbo().get_dataframe_from_table(id, columns=all_cols)
-    else:
-        _log.info("---dataset cached!")
-    # return cached version of dataset
-    return dataset_cache[id]
+    return get_cime_dbo().get_dataframe_from_table(id, columns=all_cols)
 
-
-def reset_dataset_cache(id=None):
-    global dataset_cache
-    if id is None:
-        dataset_cache = {}
-    else:
-        dataset_cache[id] = None
-
-
-@reaction_cime_api.route("/update_cache/<id>", methods=["GET"])
-def update_dataset_cache(id):
-    cache_cols = request.args.getlist("cache_cols")
-    handle_dataset_cache(id, cache_cols)
-    return {"msg": "ok"}
-
-
-# endregion
 
 # region --------------- process dataset ------------------
 
@@ -152,18 +124,18 @@ def upload_csv():
     filename = file_upload.filename or ""
     filename = "_".join(filename.split(".")[0:-1])
 
-    project = get_cime_dbo().save_dataframe(df, filename)
+    id = get_cime_dbo().save_dataframe(df, filename)
 
     # create default constraints file
-    save_poi_constraints(project.id)
-    save_poi_exceptions(project.id)
+    save_poi_constraints(id)
+    save_poi_exceptions(id)
 
     delta_time = time.time() - start_time
     _log.info("--- took %i min %f s to upload file %s" % (delta_time / 60, delta_time % 60, filename))
 
     return {
         "filename": file_upload.filename,
-        "id": project.id,
+        "id": id,
     }
 
 
@@ -846,7 +818,6 @@ class ProjectionThread(threading.Thread):
             # update the coordinates in the dataset
             start_time = time.time()
             self.cime_dbo.update_row_bulk(self.id, proj_df.index, {"x": proj_data[:, 0], "y": proj_data[:, 1]})  # type: ignore
-            reset_dataset_cache(self.id)  # reset cached data
             delta_time = time.time() - start_time
             _log.info("--- took %i min %f s to update database" % (delta_time / 60, delta_time % 60))
 
