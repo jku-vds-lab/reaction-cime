@@ -916,8 +916,6 @@ export const LineUpContext = connector(function ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lineUpInput.lineup, lineUpInput.filter]);
 
-
-
   // https://github.com/lineupjs/lineup_app/blob/master/src/export.ts
   return (
     <div className="LineUpParent">
