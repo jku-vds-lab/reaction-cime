@@ -51,16 +51,24 @@ Then install all dependencies (including dev dependencies)
 make develop
 ```
 
+start the database
+
+```
+docker compose up
+```
+
 and finally start the server
 
 ```bash
 python reaction_cime
 ```
 
-As an alternative, you can also user Docker to start the backend. The dockerized backend is managed by `docker compose`:
+
+Now, if a login screen pops up, you can use admin:admin to login. If you want to disable the login screen and go directly to the application, create a `reaction_cime/.env` with the following contents. After restaring the server, you will be automatically logged in.
 
 ```
-docker compose up
+VISYN_CORE__SECURITY__STORE__NO_SECURITY_STORE__ENABLE=true
+VISYN_CORE__SECURITY__STORE__NO_SECURITY_STORE__USER=admin
 ```
 
 ### Deploy with Docker
@@ -80,6 +88,8 @@ docker build -f Dockerfile -t reaction_cime .
 ```bash
 docker run --rm -it -p 9000:9000 reaction_cime
 ```
+
+Beware that you will need a Postgres to run the image. By default, it will use the connection string in `settings.py`, which you can override via ENV variables. For example, you can set `REACTION_CIME__DBURL=postgresql://...` and use any database of your liking.
 
 ## Linking PSE and Reaction-CIME Frontend
 

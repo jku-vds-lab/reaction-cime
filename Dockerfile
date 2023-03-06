@@ -13,6 +13,9 @@ RUN pip install numpy && make install
 
 # Override the setttings.py to use include the bundled frontend
 ENV REACTION_CIME__BUNDLES_DIR /app/bundles
+# Disable the login and always use a anonymous user
+ENV VISYN_CORE__SECURITY__STORE__NO_SECURITY_STORE__ENABLE true
+ENV VISYN_CORE__SECURITY__STORE__NO_SECURITY_STORE__USER anonymous
 
 # copy the pre-built front-end --> comment for development because we mount the volume anyway
 COPY bundles/ /app/bundles/
@@ -20,7 +23,7 @@ COPY bundles/ /app/bundles/
 # expose default port
 EXPOSE 9000
 
-CMD ["uvicorn", "tdp_core.server.main:app", "--host", "0.0.0.0", "--port", "9000"]
+CMD ["uvicorn", "visyn_core.server.main:app", "--host", "0.0.0.0", "--port", "9000"]
 
 # Running
 # docker build -f Dockerfile -t reaction_cime .

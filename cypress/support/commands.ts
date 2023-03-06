@@ -40,6 +40,7 @@ Cypress.Commands.add('createProject', (path: string) => {
   // Intercept the network request
   cy.intercept('POST', '/api/reaction_cime/upload_csv').as('loginMutation');
 
+  // eslint-disable-next-line cypress/no-unnecessary-waiting
   cy.byId('upload-file-input').selectFile(path, { force: true }).wait(500);
 
   // eslint-disable-next-line cypress/no-unnecessary-waiting

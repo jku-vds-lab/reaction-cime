@@ -1,3 +1,4 @@
+/* eslint-disable cypress/no-unnecessary-waiting */
 Cypress.on('uncaught:exception', (err, runnable) => {
   return !err.message.includes('scrollLeft');
 });
@@ -23,11 +24,10 @@ describe('domain_5000_v2', () => {
     cy.chooseNth(3);
 
     // Open LineUp & Sort after measured_yield
-    cy.get('#app').trigger('mousedown', 1000, 1073).wait(300).trigger('mousemove', 1000, 500).wait(300).trigger('mouseup', 1000, 500).wait(1000);
     cy.get('[title="Measured_yield"]').find('[title="Sort"]').filter(':visible').click();
 
     // Create second view and activate it
-    cy.byId('split-view-button').click().wait(1000);
+    cy.byId('split-view-button').click({ force: true }).wait(1000);
     cy.get('#app').click(1700, 350);
 
     // Select another encoding for the second view

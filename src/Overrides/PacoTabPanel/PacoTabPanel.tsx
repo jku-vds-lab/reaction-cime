@@ -96,7 +96,7 @@ export const PacoTabPanel = connector(({ pacoAttributes, setPacoConstraints, pac
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       <Box paddingLeft={2} paddingTop={1} paddingRight={2}>
         <Typography variant="subtitle2" gutterBottom>
-          Parallel Coordinates Settings
+          Parallel coordinates settings
         </Typography>
       </Box>
       <Box paddingLeft={2} paddingTop={1} paddingRight={2}>
@@ -121,7 +121,7 @@ export const PacoTabPanel = connector(({ pacoAttributes, setPacoConstraints, pac
             }}
           >
             <RotateLeftIcon />
-            &nbsp;Reset Constraints
+            &nbsp;Reset constraints
           </Button>
         </Tooltip>
       </Box>

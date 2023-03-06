@@ -1,13 +1,12 @@
-import os
+from os import path
 
 from fastapi import FastAPI
 from fastapi.middleware.wsgi import WSGIMiddleware
 from fastapi.staticfiles import StaticFiles
 from flask import Flask
-from flask_sqlalchemy import SQLAlchemy
 from pydantic import BaseModel
-from tdp_core.plugin.model import AVisynPlugin, RegHelper
-from tdp_core.server.utils import init_legacy_app
+from visyn_core.plugin.model import AVisynPlugin, RegHelper
+from visyn_core.server.utils import init_legacy_app
 
 from .settings import ReactionCimeSettings, get_settings
 
@@ -16,18 +15,18 @@ class VisynPlugin(AVisynPlugin):
     def register(self, registry: RegHelper):
         # registry.append("namespace", "cime_api", "reaction_cime.api", {"namespace": "/api/cime"})
 
-        # registry.append("tdp-sql-database-definition", "reaction_cime", "", {"configKey": "reaction_cime"})
+        registry.append("tdp-sql-database-definition", "reaction_cime", "", {"configKey": "reaction_cime"})
 
-        # registry.append(
-        #     "tdp-sql-database-migration",
-        #     "reaction_cime",
-        #     "",
-        #     {
-        #         "scriptLocation": path.join(path.abspath(path.dirname(__file__)), "migration"),
-        #         "configKey": "reaction_cime.migration",
-        #         "dbKey": "reaction_cime",
-        #     },
-        # )
+        registry.append(
+            "tdp-sql-database-migration",
+            "reaction_cime",
+            "",
+            {
+                "scriptLocation": path.join(path.abspath(path.dirname(__file__)), "migration"),
+                "configKey": "reaction_cime.migration",
+                "dbKey": "reaction_cime",
+            },
+        )
 
         # Add after server started to cleanup/retry pending processing
         # registry.append("after_server_started", "reaction_cime_retry_datasets", "reaction_cime.after_server_started", {})
@@ -39,25 +38,13 @@ class VisynPlugin(AVisynPlugin):
         _log = logging.getLogger(__name__)
 
         flask_app = Flask(__name__)
-        # CORS(app)
-
-        tmp_dir = get_settings().tmp_dir
-        if not os.path.exists(tmp_dir):
-            os.makedirs(tmp_dir)
-        flask_app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///" + os.path.join(tmp_dir, "app.sqlite")
-
-        db = SQLAlchemy(flask_app)
-        # app.config['SQLALCHEMY_ECHO'] = True
-
-        # setupProjectionTable(db)
 
         from .ReactionCIMEDBO import ReactionCIMEDBO
 
-        dbo = ReactionCIMEDBO(db)
+        dbo = ReactionCIMEDBO()
 
         # Make DBO accessible in FastAPI
         app.state.reaction_cime_dbo = dbo
-        app.state.tempdir = tmp_dir
 
         from .reaction_cime_api import reaction_cime_api, router
 

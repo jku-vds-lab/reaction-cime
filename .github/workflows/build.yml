@@ -9,7 +9,7 @@ on:
         type: boolean
         default: false
       build_docker_image:
-        description: 'Builder docker image'
+        description: 'Build docker image'
         required: false
         type: boolean
         default: false

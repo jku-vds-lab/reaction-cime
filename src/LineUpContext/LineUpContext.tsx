@@ -540,10 +540,9 @@ export const LineUpContext = connector(function ({
   activeStory,
   pointColorScale,
   setHoverstate,
-  detailView,
 }: Props) {
   // In case we have no input, dont render at all
-  if (!lineUpInput || !lineUpInput_data || !detailView.open) {
+  if (!lineUpInput || !lineUpInput_data) {
     // splitRef?.current?.setSizes([100, 0])
     return null;
   }

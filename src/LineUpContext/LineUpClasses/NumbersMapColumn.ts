@@ -1,5 +1,7 @@
 import MapColumn, { dialogAddons, INumbersDesc, SortByDefault, toolbar, IDataRow, IMapColumnDesc, isMissingValue } from 'lineupjs';
+// @ts-ignore
 import { IEventListener } from 'lineupjs/build/src/internal';
+// @ts-ignore
 import ValueColumn, { dataLoaded } from 'lineupjs/build/src/model/ValueColumn';
 import Column, {
   widthChanged,
@@ -13,6 +15,7 @@ import Column, {
   summaryRendererChanged,
   visibilityChanged,
   dirtyCaches,
+  // @ts-ignore
 } from 'lineupjs/build/src/model/Column';
 
 export declare type INumbersMapColumnDesc = INumbersDesc & IMapColumnDesc<number[]>;
