@@ -12,38 +12,42 @@ ReactDOM.render(
   <VisynAppProvider appName="CIME4R">
     <VisynApp
       header={
-        <VisynHeader
-          components={{
-            beforeRight: (
-              <>
-                <Anchor
-                  href="https://www.bayer.com/"
-                  rel="noreferrer"
-                  target="_blank"
-                  sx={{
-                    // Center the image
-                    display: 'flex',
-                    alignItems: 'center',
-                  }}
-                >
-                  <img src={bayerLogo} alt="Bayer logo" style={{ height: '32px', transform: 'scale(1.1)' }} />
-                </Anchor>
-                <Anchor
-                  href="https://jku-vds-lab.at/"
-                  rel="noreferrer"
-                  target="_blank"
-                  sx={{
-                    // Center the image
-                    display: 'flex',
-                    alignItems: 'center',
-                  }}
-                >
-                  <img src={vdsLogo} alt="JKU VDS Lab logo" style={{ height: '24px' }} />
-                </Anchor>
-              </>
-            ),
-          }}
-        />
+        process.env.CIME4R_APP_MODE === 'anon' ? (
+          <div />
+        ) : (
+          <VisynHeader
+            components={{
+              beforeRight: (
+                <>
+                  <Anchor
+                    href="https://www.bayer.com/"
+                    rel="noreferrer"
+                    target="_blank"
+                    sx={{
+                      // Center the image
+                      display: 'flex',
+                      alignItems: 'center',
+                    }}
+                  >
+                    <img src={bayerLogo} alt="Bayer logo" style={{ height: '32px', transform: 'scale(1.1)' }} />
+                  </Anchor>
+                  <Anchor
+                    href="https://jku-vds-lab.at/"
+                    rel="noreferrer"
+                    target="_blank"
+                    sx={{
+                      // Center the image
+                      display: 'flex',
+                      alignItems: 'center',
+                    }}
+                  >
+                    <img src={vdsLogo} alt="JKU VDS Lab logo" style={{ height: '24px' }} />
+                  </Anchor>
+                </>
+              ),
+            }}
+          />
+        )
       }
     >
       <ReactionCIMEApp />
