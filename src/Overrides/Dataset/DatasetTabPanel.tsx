@@ -1,5 +1,6 @@
 import * as React from 'react';
-import { Box, Button, Tooltip, Typography } from '@mui/material';
+import { Accordion, AccordionDetails, AccordionSummary, Box, Button, Tooltip, Typography } from '@mui/material';
+import { ExpandMore, InfoOutlined } from '@mui/icons-material';
 import { Dataset, IProjection, RootActions, useCancellablePromise, UtilityActions } from 'projection-space-explorer';
 import { connect, ConnectedProps } from 'react-redux';
 import { useState } from 'react';
@@ -9,7 +10,7 @@ import { AppState, CIME4RViewActions } from '../../State/Store';
 import { UploadedFiles } from './UploadedFiles';
 import { BackendCSVLoader } from './BackendCSVLoader';
 import { setTriggerUpdate as setTriggerUpdateAction } from '../../State/HandleDatasetDuck';
-import { saveSmilesLookupTable } from '../../Utility/Utils';
+import { isSmilesLookupTablePresent, saveSmilesLookupTable } from '../../Utility/Utils';
 import { LoadingIndicatorDialog } from './LoadingIndicatorDialog';
 
 function selectPositions(dataset: Dataset, projection: IProjection) {
@@ -42,6 +43,7 @@ export const DatasetTabPanel = connector(({ onDataSelected, resetViews, setTrigg
   const abortController = new AbortController();
   const [refreshUploadedFiles, setRefreshUploadedFiles] = useState(0);
   const lookupFileInput = React.useRef<any>();
+  const [lookupUploadNote, setLookupUploadNote] = useState<string>(isSmilesLookupTablePresent());
 
   const intermediateOnDataSelected = (dataset, state_dump?) => {
     resetViews();
@@ -103,26 +105,11 @@ export const DatasetTabPanel = connector(({ onDataSelected, resetViews, setTrigg
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-      <Box paddingLeft={2} paddingTop={2}>
+      {/* <Box paddingLeft={2} paddingTop={2}>
         <Typography variant="subtitle2" gutterBottom>
-          Custom datasets (drag and drop)
+          Saved datasets
         </Typography>
-      </Box>
-
-      <DatasetDrop
-        onDatasetChange={(dataset) => {
-          intermediateOnDataSelected(dataset);
-          setRefreshUploadedFiles(refreshUploadedFiles + 1);
-        }}
-        cancellablePromise={cancellablePromise}
-        abort_controller={abortController}
-      />
-
-      <Box paddingLeft={2} paddingTop={2}>
-        <Typography variant="subtitle2" gutterBottom>
-          Predefined datasets
-        </Typography>
-      </Box>
+      </Box> */}
 
       <UploadedFiles
         onChange={(entry) => {
@@ -143,22 +130,65 @@ export const DatasetTabPanel = connector(({ onDataSelected, resetViews, setTrigg
         ref={lookupFileInput}
         type="file"
         onChange={(e) => {
-          saveSmilesLookupTable(e.target.files);
+          saveSmilesLookupTable(e.target.files, (note) => {
+            setLookupUploadNote(() => note);
+          });
         }}
       />
+
+      {/* <Box paddingLeft={2} paddingTop={2}>
+        <Typography variant="subtitle2" gutterBottom>
+          Upload new dataset
+        </Typography>
+      </Box> */}
+
+      <DatasetDrop
+        onDatasetChange={(dataset) => {
+          intermediateOnDataSelected(dataset);
+          setRefreshUploadedFiles(refreshUploadedFiles + 1);
+        }}
+        cancellablePromise={cancellablePromise}
+        abort_controller={abortController}
+      />
+
+      {/* <Box paddingTop={2} paddingX={2}>
+        <Divider orientation="horizontal" />
+      </Box> */}
+
       <Box paddingLeft={2} paddingTop={2} paddingRight={2}>
-        <Tooltip title={'Select a lookup table for shortnames of molecules. It has to be a csv-file with the columns "smiles" and "shortname".'}>
-          <Button
-            fullWidth
-            variant="outlined"
-            aria-label="Define lookup table for shortnames of SMILES"
-            color="primary"
-            onClick={() => lookupFileInput.current.click()}
-          >
-            <ManageSearchIcon />
-            &nbsp;Define lookup table
-          </Button>
-        </Tooltip>
+        <Accordion variant="outlined" color="primary">
+          <AccordionSummary expandIcon={<ExpandMore />}>
+            <Typography variant="subtitle2">Advanced settings</Typography>
+          </AccordionSummary>
+          <AccordionDetails>
+            <Typography color="textSecondary" variant="body2">
+              Define a lookup table for molecule shortnames.{' '}
+              <Tooltip
+                title={
+                  <Typography variant="subtitle2">
+                    Upload a csv-file with the columns &#34;smiles&#34; and &#34;shortname&#34;. This mapping is then used to show a human readable name for a
+                    molecule instead of the SMILES string.
+                  </Typography>
+                }
+              >
+                <InfoOutlined fontSize="inherit" />
+              </Tooltip>
+            </Typography>
+            <Button
+              fullWidth
+              variant="outlined"
+              aria-label="Define lookup table for shortnames of SMILES"
+              color="primary"
+              onClick={() => lookupFileInput.current.click()}
+            >
+              <ManageSearchIcon />
+              &nbsp;Select table
+            </Button>
+            <Typography paddingTop={1} color="textSecondary">
+              {lookupUploadNote}
+            </Typography>
+          </AccordionDetails>
+        </Accordion>
       </Box>
     </div>
   );

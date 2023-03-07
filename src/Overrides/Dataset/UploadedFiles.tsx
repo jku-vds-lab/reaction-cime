@@ -1,4 +1,4 @@
-import { Button, Grid, IconButton, List, ListItem, ListItemSecondaryAction, ListItemText, ListSubheader } from '@mui/material';
+import { Box, Button, Grid, IconButton, List, ListItem, ListItemSecondaryAction, ListItemText, ListSubheader, Tooltip, Typography } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { DatasetType, useCancellablePromise } from 'projection-space-explorer';
 import React, { CSSProperties } from 'react';
@@ -53,17 +53,27 @@ export function UploadedFiles({ onChange, refresh }) {
   return (
     files && (
       <div>
-        <Grid item style={{ overflowY: 'auto', flex: '1 1 auto', maxHeight: '400px' }}>
-          <List subheader={<li />} style={{ backgroundColor: 'white' }}>
-            {!DEMO && (
-              <ListSubheader>
-                Uploaded files{' '}
+        <Box paddingLeft={2} paddingRight={2} paddingTop={2}>
+          {!DEMO && (
+            <Typography variant="subtitle2" gutterBottom>
+              Select dataset{' '}
+              <Tooltip title="Refresh dataset list">
                 <Button onClick={() => updateFiles()}>
                   <RefreshIcon style={{ fontSize: '1.25rem' }} />
                 </Button>
-              </ListSubheader>
-            )}
-            {DEMO && <ListSubheader>Select Dataset</ListSubheader>}
+              </Tooltip>
+            </Typography>
+          )}
+          {DEMO && (
+            <Typography variant="subtitle2" gutterBottom>
+              Select dataset
+            </Typography>
+          )}
+          <List
+            subheader={<li />}
+            style={{ backgroundColor: 'white', border: '1px solid lightgrey', borderRadius: '4px', overflowY: 'auto', maxHeight: '400px' }}
+          >
+            <LoadingIndicatorView area={loadingArea} />
             {files.map((file) => (
               <ListItem
                 key={file.id}
@@ -102,8 +112,7 @@ export function UploadedFiles({ onChange, refresh }) {
               </ListItem>
             ))}
           </List>
-          <LoadingIndicatorView area={loadingArea} />
-        </Grid>
+        </Box>
       </div>
     )
   );
