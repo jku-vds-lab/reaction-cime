@@ -30,7 +30,14 @@ export function DatasetDrop({ onDatasetChange, cancellablePromise, abort_control
           }
         }}
       />
-      <Button variant="outlined" component="span" onClick={() => fileInput?.current?.click()}>
+      <Button
+        variant="outlined"
+        component="span"
+        onClick={() => {
+          const fi = fileInput.current as HTMLInputElement;
+          fi.click();
+        }}
+      >
         Upload new dataset
       </Button>
       {/* <DragAndDrop
