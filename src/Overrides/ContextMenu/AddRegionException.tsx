@@ -65,7 +65,7 @@ export const AddRegionExceptionMenuItem = connector(({ handleClose, pos_x, pos_y
         handleClose();
       }}
     >
-      {`Show ${globalLabels.itemLabelPlural} in this region`}
+      {`Show ${globalLabels.itemLabelPlural} around this position`}
     </MenuItem>
   );
 });
