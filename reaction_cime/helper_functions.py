@@ -392,7 +392,8 @@ def rescale_and_encode(proj_df, params, selected_feature_info):
                         std = 1
                     proj_df[col] = (proj_df[col] - mean) / std
 
-            feature_weights.append(float(info["weight"]) if info.get("useWeight") else 1)
+            feature_weights.append(float(info["weight"]))
+            # feature_weights.append(float(info["weight"]) if info.get("useWeight") else 1)
 
         elif info["featureType"] == "Categorical":
             if params["encodingMethod"] == "onehot":
@@ -402,11 +403,13 @@ def rescale_and_encode(proj_df, params, selected_feature_info):
 
                 # add weights for each new column
                 for _ in hot_encoded.columns:
-                    feature_weights_end.append(float(info["weight"]) / len(hot_encoded.columns) if info.get("useWeight") else 1)
+                    # feature_weights_end.append(float(info["weight"]) / len(hot_encoded.columns) if info.get("useWeight") else 1)
+                    feature_weights_end.append(float(info["weight"]) / len(hot_encoded.columns))
             else:
                 categorical_feature_list.append(col)
                 proj_df[col] = pd.Categorical(proj_df[col]).codes
-                feature_weights.append(float(info["weight"]) if info.get("useWeight") else 1)
+                # feature_weights.append(float(info["weight"]) if info.get("useWeight") else 1)
+                feature_weights.append(float(info["weight"]))
 
         elif info["featureType"] == "Date":
             proj_df = proj_df.drop(columns=[col])
@@ -414,7 +417,8 @@ def rescale_and_encode(proj_df, params, selected_feature_info):
 
         elif info["featureType"] == "Binary":
             proj_df[col] = pd.Categorical(proj_df[col]).codes
-            feature_weights.append(float(info["weight"]) if info.get("useWeight") else 1)
+            # feature_weights.append(float(info["weight"]) if info.get("useWeight") else 1)
+            feature_weights.append(float(info["weight"]))
 
         elif info["featureType"] == "Ordinal":
             proj_df = proj_df.drop(columns=[col])

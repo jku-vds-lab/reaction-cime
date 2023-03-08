@@ -71,6 +71,7 @@ const ApplicationWrapper = connector(({ setMouseMoveFn, setMouseClickFn, resetVi
         ],
         showVisibleProjections: false,
         showTrailSettings: false,
+        enableFeatureWeighing: true,
         detailViewSplitRatio: [60, 40],
       }}
       overrideComponents={{
