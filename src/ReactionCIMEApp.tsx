@@ -3,6 +3,8 @@ import { useState } from 'react';
 import { PSEContextProvider, API, Application, PluginRegistry, setItemLabel } from 'projection-space-explorer';
 import { connect, ConnectedProps } from 'react-redux';
 import { useVisynAppContext } from 'visyn_core';
+import { Anchor } from '@mantine/core';
+import { VisynApp, VisynHeader } from 'visyn_core/app';
 import { LineUpContext } from './LineUpContext';
 import { LineUpTabPanel } from './Overrides/LineUpTabPanel';
 import { AppState, CIME4RViewActions, createCIMERootReducer } from './State/Store';
@@ -19,6 +21,8 @@ import { FilterTabPanel } from './Overrides/FilterTabPanel/FilterTabPanel';
 import { PacoTabPanel } from './Overrides/PacoTabPanel/PacoTabPanel';
 import { AddRegionExceptionMenuItem } from './Overrides/ContextMenu/AddRegionException';
 import { SetFiltersToItemFeatures } from './Overrides/ContextMenu/SetFiltersToItemFeatures';
+import vdsLogo from './assets/jku-vds-lab-logo.svg';
+import bayerLogo from './assets/bayer_logo.svg';
 
 PluginRegistry.getInstance().registerPlugin(new ReactionsPlugin());
 
@@ -71,6 +75,7 @@ const ApplicationWrapper = connector(({ setMouseMoveFn, setMouseClickFn, resetVi
         ],
         showVisibleProjections: false,
         showTrailSettings: false,
+        enableFeatureWeighing: true,
         detailViewSplitRatio: [60, 40],
       }}
       overrideComponents={{
@@ -130,10 +135,55 @@ export function ReactionCIMEApp() {
   const [context] = useState(new API<AppState>(null, createCIMERootReducer()));
   context.store.dispatch(setItemLabel({ label: 'experiment', label_plural: 'experiments' }));
   const { user } = useVisynAppContext();
+  const { clientConfig } = useVisynAppContext();
 
-  return user ? (
-    <PSEContextProvider context={context}>
-      <ApplicationWrapper />
-    </PSEContextProvider>
-  ) : null;
+  return (
+    <VisynApp
+      header={
+        clientConfig?.publicVersion ? (
+          // eslint-disable-next-line react/jsx-no-useless-fragment
+          <></>
+        ) : (
+          <VisynHeader
+            components={{
+              beforeRight: (
+                <>
+                  <Anchor
+                    href="https://www.bayer.com/"
+                    rel="noreferrer"
+                    target="_blank"
+                    sx={{
+                      // Center the image
+                      display: 'flex',
+                      alignItems: 'center',
+                    }}
+                  >
+                    <img src={bayerLogo} alt="Bayer logo" style={{ height: '32px', transform: 'scale(1.1)' }} />
+                  </Anchor>
+                  <Anchor
+                    href="https://jku-vds-lab.at/"
+                    rel="noreferrer"
+                    target="_blank"
+                    sx={{
+                      // Center the image
+                      display: 'flex',
+                      alignItems: 'center',
+                    }}
+                  >
+                    <img src={vdsLogo} alt="JKU VDS Lab logo" style={{ height: '24px' }} />
+                  </Anchor>
+                </>
+              ),
+            }}
+          />
+        )
+      }
+    >
+      {user ? (
+        <PSEContextProvider context={context}>
+          <ApplicationWrapper />
+        </PSEContextProvider>
+      ) : null}
+    </VisynApp>
+  );
 }
