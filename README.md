@@ -86,7 +86,7 @@ docker build -f Dockerfile -t reaction_cime .
 ```
 
 ```bash
-docker run --rm -it -p 9000:9000 reaction_cime
+docker run --rm -it --network host reaction_cime
 ```
 
 Beware that you will need a Postgres to run the image. By default, it will use the connection string in `settings.py`, which you can override via ENV variables. For example, you can set `REACTION_CIME__DBURL=postgresql://...` and use any database of your liking.
