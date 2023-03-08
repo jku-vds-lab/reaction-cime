@@ -55,7 +55,7 @@ export const SetFiltersToItemFeatures = connector(({ handleClose, globalLabels, 
         handleClose();
       }}
     >
-      {`Set filters to features of this ${globalLabels.itemLabel}`}
+      {`Set filters to feature values of this ${globalLabels.itemLabel}`}
     </MenuItem>
   );
 });
