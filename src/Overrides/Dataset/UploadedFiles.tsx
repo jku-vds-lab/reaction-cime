@@ -1,11 +1,10 @@
-import { Button, Grid, IconButton, List, ListItem, ListItemSecondaryAction, ListItemText, ListSubheader } from '@mui/material';
+import { Box, Button, IconButton, List, ListItem, ListItemSecondaryAction, ListItemText, Tooltip, Typography } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { DatasetType, useCancellablePromise } from 'projection-space-explorer';
 import React, { CSSProperties } from 'react';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import { trackPromise } from 'react-promise-tracker';
-import { ISecureItem, userSession } from 'visyn_core';
-import { DEMO } from '../../constants';
+import { ISecureItem, userSession, useVisynAppContext } from 'visyn_core';
 import { ReactionCIMEBackendFromEnv } from '../../Backend/ReactionCIMEBackend';
 import { LoadingIndicatorView } from './LoadingIndicatorDialog';
 
@@ -17,6 +16,7 @@ const textOverflowStyle = {
 
 const loadingArea = 'update_uploaded_files_list';
 export function UploadedFiles({ onChange, refresh }) {
+  const { clientConfig } = useVisynAppContext();
   const [files, setFiles] = React.useState<({ name: string; id: string } & ISecureItem)[]>([]);
   const { cancellablePromise } = useCancellablePromise();
 
@@ -53,17 +53,22 @@ export function UploadedFiles({ onChange, refresh }) {
   return (
     files && (
       <div>
-        <Grid item style={{ overflowY: 'auto', flex: '1 1 auto', maxHeight: '400px' }}>
-          <List subheader={<li />} style={{ backgroundColor: 'white' }}>
-            {!DEMO && (
-              <ListSubheader>
-                Uploaded files{' '}
+        <Box paddingLeft={2} paddingRight={2} paddingTop={2}>
+          {clientConfig.publicVersion && (
+            <Typography variant="subtitle2" gutterBottom>
+              Select dataset{' '}
+              <Tooltip title="Refresh dataset list">
                 <Button onClick={() => updateFiles()}>
                   <RefreshIcon style={{ fontSize: '1.25rem' }} />
                 </Button>
-              </ListSubheader>
-            )}
-            {DEMO && <ListSubheader>Select Dataset</ListSubheader>}
+              </Tooltip>
+            </Typography>
+          )}
+          <List
+            subheader={<li />}
+            style={{ backgroundColor: 'white', border: '1px solid lightgrey', borderRadius: '4px', overflowY: 'auto', maxHeight: '400px' }}
+          >
+            <LoadingIndicatorView area={loadingArea} />
             {files.map((file) => (
               <ListItem
                 key={file.id}
@@ -88,7 +93,7 @@ export function UploadedFiles({ onChange, refresh }) {
                     style: textOverflowStyle,
                   }}
                 />
-                {!DEMO && userSession.canWrite(file) && (
+                {!clientConfig.publicVersion && userSession.canWrite(file) && (
                   <ListItemSecondaryAction
                     onClick={() => {
                       handleDelete(file.id);
@@ -102,8 +107,7 @@ export function UploadedFiles({ onChange, refresh }) {
               </ListItem>
             ))}
           </List>
-          <LoadingIndicatorView area={loadingArea} />
-        </Grid>
+        </Box>
       </div>
     )
   );

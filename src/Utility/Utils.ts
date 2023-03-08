@@ -35,7 +35,7 @@ export function arrayEquals(a, b) {
   return Array.isArray(a) && Array.isArray(b) && a.length === b.length && a.every((val, index) => val === b[index]);
 }
 
-export function saveSmilesLookupTable(files: FileList) {
+export function saveSmilesLookupTable(files: FileList, callback: (note: string) => void) {
   if (files == null || files.length <= 0) {
     return;
   }
@@ -43,10 +43,20 @@ export function saveSmilesLookupTable(files: FileList) {
 
   const fileReader = new FileReader();
   fileReader.onload = (e) => {
-    localStorage.setItem('smiles_lookup', e.target.result.toString());
-    alert('Successfuly uploaded');
+    const lookupStr = e.target.result.toString();
+    if (lookupStr != null && (lookupStr.startsWith('smiles,shortname') || lookupStr.startsWith('shortname,smiles'))) {
+      localStorage.setItem('smiles_lookup', e.target.result.toString());
+      callback('Successfuly uploaded!');
+    } else {
+      callback('Invalid file format. Please make sure to include the columns "smiles" and "shortname".');
+    }
   };
   fileReader.readAsBinaryString(file);
+}
+
+export function isSmilesLookupTablePresent(): string {
+  const smilesLookupStr = localStorage.getItem('smiles_lookup');
+  return smilesLookupStr != null ? 'Lookup table available.' : 'No lookup table selected.';
 }
 
 export function mapSmilesToShortname(smiles: string): string {
