@@ -1,6 +1,5 @@
 import * as React from 'react';
 import { Button, Grid } from '@mui/material';
-import { DragAndDrop } from 'projection-space-explorer';
 import { BackendCSVLoader } from './BackendCSVLoader';
 
 export function DatasetDrop({ onDatasetChange, cancellablePromise, abort_controller }) {

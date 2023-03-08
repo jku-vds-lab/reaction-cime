@@ -1,11 +1,10 @@
-import { Box, Button, Grid, IconButton, List, ListItem, ListItemSecondaryAction, ListItemText, ListSubheader, Tooltip, Typography } from '@mui/material';
+import { Box, Button, IconButton, List, ListItem, ListItemSecondaryAction, ListItemText, Tooltip, Typography } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { DatasetType, useCancellablePromise } from 'projection-space-explorer';
 import React, { CSSProperties } from 'react';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import { trackPromise } from 'react-promise-tracker';
-import { ISecureItem, userSession } from 'visyn_core';
-import { DEMO } from '../../constants';
+import { ISecureItem, userSession, useVisynAppContext } from 'visyn_core';
 import { ReactionCIMEBackendFromEnv } from '../../Backend/ReactionCIMEBackend';
 import { LoadingIndicatorView } from './LoadingIndicatorDialog';
 
@@ -17,6 +16,7 @@ const textOverflowStyle = {
 
 const loadingArea = 'update_uploaded_files_list';
 export function UploadedFiles({ onChange, refresh }) {
+  const { clientConfig } = useVisynAppContext();
   const [files, setFiles] = React.useState<({ name: string; id: string } & ISecureItem)[]>([]);
   const { cancellablePromise } = useCancellablePromise();
 
@@ -54,7 +54,7 @@ export function UploadedFiles({ onChange, refresh }) {
     files && (
       <div>
         <Box paddingLeft={2} paddingRight={2} paddingTop={2}>
-          {!DEMO && (
+          {clientConfig.publicVersion && (
             <Typography variant="subtitle2" gutterBottom>
               Select dataset{' '}
               <Tooltip title="Refresh dataset list">
@@ -62,11 +62,6 @@ export function UploadedFiles({ onChange, refresh }) {
                   <RefreshIcon style={{ fontSize: '1.25rem' }} />
                 </Button>
               </Tooltip>
-            </Typography>
-          )}
-          {DEMO && (
-            <Typography variant="subtitle2" gutterBottom>
-              Select dataset
             </Typography>
           )}
           <List
@@ -98,7 +93,7 @@ export function UploadedFiles({ onChange, refresh }) {
                     style: textOverflowStyle,
                   }}
                 />
-                {!DEMO && userSession.canWrite(file) && (
+                {!clientConfig.publicVersion && userSession.canWrite(file) && (
                   <ListItemSecondaryAction
                     onClick={() => {
                       handleDelete(file.id);

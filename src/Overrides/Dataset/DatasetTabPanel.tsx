@@ -5,6 +5,7 @@ import { Dataset, IProjection, RootActions, useCancellablePromise, UtilityAction
 import { connect, ConnectedProps } from 'react-redux';
 import { useState } from 'react';
 import ManageSearchIcon from '@mui/icons-material/ManageSearch';
+import { useVisynAppContext } from 'visyn_core';
 import { DatasetDrop } from './DatasetDrop';
 import { AppState, CIME4RViewActions } from '../../State/Store';
 import { UploadedFiles } from './UploadedFiles';
@@ -39,6 +40,7 @@ type Props = PropsFromRedux & {
 };
 
 export const DatasetTabPanel = connector(({ onDataSelected, resetViews, setTriggerUpdate, hydrateState }: Props) => {
+  const { clientConfig } = useVisynAppContext();
   const { cancellablePromise, cancelPromises } = useCancellablePromise();
   const abortController = new AbortController();
   const [refreshUploadedFiles, setRefreshUploadedFiles] = useState(0);
@@ -142,54 +144,58 @@ export const DatasetTabPanel = connector(({ onDataSelected, resetViews, setTrigg
         </Typography>
       </Box> */}
 
-      <DatasetDrop
-        onDatasetChange={(dataset) => {
-          intermediateOnDataSelected(dataset);
-          setRefreshUploadedFiles(refreshUploadedFiles + 1);
-        }}
-        cancellablePromise={cancellablePromise}
-        abort_controller={abortController}
-      />
+      {!clientConfig.publicVersion ? (
+        <DatasetDrop
+          onDatasetChange={(dataset) => {
+            intermediateOnDataSelected(dataset);
+            setRefreshUploadedFiles(refreshUploadedFiles + 1);
+          }}
+          cancellablePromise={cancellablePromise}
+          abort_controller={abortController}
+        />
+      ) : null}
 
       {/* <Box paddingTop={2} paddingX={2}>
         <Divider orientation="horizontal" />
       </Box> */}
 
-      <Box paddingLeft={2} paddingTop={2} paddingRight={2}>
-        <Accordion variant="outlined" color="primary">
-          <AccordionSummary expandIcon={<ExpandMore />}>
-            <Typography variant="subtitle2">Advanced settings</Typography>
-          </AccordionSummary>
-          <AccordionDetails>
-            <Typography color="textSecondary" variant="body2">
-              Define a lookup table for molecule shortnames.{' '}
-              <Tooltip
-                title={
-                  <Typography variant="subtitle2">
-                    Upload a csv-file with the columns &#34;smiles&#34; and &#34;shortname&#34;. This mapping is then used to show a human readable name for a
-                    molecule instead of the SMILES string.
-                  </Typography>
-                }
+      {!clientConfig.publicVersion ? (
+        <Box paddingLeft={2} paddingTop={2} paddingRight={2}>
+          <Accordion variant="outlined" color="primary">
+            <AccordionSummary expandIcon={<ExpandMore />}>
+              <Typography variant="subtitle2">Advanced settings</Typography>
+            </AccordionSummary>
+            <AccordionDetails>
+              <Typography color="textSecondary" variant="body2">
+                Define a lookup table for molecule shortnames.{' '}
+                <Tooltip
+                  title={
+                    <Typography variant="subtitle2">
+                      Upload a csv-file with the columns &#34;smiles&#34; and &#34;shortname&#34;. This mapping is then used to show a human readable name for a
+                      molecule instead of the SMILES string.
+                    </Typography>
+                  }
+                >
+                  <InfoOutlined fontSize="inherit" />
+                </Tooltip>
+              </Typography>
+              <Button
+                fullWidth
+                variant="outlined"
+                aria-label="Define lookup table for shortnames of SMILES"
+                color="primary"
+                onClick={() => lookupFileInput.current.click()}
               >
-                <InfoOutlined fontSize="inherit" />
-              </Tooltip>
-            </Typography>
-            <Button
-              fullWidth
-              variant="outlined"
-              aria-label="Define lookup table for shortnames of SMILES"
-              color="primary"
-              onClick={() => lookupFileInput.current.click()}
-            >
-              <ManageSearchIcon />
-              &nbsp;Select table
-            </Button>
-            <Typography paddingTop={1} color="textSecondary">
-              {lookupUploadNote}
-            </Typography>
-          </AccordionDetails>
-        </Accordion>
-      </Box>
+                <ManageSearchIcon />
+                &nbsp;Select table
+              </Button>
+              <Typography paddingTop={1} color="textSecondary">
+                {lookupUploadNote}
+              </Typography>
+            </AccordionDetails>
+          </Accordion>
+        </Box>
+      ) : null}
     </div>
   );
 });
