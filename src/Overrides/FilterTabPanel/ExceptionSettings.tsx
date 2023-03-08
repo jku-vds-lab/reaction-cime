@@ -18,7 +18,9 @@ export function ExceptionSettings({ dataset, triggerDatasetUpdate, state }: Prop
     const newEx = exceptions.filter((e, i) => i !== index);
     // setExceptions(new_ex)
     ReactionCIMEBackendFromEnv.updatePOIExceptions(dataset.info.path, newEx).then((res) => {
-      if (res.msg !== 'ok') alert(res.msg);
+      if (res.msg !== 'ok') {
+        alert(res.msg);
+      }
 
       if (triggerDatasetUpdate != null) {
         triggerDatasetUpdate(
@@ -48,7 +50,7 @@ export function ExceptionSettings({ dataset, triggerDatasetUpdate, state }: Prop
         </Box>
         <Box paddingLeft={2} paddingRight={2}>
           <Typography variant="subtitle2" gutterBottom>
-            Define Exceptions
+            Define exceptions
           </Typography>
         </Box>
         {exceptions.map((exc, i) => (

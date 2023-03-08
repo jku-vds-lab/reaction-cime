@@ -173,7 +173,7 @@ def save_poi_constraints(id, constraints=None):
 # --- load
 def load_poi_exceptions(id) -> pd.DataFrame:
     project = get_cime_dbo().get_project(id)
-    if project.file_exceptions is not None:
+    if project.file_exceptions is None:
         save_poi_exceptions(id)
 
     return get_cime_dbo().get_project(id).file_exceptions  # type: ignore
@@ -218,7 +218,9 @@ def add_poi_exceptions():
             poi_count = (
                 get_cime_dbo().get_filter_mask(id, get_poi_constraints_filter(id, load_poi_constraints(id), exceptions_df))["mask"].sum()
             )  # check if constraints are limited enough
-            save_poi_exceptions(id, exceptions_df)
+            saved = save_poi_exceptions(id, exceptions_df)
+            if not saved:
+                return {"msg": "Error when saving constraints"}
             if poi_count > MAX_POINTS:
                 return {"msg": "Too many experiments within the selected filter. Only a subset of the data will be shown."}
             return {"msg": "ok"}

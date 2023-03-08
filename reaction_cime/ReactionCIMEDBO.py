@@ -28,11 +28,12 @@ class ReactionCIMEDBO:
                 raise Exception(f"Project with id {id} not found")
             return project
 
-    def update_project(self, id, value_dict):
+    def update_project(self, id, value_dict) -> bool:
         # add a if can_write and so on
         with create_session() as session:
-            session.query(Project).filter(Project.id == id).update(value_dict, synchronize_session=False)
+            res = session.query(Project).filter(Project.id == id).update(value_dict)
             session.commit()
+            return res == 1
 
     def save_dataframe(self, df: pd.DataFrame, filename: str) -> str:
         # primary key is not set to index of dataframe by default. this code could be a workaround, but does not work yet
@@ -95,7 +96,7 @@ class ReactionCIMEDBO:
     # This version of bulk update is much faster (5000rows: <1s)
     def update_row_bulk(self, id, id_list, update_dict_list: dict):
         df = pd.DataFrame(update_dict_list)
-        df.index = id_list
+        df.index = id_list  # type: ignore
         # Transform payload to [{_id: 0, x: ..., y: ...}, {_id: 1, x: ..., y: ...}, ...]
         mappings = [{"_id": id, **values} for id, values in df.to_dict("index").items()]
         with create_session() as session:
