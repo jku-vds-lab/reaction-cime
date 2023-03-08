@@ -1,6 +1,15 @@
 import * as React from 'react';
 import { useState } from 'react';
-import { PSEContextProvider, API, Application, PluginRegistry, setItemLabel } from 'projection-space-explorer';
+import {
+  PSEContextProvider,
+  API,
+  Application,
+  PluginRegistry,
+  setItemLabel,
+  setStoryLabel,
+  setStoryBookLabel,
+  setStoryTellingLabel,
+} from 'projection-space-explorer';
 import { connect, ConnectedProps } from 'react-redux';
 import { useVisynAppContext } from 'visyn_core';
 import { Anchor } from '@mantine/core';
@@ -133,7 +142,10 @@ const ApplicationWrapper = connector(({ setMouseMoveFn, setMouseClickFn, resetVi
 
 export function ReactionCIMEApp() {
   const [context] = useState(new API<AppState>(null, createCIMERootReducer()));
-  context.store.dispatch(setItemLabel({ label: 'experiment', label_plural: 'experiments' }));
+  context.store.dispatch(setItemLabel({ label: 'experiment', labelPlural: 'experiments' }));
+  context.store.dispatch(setStoryLabel({ label: 'group sequence', labelPlural: 'group sequences' }));
+  context.store.dispatch(setStoryBookLabel({ label: 'collection', labelPlural: 'collections' }));
+  context.store.dispatch(setStoryTellingLabel({ label: 'group comparison' }));
   const { user } = useVisynAppContext();
   const { clientConfig } = useVisynAppContext();
 

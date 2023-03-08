@@ -13,20 +13,6 @@ git clone https://github.com/jku-vds-lab/reaction-cime.git
 cd reaction-cime
 ```
 
-### Frontend
-
-First install the required dependencies
-
-```bash
-yarn install
-```
-
-and launch the webpack-dev-server via
-
-```bash
-yarn start
-```
-
 ### Backend
 
 First, create a new virtual environment for the dependencies
@@ -70,6 +56,21 @@ Now, if a login screen pops up, you can use admin:admin to login. If you want to
 VISYN_CORE__SECURITY__STORE__NO_SECURITY_STORE__ENABLE=true
 VISYN_CORE__SECURITY__STORE__NO_SECURITY_STORE__USER=admin
 ```
+
+### Frontend
+
+First install the required dependencies
+
+```bash
+yarn install
+```
+
+and launch the webpack-dev-server via
+
+```bash
+yarn start
+```
+
 
 ### Deploy with Docker
 
