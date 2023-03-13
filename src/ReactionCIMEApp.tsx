@@ -71,12 +71,9 @@ const ApplicationWrapper = connector(({ setMouseMoveFn, setMouseClickFn, resetVi
 
   const onLoadProject = React.useCallback(
     (tableId: string) => {
-      console.log('load project' + tableId);
-
       new BackendCSVLoader().resolvePath(
         { path: tableId, uploaded: true },
         (dataset) => {
-          console.log(dataset);
           dispatch(RootActions.loadDataset(dataset));
         },
         cancellablePromise,

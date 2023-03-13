@@ -7,7 +7,6 @@ import { trackPromise } from 'react-promise-tracker';
 import { ISecureItem, userSession, useVisynAppContext } from 'visyn_core';
 import { ReactionCIMEBackendFromEnv } from '../../Backend/ReactionCIMEBackend';
 import { LoadingIndicatorView } from './LoadingIndicatorDialog';
-import { Link } from 'react-router-dom';
 
 const textOverflowStyle = {
   textOverflow: 'ellipsis',
