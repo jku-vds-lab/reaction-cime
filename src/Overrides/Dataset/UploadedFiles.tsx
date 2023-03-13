@@ -77,14 +77,6 @@ export function UploadedFiles({ onChange, refresh }) {
                 href={`?project=${file.id}`}
                 component="a"
                 target="_self"
-                /** onClick={() => {
-                  handleClick({
-                    display: file.name,
-                    path: file.id,
-                    type: DatasetType.Chem,
-                    uploaded: true,
-                  });
-                }} */
               >
                 <ListItemText
                   primary={file.name}
