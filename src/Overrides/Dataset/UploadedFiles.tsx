@@ -1,4 +1,4 @@
-import { Box, Button, IconButton, List, ListItem, ListItemSecondaryAction, ListItemText, Tooltip, Typography } from '@mui/material';
+import { Box, Button, IconButton, List, ListItem, ListItemButton, ListItemSecondaryAction, ListItemText, Tooltip, Typography } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { DatasetType, useCancellablePromise } from 'projection-space-explorer';
 import React, { CSSProperties } from 'react';
@@ -69,19 +69,22 @@ export function UploadedFiles({ onChange, refresh }) {
             style={{ backgroundColor: 'white', border: '1px solid lightgrey', borderRadius: '4px', overflowY: 'auto', maxHeight: '400px' }}
           >
             <LoadingIndicatorView area={loadingArea} />
+
             {files.map((file) => (
-              <ListItem
+              <ListItemButton
                 key={file.id}
                 data-cy="uploaded-data-list-item"
-                button
-                onClick={() => {
+                href={`?project=${file.id}`}
+                component="a"
+                target="_self"
+                /** onClick={() => {
                   handleClick({
                     display: file.name,
                     path: file.id,
                     type: DatasetType.Chem,
-                    uploaded: true, // indicates that file is already uploaded
+                    uploaded: true,
                   });
-                }}
+                }} */
               >
                 <ListItemText
                   primary={file.name}
@@ -104,7 +107,7 @@ export function UploadedFiles({ onChange, refresh }) {
                     </IconButton>
                   </ListItemSecondaryAction>
                 )}
-              </ListItem>
+              </ListItemButton>
             ))}
           </List>
         </Box>
