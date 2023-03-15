@@ -1,10 +1,20 @@
 import * as React from 'react';
 import { useState } from 'react';
-import { PSEContextProvider, API, Application, PluginRegistry, setItemLabel } from 'projection-space-explorer';
-import { connect, ConnectedProps } from 'react-redux';
+import {
+  PSEContextProvider,
+  API,
+  Application,
+  PluginRegistry,
+  setItemLabel,
+  usePSESelector,
+  RootActions,
+  useCancellablePromise,
+} from 'projection-space-explorer';
+import { connect, ConnectedProps, useDispatch } from 'react-redux';
 import { useVisynAppContext } from 'visyn_core';
 import { Anchor } from '@mantine/core';
 import { VisynApp, VisynHeader } from 'visyn_core/app';
+import { BrowserRouter, useSearchParams } from 'react-router-dom';
 import { LineUpContext } from './LineUpContext';
 import { LineUpTabPanel } from './Overrides/LineUpTabPanel';
 import { AppState, CIME4RViewActions, createCIMERootReducer } from './State/Store';
@@ -23,6 +33,7 @@ import { AddRegionExceptionMenuItem } from './Overrides/ContextMenu/AddRegionExc
 import { SetFiltersToItemFeatures } from './Overrides/ContextMenu/SetFiltersToItemFeatures';
 import vdsLogo from './assets/jku-vds-lab-logo.svg';
 import bayerLogo from './assets/bayer_logo.svg';
+import { BackendCSVLoader } from './Overrides/Dataset/BackendCSVLoader';
 
 PluginRegistry.getInstance().registerPlugin(new ReactionsPlugin());
 
@@ -45,11 +56,65 @@ type PropsFromRedux = ConnectedProps<typeof connector>;
 type Props = PropsFromRedux;
 
 const ApplicationWrapper = connector(({ setMouseMoveFn, setMouseClickFn, resetViews }: Props) => {
+  const loadedDataset = usePSESelector((state) => state.dataset);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const dispatch = useDispatch();
+  const { cancellablePromise } = useCancellablePromise();
+  const abortController = React.useMemo(() => new AbortController(), []);
+  const hasStartedRef = React.useRef(false);
+
   const startProjection = (msg: string) => {
     if (msg === 'init') {
       resetViews();
     }
   };
+
+  const onLoadProject = React.useCallback(
+    (tableId: string) => {
+      new BackendCSVLoader().resolvePath(
+        { path: tableId, uploaded: true },
+        (dataset) => {
+          dispatch(RootActions.loadDataset(dataset));
+        },
+        cancellablePromise,
+        null,
+        abortController,
+      );
+    },
+    [dispatch, abortController, cancellablePromise],
+  );
+
+  React.useEffect(() => {
+    if (hasStartedRef.current) {
+      return;
+    }
+    hasStartedRef.current = true;
+
+    const tableId = searchParams.get('project');
+
+    // If the application started with a tableId, try to load that
+    if (tableId) {
+      onLoadProject(tableId);
+    }
+  }, [searchParams, onLoadProject]);
+
+  React.useEffect(() => {
+    const tableId = loadedDataset?.info?.path;
+
+    if (!hasStartedRef.current) {
+      return;
+    }
+
+    setSearchParams((prev) => {
+      if (tableId) {
+        return new URLSearchParams({
+          project: tableId,
+        });
+      }
+
+      return prev;
+    });
+  }, [loadedDataset?.info, setSearchParams]);
 
   return (
     <Application
@@ -133,7 +198,7 @@ const ApplicationWrapper = connector(({ setMouseMoveFn, setMouseClickFn, resetVi
 
 export function ReactionCIMEApp() {
   const [context] = useState(new API<AppState>(null, createCIMERootReducer()));
-  context.store.dispatch(setItemLabel({ label: 'experiment', label_plural: 'experiments' }));
+  context.store.dispatch(setItemLabel({ label: 'experiment', labelPlural: 'experiments' }));
   const { user } = useVisynAppContext();
   const { clientConfig } = useVisynAppContext();
 
@@ -181,7 +246,9 @@ export function ReactionCIMEApp() {
     >
       {user ? (
         <PSEContextProvider context={context}>
-          <ApplicationWrapper />
+          <BrowserRouter>
+            <ApplicationWrapper />
+          </BrowserRouter>
         </PSEContextProvider>
       ) : null}
     </VisynApp>

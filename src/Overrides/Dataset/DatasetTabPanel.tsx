@@ -107,12 +107,6 @@ export const DatasetTabPanel = connector(({ onDataSelected, resetViews, setTrigg
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-      {/* <Box paddingLeft={2} paddingTop={2}>
-        <Typography variant="subtitle2" gutterBottom>
-          Saved datasets
-        </Typography>
-      </Box> */}
-
       <UploadedFiles
         onChange={(entry) => {
           triggerUpdate(entry);
@@ -138,12 +132,6 @@ export const DatasetTabPanel = connector(({ onDataSelected, resetViews, setTrigg
         }}
       />
 
-      {/* <Box paddingLeft={2} paddingTop={2}>
-        <Typography variant="subtitle2" gutterBottom>
-          Upload new dataset
-        </Typography>
-      </Box> */}
-
       {!clientConfig.publicVersion ? (
         <DatasetDrop
           onDatasetChange={(dataset) => {
@@ -154,10 +142,6 @@ export const DatasetTabPanel = connector(({ onDataSelected, resetViews, setTrigg
           abort_controller={abortController}
         />
       ) : null}
-
-      {/* <Box paddingTop={2} paddingX={2}>
-        <Divider orientation="horizontal" />
-      </Box> */}
 
       {!clientConfig.publicVersion ? (
         <Box paddingLeft={2} paddingTop={2} paddingRight={2}>
