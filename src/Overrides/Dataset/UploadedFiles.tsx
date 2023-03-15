@@ -67,7 +67,7 @@ export function UploadedFiles({ onChange, refresh }) {
             <LoadingIndicatorView area={loadingArea} />
 
             {files.map((file) => (
-              <ListItemButton key={file.id} data-cy="uploaded-data-list-item" href={`?project=${file.id}`} component="a" target="_self">
+              <ListItemButton key={file.id} data-cy="uploaded-data-list-item" href={`/?project=${file.id}`} component="a" target="_self">
                 <ListItemText
                   primary={file.name}
                   secondary={`By ${file.creator}`}
