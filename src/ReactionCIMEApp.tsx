@@ -141,11 +141,15 @@ const ApplicationWrapper = connector(({ setMouseMoveFn, setMouseClickFn, resetVi
 });
 
 export function ReactionCIMEApp() {
-  const [context] = useState(new API<AppState>(null, createCIMERootReducer()));
-  context.store.dispatch(setItemLabel({ label: 'experiment', labelPlural: 'experiments' }));
-  context.store.dispatch(setStoryLabel({ label: 'group sequence', labelPlural: 'group sequences' }));
-  context.store.dispatch(setStoryBookLabel({ label: 'collection', labelPlural: 'collections' }));
-  context.store.dispatch(setStoryTellingLabel({ label: 'group comparison' }));
+  const context = React.useMemo(() => new API<AppState>(null, createCIMERootReducer()), []);
+
+  React.useEffect(() => {
+    context.store.dispatch(setItemLabel({ label: 'experiment', labelPlural: 'experiments' }));
+    context.store.dispatch(setStoryLabel({ label: 'group sequence', labelPlural: 'group sequences' }));
+    context.store.dispatch(setStoryBookLabel({ label: 'collection', labelPlural: 'collections' }));
+    context.store.dispatch(setStoryTellingLabel({ label: 'group comparison' }));
+  }, [context]);
+
   const { user } = useVisynAppContext();
   const { clientConfig } = useVisynAppContext();
 
