@@ -769,7 +769,7 @@ export const LineUpContext = connector(function ({
       });
 
       const lineupSmilesCols = ranking.children.filter((x: any) => smilesStructureColumns.includes(x.label)) as StructureImageColumn[];
-      console.log(lineupSmilesCols);
+      // (lineupSmilesCols);
       lineupSmilesCols.forEach((lineup_smiles_col) => {
         lineup_smiles_col.on('widthChanged', (prev, current) => {
           lineup.update();
