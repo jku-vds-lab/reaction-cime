@@ -1,6 +1,6 @@
-import { Box, Button, IconButton, List, ListItem, ListItemSecondaryAction, ListItemText, Tooltip, Typography } from '@mui/material';
+import { Box, Button, IconButton, List, ListItemButton, ListItemSecondaryAction, ListItemText, Tooltip, Typography } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
-import { DatasetType, useCancellablePromise } from 'projection-space-explorer';
+import { useCancellablePromise } from 'projection-space-explorer';
 import React, { CSSProperties } from 'react';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import { trackPromise } from 'react-promise-tracker';
@@ -8,11 +8,11 @@ import { ISecureItem, userSession, useVisynAppContext } from 'visyn_core';
 import { ReactionCIMEBackendFromEnv } from '../../Backend/ReactionCIMEBackend';
 import { LoadingIndicatorView } from './LoadingIndicatorDialog';
 
-const textOverflowStyle = {
+const textOverflowStyle: CSSProperties = {
   textOverflow: 'ellipsis',
   overflow: 'hidden',
   whiteSpace: 'nowrap',
-} satisfies CSSProperties;
+};
 
 const loadingArea = 'update_uploaded_files_list';
 export function UploadedFiles({ onChange, refresh }) {
@@ -37,10 +37,6 @@ export function UploadedFiles({ onChange, refresh }) {
     updateFiles();
     // eslint-disable-next-line
   }, [refresh]);
-
-  const handleClick = (entry) => {
-    onChange(entry);
-  };
 
   const handleDelete = (file: string) => {
     cancellablePromise(ReactionCIMEBackendFromEnv.deleteFile(file))
@@ -69,20 +65,9 @@ export function UploadedFiles({ onChange, refresh }) {
             style={{ backgroundColor: 'white', border: '1px solid lightgrey', borderRadius: '4px', overflowY: 'auto', maxHeight: '400px' }}
           >
             <LoadingIndicatorView area={loadingArea} />
+
             {files.map((file) => (
-              <ListItem
-                key={file.id}
-                data-cy="uploaded-data-list-item"
-                button
-                onClick={() => {
-                  handleClick({
-                    display: file.name,
-                    path: file.id,
-                    type: DatasetType.Chem,
-                    uploaded: true, // indicates that file is already uploaded
-                  });
-                }}
-              >
+              <ListItemButton key={file.id} data-cy="uploaded-data-list-item" href={`/?project=${file.id}`} component="a" target="_self">
                 <ListItemText
                   primary={file.name}
                   secondary={`By ${file.creator}`}
@@ -95,7 +80,8 @@ export function UploadedFiles({ onChange, refresh }) {
                 />
                 {!clientConfig.publicVersion && userSession.canWrite(file) && (
                   <ListItemSecondaryAction
-                    onClick={() => {
+                    onClick={(event) => {
+                      event.preventDefault();
                       handleDelete(file.id);
                     }}
                   >
@@ -104,7 +90,7 @@ export function UploadedFiles({ onChange, refresh }) {
                     </IconButton>
                   </ListItemSecondaryAction>
                 )}
-              </ListItem>
+              </ListItemButton>
             ))}
           </List>
         </Box>
