@@ -6,6 +6,9 @@ import {
   Application,
   PluginRegistry,
   setItemLabel,
+  setStoryLabel,
+  setStoryBookLabel,
+  setStoryTellingLabel,
   usePSESelector,
   RootActions,
   useCancellablePromise,
@@ -129,14 +132,14 @@ const ApplicationWrapper = connector(({ setMouseMoveFn, setMouseClickFn, resetVi
           { id: 'umapRemote', name: 'UMAP', settings: { nneighbors: true }, embController: new RemoteEmbeddingController('umap', startProjection) },
           { id: 'tsneRemote', name: 't-SNE', settings: { perplexity: true }, embController: new RemoteEmbeddingController('tsne', startProjection) },
           { id: 'pcaRemote', name: 'PCA', settings: {}, embController: new RemoteEmbeddingController('pca', startProjection) },
-          {
-            id: 'rmOverlap',
-            name: 'Overlap removal',
-            settings: { hideSettings: true },
-            embController: new RemoteEmbeddingController('rmOverlap', startProjection),
-            description:
-              'Removes overlapping items by moving them to the nearest non-overlapping position. This is particularly useful for large datasets after a projection like t-SNE or UMAP has been triggered to reduce visual clutter.',
-          },
+          // {
+          //   id: 'rmOverlap',
+          //   name: 'Overlap removal',
+          //   settings: { hideSettings: true },
+          //   embController: new RemoteEmbeddingController('rmOverlap', startProjection),
+          //   description:
+          //     'Removes overlapping items by moving them to the nearest non-overlapping position. This is particularly useful for large datasets after a projection like t-SNE or UMAP has been triggered to reduce visual clutter.',
+          // },
         ],
         showVisibleProjections: false,
         showTrailSettings: false,
@@ -197,8 +200,15 @@ const ApplicationWrapper = connector(({ setMouseMoveFn, setMouseClickFn, resetVi
 });
 
 export function ReactionCIMEApp() {
-  const [context] = useState(new API<AppState>(null, createCIMERootReducer()));
-  context.store.dispatch(setItemLabel({ label: 'experiment', labelPlural: 'experiments' }));
+  const context = React.useMemo(() => new API<AppState>(null, createCIMERootReducer()), []);
+
+  React.useEffect(() => {
+    context.store.dispatch(setItemLabel({ label: 'experiment', labelPlural: 'experiments' }));
+    context.store.dispatch(setStoryLabel({ label: 'group sequence', labelPlural: 'group sequences' }));
+    context.store.dispatch(setStoryBookLabel({ label: 'collection', labelPlural: 'collections' }));
+    context.store.dispatch(setStoryTellingLabel({ label: 'group comparison' }));
+  }, [context]);
+
   const { user } = useVisynAppContext();
   const { clientConfig } = useVisynAppContext();
 
