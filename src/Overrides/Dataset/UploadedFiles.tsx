@@ -1,6 +1,6 @@
-import { Box, Button, IconButton, List, ListItem, ListItemButton, ListItemSecondaryAction, ListItemText, Tooltip, Typography } from '@mui/material';
+import { Box, Button, IconButton, List, ListItemButton, ListItemSecondaryAction, ListItemText, Tooltip, Typography } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
-import { DatasetType, useCancellablePromise } from 'projection-space-explorer';
+import { useCancellablePromise } from 'projection-space-explorer';
 import React, { CSSProperties } from 'react';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import { trackPromise } from 'react-promise-tracker';
@@ -8,11 +8,11 @@ import { ISecureItem, userSession, useVisynAppContext } from 'visyn_core';
 import { ReactionCIMEBackendFromEnv } from '../../Backend/ReactionCIMEBackend';
 import { LoadingIndicatorView } from './LoadingIndicatorDialog';
 
-const textOverflowStyle = {
+const textOverflowStyle: CSSProperties = {
   textOverflow: 'ellipsis',
   overflow: 'hidden',
   whiteSpace: 'nowrap',
-} satisfies CSSProperties;
+};
 
 const loadingArea = 'update_uploaded_files_list';
 export function UploadedFiles({ onChange, refresh }) {
@@ -67,13 +67,7 @@ export function UploadedFiles({ onChange, refresh }) {
             <LoadingIndicatorView area={loadingArea} />
 
             {files.map((file) => (
-              <ListItemButton
-                key={file.id}
-                data-cy="uploaded-data-list-item"
-                href={`?project=${file.id}`}
-                component="a"
-                target="_self"
-              >
+              <ListItemButton key={file.id} data-cy="uploaded-data-list-item" href={`?project=${file.id}`} component="a" target="_self">
                 <ListItemText
                   primary={file.name}
                   secondary={`By ${file.creator}`}
