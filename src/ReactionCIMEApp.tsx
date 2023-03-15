@@ -198,7 +198,7 @@ const ApplicationWrapper = connector(({ setMouseMoveFn, setMouseClickFn, resetVi
 
 export function ReactionCIMEApp() {
   const [context] = useState(new API<AppState>(null, createCIMERootReducer()));
-  context.store.dispatch(setItemLabel({ label: 'experiment', label_plural: 'experiments' }));
+  context.store.dispatch(setItemLabel({ label: 'experiment', labelPlural: 'experiments' }));
   const { user } = useVisynAppContext();
   const { clientConfig } = useVisynAppContext();
 
