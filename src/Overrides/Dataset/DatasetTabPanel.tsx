@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { Accordion, AccordionDetails, AccordionSummary, Box, Button, Divider, Grid, Tooltip, Typography } from '@mui/material';
 import { ExpandMore, InfoOutlined, GetApp, FileUpload } from '@mui/icons-material';
-import { Dataset, IProjection, RootActions, useCancellablePromise, UtilityActions } from 'projection-space-explorer';
+import { Dataset, IProjection, RootActions, useCancellablePromise, usePSESelector, UtilityActions } from 'projection-space-explorer';
 import { connect, ConnectedProps, ReactReduxContext } from 'react-redux';
 import { useState } from 'react';
 import ManageSearchIcon from '@mui/icons-material/ManageSearch';
@@ -32,6 +32,14 @@ function exportState(state: AppState) {
     'lineUpInput',
     'pointColorMapping',
     'detailView',
+    'activeLine',
+    'currentAggregation',
+    'genericFingerprintAttributes',
+    'handleDataset',
+    'highlightedSequence',
+    'hoverState',
+    'mouseInteractionHooks',
+    'selectedLineBy',
   ]);
   // TODO: add lineup dump
   // before serialization, save the lineup dump in the pse dump
@@ -81,8 +89,8 @@ export const DatasetTabPanel = connector(({ onDataSelected, resetViews, setTrigg
   const lookupFileInput = React.useRef<HTMLInputElement>();
   const [lookupUploadNote, setLookupUploadNote] = useState<string>(isSmilesLookupTablePresent());
   const stateFileInput = React.useRef<HTMLInputElement>();
-  // const currentState = usePSESelector<AppState>((state) => state);
   const context = React.useContext(ReactReduxContext);
+  const currentDataset = usePSESelector((state) => state.dataset);
 
   const intermediateOnDataSelected = (dataset, state_dump?) => {
     resetViews();
@@ -182,7 +190,7 @@ export const DatasetTabPanel = connector(({ onDataSelected, resetViews, setTrigg
 
       {!clientConfig.publicVersion ? (
         <Box paddingLeft={2} paddingTop={2} paddingRight={2}>
-          <Accordion variant="outlined" color="primary">
+          <Accordion variant="outlined" color="primary" disabled={currentDataset === null}>
             <AccordionSummary expandIcon={<ExpandMore />}>
               <Typography variant="subtitle2">Advanced settings</Typography>
             </AccordionSummary>
