@@ -87,6 +87,7 @@
   "resolutions": {
     "@types/react": "^16.9.23",
     "@types/react-dom": "^16.9.5",
+    "projection-space-explorer": "portal:./projection-space-explorer",
     "react": "^16.13.0",
     "react-dom": "^16.13.0",
     "vega-lite@4.16.8": "patch:vega-lite@npm:4.16.8#.yarn/patches/vega-lite-npm-4.16.8-2acecf824b.patch"
