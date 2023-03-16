@@ -123,7 +123,7 @@ export const DatasetTabPanel = connector(({ onDataSelected, resetViews, setTrigg
       />
       <input
         style={{ display: 'none' }}
-        accept=".csv"
+        accept=".csv,.zip"
         ref={lookupFileInput}
         type="file"
         onChange={(e) => {

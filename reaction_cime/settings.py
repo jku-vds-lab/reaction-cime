@@ -6,6 +6,7 @@ class ReactionCimeSettings(BaseModel):
     dburl: str = "postgresql://admin:admin@localhost:5432/db"
     # statement_timeout: Any = None
     bundles_dir: str | None = None
+    uploaded_files_path: str = "/tmp/uploaded_files"
     # migration: Dict = {"autoUpgrade": True}
 
 

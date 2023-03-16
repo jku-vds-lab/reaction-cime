@@ -9,7 +9,7 @@ export function DatasetDrop({ onDatasetChange, cancellablePromise, abort_control
     <Grid container item alignItems="stretch" justifyContent="center" direction="column" style={{ padding: '16px' }}>
       <input
         style={{ display: 'none' }}
-        accept=".csv"
+        accept=".csv,.zip"
         ref={fileInput}
         data-cy="upload-file-input"
         // multiple
@@ -23,7 +23,7 @@ export function DatasetDrop({ onDatasetChange, cancellablePromise, abort_control
           const file = files[0];
           const fileName = file.name as string;
 
-          if (fileName.endsWith('csv')) {
+          if (fileName.endsWith('csv') || fileName.endsWith('zip')) {
             // abort_controller = new AbortController();
             new BackendCSVLoader().resolveContent(file, onDatasetChange, cancellablePromise, abort_controller);
           }
