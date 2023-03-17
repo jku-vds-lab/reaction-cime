@@ -33,30 +33,11 @@ export function DatasetDrop({ onDatasetChange, cancellablePromise, abort_control
         variant="outlined"
         component="span"
         onClick={() => {
-          const fi = fileInput.current;
-          fi.click();
+          fileInput.current.click();
         }}
       >
         Upload new dataset
       </Button>
-      {/* <DragAndDrop
-        accept=".csv"
-        handleDrop={(files) => {
-          if (files == null || files.length <= 0) {
-            return;
-          }
-
-          const file = files[0];
-          const fileName = file.name as string;
-
-          if (fileName.endsWith('csv')) {
-            // abort_controller = new AbortController();
-            new BackendCSVLoader().resolveContent(file, onDatasetChange, cancellablePromise, abort_controller);
-          }
-        }}
-      >
-        <div style={{ height: 200 }} />
-      </DragAndDrop> */}
     </Grid>
   );
 }
