@@ -27,7 +27,8 @@ from sklearn.decomposition import PCA
 from visyn_core import manager
 from visyn_core.middleware.request_context_plugin import get_request
 
-from .constants import storage_path
+from reaction_cime.settings import get_settings
+
 from .helper_functions import (
     aggregate_by_col_interpolate,
     circ_radius_to_radius,
@@ -45,6 +46,7 @@ _log = logging.getLogger(__name__)
 
 router = APIRouter(tags=["Reaction-CIME"])
 reaction_cime_api = Blueprint("reaction_cime", __name__)
+
 
 # TODO: Do not enable this route!
 # @reaction_cime_api.route("/refresh_db", methods=["GET"])
@@ -104,8 +106,10 @@ def upload_csv():
     _log.info("Received new csv or zip to upload")
     file_upload = request.files.get("myFile")
 
+    storage_path = get_settings().storage_path
+
     # --- check if file is corrupt
-    if not file_upload or file_upload.filename == "" or file_upload.filename is None:
+    if not file_upload or not file_upload.filename:
         abort(500, "No valid file provided")
 
     file_upload.seek(0, 2)  # sets file's current position at 0th offset from the end (2)
