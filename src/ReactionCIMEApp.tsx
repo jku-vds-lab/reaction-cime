@@ -166,7 +166,7 @@ const ApplicationWrapper = connector(({ setMouseMoveFn, setMouseClickFn, resetVi
             alwaysRender: true,
           },
           {
-            name: 'Parallel Coordinates',
+            name: 'Parallel coordinates',
             view: <PacoContext key="paco" />,
             settings: PacoTabPanel,
             alwaysRender: true,
@@ -184,7 +184,7 @@ const ApplicationWrapper = connector(({ setMouseMoveFn, setMouseClickFn, resetVi
             name: 'aggregatDS',
             tab: AggregationTabPanel,
             title: 'Aggregate',
-            description: 'Aggregated Dataset that should be shown in the background',
+            description: 'Aggregated dataset that should be shown in the background',
             icon: ReactionCIMEIcons.Aggregate,
           },
         ],
