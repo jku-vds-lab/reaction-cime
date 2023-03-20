@@ -68,6 +68,7 @@ export class RemoteEmbeddingController extends EmbeddingController {
   }
 
   override supportsPause() {
+    // Removes the pause button
     return false;
   }
 
