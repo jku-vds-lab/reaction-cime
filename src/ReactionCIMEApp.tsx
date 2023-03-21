@@ -129,9 +129,34 @@ const ApplicationWrapper = connector(({ setMouseMoveFn, setMouseClickFn, resetVi
       }}
       features={{
         embeddings: [
-          { id: 'umapRemote', name: 'UMAP', settings: { nneighbors: true }, embController: new RemoteEmbeddingController('umap', startProjection) },
-          { id: 'tsneRemote', name: 't-SNE', settings: { perplexity: true }, embController: new RemoteEmbeddingController('tsne', startProjection) },
-          { id: 'pcaRemote', name: 'PCA', settings: {}, embController: new RemoteEmbeddingController('pca', startProjection) },
+          {
+            id: 'umapRemote',
+            name: 'UMAP',
+            settings: { nneighbors: true },
+            embController: new RemoteEmbeddingController('umap', startProjection),
+            description:
+              'Performs Uniform Manifold Approximation (UMAP) on the whole dataset using the chosen feature columns. This projects the high-dimensional dataset to a two-dimensional space that will then be shown as a scatterplot.',
+            tooltip:
+              'Performs Uniform Manifold Approximation (UMAP) on the whole dataset using the chosen feature columns. This method scales better than t-SNE with an increasing number of points.',
+          },
+          {
+            id: 'tsneRemote',
+            name: 't-SNE',
+            settings: { perplexity: true },
+            embController: new RemoteEmbeddingController('tsne', startProjection),
+            description:
+              'Performs t-distributed stochastic neighbor embedding (t-SNE) on the whole dataset using the chosen feature columns. This projects the high-dimensional dataset to a two-dimensional space that will then be shown as a scatterplot.',
+            tooltip: 'Performs t-distributed stochastic neighbor embedding (t-SNE) on the whole dataset using the chosen feature columns.',
+          },
+          {
+            id: 'pcaRemote',
+            name: 'PCA',
+            settings: {},
+            embController: new RemoteEmbeddingController('pca', startProjection),
+            description:
+              'Performs principal component analysis (PCA) on the whole dataset using the chosen feature columns. This linearly projects the high-dimensional dataset to a two-dimensional space that will then be shown as a scatterplot.',
+            tooltip: 'Performs principal component analysis (PCA) on the whole dataset using the chosen feature columns.',
+          },
           // {
           //   id: 'rmOverlap',
           //   name: 'Overlap removal',
