@@ -1,4 +1,4 @@
-import { Box, Button, IconButton, List, ListItemButton, ListItemSecondaryAction, ListItemText, Tooltip, Typography } from '@mui/material';
+import { Box, Button, IconButton, List, ListItem, ListItemButton, ListItemText, Tooltip, Typography } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { useCancellablePromise } from 'projection-space-explorer';
 import React, { CSSProperties } from 'react';
@@ -67,30 +67,45 @@ export function UploadedFiles({ onChange, refresh }) {
             <LoadingIndicatorView area={loadingArea} />
 
             {files.map((file) => (
-              <ListItemButton key={file.id} data-cy="uploaded-data-list-item" href={`/?project=${file.id}`} component="a" target="_self">
-                <ListItemText
-                  primary={file.name}
-                  secondary={`By ${file.creator}`}
-                  primaryTypographyProps={{
-                    style: textOverflowStyle,
-                  }}
-                  secondaryTypographyProps={{
-                    style: textOverflowStyle,
-                  }}
-                />
-                {!clientConfig.publicVersion && userSession.canWrite(file) && (
-                  <ListItemSecondaryAction
-                    onClick={(event) => {
-                      event.preventDefault();
-                      handleDelete(file.id);
-                    }}
-                  >
-                    <IconButton edge="end" aria-label="delete">
+              <ListItem
+                disablePadding
+                key={file.id}
+                secondaryAction={
+                  !clientConfig.publicVersion &&
+                  userSession.canWrite(file) && (
+                    <IconButton
+                      edge="end"
+                      aria-label="delete"
+                      onClick={(event) => {
+                        event.preventDefault();
+                        handleDelete(file.id);
+                      }}
+                    >
                       <DeleteIcon />
                     </IconButton>
-                  </ListItemSecondaryAction>
-                )}
-              </ListItemButton>
+                  )
+                }
+              >
+                <ListItemButton
+                  style={{ width: '100%' }}
+                  key={file.id}
+                  data-cy="uploaded-data-list-item"
+                  href={`/?project=${file.id}`}
+                  component="a"
+                  target="_self"
+                >
+                  <ListItemText
+                    primary={file.name}
+                    secondary={`By ${file.creator}`}
+                    primaryTypographyProps={{
+                      style: textOverflowStyle,
+                    }}
+                    secondaryTypographyProps={{
+                      style: textOverflowStyle,
+                    }}
+                  />
+                </ListItemButton>
+              </ListItem>
             ))}
           </List>
         </Box>
