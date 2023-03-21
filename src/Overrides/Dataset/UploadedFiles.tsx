@@ -71,40 +71,45 @@ export function UploadedFiles({ onChange, refresh }) {
                 disablePadding
                 key={file.id}
                 secondaryAction={
-                  !clientConfig.publicVersion &&
-                  userSession.canWrite(file) && (
-                    <IconButton
-                      edge="end"
-                      aria-label="delete"
-                      onClick={(event) => {
-                        event.preventDefault();
-                        handleDelete(file.id);
-                      }}
-                    >
-                      <DeleteIcon />
-                    </IconButton>
+                  !clientConfig.publicVersion && userSession.canWrite(file) ? (
+                    <Tooltip placement="right" title={<Typography variant="subtitle2">Permanently delete dataset &quot;{file.name}&quot;</Typography>}>
+                      <IconButton
+                        edge="end"
+                        aria-label="delete"
+                        onClick={(event) => {
+                          event.preventDefault();
+                          handleDelete(file.id);
+                        }}
+                      >
+                        <DeleteIcon />
+                      </IconButton>
+                    </Tooltip>
+                  ) : (
+                    <div />
                   )
                 }
               >
-                <ListItemButton
-                  style={{ width: '100%' }}
-                  key={file.id}
-                  data-cy="uploaded-data-list-item"
-                  href={`/?project=${file.id}`}
-                  component="a"
-                  target="_self"
-                >
-                  <ListItemText
-                    primary={file.name}
-                    secondary={`By ${file.creator}`}
-                    primaryTypographyProps={{
-                      style: textOverflowStyle,
-                    }}
-                    secondaryTypographyProps={{
-                      style: textOverflowStyle,
-                    }}
-                  />
-                </ListItemButton>
+                <Tooltip placement="right" title={<Typography variant="subtitle2">Load dataset &quot;{file.name}&quot;</Typography>}>
+                  <ListItemButton
+                    style={{ width: '100%' }}
+                    key={file.id}
+                    data-cy="uploaded-data-list-item"
+                    href={`/?project=${file.id}`}
+                    component="a"
+                    target="_self"
+                  >
+                    <ListItemText
+                      primary={file.name}
+                      secondary={`By ${file.creator}`}
+                      primaryTypographyProps={{
+                        style: textOverflowStyle,
+                      }}
+                      secondaryTypographyProps={{
+                        style: textOverflowStyle,
+                      }}
+                    />
+                  </ListItemButton>
+                </Tooltip>
               </ListItem>
             ))}
           </List>
