@@ -3,7 +3,7 @@ import { Button, Grid } from '@mui/material';
 import { BackendCSVLoader } from './BackendCSVLoader';
 
 export function DatasetDrop({ onDatasetChange, cancellablePromise, abort_controller }) {
-  const fileInput = React.useRef();
+  const fileInput = React.useRef<HTMLInputElement>();
 
   return (
     <Grid container item alignItems="stretch" justifyContent="center" direction="column" style={{ padding: '16px' }}>
@@ -33,7 +33,7 @@ export function DatasetDrop({ onDatasetChange, cancellablePromise, abort_control
         variant="outlined"
         component="span"
         onClick={() => {
-          const fi = fileInput.current as HTMLInputElement;
+          const fi = fileInput.current;
           fi.click();
         }}
       >
