@@ -4,7 +4,7 @@ import { connect, ConnectedProps } from 'react-redux';
 import { Handler } from 'vega-tooltip';
 import { makeStyles } from '@mui/styles';
 import './FeatureLegend.scss';
-import { Table, TableBody, TableCell, TableHead, TableRow } from '@mui/material';
+import { Table, TableBody, TableCell, TableHead, TableRow, Tooltip, Typography } from '@mui/material';
 import * as vegaImport from 'vega';
 import { DefaultLegend, FeatureType, IVector, RootState } from 'projection-space-explorer';
 import VegaDensity from './VegaHelpers/VegaDensity';
@@ -12,6 +12,7 @@ import BarChart from './VegaHelpers/BarChart';
 import VegaDate from './VegaHelpers/VegaDate';
 import { mapSmilesToShortname } from '../../Utility/Utils';
 import { ReactionCIMEBackendFromEnv } from '../../Backend/ReactionCIMEBackend';
+import { InfoOutlined } from '@mui/icons-material';
 
 export function formatSMILESTooltip(value: any, valueToHtml: (value: any) => string, maxDepth: number): string {
   let content = '';
@@ -286,7 +287,7 @@ function genRows(vectors, aggregation, legendAttributes, dataset) {
   return ret;
 }
 
-function getTable(vectors, aggregation, legendAttributes, dataset) {
+function getTable(vectors, aggregation, legendAttributes, dataset, itemLabelPlural: string) {
   const classes = makeStyles({
     table: {
       maxWidth: 288,
@@ -305,6 +306,19 @@ function getTable(vectors, aggregation, legendAttributes, dataset) {
           // overflow: "auto"
         }}
       >
+        <Typography paddingX={2} paddingBottom={1} color="textSecondary" variant="body2">
+          The visualizations show distributions of feature values and are sorted by their purity.{' '}
+          <Tooltip
+            title={
+              <Typography variant="subtitle2">
+                The visualizations show the value distributions of a feature overall (black outline) and the distribution of the selected {itemLabelPlural}. The
+                visualizations are sorted by the homogeneity of feature values in the subset of selected {itemLabelPlural} (i.e., measure of purity).
+              </Typography>
+            }
+          >
+            <InfoOutlined fontSize="inherit" />
+          </Tooltip>
+        </Typography>
         <Table className={classes.table} aria-label="simple table" size="small">
           <TableHead />
           <TableBody>
@@ -331,6 +345,7 @@ const mapState = (state: RootState) => {
   return {
     legendAttributes: state.genericFingerprintAttributes,
     dataset: state.dataset,
+    globalLabels: state.globalLabels
   };
 };
 
@@ -345,9 +360,9 @@ type Props = PropsFromRedux & {
   selection: IVector[];
 };
 
-export const FeatureLegend = connector(({ selection, aggregate, legendAttributes, dataset }: Props) => {
+export const FeatureLegend = connector(({ selection, aggregate, legendAttributes, dataset, globalLabels }: Props) => {
   if (selection.length <= 0) {
     return <DefaultLegend />;
   }
-  return getTable(selection, aggregate, legendAttributes, dataset);
+  return getTable(selection, aggregate, legendAttributes, dataset, globalLabels.itemLabelPlural);
 });
