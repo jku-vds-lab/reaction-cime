@@ -337,7 +337,7 @@ def map_constraint_operator(row):
     if row.operator == "BETWEEN":
         return f'"{row.col}" BETWEEN {row.val1} AND {row.val2}'
     if row.operator == "EQUALS":
-        return f'"{row.col}" LIKE \'{row.val1}\''
+        return f"\"{row.col}\" LIKE '{row.val1}'"
     return ""
 
 
