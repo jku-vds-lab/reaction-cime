@@ -192,7 +192,7 @@ def load_poi_constraints(id) -> pd.DataFrame:
 @reaction_cime_api.route("/reset_poi_constraints/<id>", methods=["GET"])
 def reset_poi_constraints(id):
     save_poi_constraints(id)
-    save_poi_exceptions(id)  # TODO: do we want to reset exceptions too?
+    # save_poi_exceptions(id)  # TODO: do we want to reset exceptions too? -> no
     return {"msg": "ok"}
 
 
@@ -337,7 +337,7 @@ def map_constraint_operator(row):
     if row.operator == "BETWEEN":
         return f'"{row.col}" BETWEEN {row.val1} AND {row.val2}'
     if row.operator == "EQUALS":
-        return f'"{row.col}"="{row.val1}"'
+        return f'"{row.col}" LIKE \'{row.val1}\''
     return ""
 
 
@@ -848,7 +848,6 @@ class ProjectionThread(threading.Thread):
         self.msg = "rescale and encode..."
         # rescale numerical values and encode categorical values
         proj_df, categorical_features, feature_weights = rescale_and_encode(proj_df, self.params, self.selected_feature_info)
-        print(feature_weights)
 
         self.msg = "calc metric..."
         # handle custom metrics
