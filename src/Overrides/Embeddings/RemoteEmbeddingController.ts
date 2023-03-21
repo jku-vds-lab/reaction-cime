@@ -61,10 +61,15 @@ export class RemoteEmbeddingController extends EmbeddingController {
     );
   }
 
-  terminate() {
+  override terminate() {
     this.worker.postMessage({
       messageType: 'abort',
     });
+  }
+
+  override supportsPause() {
+    // Removes the pause button
+    return false;
   }
 
   step() {
