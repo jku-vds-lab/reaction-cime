@@ -1,8 +1,8 @@
 import * as React from 'react';
 import { Accordion, AccordionDetails, AccordionSummary, Box, Button, Tooltip, Typography } from '@mui/material';
 import { ExpandMore, InfoOutlined } from '@mui/icons-material';
-import { Dataset, IProjection, RootActions, useCancellablePromise, UtilityActions } from 'projection-space-explorer';
-import { connect, ConnectedProps } from 'react-redux';
+import { Dataset, IProjection, isEntityId, RootActions, useCancellablePromise, UtilityActions } from 'projection-space-explorer';
+import { connect, ConnectedProps, useDispatch } from 'react-redux';
 import { useState } from 'react';
 import ManageSearchIcon from '@mui/icons-material/ManageSearch';
 import { useVisynAppContext } from 'visyn_core';
@@ -14,7 +14,7 @@ import { setTriggerUpdate as setTriggerUpdateAction } from '../../State/HandleDa
 import { isSmilesLookupTablePresent, saveSmilesLookupTable } from '../../Utility/Utils';
 import { LoadingIndicatorDialog } from './LoadingIndicatorDialog';
 
-function selectPositions(dataset: Dataset, projection: IProjection) {
+export function selectPositions(dataset: Dataset, projection: IProjection) {
   const xChannel = projection.xChannel ?? 'x';
   const yChannel = projection.xChannel ?? 'y';
   return dataset.vectors.map((vector) => ({
@@ -46,6 +46,7 @@ export const DatasetTabPanel = connector(({ onDataSelected, resetViews, setTrigg
   const [refreshUploadedFiles, setRefreshUploadedFiles] = useState(0);
   const lookupFileInput = React.useRef<any>();
   const [lookupUploadNote, setLookupUploadNote] = useState<string>(isSmilesLookupTablePresent());
+  const dispatch = useDispatch();
 
   const intermediateOnDataSelected = (dataset, state_dump?) => {
     resetViews();
@@ -56,7 +57,7 @@ export const DatasetTabPanel = connector(({ onDataSelected, resetViews, setTrigg
   };
 
   const triggerUpdate = (entry, state?: AppState) => {
-    let stateDump = null;
+    let stateDump: Partial<AppState> = null;
     if (state != null) {
       stateDump = UtilityActions.partialDump(state, [
         'dataset',
@@ -71,28 +72,28 @@ export const DatasetTabPanel = connector(({ onDataSelected, resetViews, setTrigg
         'projects',
         'interfaceState',
         'selectedLineBy',
+        'viewTransform',
       ]);
     }
     new BackendCSVLoader().resolvePath(
       entry,
       (dataset) => {
         if (stateDump != null) {
-          // we have to update the workspace positions manually to the new positions
-          const newProjectionEntities = { ...stateDump.multiples.projections.entities };
           stateDump.multiples.multiples.ids.forEach((id) => {
-            const active = stateDump.multiples.multiples.entities[id];
-            const workspaceId = active.attributes.workspace;
-            const workspace = state.multiples.multiples.entities[id].attributes.workspace as IProjection;
-            const newPositions = selectPositions(dataset, workspace);
-            const newWorkspaceIdPosition = { ...newProjectionEntities[workspaceId] };
-            newWorkspaceIdPosition.positions = newPositions;
-            newProjectionEntities[workspaceId] = newWorkspaceIdPosition;
+            const multiple = stateDump.multiples.multiples.entities[id];
+            const { workspace } = multiple.attributes;
+
+            const projection = isEntityId(workspace) ? stateDump.multiples.projections.entities[workspace] : workspace;
+
+            // Projection was not specified through x/y channels
+            if (projection.positions) {
+              projection.positions = selectPositions(dataset, projection);
+            }
           });
-          const newProjections = { ...stateDump.multiples.projections, entities: newProjectionEntities };
-          const newMultiples = { ...stateDump.multiples, projections: newProjections };
-          stateDump = { ...stateDump, multiples: newMultiples };
         }
-        intermediateOnDataSelected(dataset, stateDump);
+
+        dispatch(RootActions.loadDataset(dataset, stateDump));
+        // intermediateOnDataSelected(dataset, stateDump);
       },
       cancellablePromise,
       null,
@@ -122,7 +123,7 @@ export const DatasetTabPanel = connector(({ onDataSelected, resetViews, setTrigg
       />
       <input
         style={{ display: 'none' }}
-        accept=".csv"
+        accept=".csv,.zip"
         ref={lookupFileInput}
         type="file"
         onChange={(e) => {
