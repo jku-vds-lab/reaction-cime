@@ -110,10 +110,7 @@ export const LineUpTabPanel = connector(({ setDetailVisibility, setLineUpInput_f
         </Tooltip>
       </Box>
       <Box paddingLeft={2} paddingTop={1} paddingRight={2}>
-        <Tooltip
-            placement="right"
-            title={<Typography variant="subtitle2">If activated, LinUp shows values in the cells for numeric features.</Typography>}
-          >
+        <Tooltip placement="right" title={<Typography variant="subtitle2">If activated, LinUp shows values in the cells for numeric features.</Typography>}>
           <FormControlLabel
             control={
               <Switch

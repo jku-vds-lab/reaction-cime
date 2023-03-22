@@ -51,11 +51,5 @@ export const NOItemsInfo = connector(({ dataset, globalLabels, variant }: Props)
       break;
   }
 
-  return (
-    totalDataPoints >= 0 && (
-      <Typography color="textSecondary" variant="body2">
-        {text}
-      </Typography>
-    )
-  );
+  return totalDataPoints >= 0 && text;
 });
