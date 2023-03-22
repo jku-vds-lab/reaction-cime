@@ -1,4 +1,6 @@
-import { Slider, Typography } from '@mui/material';
+import { InfoOutlined } from '@mui/icons-material';
+import { Slider, Tooltip, Typography } from '@mui/material';
+import { Box } from '@mui/system';
 import React from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 import { AggregateActions } from '../../State/AggregateSettingsDuck';
@@ -64,9 +66,19 @@ export const StepSlider = sliderconnector(({ selectAttribute, setAggregateColor,
   }, [curStep, selectAttribute, variableIndex]);
 
   return marks && marks.length > 0 ? (
-    <>
-      <Typography id="range-slider" gutterBottom>
-        Choose step
+    <Box paddingTop={1}>
+      <Typography variant="body2" color="textSecondary" id="range-slider">
+        Choose step{' '}
+        <Tooltip
+          placement="right"
+          title={
+            <Typography variant="subtitle2">
+              The chosen feature is of temporal nature. You can use the slider to choose the time step used for encoding.
+            </Typography>
+          }
+        >
+          <InfoOutlined fontSize="inherit" style={{ color: 'grey' }} />
+        </Tooltip>
       </Typography>
       <Slider
         min={0}
@@ -77,6 +89,6 @@ export const StepSlider = sliderconnector(({ selectAttribute, setAggregateColor,
         marks={marks}
         valueLabelDisplay="auto"
       />
-    </>
+    </Box>
   ) : null;
 });

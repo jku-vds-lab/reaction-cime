@@ -1,11 +1,12 @@
 import * as React from 'react';
 import { connect, ConnectedProps } from 'react-redux';
-import { Button, InputLabel, MenuItem, Select } from '@mui/material';
+import { Button, InputLabel, MenuItem, Select, Tooltip, Typography } from '@mui/material';
 import * as vsup from 'vsup';
 import * as d3 from 'd3v5';
 import { D3_CONTINUOUS_COLOR_SCALE_LIST, AggregateActions } from '../../State/AggregateSettingsDuck';
 import { AppState } from '../../State/Store';
 import { PSE_BLUE } from '../../Utility/Utils';
+import { InfoOutlined } from '@mui/icons-material';
 
 const mapStateToProps = (state: AppState) => ({
   aggregateSettings: state.multiples.multiples.entities[state.multiples.active]?.attributes.aggregateSettings,
@@ -196,7 +197,9 @@ export const ColorMapLegend = connector(
 
     return (
       <>
-        <InputLabel id="colorscale-select-label">Choose colormap</InputLabel>
+        <Typography variant="body2" color="textSecondary" id="range-slider">
+          Choose colormap
+        </Typography>
         <Select labelId="colorscale-select-label" id="colorscale-select" value={aggregateSettings.colormapSettings.colorscale} onChange={handleChange}>
           {D3_CONTINUOUS_COLOR_SCALE_LIST.map((colorscale) => (
             <MenuItem key={colorscale} value={colorscale} title={colorscale}>
