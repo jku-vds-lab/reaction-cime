@@ -1,5 +1,5 @@
 /* eslint-disable no-await-in-loop */
-import { Table, TableBody, TableCell, TableHead, TableRow } from '@mui/material';
+import { Table, TableBody, TableCell, TableHead, TableRow, Typography } from '@mui/material';
 import { makeStyles } from '@mui/styles';
 import { Dataset, FeatureType, IProjection } from 'projection-space-explorer';
 import React from 'react';
@@ -12,6 +12,7 @@ import BarChart from './VegaHelpers/BarChart';
 import AreaChart from './VegaHelpers/AreaChart';
 import { formatSMILESTooltip } from './FeatureLegend';
 import { mapSmilesToShortname } from '../../Utility/Utils';
+import { Box } from '@mui/system';
 
 async function handleCategoricalData(
   dataset: Dataset,
@@ -194,6 +195,14 @@ export const AggregateLegend = connector(({ aggregate, aggregateSelection, legen
           // overflow: "auto"
         }}
       >
+        <Box paddingX={2} paddingTop={2} paddingBottom={1}>
+          <Typography variant="subtitle2" gutterBottom>
+            Filter settings
+          </Typography>
+          <Typography variant="body2" color="textSecondary" gutterBottom>
+            Adjust filter settings to show a different subset of {state.globalLabels.itemLabelPlural} in the front end.
+          </Typography>
+        </Box>
         <Table className={classes.table} aria-label="simple table" size="small">
           <TableHead />
           <TableBody>

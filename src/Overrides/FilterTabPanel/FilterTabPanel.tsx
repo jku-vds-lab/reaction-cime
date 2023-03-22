@@ -2,7 +2,7 @@ import { Grid, Typography, Box, Button } from '@mui/material';
 import { connect, ConnectedProps } from 'react-redux';
 import GetAppIcon from '@mui/icons-material/GetApp';
 import React from 'react';
-import { SelectFeatureComponent } from 'projection-space-explorer';
+import { toSentenceCase, SelectFeatureComponent } from 'projection-space-explorer';
 import FileUploadIcon from '@mui/icons-material/FileUpload';
 import { AppState } from '../../State/Store';
 // @ts-ignore
@@ -71,12 +71,16 @@ export const FilterTabPanel = connector(({ dataset, triggerDatasetUpdate, state 
   return (
     dataset && (
       <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflowY: 'auto' }}>
-        <Box paddingLeft={2} paddingTop={1} paddingRight={2}>
-          {/* TODO: always show info about NO items */}
-          <NOItemsInfo variant="filterOutOfTotal" />
+        <Box paddingX={2} paddingTop={2} paddingBottom={1}>
           <Typography variant="subtitle2" gutterBottom>
             Filter settings
           </Typography>
+          <Typography variant="body2" color="textSecondary" gutterBottom>
+            Adjust filter settings to show a different subset of {state.globalLabels.itemLabelPlural} in the front end.
+          </Typography>
+
+          {/* TODO: always show info about NO items */}
+          <NOItemsInfo variant="filterOutOfTotal" />
         </Box>
         <Box paddingLeft={2} paddingTop={1} paddingRight={2}>
           <SelectFeatureComponent

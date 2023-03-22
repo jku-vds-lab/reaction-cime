@@ -1,4 +1,4 @@
-import { Box } from '@mui/material';
+import { Box, Typography } from '@mui/material';
 import { connect, ConnectedProps } from 'react-redux';
 import React from 'react';
 import { SelectFeatureComponent } from 'projection-space-explorer';
@@ -116,7 +116,13 @@ export const AggregationTabPanel = connector(
 
     return (
       <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-        <Box paddingLeft={2} paddingTop={1} paddingRight={2}>
+        <Box paddingX={2} paddingTop={2} paddingBottom={1}>
+          <Typography variant="subtitle2" gutterBottom>
+            Aggregation settings
+          </Typography>
+          <Typography variant="body2" color="textSecondary" gutterBottom>
+            Select the attribute to aggregate the data by and change the visual encoding.
+          </Typography>
           <NOItemsInfo variant="all" />
         </Box>
         {/* <Box paddingLeft={2} paddingTop={1} paddingRight={2}>
