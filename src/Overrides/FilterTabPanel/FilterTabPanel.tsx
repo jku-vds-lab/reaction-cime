@@ -108,8 +108,8 @@ export const FilterTabPanel = connector(({ dataset, triggerDatasetUpdate, state 
             }}
           />
         </Box>
-
-        <Box paddingLeft={2} paddingTop={1} paddingRight={2}>
+        {/* TODO: this downloads the current filter file. this file can later be uploaded again -> not really necessary because filters are saved in backend */}
+        {/* <Box paddingLeft={2} paddingTop={1} paddingRight={2}>
           <Grid container>
             <Grid item xs={6} paddingRight={1}>
               <Button
@@ -147,7 +147,7 @@ export const FilterTabPanel = connector(({ dataset, triggerDatasetUpdate, state 
               </Button>
             </Grid>
           </Grid>
-        </Box>
+        </Box> */}
         <Box paddingTop={1} paddingRight={2}>
           <ExceptionSettings state={state} triggerDatasetUpdate={triggerDatasetUpdate} dataset={dataset} />
         </Box>

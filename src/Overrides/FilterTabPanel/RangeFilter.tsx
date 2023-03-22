@@ -31,7 +31,7 @@ export function RangeFilter({ col, value, setValue, remove, dataset }: Props) {
   return (
     <Grid container paddingTop={0}>
       <Grid item xs={3} textAlign="right">
-        <Tooltip title={`Remove ${col} filter`}>
+        <Tooltip title={<Typography variant="subtitle2">Remove {col} filter.</Typography>}>
           <IconButton
             onClick={() => {
               remove(col);
@@ -42,7 +42,7 @@ export function RangeFilter({ col, value, setValue, remove, dataset }: Props) {
         </Tooltip>
       </Grid>
       <Grid item xs={9}>
-        <Typography id={`filter_${col}`} marginBottom="-5px">
+        <Typography id={`filter_${col}`} marginBottom="-5px" style={{ textOverflow: 'ellipsis', overflow: 'hidden' }}>
           {col}
         </Typography>
         <Slider

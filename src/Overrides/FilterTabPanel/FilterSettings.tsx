@@ -1,5 +1,5 @@
 /* eslint-disable guard-for-in */
-import { Box, Button, Tooltip } from '@mui/material';
+import { Box, Button, Tooltip, Typography } from '@mui/material';
 import { Dataset } from 'projection-space-explorer';
 import React from 'react';
 import FilterAltIcon from '@mui/icons-material/FilterAlt';
@@ -7,6 +7,7 @@ import RotateLeftIcon from '@mui/icons-material/RotateLeft';
 import { ReactionCIMEBackendFromEnv } from '../../Backend/ReactionCIMEBackend';
 import { CategoryFilter } from './CategoryFilter';
 import { RangeFilter } from './RangeFilter';
+import { AppState } from '../../index';
 
 export const updateBackendConstraints = (dimensions: Record<string, any>, dataset, triggerDatasetUpdate, state) => {
   const constraintDimensions = dimensions;
@@ -49,7 +50,7 @@ type Props = {
   constraintCols: string[];
   constraints: { col: string; operator: string; val1: string; val2: string }[];
   triggerDatasetUpdate;
-  state;
+  state: AppState;
 };
 
 export function FilterSettings({ dataset, removeFilter, constraintCols, constraints, triggerDatasetUpdate, state }: Props) {
@@ -157,19 +158,35 @@ export function FilterSettings({ dataset, removeFilter, constraintCols, constrai
       </Box>
 
       <Box paddingLeft={2} paddingTop={1}>
-        <Button
-          fullWidth
-          variant="outlined"
-          onClick={() => {
-            updateBackendConstraints(filterValues, dataset, triggerDatasetUpdate, state);
-          }}
+        <Tooltip
+          placement="right"
+          title={
+            <Typography variant="subtitle2">
+              Save the current filter configuration and update the subset of {state.globalLabels.itemLabelPlural}, shown in the web application, accordingly.
+            </Typography>
+          }
         >
-          <FilterAltIcon />
-          &nbsp;Apply filter
-        </Button>
+          <Button
+            fullWidth
+            variant="outlined"
+            onClick={() => {
+              updateBackendConstraints(filterValues, dataset, triggerDatasetUpdate, state);
+            }}
+          >
+            <FilterAltIcon />
+            &nbsp;Apply filter
+          </Button>
+        </Tooltip>
       </Box>
       <Box paddingLeft={2} paddingTop={1}>
-        <Tooltip title="Reset filter to initial state">
+        <Tooltip
+          placement="right"
+          title={
+            <Typography variant="subtitle2">
+              Reset filter to the initial configuration. This removes all filters and sets the &quot;experiment cycle&quot; filter to be positive.
+            </Typography>
+          }
+        >
           <Button
             fullWidth
             variant="outlined"
