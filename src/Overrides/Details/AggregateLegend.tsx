@@ -158,6 +158,7 @@ const mapStateToProps = (state: AppState) => ({
   legendAttributes: state.genericFingerprintAttributes,
   dataset: state.dataset,
   workspace: state.multiples.multiples.entities[state.multiples.active].attributes.workspace,
+  globalLabels: state.globalLabels
 });
 const mapDispatchToProps = (dispatch: any) => ({});
 
@@ -178,7 +179,7 @@ const useStyles = makeStyles({
   },
 });
 
-export const AggregateLegend = connector(({ aggregate, aggregateSelection, legendAttributes, dataset, workspace }: Props) => {
+export const AggregateLegend = connector(({ aggregate, aggregateSelection, legendAttributes, dataset, workspace, globalLabels }: Props) => {
   const classes = useStyles();
   const [rows, setRows] = React.useState([]);
 
@@ -200,7 +201,7 @@ export const AggregateLegend = connector(({ aggregate, aggregateSelection, legen
             Filter settings
           </Typography>
           <Typography variant="body2" color="textSecondary" gutterBottom>
-            Adjust filter settings to show a different subset of {state.globalLabels.itemLabelPlural} in the front end.
+            Adjust filter settings to show a different subset of {globalLabels.itemLabelPlural} in the front end.
           </Typography>
         </Box>
         <Table className={classes.table} aria-label="simple table" size="small">
