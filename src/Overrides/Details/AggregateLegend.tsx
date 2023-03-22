@@ -6,13 +6,13 @@ import React from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 import * as vegaImport from 'vega';
 import { Handler } from 'vega-tooltip';
+import { Box } from '@mui/system';
 import { ReactionCIMEBackendFromEnv } from '../../Backend/ReactionCIMEBackend';
 import { AppState } from '../../State/Store';
 import BarChart from './VegaHelpers/BarChart';
 import AreaChart from './VegaHelpers/AreaChart';
 import { formatSMILESTooltip } from './FeatureLegend';
 import { mapSmilesToShortname } from '../../Utility/Utils';
-import { Box } from '@mui/system';
 
 async function handleCategoricalData(
   dataset: Dataset,
@@ -158,7 +158,7 @@ const mapStateToProps = (state: AppState) => ({
   legendAttributes: state.genericFingerprintAttributes,
   dataset: state.dataset,
   workspace: state.multiples.multiples.entities[state.multiples.active].attributes.workspace,
-  globalLabels: state.globalLabels
+  globalLabels: state.globalLabels,
 });
 const mapDispatchToProps = (dispatch: any) => ({});
 

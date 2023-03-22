@@ -3,11 +3,11 @@ import { connect, ConnectedProps } from 'react-redux';
 import { Button, InputLabel, MenuItem, Select, Tooltip, Typography } from '@mui/material';
 import * as vsup from 'vsup';
 import * as d3 from 'd3v5';
+import { InfoOutlined } from '@mui/icons-material';
+import { Box } from '@mui/system';
 import { D3_CONTINUOUS_COLOR_SCALE_LIST, AggregateActions } from '../../State/AggregateSettingsDuck';
 import { AppState } from '../../State/Store';
 import { PSE_BLUE } from '../../Utility/Utils';
-import { InfoOutlined } from '@mui/icons-material';
-import { Box } from '@mui/system';
 
 const mapStateToProps = (state: AppState) => ({
   aggregateSettings: state.multiples.multiples.entities[state.multiples.active]?.attributes.aggregateSettings,

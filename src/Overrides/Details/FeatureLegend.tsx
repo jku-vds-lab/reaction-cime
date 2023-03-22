@@ -7,12 +7,12 @@ import './FeatureLegend.scss';
 import { Table, TableBody, TableCell, TableHead, TableRow, Tooltip, Typography } from '@mui/material';
 import * as vegaImport from 'vega';
 import { DefaultLegend, FeatureType, IVector, RootState } from 'projection-space-explorer';
+import { InfoOutlined } from '@mui/icons-material';
 import VegaDensity from './VegaHelpers/VegaDensity';
 import BarChart from './VegaHelpers/BarChart';
 import VegaDate from './VegaHelpers/VegaDate';
 import { mapSmilesToShortname } from '../../Utility/Utils';
 import { ReactionCIMEBackendFromEnv } from '../../Backend/ReactionCIMEBackend';
-import { InfoOutlined } from '@mui/icons-material';
 
 export function formatSMILESTooltip(value: any, valueToHtml: (value: any) => string, maxDepth: number): string {
   let content = '';
@@ -345,7 +345,7 @@ const mapState = (state: RootState) => {
   return {
     legendAttributes: state.genericFingerprintAttributes,
     dataset: state.dataset,
-    globalLabels: state.globalLabels
+    globalLabels: state.globalLabels,
   };
 };
 

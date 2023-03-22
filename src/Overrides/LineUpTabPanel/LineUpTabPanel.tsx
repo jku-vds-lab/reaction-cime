@@ -8,7 +8,7 @@ import { AppState } from '../../State/Store';
 const mapStateToProps = (state: AppState) => ({
   currentAggregation: state.currentAggregation,
   lineUpInput: state.lineUpInput,
-  globalLabels: state.globalLabels
+  globalLabels: state.globalLabels,
 });
 
 const mapDispatchToProps = (dispatch) => ({

@@ -7,7 +7,7 @@ import RotateLeftIcon from '@mui/icons-material/RotateLeft';
 import { ReactionCIMEBackendFromEnv } from '../../Backend/ReactionCIMEBackend';
 import { CategoryFilter } from './CategoryFilter';
 import { RangeFilter } from './RangeFilter';
-import { AppState } from '../../index';
+import { AppState } from '../../State/Store';
 
 export const updateBackendConstraints = (dimensions: Record<string, any>, dataset, triggerDatasetUpdate, state) => {
   const constraintDimensions = dimensions;

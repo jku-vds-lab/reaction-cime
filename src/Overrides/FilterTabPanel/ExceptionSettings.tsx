@@ -2,10 +2,10 @@ import { Box, Divider, Grid, IconButton, Tooltip, Typography } from '@mui/materi
 import { Dataset } from 'projection-space-explorer';
 import React from 'react';
 import DeleteIcon from '@mui/icons-material/Delete';
+import { InfoOutlined } from '@mui/icons-material';
 import { ReactionCIMEBackendFromEnv } from '../../Backend/ReactionCIMEBackend';
 import { formatLabel } from '../../Utility/Utils';
 import { AppState } from '../../State/Store';
-import { InfoOutlined } from '@mui/icons-material';
 
 type Props = {
   dataset: Dataset;
