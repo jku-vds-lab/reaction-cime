@@ -191,7 +191,7 @@ const ApplicationWrapper = connector(({ setMouseMoveFn, setMouseClickFn, resetVi
             alwaysRender: true,
           },
           {
-            name: 'Parallel coordinates',
+            name: 'Parallel Coordinates',
             view: <PacoContext key="paco" />,
             settings: PacoTabPanel,
             alwaysRender: true,
