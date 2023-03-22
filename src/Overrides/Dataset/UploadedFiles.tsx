@@ -72,7 +72,7 @@ export function UploadedFiles({ onChange, refresh }) {
                 key={file.id}
                 secondaryAction={
                   !clientConfig.publicVersion && userSession.canWrite(file) ? (
-                    <Tooltip placement="right" title={<Typography variant="subtitle2">Permanently delete dataset &quot;{file.name}&quot;</Typography>}>
+                    <Tooltip placement="right" title={<Typography variant="subtitle2">Permanently delete dataset &quot;{file.name}&quot;.</Typography>}>
                       <IconButton
                         edge="end"
                         aria-label="delete"
@@ -89,7 +89,7 @@ export function UploadedFiles({ onChange, refresh }) {
                   )
                 }
               >
-                <Tooltip placement="right" title={<Typography variant="subtitle2">Load dataset &quot;{file.name}&quot;</Typography>}>
+                <Tooltip placement="right" title={<Typography variant="subtitle2">Load dataset &quot;{file.name}&quot;.</Typography>}>
                   <ListItemButton
                     style={{ width: '100%' }}
                     key={file.id}

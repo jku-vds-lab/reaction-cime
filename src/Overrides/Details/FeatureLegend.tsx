@@ -306,12 +306,12 @@ function getTable(vectors, aggregation, legendAttributes, dataset, itemLabelPlur
           // overflow: "auto"
         }}
       >
-        <Typography paddingX={2} paddingBottom={1} color="textSecondary" variant="body2">
-          The visualizations show distributions of feature values and are sorted by their purity.{' '}
+        <Typography paddingX={2} paddingBottom={1} color="textSecondary" variant="body2" maxWidth={250}>
+          The plots show distributions of feature values and are sorted by their purity.{' '}
           <Tooltip
             title={
               <Typography variant="subtitle2">
-                The visualizations show the value distributions of a feature overall (black outline) and the distribution of the selected {itemLabelPlural}. The
+                The plots show the value distributions of a feature overall (black outline) and the distribution of the selected {itemLabelPlural}. The
                 visualizations are sorted by the homogeneity of feature values in the subset of selected {itemLabelPlural} (i.e., measure of purity).
               </Typography>
             }
