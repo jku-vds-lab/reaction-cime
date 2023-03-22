@@ -71,6 +71,8 @@ export const FilterTabPanel = connector(({ dataset, triggerDatasetUpdate, state 
   return (
     dataset && (
       <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflowY: 'auto' }}>
+        {/* TODO: always show info about NO items */}
+        <NOItemsInfo variant="filterOutOfTotal" />
         <Box paddingX={2} paddingTop={2} paddingBottom={1}>
           <Typography variant="subtitle2" gutterBottom>
             Filter settings
@@ -78,9 +80,6 @@ export const FilterTabPanel = connector(({ dataset, triggerDatasetUpdate, state 
           <Typography variant="body2" color="textSecondary" gutterBottom>
             Adjust filter settings to show a different subset of {state.globalLabels.itemLabelPlural} in the front end.
           </Typography>
-
-          {/* TODO: always show info about NO items */}
-          <NOItemsInfo variant="filterOutOfTotal" />
         </Box>
         <Box paddingLeft={2} paddingTop={1} paddingRight={2}>
           <SelectFeatureComponent

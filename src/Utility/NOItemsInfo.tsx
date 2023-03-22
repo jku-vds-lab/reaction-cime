@@ -1,4 +1,5 @@
 import { Typography } from '@mui/material';
+import { Box } from '@mui/system';
 import React from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 import { ReactionCIMEBackendFromEnv } from '../Backend/ReactionCIMEBackend';
@@ -51,5 +52,5 @@ export const NOItemsInfo = connector(({ dataset, globalLabels, variant }: Props)
       break;
   }
 
-  return totalDataPoints >= 0 && text;
+  return totalDataPoints >= 0 && <Box padding={1}>{text}</Box>;
 });

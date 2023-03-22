@@ -7,6 +7,7 @@ import { D3_CONTINUOUS_COLOR_SCALE_LIST, AggregateActions } from '../../State/Ag
 import { AppState } from '../../State/Store';
 import { PSE_BLUE } from '../../Utility/Utils';
 import { InfoOutlined } from '@mui/icons-material';
+import { Box } from '@mui/system';
 
 const mapStateToProps = (state: AppState) => ({
   aggregateSettings: state.multiples.multiples.entities[state.multiples.active]?.attributes.aggregateSettings,
@@ -197,7 +198,7 @@ export const ColorMapLegend = connector(
 
     return (
       <>
-        <Typography variant="body2" color="textSecondary" id="range-slider">
+        <Typography variant="body2" color="textSecondary">
           Choose colormap
         </Typography>
         <Select labelId="colorscale-select-label" id="colorscale-select" value={aggregateSettings.colormapSettings.colorscale} onChange={handleChange}>
@@ -218,14 +219,36 @@ export const ColorMapLegend = connector(
           <g ref={gRef} />
         </svg>
         {legend?.height == null && ( // only the "simple" legend has a hight attribute
-          <Button
-            variant="outlined"
-            onClick={() => {
-              toggleUseVSUP();
-            }}
-          >
-            Switch encoding
-          </Button>
+          <Box>
+            <Typography variant="body2" color="textSecondary" gutterBottom>
+              The chosen feature consists of two variables. You can choose bi-variate color mapping or VSUP.{' '}
+              <Tooltip
+                placement="right"
+                title={
+                  <Typography variant="subtitle2">
+                    Both color mapping methods can be used for encoding two variables. In bi-variate color mapping, the two variables are linearly encoded with
+                    hue and saturation. For value-suppressing uncertainty palettes (VSUP), one of the values is considered a measure of &quot;uncertainty&quot;.
+                    With increasing uncertainty the separation of values becomes less important.
+                  </Typography>
+                }
+              >
+                <InfoOutlined fontSize="inherit" style={{ color: 'grey' }} />
+              </Tooltip>
+            </Typography>
+            <Tooltip
+              placement="right"
+              title={<Typography variant="subtitle2">Switch to {aggregateSettings.colormapSettings.useVSUP ? 'bi-variate mapping' : 'VSUP'}</Typography>}
+            >
+              <Button
+                variant="outlined"
+                onClick={() => {
+                  toggleUseVSUP();
+                }}
+              >
+                Switch encoding
+              </Button>
+            </Tooltip>
+          </Box>
         )}
         {aggregateSettings.colormapSettings.valueFilter != null && aggregateSettings.colormapSettings.valueFilter.length > 0 && (
           <Button
