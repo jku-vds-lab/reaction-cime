@@ -213,7 +213,7 @@ def add_poi_exceptions():
         ):
 
             exceptions_df = load_poi_exceptions(id)
-            exceptions_df = exceptions_df.concat(new_exceptions_df, ignore_index=True)
+            exceptions_df = pd.concat([exceptions_df, new_exceptions_df], ignore_index=True)
 
             poi_count = (
                 get_cime_dbo().get_filter_mask(id, get_poi_constraints_filter(id, load_poi_constraints(id), exceptions_df))["mask"].sum()
@@ -595,7 +595,7 @@ def get_hexagonal_aggregation(id, x_channel="x", y_channel="y"):
 
     agg_df["hex"] = True
 
-    agg_df = agg_df.concat(wrong_df, ignore_index=True)
+    agg_df = pd.concat([agg_df, wrong_df], ignore_index=True)
 
     csv_buffer = StringIO()
     agg_df.to_csv(csv_buffer, index=False)
