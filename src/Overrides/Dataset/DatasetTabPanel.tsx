@@ -145,7 +145,7 @@ export const DatasetTabPanel = connector(({ onDataSelected, resetViews, setTrigg
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-      <Box paddingX={2} paddingTop={2} paddingBottom={1}>
+      <Box paddingX={2} paddingTop={2}>
         <Typography variant="subtitle2" gutterBottom>
           Load dataset
         </Typography>

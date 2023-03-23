@@ -71,14 +71,14 @@ export const FilterTabPanel = connector(({ dataset, triggerDatasetUpdate, state 
   return (
     dataset && (
       <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflowY: 'auto' }}>
-        {/* TODO: always show info about NO items */}
-        <NOItemsInfo variant="filterOutOfTotal" />
         <Box paddingX={2} paddingTop={2} paddingBottom={1}>
           <Typography variant="subtitle2" gutterBottom>
             Filter settings
           </Typography>
           <Typography variant="body2" color="textSecondary" gutterBottom>
-            Adjust filter settings to show a different subset of {state.globalLabels.itemLabelPlural} in the front end.
+            Adjust filter settings to show a different subset of {state.globalLabels.itemLabelPlural} in the front end.{' '}
+            {/* TODO: always show info about NO items */}
+            <NOItemsInfo variant="filterOutOfTotal" />
           </Typography>
         </Box>
         <Box paddingLeft={2} paddingTop={1} paddingRight={2}>
@@ -147,9 +147,7 @@ export const FilterTabPanel = connector(({ dataset, triggerDatasetUpdate, state 
             </Grid>
           </Grid>
         </Box> */}
-        <Box paddingTop={1} paddingRight={2}>
-          <ExceptionSettings state={state} triggerDatasetUpdate={triggerDatasetUpdate} dataset={dataset} />
-        </Box>
+        <ExceptionSettings state={state} triggerDatasetUpdate={triggerDatasetUpdate} dataset={dataset} />
       </div>
     )
   );

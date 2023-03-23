@@ -47,10 +47,7 @@ export function ExceptionSettings({ dataset, triggerDatasetUpdate, state }: Prop
   return (
     exceptions.length > 0 && (
       <div>
-        <Box paddingY={2}>
-          <Divider orientation="horizontal" />
-        </Box>
-        <Box paddingX={2} paddingTop={2} paddingBottom={1}>
+        <Box paddingX={2} paddingTop={4} paddingBottom={1}>
           <Typography variant="subtitle2" gutterBottom>
             Exception settings
           </Typography>

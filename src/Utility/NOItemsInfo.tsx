@@ -35,22 +35,22 @@ export const NOItemsInfo = connector(({ dataset, globalLabels, variant }: Props)
   switch (variant) {
     case 'all':
       text = (
-        <Typography color="textSecondary" variant="body2">
-          Showing all <b>{totalDataPoints}</b> {globalLabels.itemLabelPlural} as aggregation
-        </Typography>
+        <>
+          Showing all <b>{totalDataPoints}</b> {globalLabels.itemLabelPlural} as aggregation.
+        </>
       );
       break;
     case 'filterOutOfTotal':
       text = (
-        <Typography color="textSecondary" variant="body2">
+        <>
           Currently showing <b>{length}</b> out of <b>{totalDataPoints}</b> {globalLabels.itemLabelPlural} (~
           {Math.round((length / totalDataPoints) * 10000) / 100}% of the dataset).
-        </Typography>
+        </>
       );
       break;
     default:
       break;
   }
 
-  return totalDataPoints >= 0 && <Box padding={1}>{text}</Box>;
+  return totalDataPoints >= 0 && text;
 });

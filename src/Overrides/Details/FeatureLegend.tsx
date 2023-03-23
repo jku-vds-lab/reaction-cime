@@ -325,7 +325,7 @@ function getTable(vectors, aggregation, legendAttributes, dataset, itemLabelPlur
             {rows.map((row) => (
               <TableRow className={classes.tableRow} key={row.feature}>
                 <TableCell component="th" scope="row">
-                  <div style={{ maxWidth: 200 }}>
+                  <div style={{ maxWidth: 200, textOverflow: 'ellipsis', overflow: 'hidden' }}>
                     {row.feature}
                     <br />
                     <b>{mapSmilesToShortname(row.category)}</b>
