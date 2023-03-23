@@ -135,11 +135,7 @@ def upload_csv():
     delta_time = time.time() - start_time
     _log.info("--- took %i min %f s to upload file %s" % (delta_time / 60, delta_time % 60, filename))
 
-    return {
-        "filename": file_upload.filename,
-        "id": id,
-        "msg": msg
-    }
+    return {"filename": file_upload.filename, "id": id, "msg": msg}
 
 
 @reaction_cime_api.route("/get_no_datapoints/<id>", methods=["GET"])
