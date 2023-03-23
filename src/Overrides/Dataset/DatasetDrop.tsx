@@ -1,9 +1,32 @@
 import * as React from 'react';
-import { Button, Grid } from '@mui/material';
+import { Alert, Button, Grid, IconButton, Snackbar } from '@mui/material';
 import { BackendCSVLoader } from './BackendCSVLoader';
+import { Dataset } from 'projection-space-explorer';
+import CloseIcon from '@mui/icons-material/Close';
 
 export function DatasetDrop({ onDatasetChange, cancellablePromise, abort_controller }) {
   const fileInput = React.useRef<HTMLInputElement>();
+  const [msg, setMsg] = React.useState('');
+
+  const openSnack = (msg: string) => {
+    setMsg(msg);
+  };
+
+  const handleClose = (event: React.SyntheticEvent | Event, reason?: string) => {
+    if (reason === 'clickaway') {
+      return;
+    }
+
+    setMsg('');
+  };
+
+  const action = (
+    <React.Fragment>
+      <IconButton size="small" aria-label="close" color="inherit" onClick={handleClose}>
+        <CloseIcon fontSize="small" />
+      </IconButton>
+    </React.Fragment>
+  );
 
   return (
     <Grid container item alignItems="stretch" justifyContent="center" direction="column" style={{ padding: '16px' }}>
@@ -24,8 +47,18 @@ export function DatasetDrop({ onDatasetChange, cancellablePromise, abort_control
           const fileName = file.name as string;
 
           if (fileName.endsWith('csv')) {
-            // abort_controller = new AbortController();
-            new BackendCSVLoader().resolveContent(file, onDatasetChange, cancellablePromise, abort_controller);
+            const loader = new BackendCSVLoader();
+            loader.resolveContent(
+              file,
+              (dataset: Dataset) => {
+                if (loader.backendMessage !== 'ok') {
+                  openSnack(loader.backendMessage);
+                }
+                onDatasetChange(dataset);
+              },
+              cancellablePromise,
+              abort_controller,
+            );
           }
         }}
       />
@@ -39,24 +72,9 @@ export function DatasetDrop({ onDatasetChange, cancellablePromise, abort_control
       >
         Upload new dataset
       </Button>
-      {/* <DragAndDrop
-        accept=".csv"
-        handleDrop={(files) => {
-          if (files == null || files.length <= 0) {
-            return;
-          }
-
-          const file = files[0];
-          const fileName = file.name as string;
-
-          if (fileName.endsWith('csv')) {
-            // abort_controller = new AbortController();
-            new BackendCSVLoader().resolveContent(file, onDatasetChange, cancellablePromise, abort_controller);
-          }
-        }}
-      >
-        <div style={{ height: 200 }} />
-      </DragAndDrop> */}
+      <Snackbar open={msg !== ''} autoHideDuration={10000} onClose={handleClose} message={msg} action={action}>
+        <Alert severity="info">{msg}</Alert>
+      </Snackbar>
     </Grid>
   );
 }
