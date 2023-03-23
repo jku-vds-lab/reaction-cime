@@ -145,7 +145,7 @@ def generate_rename_list(domain):
             # TODO: make this dynamic
             modifier = '"project":false,"paco":false,"lineup_meta_column":"pred_step"'  # signal lineup that it should add a meta_column with this label, that gives information for other columns
         elif col == "groupLabel":
-            groups = list(set(domain[domain[col] != "-1"][col]))
+            groups = list(set(domain[(domain[col] != "-1") * (domain[col] != -1)][col]))
             groups.sort()
             cluster_edges = []
             indices = range(0, len(groups) - 1)
