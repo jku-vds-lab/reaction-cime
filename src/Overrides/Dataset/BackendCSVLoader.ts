@@ -52,7 +52,9 @@ export class BackendCSVLoader implements Loader {
     trackPromise(
       promise
         .then((uploaded) => {
-          // console.log("UPLOADED", uploaded);
+          if (uploaded.msg !== 'ok') {
+            alert(uploaded.msg);
+          }
           this.loadPOICSV(onChange, { display: '', type: this.datasetType, path: uploaded.id }, cancellablePromise, modifiers, controller);
         })
         .catch((error) => {

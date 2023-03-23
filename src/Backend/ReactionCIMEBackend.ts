@@ -219,7 +219,7 @@ export class ReactionCIMEBackend {
       });
   };
 
-  public upload_csv_file = async (file, controller?): Promise<{ name: string; id: number }> => {
+  public upload_csv_file = async (file, controller?): Promise<{ name: string; id: number; msg: string }> => {
     // upload the csv file to the server
     // the response is a unique filename that can be used to make further requests
     const formDataFile = new FormData();

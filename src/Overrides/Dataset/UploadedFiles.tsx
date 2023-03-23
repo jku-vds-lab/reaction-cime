@@ -113,17 +113,17 @@ export function UploadedFiles({ onChange, refresh }) {
           </List>
         </Box>
         <Dialog open={deleteDialog} onClose={() => setDeleteDialog(false)} aria-labelledby="alert-dialog-title" aria-describedby="alert-dialog-description">
-          <DialogTitle id="alert-dialog-title">Delete dataset &quot;{item.name}&quot;</DialogTitle>
+          <DialogTitle id="alert-dialog-title">Delete dataset &quot;{item?.name}&quot;</DialogTitle>
           <DialogContent>
             <DialogContentText id="alert-dialog-description">
-              Are you sure you want to delete dataset &quot;{item.name}&quot;? This action cannot be undone.
+              Are you sure you want to delete dataset &quot;{item?.name}&quot;? This action cannot be undone.
             </DialogContentText>
           </DialogContent>
           <DialogActions>
             <Button onClick={() => setDeleteDialog(false)}>Cancel</Button>
             <Button
               onClick={() => {
-                handleDelete(item.id);
+                handleDelete(item?.id);
                 setDeleteDialog(false);
               }}
               autoFocus
