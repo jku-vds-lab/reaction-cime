@@ -159,7 +159,6 @@ export const DatasetTabPanel = connector(({ onDataSelected, resetViews, setTrigg
         area="global_loading_indicator"
       />
 
-
       {!clientConfig.publicVersion ? (
         <DatasetDrop
           onDatasetChange={(dataset) => {

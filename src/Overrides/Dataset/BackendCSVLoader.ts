@@ -17,7 +17,7 @@ export class BackendCSVLoader implements Loader {
   loadingArea = 'global_loading_indicator';
 
   // Backend errors
-  backendMessage: string = 'ok';
+  backendMessage = 'ok';
 
   resolvePath(
     entry: any,

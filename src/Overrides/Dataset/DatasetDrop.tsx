@@ -1,15 +1,15 @@
 import * as React from 'react';
 import { Alert, Button, Grid, IconButton, Snackbar } from '@mui/material';
-import { BackendCSVLoader } from './BackendCSVLoader';
 import { Dataset } from 'projection-space-explorer';
 import CloseIcon from '@mui/icons-material/Close';
+import { BackendCSVLoader } from './BackendCSVLoader';
 
 export function DatasetDrop({ onDatasetChange, cancellablePromise, abort_controller }) {
   const fileInput = React.useRef<HTMLInputElement>();
   const [msg, setMsg] = React.useState('');
 
-  const openSnack = (msg: string) => {
-    setMsg(msg);
+  const openSnack = (value: string) => {
+    setMsg(value);
   };
 
   const handleClose = (event: React.SyntheticEvent | Event, reason?: string) => {
@@ -21,11 +21,9 @@ export function DatasetDrop({ onDatasetChange, cancellablePromise, abort_control
   };
 
   const action = (
-    <React.Fragment>
-      <IconButton size="small" aria-label="close" color="inherit" onClick={handleClose}>
-        <CloseIcon fontSize="small" />
-      </IconButton>
-    </React.Fragment>
+    <IconButton size="small" aria-label="close" color="inherit" onClick={handleClose}>
+      <CloseIcon fontSize="small" />
+    </IconButton>
   );
 
   return (
