@@ -1,6 +1,6 @@
 import { Box, Button, IconButton, List, ListItem, ListItemButton, ListItemText, Tooltip, Typography } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
-import { useCancellablePromise } from 'projection-space-explorer';
+import { useCancellablePromise, usePSESelector } from 'projection-space-explorer';
 import React, { CSSProperties } from 'react';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import { trackPromise } from 'react-promise-tracker';
@@ -19,6 +19,7 @@ export function UploadedFiles({ onChange, refresh }) {
   const { clientConfig } = useVisynAppContext();
   const [files, setFiles] = React.useState<({ name: string; id: string } & ISecureItem)[]>([]);
   const { cancellablePromise } = useCancellablePromise();
+  const dataset = usePSESelector((state) => state.dataset);
 
   const updateFiles = () => {
     trackPromise(
@@ -70,6 +71,7 @@ export function UploadedFiles({ onChange, refresh }) {
               <ListItem
                 disablePadding
                 key={file.id}
+                selected={file.id === dataset?.info?.path}
                 secondaryAction={
                   !clientConfig.publicVersion && userSession.canWrite(file) ? (
                     <Tooltip placement="right" title={<Typography variant="subtitle2">Permanently delete dataset &quot;{file.name}&quot;.</Typography>}>

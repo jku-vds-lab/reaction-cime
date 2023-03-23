@@ -471,7 +471,7 @@ function buildLineup(cols, data, pointColorScale, channelColor) {
     } else if (col.metaInformation.listData) {
       // builder.column(LineUpJS.buildNumberColumn(i, [-10,10]).asArray().width(100));
       const columnDesc = deriveColumnDescriptions(data, { columns: [i] })[0];
-      console.log({ ...columnDesc });
+
       if (col.metaInformation.range) {
         // TODO: fix lineup errors
         // @ts-expect-error the typings of lineup seem to not include domain
