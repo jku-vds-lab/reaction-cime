@@ -121,8 +121,7 @@ export const AggregationTabPanel = connector(
             Aggregation settings
           </Typography>
           <Typography variant="body2" color="textSecondary" gutterBottom>
-            Select the attribute to aggregate the data by and change the visual encoding.{' '}
-            <NOItemsInfo variant="all" />
+            Select the attribute to aggregate the data by and change the visual encoding. <NOItemsInfo variant="all" />
           </Typography>
         </Box>
         {/* <Box paddingLeft={2} paddingTop={1} paddingRight={2}>
