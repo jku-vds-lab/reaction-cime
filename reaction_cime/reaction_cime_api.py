@@ -97,6 +97,7 @@ def handle_dataset_cache(id, cols=None, x_channel="x", y_channel="y"):
 @reaction_cime_api.route("/upload_csv", methods=["OPTIONS", "POST"])
 def upload_csv():
     start_time = time.time()
+    msg = "ok"
     _log.info("Received new csv to upload")
     file_upload = request.files.get("myFile")
 
@@ -119,6 +120,7 @@ def upload_csv():
         _log.info("--- randomly init x and y coordinates")
         df["x"] = np.random.uniform(-50, 50, len(df))
         df["y"] = np.random.uniform(-50, 50, len(df))
+        msg = "Could not find x and y coordinates in the dataset. Randomly initialized x and y coordinates. Project the dataset to get a better visualization."
 
     _log.info("--- save file to database")
     filename = file_upload.filename or ""
@@ -133,10 +135,7 @@ def upload_csv():
     delta_time = time.time() - start_time
     _log.info("--- took %i min %f s to upload file %s" % (delta_time / 60, delta_time % 60, filename))
 
-    return {
-        "filename": file_upload.filename,
-        "id": id,
-    }
+    return {"filename": file_upload.filename, "id": id, "msg": msg}
 
 
 @reaction_cime_api.route("/get_no_datapoints/<id>", methods=["GET"])

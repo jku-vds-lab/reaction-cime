@@ -16,6 +16,9 @@ export class BackendCSVLoader implements Loader {
 
   loadingArea = 'global_loading_indicator';
 
+  // Backend errors
+  backendMessage = 'ok';
+
   resolvePath(
     entry: any,
     finished: (dataset: Dataset) => void,
@@ -52,7 +55,7 @@ export class BackendCSVLoader implements Loader {
     trackPromise(
       promise
         .then((uploaded) => {
-          // console.log("UPLOADED", uploaded);
+          this.backendMessage = uploaded.msg;
           this.loadPOICSV(onChange, { display: '', type: this.datasetType, path: uploaded.id }, cancellablePromise, modifiers, controller);
         })
         .catch((error) => {
