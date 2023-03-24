@@ -139,7 +139,6 @@ def generate_rename_list(domain):
             # elif target_col == col:
             # col ends with _value bzw _step in lineup -> it belongs to a lineup time series
             # TODO: make this dynamic
-            print("--------", col)
             modifier = '"project":false,"paco":true,"lineup_meta_column":"predicted_yield_value"'  # signal lineup that it should add a meta_column with this label, that gives information for other columns
         elif col == cycle_column:
             # col ends with _value bzw _step in lineup -> it belongs to a lineup time series
