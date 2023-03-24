@@ -102,16 +102,16 @@ const ApplicationWrapper = connector(({ setMouseMoveFn, setMouseClickFn, resetVi
   }, [searchParams, onLoadProject]);
 
   React.useEffect(() => {
-    const tableId = loadedDataset?.info?.path;
+    const urlId = loadedDataset?.info?.path;
 
     if (!hasStartedRef.current) {
       return;
     }
 
     setSearchParams((prev) => {
-      if (tableId) {
+      if (urlId) {
         return new URLSearchParams({
-          project: tableId,
+          project: urlId,
         });
       }
 
