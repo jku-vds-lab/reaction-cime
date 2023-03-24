@@ -150,6 +150,8 @@ export class MyLineChartRenderer implements ICellRendererFactory {
 
         let measurementValue = null;
         let measurementStep = null;
+        console.log(dataRow.v);
+        console.log(col.desc.label);
         if (`${col.desc.label}_value` in dataRow.v && `${col.desc.label}_step` in dataRow.v) {
           measurementValue = dataRow.v[`${col.desc.label}_value`];
           measurementStep = dataRow.v[`${col.desc.label}_step`];
@@ -205,7 +207,8 @@ export class MyLineChartRenderer implements ICellRendererFactory {
               return y(d);
             }), // 1-(d/data_max)
         );
-
+        console.log('---linechart---');
+        console.log(measurementValue, measurementStep)
         if (measurementValue != null && measurementStep != null) {
           // create the marker that marks an actual measurement
 

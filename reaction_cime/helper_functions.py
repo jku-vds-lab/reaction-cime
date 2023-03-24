@@ -139,11 +139,12 @@ def generate_rename_list(domain):
             # elif target_col == col:
             # col ends with _value bzw _step in lineup -> it belongs to a lineup time series
             # TODO: make this dynamic
-            modifier = '"project":false,"paco":true,"lineup_meta_column":"pred_value"'  # signal lineup that it should add a meta_column with this label, that gives information for other columns
+            print("--------", col)
+            modifier = '"project":false,"paco":true,"lineup_meta_column":"predicted_yield_value"'  # signal lineup that it should add a meta_column with this label, that gives information for other columns
         elif col == cycle_column:
             # col ends with _value bzw _step in lineup -> it belongs to a lineup time series
             # TODO: make this dynamic
-            modifier = '"project":false,"paco":false,"lineup_meta_column":"pred_step"'  # signal lineup that it should add a meta_column with this label, that gives information for other columns
+            modifier = '"project":false,"paco":false,"lineup_meta_column":"predicted_yield_step"'  # signal lineup that it should add a meta_column with this label, that gives information for other columns
         elif col == "groupLabel":
             groups = list(set(domain[(domain[col] != "-1") * (domain[col] != -1)][col]))
             groups.sort()
