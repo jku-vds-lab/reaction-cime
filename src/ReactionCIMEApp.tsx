@@ -132,14 +132,15 @@ const ApplicationWrapper = connector(({ setMouseMoveFn, setMouseClickFn, resetVi
           { id: 'umapRemote', name: 'UMAP', settings: { nneighbors: true }, embController: new RemoteEmbeddingController('umap', startProjection) },
           { id: 'tsneRemote', name: 't-SNE', settings: { perplexity: true }, embController: new RemoteEmbeddingController('tsne', startProjection) },
           { id: 'pcaRemote', name: 'PCA', settings: {}, embController: new RemoteEmbeddingController('pca', startProjection) },
-          // {
-          //   id: 'rmOverlap',
-          //   name: 'Overlap removal',
-          //   settings: { hideSettings: true },
-          //   embController: new RemoteEmbeddingController('rmOverlap', startProjection),
-          //   description:
-          //     'Removes overlapping items by moving them to the nearest non-overlapping position. This is particularly useful for large datasets after a projection like t-SNE or UMAP has been triggered to reduce visual clutter.',
-          // },
+          {
+            id: 'rmOverlap',
+            name: 'Overlap removal',
+            settings: { hideSettings: true },
+            embController: new RemoteEmbeddingController('rmOverlap', startProjection),
+            tooltip: 'Removes overlapping points by moving them to the nearest non-overlapping position. This helps to reduce visual clutter.',
+            description:
+              'Removes overlapping points by moving them to the nearest non-overlapping position. This is particularly useful for large datasets after a projection like t-SNE or UMAP has been triggered to reduce visual clutter.',
+          },
         ],
         showVisibleProjections: false,
         showTrailSettings: false,
