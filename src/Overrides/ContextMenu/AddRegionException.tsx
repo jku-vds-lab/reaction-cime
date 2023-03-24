@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { MenuItem } from '@mui/material';
-import { CameraTransformations, IProjection, TypedObject } from 'projection-space-explorer';
+import { CameraTransformations, IProjection, TypedObject, highlightTab } from 'projection-space-explorer';
 import { connect, ConnectedProps } from 'react-redux';
 import { ReactionCIMEBackendFromEnv } from '../../Backend/ReactionCIMEBackend';
 import { AppState } from '../../State/Store';
@@ -61,7 +61,7 @@ export const AddRegionExceptionMenuItem = connector(({ handleClose, pos_x, pos_y
             );
           }
         });
-
+        highlightTab(7);
         handleClose();
       }}
     >

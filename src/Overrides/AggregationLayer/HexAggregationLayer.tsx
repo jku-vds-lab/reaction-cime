@@ -1,4 +1,4 @@
-import { IProjection, useCancellablePromise } from 'projection-space-explorer';
+import { IProjection, useCancellablePromise, highlightTab } from 'projection-space-explorer';
 import * as React from 'react';
 import { connect, ConnectedProps, useDispatch } from 'react-redux';
 import * as THREE from 'three';
@@ -299,7 +299,7 @@ export const HexAggregationLayer = connector(
     }, [aggregateDataset, mouseMove]);
 
     React.useEffect(() => {
-      if (mouseClick != null && !mouseClick.event_used && aggregateDataset != null) {
+      if (mouseClick != null && !mouseClick.event_used && mouseClick.button === 0 && aggregateDataset != null) {
         const circRadius = aggregateDataset.columns.circ_radius.range.max;
         // check if it is outside of the aggregation bounding box
         if (isOutsideBoundingBox(mouseClick, aggregateDataset, circRadius, xChannel, yChannel)) {
@@ -321,6 +321,8 @@ export const HexAggregationLayer = connector(
                 object.position.x = row[xChannel];
                 object.position.y = row[yChannel];
                 object.position.z = -1;
+
+                highlightTab(5);
                 setSelectElement(object);
                 setCurrentAggregateSelectionFn(row);
               }

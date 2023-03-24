@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { MenuItem } from '@mui/material';
-import { EXCLUDED_COLUMNS_ALL, TypedObject } from 'projection-space-explorer';
+import { EXCLUDED_COLUMNS_ALL, TypedObject, highlightTab } from 'projection-space-explorer';
 import { connect, ConnectedProps } from 'react-redux';
 import { AppState } from '../../State/Store';
 import { updateBackendConstraints } from '../FilterTabPanel/FilterSettings';
@@ -52,6 +52,8 @@ export const SetFiltersToItemFeatures = connector(({ handleClose, globalLabels, 
         });
 
         updateBackendConstraints(constraints, dataset, triggerDatasetUpdate, state);
+
+        highlightTab(7);
         handleClose();
       }}
     >
