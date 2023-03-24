@@ -205,7 +205,6 @@ export class MyLineChartRenderer implements ICellRendererFactory {
               return y(d);
             }), // 1-(d/data_max)
         );
-
         if (measurementValue != null && measurementStep != null) {
           // create the marker that marks an actual measurement
 
@@ -471,7 +470,6 @@ function buildLineup(cols, data, pointColorScale, channelColor) {
     } else if (col.metaInformation.listData) {
       // builder.column(LineUpJS.buildNumberColumn(i, [-10,10]).asArray().width(100));
       const columnDesc = deriveColumnDescriptions(data, { columns: [i] })[0];
-
       if (col.metaInformation.range) {
         // TODO: fix lineup errors
         // @ts-expect-error the typings of lineup seem to not include domain

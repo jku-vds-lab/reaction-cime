@@ -1,4 +1,19 @@
-import { Box, Button, IconButton, List, ListItem, ListItemButton, ListItemText, Tooltip, Typography } from '@mui/material';
+import {
+  Box,
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
+  IconButton,
+  List,
+  ListItem,
+  ListItemButton,
+  ListItemText,
+  Tooltip,
+  Typography,
+} from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { useCancellablePromise, usePSESelector } from 'projection-space-explorer';
 import React, { CSSProperties } from 'react';
@@ -20,6 +35,8 @@ export function UploadedFiles({ onChange, refresh }) {
   const [files, setFiles] = React.useState<({ name: string; id: string } & ISecureItem)[]>([]);
   const { cancellablePromise } = useCancellablePromise();
   const dataset = usePSESelector((state) => state.dataset);
+  const [deleteDialog, setDeleteDialog] = React.useState(false);
+  const [item, setItem] = React.useState<{ name: string; id: string }>();
 
   const updateFiles = () => {
     trackPromise(
@@ -51,7 +68,7 @@ export function UploadedFiles({ onChange, refresh }) {
     files && (
       <div>
         <Box paddingLeft={2} paddingRight={2} paddingTop={2}>
-          {clientConfig.publicVersion && (
+          {!clientConfig.publicVersion && (
             <Typography variant="subtitle2" gutterBottom>
               Select dataset{' '}
               <Tooltip title="Refresh dataset list">
@@ -80,7 +97,8 @@ export function UploadedFiles({ onChange, refresh }) {
                         aria-label="delete"
                         onClick={(event) => {
                           event.preventDefault();
-                          handleDelete(file.id);
+                          setDeleteDialog(true);
+                          setItem(file);
                         }}
                       >
                         <DeleteIcon />
@@ -116,6 +134,26 @@ export function UploadedFiles({ onChange, refresh }) {
             ))}
           </List>
         </Box>
+        <Dialog open={deleteDialog} onClose={() => setDeleteDialog(false)} aria-labelledby="alert-dialog-title" aria-describedby="alert-dialog-description">
+          <DialogTitle id="alert-dialog-title">Delete dataset &quot;{item?.name}&quot;</DialogTitle>
+          <DialogContent>
+            <DialogContentText id="alert-dialog-description">
+              Are you sure you want to delete dataset &quot;{item?.name}&quot;? This action cannot be undone.
+            </DialogContentText>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setDeleteDialog(false)}>Cancel</Button>
+            <Button
+              onClick={() => {
+                handleDelete(item?.id);
+                setDeleteDialog(false);
+              }}
+              autoFocus
+            >
+              Delete
+            </Button>
+          </DialogActions>
+        </Dialog>
       </div>
     )
   );

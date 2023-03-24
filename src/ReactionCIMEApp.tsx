@@ -102,16 +102,16 @@ const ApplicationWrapper = connector(({ setMouseMoveFn, setMouseClickFn, resetVi
   }, [searchParams, onLoadProject]);
 
   React.useEffect(() => {
-    const tableId = loadedDataset?.info?.path;
+    const urlId = loadedDataset?.info?.path;
 
     if (!hasStartedRef.current) {
       return;
     }
 
     setSearchParams((prev) => {
-      if (tableId) {
+      if (urlId) {
         return new URLSearchParams({
-          project: tableId,
+          project: urlId,
         });
       }
 
@@ -157,14 +157,15 @@ const ApplicationWrapper = connector(({ setMouseMoveFn, setMouseClickFn, resetVi
               'Performs principal component analysis (PCA) on the whole dataset using the chosen feature columns. This linearly projects the high-dimensional dataset to a two-dimensional space that will then be shown as a scatterplot.',
             tooltip: 'Performs principal component analysis (PCA) on the whole dataset using the chosen feature columns.',
           },
-          // {
-          //   id: 'rmOverlap',
-          //   name: 'Overlap removal',
-          //   settings: { hideSettings: true },
-          //   embController: new RemoteEmbeddingController('rmOverlap', startProjection),
-          //   description:
-          //     'Removes overlapping items by moving them to the nearest non-overlapping position. This is particularly useful for large datasets after a projection like t-SNE or UMAP has been triggered to reduce visual clutter.',
-          // },
+          {
+            id: 'rmOverlap',
+            name: 'Overlap removal',
+            settings: { hideSettings: true },
+            embController: new RemoteEmbeddingController('rmOverlap', startProjection),
+            tooltip: 'Removes overlapping points by moving them to the nearest non-overlapping position. This helps to reduce visual clutter.',
+            description:
+              'Removes overlapping points by moving them to the nearest non-overlapping position. This is particularly useful for large datasets after a projection like t-SNE or UMAP has been triggered to reduce visual clutter.',
+          },
         ],
         showVisibleProjections: false,
         showTrailSettings: false,

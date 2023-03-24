@@ -172,17 +172,6 @@ export const DatasetTabPanel = connector(({ onDataSelected, resetViews, setTrigg
         }}
         area="global_loading_indicator"
       />
-      <input
-        style={{ display: 'none' }}
-        accept=".csv,.zip"
-        ref={lookupFileInput}
-        type="file"
-        onChange={(e) => {
-          saveSmilesLookupTable(e.target.files, (note) => {
-            setLookupUploadNote(() => note);
-          });
-        }}
-      />
 
       {!clientConfig.publicVersion ? (
         <DatasetDrop
@@ -216,6 +205,17 @@ export const DatasetTabPanel = connector(({ onDataSelected, resetViews, setTrigg
                     <InfoOutlined fontSize="inherit" />
                   </Tooltip>
                 </Typography>
+                <input
+                  style={{ display: 'none' }}
+                  accept=".csv"
+                  ref={lookupFileInput}
+                  type="file"
+                  onChange={(e) => {
+                    saveSmilesLookupTable(e.target.files, (note) => {
+                      setLookupUploadNote(() => note);
+                    });
+                  }}
+                />
                 <Button
                   fullWidth
                   variant="outlined"
