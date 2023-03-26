@@ -205,7 +205,6 @@ export class MyLineChartRenderer implements ICellRendererFactory {
               return y(d);
             }), // 1-(d/data_max)
         );
-
         if (measurementValue != null && measurementStep != null) {
           // create the marker that marks an actual measurement
 

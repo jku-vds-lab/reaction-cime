@@ -103,7 +103,7 @@ def handle_dataset_cache(id, cols=None, x_channel="x", y_channel="y"):
 @reaction_cime_api.route("/upload_csv", methods=["OPTIONS", "POST"])
 def upload_csv():
     start_time = time.time()
-    _log.info("Received new csv or zip to upload")
+    _log.info("Received new csv to upload")
     file_upload = request.files.get("myFile")
 
     storage_path = get_settings().storage_path
@@ -155,18 +155,14 @@ def upload_csv():
 
     _log.info(f"Uploading file {file_name}")
 
-    df = pd.read_csv(storage_path / file_name)
-
-    if "x" not in df.columns or "y" not in df.columns:
-        _log.info("--- randomly init x and y coordinates")
-        df["x"] = np.random.uniform(-50, 50, len(df))
-        df["y"] = np.random.uniform(-50, 50, len(df))
+    # df = pd.read_csv(storage_path / file_name)
 
     _log.info("--- save file to database")
     save_name = file_name or ""
     save_name = "_".join(save_name.split(".")[0:-1])
 
-    id = get_cime_dbo().save_dataframe(df, save_name)
+    # id = get_cime_dbo().save_dataframe(df, save_name)
+    id, msg = get_cime_dbo().save_dataframe_chunked(storage_path / file_name, save_name, chunksize=10 ** 3)
 
     # create default constraints file
     save_poi_constraints(id)
@@ -178,10 +174,7 @@ def upload_csv():
     # delete csv file
     os.remove(storage_path / file_name)
 
-    return {
-        "filename": file_upload.filename,
-        "id": id,
-    }
+    return {"filename": file_upload.filename, "id": id, "msg": msg}
 
 
 @reaction_cime_api.route("/get_no_datapoints/<id>", methods=["GET"])
@@ -237,7 +230,7 @@ def load_poi_constraints(id) -> pd.DataFrame:
 @reaction_cime_api.route("/reset_poi_constraints/<id>", methods=["GET"])
 def reset_poi_constraints(id):
     save_poi_constraints(id)
-    save_poi_exceptions(id)  # TODO: do we want to reset exceptions too?
+    # save_poi_exceptions(id)  # TODO: do we want to reset exceptions too? -> no
     return {"msg": "ok"}
 
 
@@ -258,7 +251,7 @@ def add_poi_exceptions():
         ):
 
             exceptions_df = load_poi_exceptions(id)
-            exceptions_df = exceptions_df.append(new_exceptions_df, ignore_index=True)
+            exceptions_df = pd.concat([exceptions_df, new_exceptions_df], ignore_index=True)
 
             poi_count = (
                 get_cime_dbo().get_filter_mask(id, get_poi_constraints_filter(id, load_poi_constraints(id), exceptions_df))["mask"].sum()
@@ -382,7 +375,7 @@ def map_constraint_operator(row):
     if row.operator == "BETWEEN":
         return f'"{row.col}" BETWEEN {row.val1} AND {row.val2}'
     if row.operator == "EQUALS":
-        return f'"{row.col}"="{row.val1}"'
+        return f"\"{row.col}\" LIKE '{row.val1}'"
     return ""
 
 
@@ -640,7 +633,7 @@ def get_hexagonal_aggregation(id, x_channel="x", y_channel="y"):
 
     agg_df["hex"] = True
 
-    agg_df = agg_df.append(wrong_df, ignore_index=True)
+    agg_df = pd.concat([agg_df, wrong_df], ignore_index=True)
 
     csv_buffer = StringIO()
     agg_df.to_csv(csv_buffer, index=False)
@@ -893,7 +886,6 @@ class ProjectionThread(threading.Thread):
         self.msg = "rescale and encode..."
         # rescale numerical values and encode categorical values
         proj_df, categorical_features, feature_weights = rescale_and_encode(proj_df, self.params, self.selected_feature_info)
-        print(feature_weights)
 
         self.msg = "calc metric..."
         # handle custom metrics

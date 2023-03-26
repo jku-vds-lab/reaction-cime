@@ -1,7 +1,9 @@
 import logging
+from pathlib import Path
 import time
 from datetime import datetime
 
+import numpy as np
 import pandas as pd
 from sqlalchemy import MetaData, Table, bindparam
 from sqlalchemy.engine import Engine
@@ -34,6 +36,72 @@ class ReactionCIMEDBO:
             res = session.query(Project).filter(Project.id == id).update(value_dict)
             session.commit()
             return res == 1
+
+    def save_dataframe_chunked(self, path: Path, save_name: str, chunksize: int):
+        msg = "ok"
+        
+        with create_session() as session:
+            p = Project()
+            p.name = save_name  # type: ignore
+            p.description = ""  # type: ignore
+            # Security
+            p.buddies = []  # type: ignore
+            p.permissions = 744  # TODO: the user itself can write, everyone else can read
+            p.creator = current_username()
+            p.creation_date = datetime.utcnow()
+            p.modifier = None
+            p.modification_date = None
+            session.add(p)
+            session.flush()
+            session.refresh(p)
+
+            table_name_with_schema = self.get_table_name(p.id, with_schema_prefix=True)
+            table_name = self.get_table_name(p.id, with_schema_prefix=False)
+
+            engine: Engine = session.get_bind()
+            with engine.begin() as conn:
+                start_time = time.time()
+
+                chunkIndex = 0
+                with pd.read_csv(path, chunksize=chunksize) as reader:
+                    for chunk in reader:
+                        if "x" not in chunk.columns or "y" not in chunk.columns:
+                            chunk["x"] = np.random.uniform(-50, 50, len(chunk))
+                            chunk["y"] = np.random.uniform(-50, 50, len(chunk))
+                            msg = "Could not find x and y coordinates in the dataset. Randomly initialized x and y coordinates. Project the dataset to get a better visualization."
+
+                        chunk.to_sql(
+                            table_name,
+                            schema="cime4r",
+                            con=conn,
+                            if_exists="replace" if chunkIndex == 0 else "append",
+                            index=True,
+                            index_label="id",
+                            chunksize=5000,
+                        )
+
+                        _log.info("--- saved chunk %i of file %s" % (chunkIndex, save_name))
+
+                        chunkIndex += 1
+
+                # p.fully_processed = True
+
+                delta_time = time.time() - start_time
+                _log.info("--- took %i min %f s to save file %s" % (delta_time / 60, delta_time % 60, save_name))
+
+                start_time = time.time()
+                conn.execute(f"DROP INDEX IF EXISTS {table_name}_index;")
+                delta_time = time.time() - start_time
+                _log.info("--- took %i min %f s to drop index of file %s" % (delta_time / 60, delta_time % 60, save_name))
+
+                start_time = time.time()
+                conn.execute(f"create unique index {table_name}_index on {table_name_with_schema}(id)")
+                delta_time = time.time() - start_time
+                _log.info("--- took %i min %f s to create index of file %s" % (delta_time / 60, delta_time % 60, save_name))
+
+            session.commit()
+
+            return str(p.id), msg
 
     def save_dataframe(self, df: pd.DataFrame, filename: str) -> str:
         # primary key is not set to index of dataframe by default. this code could be a workaround, but does not work yet
