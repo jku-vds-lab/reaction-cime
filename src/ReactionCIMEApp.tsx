@@ -164,7 +164,7 @@ const ApplicationWrapper = connector(({ setMouseMoveFn, setMouseClickFn, resetVi
             embController: new RemoteEmbeddingController('rmOverlap', startProjection),
             tooltip: 'Removes overlapping points by moving them to the nearest non-overlapping position. This helps to reduce visual clutter.',
             description:
-              'Removes overlapping points by moving them to the nearest non-overlapping position. This is particularly useful for large datasets after a projection like t-SNE or UMAP has been triggered to reduce visual clutter.',
+              'Removes overlapping points of the current projection by moving them to the nearest non-overlapping position. This is particularly useful for large datasets after a projection like t-SNE or UMAP has been triggered to reduce visual clutter.',
           },
         ],
         showVisibleProjections: false,
