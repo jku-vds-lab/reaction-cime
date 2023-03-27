@@ -72,6 +72,7 @@
     "react-dom": "^16.13.0",
     "react-inlinesvg": "^2.3.0",
     "react-loader-spinner": "^4.0.0",
+    "react-markdown": "^8.0.6",
     "react-promise-tracker": "^2.1.0",
     "react-redux": "^7.2.6",
     "react-router-dom": "^6.9.0",
