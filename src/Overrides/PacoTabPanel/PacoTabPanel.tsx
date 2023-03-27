@@ -107,7 +107,7 @@ export const PacoTabPanel = connector(({ pacoAttributes, setPacoConstraints, pac
             dispatch(PacoActions.setPacoAttributes(attributes));
           }}
         >
-          Choose attributes
+          Choose features
         </AttributeSelectionTable>
       </Box>
       <Box paddingLeft={2} paddingTop={1} paddingRight={2}>
