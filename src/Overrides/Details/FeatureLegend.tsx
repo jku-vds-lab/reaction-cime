@@ -211,14 +211,12 @@ function getNormalizedSTD(data, min, max) {
   return getSTD(data);
 }
 
+const N_HOVER_ROWS = 5;
+
 function genRows(vectors, aggregation, legendAttributes, dataset) {
   if (dataset === undefined) {
     return [];
   }
-
-  // if(!aggregation){ // TODO: if it shows the hover state, we don't need to generate all rows because we can't scroll anyway
-  //   return []
-  // }
 
   const rows = [];
   const dictOfArrays = dictionary(vectors);
@@ -283,6 +281,11 @@ function genRows(vectors, aggregation, legendAttributes, dataset) {
 
   // sort rows by score
   ret.sort(sortByScore);
+
+  if (!aggregation) {
+    // if it shows the hover state, we don't need to generate all rows because we can't scroll anyway -> only show top 5 charts
+    return ret.slice(0, N_HOVER_ROWS);
+  }
 
   return ret;
 }
