@@ -1,5 +1,4 @@
 import * as React from 'react';
-import { useState } from 'react';
 import {
   PSEContextProvider,
   API,
@@ -37,6 +36,7 @@ import { SetFiltersToItemFeatures } from './Overrides/ContextMenu/SetFiltersToIt
 import vdsLogo from './assets/jku-vds-lab-logo.svg';
 import bayerLogo from './assets/bayer_logo.svg';
 import { BackendCSVLoader } from './Overrides/Dataset/BackendCSVLoader';
+import { TabDocumentation } from './Utility/TabDocumentation';
 
 PluginRegistry.getInstance().registerPlugin(new ReactionsPlugin());
 
@@ -173,6 +173,7 @@ const ApplicationWrapper = connector(({ setMouseMoveFn, setMouseClickFn, resetVi
         detailViewSplitRatio: [60, 40],
       }}
       overrideComponents={{
+        tabContainerPrefix: TabDocumentation,
         mouseInteractionCallbacks: {
           onmousemove: (coords, event_used) => {
             setMouseMoveFn({ x: coords.x, y: coords.y, event_used });
