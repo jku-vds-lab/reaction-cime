@@ -8,14 +8,14 @@ import {
   DialogTitle,
   IconButton,
   List,
+  ListItem,
   ListItemButton,
-  ListItemSecondaryAction,
   ListItemText,
   Tooltip,
   Typography,
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
-import { useCancellablePromise } from 'projection-space-explorer';
+import { useCancellablePromise, usePSESelector } from 'projection-space-explorer';
 import React, { CSSProperties } from 'react';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import { trackPromise } from 'react-promise-tracker';
@@ -34,6 +34,7 @@ export function UploadedFiles({ onChange, refresh }) {
   const { clientConfig } = useVisynAppContext();
   const [files, setFiles] = React.useState<({ name: string; id: string } & ISecureItem)[]>([]);
   const { cancellablePromise } = useCancellablePromise();
+  const dataset = usePSESelector((state) => state.dataset);
   const [deleteDialog, setDeleteDialog] = React.useState(false);
   const [item, setItem] = React.useState<{ name: string; id: string }>();
 
@@ -84,31 +85,52 @@ export function UploadedFiles({ onChange, refresh }) {
             <LoadingIndicatorView area={loadingArea} />
 
             {files.map((file) => (
-              <ListItemButton key={file.id} data-cy="uploaded-data-list-item" href={`/?project=${file.id}`} component="a" target="_self">
-                <ListItemText
-                  primary={file.name}
-                  secondary={`By ${file.creator}`}
-                  primaryTypographyProps={{
-                    style: textOverflowStyle,
-                  }}
-                  secondaryTypographyProps={{
-                    style: textOverflowStyle,
-                  }}
-                />
-                {!clientConfig.publicVersion && userSession.canWrite(file) && (
-                  <ListItemSecondaryAction
-                    onClick={(event) => {
-                      event.preventDefault();
-                      setDeleteDialog(true);
-                      setItem(file);
-                    }}
+              <ListItem
+                disablePadding
+                key={file.id}
+                selected={file.id === dataset?.info?.path}
+                secondaryAction={
+                  !clientConfig.publicVersion && userSession.canWrite(file) ? (
+                    <Tooltip placement="right" title={<Typography variant="subtitle2">Permanently delete dataset &quot;{file.name}&quot;.</Typography>}>
+                      <IconButton
+                        edge="end"
+                        aria-label="delete"
+                        onClick={(event) => {
+                          event.preventDefault();
+                          setDeleteDialog(true);
+                          setItem(file);
+                        }}
+                      >
+                        <DeleteIcon />
+                      </IconButton>
+                    </Tooltip>
+                  ) : (
+                    <div />
+                  )
+                }
+              >
+                <Tooltip placement="right" title={<Typography variant="subtitle2">Load dataset &quot;{file.name}&quot;.</Typography>}>
+                  <ListItemButton
+                    style={{ width: '100%' }}
+                    key={file.id}
+                    data-cy="uploaded-data-list-item"
+                    href={`/?project=${file.id}`}
+                    component="a"
+                    target="_self"
                   >
-                    <IconButton edge="end" aria-label="delete">
-                      <DeleteIcon />
-                    </IconButton>
-                  </ListItemSecondaryAction>
-                )}
-              </ListItemButton>
+                    <ListItemText
+                      primary={file.name}
+                      secondary={`By ${file.creator}`}
+                      primaryTypographyProps={{
+                        style: textOverflowStyle,
+                      }}
+                      secondaryTypographyProps={{
+                        style: textOverflowStyle,
+                      }}
+                    />
+                  </ListItemButton>
+                </Tooltip>
+              </ListItem>
             ))}
           </List>
         </Box>

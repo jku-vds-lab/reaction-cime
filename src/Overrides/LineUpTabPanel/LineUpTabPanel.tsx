@@ -1,15 +1,14 @@
-import { Typography, Box, Button, FormControlLabel, Switch } from '@mui/material';
+import { Typography, Box, Button, FormControlLabel, Switch, Tooltip } from '@mui/material';
 import { connect, ConnectedProps } from 'react-redux';
-import GetAppIcon from '@mui/icons-material/GetApp';
 import React from 'react';
 import { DetailViewActions } from 'projection-space-explorer';
 import { setLineUpInputFilter } from '../../State/LineUpInputDuck';
 import { AppState } from '../../State/Store';
-import { downloadImpl } from '../../Utility/Utils';
 
 const mapStateToProps = (state: AppState) => ({
   currentAggregation: state.currentAggregation,
   lineUpInput: state.lineUpInput,
+  globalLabels: state.globalLabels,
 });
 
 const mapDispatchToProps = (dispatch) => ({
@@ -25,7 +24,7 @@ type Props = PropsFromRedux & {
   splitRef: any;
 };
 
-export const LineUpTabPanel = connector(({ setDetailVisibility, setLineUpInput_filter, lineUpInput, currentAggregation, splitRef }: Props) => {
+export const LineUpTabPanel = connector(({ setDetailVisibility, setLineUpInput_filter, lineUpInput, currentAggregation, splitRef, globalLabels }: Props) => {
   // const handleChange = (_, value) => {};
 
   const onLoad = (filter) => {
@@ -38,26 +37,16 @@ export const LineUpTabPanel = connector(({ setDetailVisibility, setLineUpInput_f
     }
   };
 
-  // https://stackoverflow.com/questions/31214677/download-a-reactjs-object-as-a-file
-  // const downloadImpl = (data: string, name: string, mimetype: string) => {
-  //   var b = new Blob([data], { type: mimetype });
-  //   var csvURL = window.URL.createObjectURL(b);
-  //   let tempLink = document.createElement("a");
-  //   tempLink.href = csvURL;
-  //   tempLink.setAttribute("download", name);
-  //   tempLink.click();
+  // const exportCSV = () => {
+  //   if (lineUpInput.lineup && lineUpInput.lineup.data) {
+  //     // exports all data that is currently shown in the table -> filters and sorts are applied! also annotations are included
+  //     lineUpInput
+  //       .lineup!.data.exportTable(lineUpInput.lineup!.data.getRankings()[0], {
+  //         separator: ',',
+  //       })
+  //       .then((x) => downloadImpl(x, `lineup-export.csv`, 'application/csv'));
+  //   }
   // };
-
-  const exportCSV = () => {
-    if (lineUpInput.lineup && lineUpInput.lineup.data) {
-      // exports all data that is currently shown in the table -> filters and sorts are applied! also annotations are included
-      lineUpInput
-        .lineup!.data.exportTable(lineUpInput.lineup!.data.getRankings()[0], {
-          separator: ',',
-        })
-        .then((x) => downloadImpl(x, `lineup-export.csv`, 'application/csv'));
-    }
-  };
 
   const [cellValueVis, setCellValueVis] = React.useState(false);
 
@@ -91,41 +80,53 @@ export const LineUpTabPanel = connector(({ setDetailVisibility, setLineUpInput_f
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-      <Box paddingLeft={2} paddingTop={1} paddingRight={2}>
+      <Box paddingX={2} paddingTop={2} paddingBottom={1}>
         <Typography variant="subtitle2" gutterBottom>
           LineUp settings
         </Typography>
       </Box>
       <Box paddingLeft={2} paddingTop={1} paddingRight={2}>
-        {/* <FormControlLabel
-                control={<Switch checked={true} onChange={handleChange} name="checkedA" />}
-                label="External Selection Summary"
-            /> */}
-
-        <Button fullWidth style={{ marginRight: 2 }} variant="outlined" onClick={() => onLoad({ reset: true })}>
-          Load all
-        </Button>
+        <Tooltip placement="right" title={<Typography variant="subtitle2">Show all {globalLabels.itemLabelPlural} in the LineUp view</Typography>}>
+          <Button fullWidth style={{ marginRight: 2 }} variant="outlined" onClick={() => onLoad({ reset: true })}>
+            View all {globalLabels.itemLabelPlural}
+          </Button>
+        </Tooltip>
       </Box>
       <Box paddingLeft={2} paddingTop={1} paddingRight={2}>
-        <Button fullWidth variant="outlined" onClick={() => onLoad({ selection: currentAggregation.aggregation })}>
-          Load selection
-        </Button>
+        <Tooltip
+          placement="right"
+          title={<Typography variant="subtitle2">Only show the current selection of {globalLabels.itemLabelPlural} in the LineUp view</Typography>}
+        >
+          <span>
+            <Button
+              disabled={currentAggregation?.aggregation.length <= 0}
+              fullWidth
+              variant="outlined"
+              onClick={() => onLoad({ selection: currentAggregation.aggregation })}
+            >
+              View selected {globalLabels.itemLabelPlural}
+            </Button>
+          </span>
+        </Tooltip>
       </Box>
       <Box paddingLeft={2} paddingTop={1} paddingRight={2}>
-        <FormControlLabel
-          control={
-            <Switch
-              color="primary"
-              value={cellValueVis}
-              onChange={(event) => {
-                toggleVis();
-              }}
-            />
-          }
-          label="Show cell values"
-        />
+        <Tooltip placement="right" title={<Typography variant="subtitle2">If activated, LinUp shows values in the cells for numeric features.</Typography>}>
+          <FormControlLabel
+            control={
+              <Switch
+                color="primary"
+                value={cellValueVis}
+                onChange={(event) => {
+                  toggleVis();
+                }}
+              />
+            }
+            label="Show cell values"
+          />
+        </Tooltip>
       </Box>
-      <Box paddingLeft={2} paddingTop={1} paddingRight={2}>
+      {/* TODO: if we need this, debug before activating again */}
+      {/* <Box paddingLeft={2} paddingTop={1} paddingRight={2}>
         <Button
           fullWidth
           variant="outlined"
@@ -136,7 +137,7 @@ export const LineUpTabPanel = connector(({ setDetailVisibility, setLineUpInput_f
           <GetAppIcon />
           &nbsp;Export CSV
         </Button>
-      </Box>
+      </Box> */}
     </div>
   );
 });

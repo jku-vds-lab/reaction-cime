@@ -94,7 +94,7 @@ export const PacoTabPanel = connector(({ pacoAttributes, setPacoConstraints, pac
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-      <Box paddingLeft={2} paddingTop={1} paddingRight={2}>
+      <Box paddingX={2} paddingTop={2} paddingBottom={1}>
         <Typography variant="subtitle2" gutterBottom>
           Parallel coordinates settings
         </Typography>
@@ -107,11 +107,11 @@ export const PacoTabPanel = connector(({ pacoAttributes, setPacoConstraints, pac
             dispatch(PacoActions.setPacoAttributes(attributes));
           }}
         >
-          Choose attributes
+          Choose features
         </AttributeSelectionTable>
       </Box>
       <Box paddingLeft={2} paddingTop={1} paddingRight={2}>
-        <Tooltip title="Reset constraints to initial state">
+        <Tooltip placement="right" title={<Typography variant="subtitle2">Reset constraints of parallel coordinates view to the initial state.</Typography>}>
           <Button
             fullWidth
             variant="outlined"
@@ -128,7 +128,7 @@ export const PacoTabPanel = connector(({ pacoAttributes, setPacoConstraints, pac
       <Box paddingLeft={2} paddingTop={1} paddingRight={2}>
         <Grid container>
           <Grid item xs={6} paddingRight={1}>
-            <Tooltip title="Export constraints">
+            <Tooltip title={<Typography variant="subtitle2">Export current parallel coordinates constraints.</Typography>}>
               <Button
                 fullWidth
                 variant="outlined"
@@ -153,7 +153,7 @@ export const PacoTabPanel = connector(({ pacoAttributes, setPacoConstraints, pac
                 uploadConstraints(e.target.files, setPacoConstraints);
               }}
             />
-            <Tooltip title="Import constraints">
+            <Tooltip title={<Typography variant="subtitle2">Import parallel coordinates constraints.</Typography>}>
               <Button fullWidth variant="outlined" color="primary" aria-label="Import constraints" onClick={() => fileInput.current.click()}>
                 <FileUploadIcon />
                 &nbsp;Import

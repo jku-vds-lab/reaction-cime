@@ -1,7 +1,8 @@
 import React from 'react';
 import { connect, ConnectedProps } from 'react-redux';
-import { Checkbox, FormControlLabel, Grid, Radio, FormControl, InputLabel, Select, MenuItem, Typography } from '@mui/material';
+import { Checkbox, FormControlLabel, Grid, Radio, FormControl, InputLabel, Select, MenuItem, Typography, Tooltip } from '@mui/material';
 import { Box } from '@mui/system';
+import { InfoOutlined } from '@mui/icons-material';
 import { AppState } from '../../State/Store';
 import { AggregationMethod, AggregateActions } from '../../State/AggregateSettingsDuck';
 import { MinMaxNumberInput } from '../../Utility/MinMaxNumberInput';
@@ -59,56 +60,39 @@ export const AdvancedAggregationSettings = connector(
     // if we decide to include it: remove "false" flag; also make sure that cache is cleared and that the background is updated when sample size is changed
     return (
       <>
-        <Box paddingTop={1}>
-          <FormControlLabel
-            control={
-              <Checkbox
-                checked={aggregateSettings.advancedSettings.deriveRange}
-                onChange={() => {
-                  toggleDeriveRange();
-                }}
-                title="Derive range from data"
-              />
-            }
-            label="Derive range from data"
-          />
-
-          {aggregateSettings.advancedSettings.valueRange != null && !aggregateSettings.advancedSettings.deriveRange && (
-            <MinMaxNumberInput
-              title={`Customize range for ${aggregateSettings.colormapSettings.aggregateColor.value_col}`}
-              target="value"
-              range={aggregateSettings.advancedSettings.valueRange}
-              setRange={setValueRange}
-            />
-          )}
-          {aggregateSettings.advancedSettings.uncertaintyRange != null && !aggregateSettings.advancedSettings.deriveRange && (
-            <MinMaxNumberInput
-              title={`Customize range for ${aggregateSettings.colormapSettings.aggregateColor.uncertainty_col}`}
-              target="uncertainty"
-              range={aggregateSettings.advancedSettings.uncertaintyRange}
-              setRange={setUncertaintyRange}
-            />
-          )}
-        </Box>
-
-        {selectAttributeInfo != null ? (
-          <Box paddingTop={1} sx={{ flexGrow: 1 }}>
+        {selectAttributeInfo != null && Object.keys(selectAttributeInfo).length > 1 ? (
+          <Box paddingY={1} sx={{ flexGrow: 1 }}>
+            <Typography variant="body2" color="textSecondary" id="range-slider">
+              Choose encoding for variables{' '}
+              <Tooltip
+                placement="right"
+                title={
+                  <Typography variant="subtitle2">
+                    Choose, which variable should be encoded in the hue and which in the saturation of the color. You can also change the aggregation method.
+                  </Typography>
+                }
+              >
+                <InfoOutlined fontSize="inherit" style={{ color: 'grey' }} />
+              </Tooltip>
+            </Typography>
             <>
-              <Grid container columns={{ xs: 3 }}>
-                <Grid item xs={1} />
-                <Grid item xs={1}>
-                  Value
+              <Grid container columns={{ xs: 10 }} textAlign="center">
+                <Grid item xs={2} />
+                <Grid item xs={4}>
+                  Hue
                 </Grid>
-                <Grid item xs={1}>
-                  Uncertainty
+                <Grid item xs={4}>
+                  Saturation
                 </Grid>
               </Grid>
               {Object.keys(selectAttributeInfo).map((value, index) => (
-                <Grid container columns={{ xs: 3 }} key={value}>
-                  <Grid item xs={1}>
-                    {value}
+                <Grid container columns={{ xs: 10 }} key={value}>
+                  <Grid item xs={2} textAlign="right" style={{ textOverflow: 'ellipsis', overflow: 'hidden' }}>
+                    <Tooltip placement="right" title={<Typography variant="subtitle2">{value}</Typography>}>
+                      <span>{value}</span>
+                    </Tooltip>
                   </Grid>
-                  <Grid item xs={1}>
+                  <Grid item xs={4} textAlign="center">
                     <Radio
                       onChange={(event) => {
                         if (event.target.checked) {
@@ -121,7 +105,7 @@ export const AdvancedAggregationSettings = connector(
                       checked={index === aggregateSettings.advancedSettings.variableIndex.valueVariableIndex}
                     />
                   </Grid>
-                  <Grid item xs={1}>
+                  <Grid item xs={4} textAlign="center">
                     <Radio
                       onChange={(event) => {
                         if (event.target.checked) {
@@ -136,9 +120,9 @@ export const AdvancedAggregationSettings = connector(
                   </Grid>
                 </Grid>
               ))}
-              <Grid container columns={{ xs: 3 }}>
-                <Grid item xs={1} />
-                <Grid item xs={1}>
+              <Grid container columns={{ xs: 10 }} textAlign="center">
+                <Grid item xs={2} />
+                <Grid item xs={4}>
                   <FormControl>
                     <InputLabel id="selectValueAggregation">Agg</InputLabel>
                     <Select
@@ -160,7 +144,7 @@ export const AdvancedAggregationSettings = connector(
                     </Select>
                   </FormControl>
                 </Grid>
-                <Grid item xs={1}>
+                <Grid item xs={4}>
                   <FormControl>
                     <InputLabel id="selectUncertaintyAggregation">Agg</InputLabel>
                     <Select
@@ -187,8 +171,8 @@ export const AdvancedAggregationSettings = connector(
           </Box>
         ) : (
           <Box paddingTop={1}>
-            <Typography variant="subtitle2" gutterBottom>
-              Select value aggregation function
+            <Typography variant="body2" color="textSecondary" id="range-slider" gutterBottom>
+              Choose aggregation method
             </Typography>
             <FormControl>
               <InputLabel id="selectValueAggregation">Agg</InputLabel>
@@ -212,6 +196,48 @@ export const AdvancedAggregationSettings = connector(
             </FormControl>
           </Box>
         )}
+
+        <Box paddingY={1}>
+          <Tooltip
+            placement="right"
+            title={
+              <Typography variant="subtitle2">
+                If active, the minimum and maximum values for colormapping are automatically derived from the data. Otherwise, the user can manually specify the
+                range. This might be useful for tasks like comparing different features.
+              </Typography>
+            }
+          >
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={aggregateSettings.advancedSettings.deriveRange}
+                  onChange={() => {
+                    toggleDeriveRange();
+                  }}
+                  title="Derive range from data"
+                />
+              }
+              label="Derive range from data"
+            />
+          </Tooltip>
+
+          {aggregateSettings.advancedSettings.valueRange != null && !aggregateSettings.advancedSettings.deriveRange && (
+            <MinMaxNumberInput
+              title={`Customize range for ${aggregateSettings.colormapSettings.aggregateColor.value_col}`}
+              target="value"
+              range={aggregateSettings.advancedSettings.valueRange}
+              setRange={setValueRange}
+            />
+          )}
+          {aggregateSettings.advancedSettings.uncertaintyRange != null && !aggregateSettings.advancedSettings.deriveRange && (
+            <MinMaxNumberInput
+              title={`Customize range for ${aggregateSettings.colormapSettings.aggregateColor.uncertainty_col}`}
+              target="uncertainty"
+              range={aggregateSettings.advancedSettings.uncertaintyRange}
+              setRange={setUncertaintyRange}
+            />
+          )}
+        </Box>
       </>
     );
   },
