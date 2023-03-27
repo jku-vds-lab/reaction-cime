@@ -37,6 +37,8 @@ This section explains the general layout of the tool and the basic controls with
 - Projection (2-dimensional) View (yellow): Shows the current projection of the data and allows the user to interact with the low-dimensional projection of the experiments
 - Tabular (high-dimensional) View (green): Can be dragged up from the bottom of the window to show a [LineUp](https://lineup.js.org/) table or parallel coordinates plot of the high dimensional space of the experiments
 
+![cime4r-general-annotated](https://user-images.githubusercontent.com/45741696/227914093-57b73b24-308a-4dc8-afca-2668972fb42a.PNG width="700")
+
 
 ### Controls
 The following describes a list of controls:
