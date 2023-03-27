@@ -424,7 +424,7 @@ function buildLineup(cols, data, pointColorScale, channelColor, groupLabel, scal
   // console.log(channelColor) //TODO: update lineup colorscale, if sth changes; TODO: do this for all columns, not just groupLabel
   let groupLabelCatColor;
   if (channelColor?.key === PrebuiltFeatures.ClusterLabel) {
-    const scale = ANormalized.get(scales, pointColorScale as string)
+    const scale = ANormalized.get(scales, pointColorScale as string);
     const groupLabelMapping = {
       scale,
       values: AShallowSet.create(data.map((vector, i) => groupLabel[i])),
