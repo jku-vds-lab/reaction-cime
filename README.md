@@ -176,11 +176,11 @@ If a feature consists of two variables (e.g., mean and variance of a prediction)
 ### Settings (green)
 Users can adjust the settings of the aggregation visualization. By default, the range used for mapping values to colors is derived from the data (i.e., the minimum and maximum value of the selected feature). Users can also customize the range, which can be useful, for example, if users want to compare several timesteps or features with each other.
 
-<img src="https://user-images.githubusercontent.com/45741696/227916404-017014c4-2e2a-4e51-8647-682092211da8.PNG" width="100">
+<img src="https://user-images.githubusercontent.com/45741696/227916404-017014c4-2e2a-4e51-8647-682092211da8.PNG" width="200">
 
 Finally, users can also choose the aggregation function that should be used to calculate the aggregated value. 
 
-<img src="https://user-images.githubusercontent.com/45741696/227916514-9e2dac6c-6de2-4f01-8b96-1ba338113c0b.PNG" width="100">
+<img src="https://user-images.githubusercontent.com/45741696/227916514-9e2dac6c-6de2-4f01-8b96-1ba338113c0b.PNG" width="200">
 
 If the selected feature has two values users can also choose, which of the two values should be considered as uncertainty for the color encoding. 
 
