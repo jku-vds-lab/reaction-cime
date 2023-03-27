@@ -1,8 +1,6 @@
 # ChemInformatics Model Explorer for Reaction Optimization (CIME4R): TODO…
 This is the repository for CIME4R (as discussed in the paper). It builds upon the [Projection Space Explorer library](https://github.com/jku-vds-lab/projection-space-explorer).
 
-The repository is split into front-end (`src`, `package.json`, ...) and back-end (`reaction_cime`, `Makefile`, `requirements.txt`, ...). 
-
 #### Published in: TODO ####
 #### DOI: TODO ###
 
@@ -39,6 +37,7 @@ This section explains the general layout of the tool and the basic controls with
 - Projection (2-dimensional) View (yellow): Shows the current projection of the data and allows the user to interact with the low-dimensional projection of the experiments
 - Tabular (high-dimensional) View (green): Can be dragged up from the bottom of the window to show a [LineUp](https://lineup.js.org/) table or parallel coordinates plot of the high dimensional space of the experiments
 
+<img src="https://user-images.githubusercontent.com/45741696/227914093-57b73b24-308a-4dc8-afca-2668972fb42a.PNG" width="700">
 
 ### Controls
 The following describes a list of controls:
@@ -66,6 +65,7 @@ Finally, in the advanced settings (green) users can specify a SMILES lookup tabl
 With the SMILES lookup table, users can define key-value pairs of SMILES strings and human-readable names for those SMILES, which are then used by CIME4R to show the human-readable names instead of SMILES. The file has to be a CSV file with the columns “smiles” and “shortname”. Check out the [example SMILES lookup table](TODO: add example).
 The export button allows users to save the current session of CIME4R so that they can later continue or even share the session with a colleague.
 
+<img src="https://user-images.githubusercontent.com/45741696/227914723-6b7a48a0-9d41-4519-b4b6-7cbb31f4f525.PNG" width="200">
 
 ### Data Format
 Data is handed to the system using a [comma separated values (CSV)](https://en.wikipedia.org/wiki/Comma-separated_values) file format that contains a collection of chemical reaction parameter configurations, measured target values (e.g., measured yield), during which cycle the measurement was performed, and additional properties that can be customized (e.g., predicted yield, SHAP values).
@@ -97,6 +97,7 @@ The values for x and y can then be re-calculated with a projection method.
 
 Currently, there are options for [UMAP](https://umap-learn.readthedocs.io/), [t-SNE](https://opentsne.readthedocs.io/), and [PCA](https://scikit-learn.org/stable/modules/generated/sklearn.decomposition.PCA.html) projection implemented. The projection calculations are done in the back-end on the whole dataset. The positions of the points can be refined with [Overlap removal](https://arxiv.org/pdf/1903.06262.pdf) ([Code on Github](https://github.com/fpaulovich/dimensionality-reduction)), which uses a grid-based method to reduce overlaps of points and therefore helps to minimize visual clutter in the scatter plot.
 
+<img src="https://user-images.githubusercontent.com/45741696/227914984-5ff9c14b-d424-4e6d-a7e4-7436beb8ffe3.PNG" width="200">
 
 ### Parameters (orange)
 For calculating the projection, users can click on one of the projection methods (orange). This opens a dialog, where users can choose the features which should be used for the projection by selecting and deselecting the corresponding checkboxes. To select or deselect whole semantic groups of features (e.g., select all features that belong to a descriptor, or all experiment parameters), users can interact with the checkboxes next to the group name. Users can also collapse and expand the list of experiments in a group.
@@ -126,6 +127,9 @@ As already mentioned previously the points shown in the scatter plot are only a 
 
 The subset available in the front-end can be adjusted by users in the *Filter* tab panel. 
 
+<img src="https://user-images.githubusercontent.com/45741696/227915177-39b14697-6d42-41dd-b8c1-d936d7637e86.PNG" width="700">
+
+
 ### Filter Info (orange)
 The filter info tells users how many experiments are shown in the front-end and the total number of points in the back-end. It also indicates this information as a percentage value.
 
@@ -150,6 +154,8 @@ Users can define such exceptions with a right-click on the scatter plot. This op
 ## Aggregate
 Since we only show a subset of experiments in the scatter plot, we provide an additional visualization that gives an aggregated view of the data in the back-end. 
 
+<img src="https://user-images.githubusercontent.com/45741696/227915323-e7c7a913-3ace-4f1a-b539-2e3aaed27479.PNG" width="700">
+
 
 ### Select feature (orange)
 Users can choose a feature they want to visualize using the auto-complete text-input field. The values of the chosen feature are then shown in the background of the scatter plot as an aggregation of the data in the back-end into hexagonal bins. The aggregated value for each hexagon is encoded with colors.
@@ -159,6 +165,9 @@ Depending on whether or not the chosen feature is of temporal nature (i.e., temp
 ### Color encoding (yellow)
 Users can adapt the color encoding by selecting a different colormap in the drop-down selection input.
 Depending on whether the chosen feature consists of one or two values, the color encoding is slightly different:
+
+<img src="https://user-images.githubusercontent.com/45741696/227915961-06f467d8-8ae6-4d00-b0be-62afae0e23b5.PNG" width="200">
+<img src="https://user-images.githubusercontent.com/45741696/227916038-0a0db7bc-4f2d-47a9-aae8-0c46666ccb10.gif" width="200">
 		
 For features consisting of one value, the feature values are linearly mapped to the chosen color scale. 
 
@@ -167,8 +176,11 @@ If a feature consists of two variables (e.g., mean and variance of a prediction)
 ### Settings (green)
 Users can adjust the settings of the aggregation visualization. By default, the range used for mapping values to colors is derived from the data (i.e., the minimum and maximum value of the selected feature). Users can also customize the range, which can be useful, for example, if users want to compare several timesteps or features with each other.
 
+<img src="https://user-images.githubusercontent.com/45741696/227916404-017014c4-2e2a-4e51-8647-682092211da8.PNG" width="200">
 
 Finally, users can also choose the aggregation function that should be used to calculate the aggregated value. 
+
+<img src="https://user-images.githubusercontent.com/45741696/227916514-9e2dac6c-6de2-4f01-8b96-1ba338113c0b.PNG" width="200">
 
 If the selected feature has two values users can also choose, which of the two values should be considered as uncertainty for the color encoding. 
 
@@ -184,6 +196,9 @@ In the "Encoding" tab panel users can change the marks and channels of the displ
 
 ## Selection Info
 In this tab panel summary visualizations of selected points are shown. The info box at the top (orange) shows the number of selected experiments and the total experiments in the front-end.
+
+<img src="https://user-images.githubusercontent.com/45741696/227916658-23fa58c1-579d-431a-9e4d-45ab7cade39e.PNG" width="200">
+
 
 Below this information, there are three icon buttons (yellow) explained from left to right:
 External summary: open the selection visualization in an external window
@@ -206,6 +221,7 @@ The hover view is similar to the selection visualization; it shows a summary of 
 ## Groups
 In the "Groups" tab panel users can adjust group settings, automatically define groups by clustering and choose between group collections.
 
+<img src="https://user-images.githubusercontent.com/45741696/227916797-29ef0bc5-0638-4ebd-acd3-9ad4d613f8e9.png" width="200">
 
 
 ### Group Settings (orange)
@@ -217,9 +233,13 @@ If users click on a group center (grey diamond), all experiments belonging to th
 Automatic Clustering of the projected features can be done in this panel. The algorithm used for clustering is [HDBSCAN](https://hdbscan.readthedocs.io/). 
 Parameters can be changed either by adjusting the slider (few groups...many groups), or by enabling the **Advanced**-Mode. Chosen parameters are always synchronized with the values in the advanced user inputs. Any other possible parameters that could be used for HDBSCAN are set to the default parameters that can be retrieved from the HDBSCAN docs.
 
+<img src="https://user-images.githubusercontent.com/45741696/227916909-993fd38a-a396-45db-b41b-1e2434a21fa3.png" width="400">
 
 ### Groups and collections (green)
 A group collection is a set of groups - and possible connections between those groups - that were either created automatically or manually composed. This way, users can view various groupings by just switching between collections.
+
+<img src="https://user-images.githubusercontent.com/45741696/227917115-4149b61b-c2eb-422a-be39-8a00718c4bd0.png" width="700">
+
 
 A new group collection can be created by clicking **New**. 
 Users can manually add groups to a new or existing collection by selecting points in the scatter plot and choosing "Define group from selection" from the context menu that opens with a right-click on the scatter plot.
@@ -247,6 +267,8 @@ For high-dimensional data exploration, we included a [LineUp table](https://line
 
 ### LineUp
 To show the table you can either use one of the buttons in the tab panel, or you can drag the component from the bottom of the window to increase the size of the table. 
+
+<img src="https://user-images.githubusercontent.com/45741696/227917268-556df60d-28bb-44e4-b3f8-5e8b6926db51.gif" width="700">
 
 
 The table shows all properties that were included in the provided dataset except properties that have the "desc" modifier (i.e., descriptor features are usually too numerous to show). 
