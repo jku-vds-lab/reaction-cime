@@ -1,8 +1,6 @@
 # ChemInformatics Model Explorer for Reaction Optimization (CIME4R): TODO…
 This is the repository for CIME4R (as discussed in the paper). It builds upon the [Projection Space Explorer library](https://github.com/jku-vds-lab/projection-space-explorer).
 
-The repository is split into front-end (`src`, `package.json`, ...) and back-end (`reaction_cime`, `Makefile`, `requirements.txt`, ...). 
-
 #### Published in: TODO ####
 #### DOI: TODO ###
 
