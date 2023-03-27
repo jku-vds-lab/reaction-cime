@@ -778,6 +778,7 @@ def project_dataset():
             n_epochs=int(params["iterations"]),
             init=initialization,  # type: ignore
             verbose=True,
+            low_memory=True,
         )  # output_metric="euclidean" --> ? learning_rate=float(params["learningRate"]) --> if we have user input for this, we would need "auto" as an option
         proj_data = proj.fit_transform(normalized_values)
     elif params["embedding_method"] == "tsne":
@@ -973,6 +974,7 @@ class ProjectionThread(threading.Thread):
             init=initialization,
             tqdm_kwds={"bar_format": "{n_fmt}", "file": CustomTQDM(self)},
             verbose=True,
+            low_memory=True,
         )  # output_metric="euclidean" --> ? learning_rate=float(params["learningRate"]) --> if we have user input for this, we would need "auto" as an option
         proj_data = proj.fit_transform(normalized_values)
         return proj_data
