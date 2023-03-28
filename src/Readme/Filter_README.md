@@ -1,5 +1,7 @@
 [Back to main README](../../README.md#tab-documentation)
 
+[//]: # (document start)
+
 ## Filter
 As already mentioned previously the points shown in the scatter plot are only a subset of the whole dataset. This is necessary because reaction datasets can become very large, which is a challenge for computational resources on the one hand, and human processing capabilities on the other hand (i.e., showing all points to a user can become overwhelming quickly). 
 

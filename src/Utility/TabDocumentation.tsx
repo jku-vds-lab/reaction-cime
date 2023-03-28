@@ -24,7 +24,7 @@ const readmeMap = {
 
 // Remove back link to the documentation page
 for (const key in readmeMap) {
-  const str = '#tab-documentation)';
+  const str = '[//]: # (document start)';
   readmeMap[key] = readmeMap[key].substring(readmeMap[key].indexOf(str) + str.length);
 }
 

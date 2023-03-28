@@ -1,5 +1,7 @@
 [Back to main README](../../README.md#tab-documentation)
 
+[//]: # (document start)
+
 ## Selection Info
 In this tab panel summary visualizations of selected points are shown. The info box at the top (orange) shows the number of selected experiments and the total experiments in the front-end.
 

@@ -1,5 +1,7 @@
 [Back to main README](../../README.md#tab-documentation)
 
+[//]: # (document start)
+
 ## Groups
 In the "Groups" tab panel users can adjust group settings, automatically define groups by clustering and choose between group collections.
 

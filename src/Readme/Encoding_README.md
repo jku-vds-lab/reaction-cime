@@ -1,5 +1,7 @@
 [Back to main README](../../README.md#tab-documentation)
 
+[//]: # (document start)
+
 ## Encoding
 In the "Encoding" tab panel users can change the marks and channels of the displayed data.
 - **shape by**: select a categorical feature with less than six distinct values and encode each value as a different mark 
