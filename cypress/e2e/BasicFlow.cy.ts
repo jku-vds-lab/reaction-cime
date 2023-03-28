@@ -14,8 +14,15 @@ describe('domain_5000_v2', () => {
 
     // Define groups by clustering
     cy.switchTab('groups');
+
+    // Intercept the network request
+    cy.intercept('POST', '/api/reaction_cime/segmentation').as('groupMutation');
+
     cy.byId('define-groups-by-clustering-button').click();
     cy.byId('run-clustering-button').click();
+
+    // eslint-disable-next-line cypress/no-unnecessary-waiting
+    cy.wait('@groupMutation');
 
     // Set some encodings
     cy.switchTab('encoding');

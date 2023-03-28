@@ -84,7 +84,7 @@ class ReactionCIMEDBO:
 
                         chunk_index += 1
 
-                p.fully_processed = True
+                p.fully_processed = True  # type: ignore
 
                 delta_time = time.time() - start_time
                 _log.info("--- took %i min %f s to save file %s" % (delta_time / 60, delta_time % 60, save_name))

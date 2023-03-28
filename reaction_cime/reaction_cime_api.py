@@ -882,7 +882,7 @@ class ProjectionThread(threading.Thread):
             # initialization = get_poi_df_from_db(self.id, self.cime_dbo)[["x","y"]].values # does this make sense?
             initialization = proj_df[["x", "y"]].values
 
-        # TODO: if params["useSelection"]: only project selected points --> do this in front-end? do this at all?
+        # TODO: if params["useSelection"]: only project selected points --> do this in front-end? do this at all? --> for now, remove this option in front-end
 
         self.msg = "rescale and encode..."
         # rescale numerical values and encode categorical values

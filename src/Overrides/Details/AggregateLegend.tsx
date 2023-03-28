@@ -1,11 +1,12 @@
 /* eslint-disable no-await-in-loop */
-import { Table, TableBody, TableCell, TableHead, TableRow } from '@mui/material';
+import { Table, TableBody, TableCell, TableHead, TableRow, Typography } from '@mui/material';
 import { makeStyles } from '@mui/styles';
 import { Dataset, FeatureType, IProjection } from 'projection-space-explorer';
 import React from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 import * as vegaImport from 'vega';
 import { Handler } from 'vega-tooltip';
+import { Box } from '@mui/system';
 import { ReactionCIMEBackendFromEnv } from '../../Backend/ReactionCIMEBackend';
 import { AppState } from '../../State/Store';
 import BarChart from './VegaHelpers/BarChart';
@@ -157,6 +158,7 @@ const mapStateToProps = (state: AppState) => ({
   legendAttributes: state.genericFingerprintAttributes,
   dataset: state.dataset,
   workspace: state.multiples.multiples.entities[state.multiples.active].attributes.workspace,
+  globalLabels: state.globalLabels,
 });
 const mapDispatchToProps = (dispatch: any) => ({});
 
@@ -177,7 +179,7 @@ const useStyles = makeStyles({
   },
 });
 
-export const AggregateLegend = connector(({ aggregate, aggregateSelection, legendAttributes, dataset, workspace }: Props) => {
+export const AggregateLegend = connector(({ aggregate, aggregateSelection, legendAttributes, dataset, workspace, globalLabels }: Props) => {
   const classes = useStyles();
   const [rows, setRows] = React.useState([]);
 
@@ -194,6 +196,14 @@ export const AggregateLegend = connector(({ aggregate, aggregateSelection, legen
           // overflow: "auto"
         }}
       >
+        <Box paddingX={2} paddingTop={2} paddingBottom={1}>
+          <Typography variant="subtitle2" gutterBottom>
+            Filter settings
+          </Typography>
+          <Typography variant="body2" color="textSecondary" gutterBottom>
+            Adjust filter settings to show a different subset of {globalLabels.itemLabelPlural} in the front end.
+          </Typography>
+        </Box>
         <Table className={classes.table} aria-label="simple table" size="small">
           <TableHead />
           <TableBody>

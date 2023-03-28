@@ -4,9 +4,10 @@ import { connect, ConnectedProps } from 'react-redux';
 import { Handler } from 'vega-tooltip';
 import { makeStyles } from '@mui/styles';
 import './FeatureLegend.scss';
-import { Table, TableBody, TableCell, TableHead, TableRow } from '@mui/material';
+import { Table, TableBody, TableCell, TableHead, TableRow, Tooltip, Typography } from '@mui/material';
 import * as vegaImport from 'vega';
 import { DefaultLegend, FeatureType, IVector, RootState } from 'projection-space-explorer';
+import { InfoOutlined } from '@mui/icons-material';
 import VegaDensity from './VegaHelpers/VegaDensity';
 import BarChart from './VegaHelpers/BarChart';
 import VegaDate from './VegaHelpers/VegaDate';
@@ -210,14 +211,12 @@ function getNormalizedSTD(data, min, max) {
   return getSTD(data);
 }
 
+const N_HOVER_ROWS = 5;
+
 function genRows(vectors, aggregation, legendAttributes, dataset) {
   if (dataset === undefined) {
     return [];
   }
-
-  // if(!aggregation){ // TODO: if it shows the hover state, we don't need to generate all rows because we can't scroll anyway
-  //   return []
-  // }
 
   const rows = [];
   const dictOfArrays = dictionary(vectors);
@@ -283,10 +282,15 @@ function genRows(vectors, aggregation, legendAttributes, dataset) {
   // sort rows by score
   ret.sort(sortByScore);
 
+  if (!aggregation) {
+    // if it shows the hover state, we don't need to generate all rows because we can't scroll anyway -> only show top 5 charts
+    return ret.slice(0, N_HOVER_ROWS);
+  }
+
   return ret;
 }
 
-function getTable(vectors, aggregation, legendAttributes, dataset) {
+function getTable(vectors, aggregation, legendAttributes, dataset, itemLabelPlural: string) {
   const classes = makeStyles({
     table: {
       maxWidth: 288,
@@ -305,13 +309,32 @@ function getTable(vectors, aggregation, legendAttributes, dataset) {
           // overflow: "auto"
         }}
       >
+        {aggregation ? (
+          <Typography paddingX={2} paddingBottom={1} color="textSecondary" variant="body2" maxWidth={250}>
+            The plots show distributions of feature values and are sorted by their purity.{' '}
+            <Tooltip
+              title={
+                <Typography variant="subtitle2">
+                  The plots show the value distributions of a feature overall (black outline) and the distribution of the selected {itemLabelPlural}. The
+                  visualizations are sorted by the homogeneity of feature values in the subset of selected {itemLabelPlural} (i.e., measure of purity).
+                </Typography>
+              }
+            >
+              <InfoOutlined fontSize="inherit" />
+            </Tooltip>
+          </Typography>
+        ) : (
+          <Typography paddingX={1} paddingBottom={1} color="textSecondary" variant="body2" maxWidth={250}>
+            Feature values of the hovered point (blue) compared to the overall value distributions (black).
+          </Typography>
+        )}
         <Table className={classes.table} aria-label="simple table" size="small">
           <TableHead />
           <TableBody>
             {rows.map((row) => (
               <TableRow className={classes.tableRow} key={row.feature}>
                 <TableCell component="th" scope="row">
-                  <div style={{ maxWidth: 200 }}>
+                  <div style={{ maxWidth: 200, textOverflow: 'ellipsis', overflow: 'hidden' }}>
                     {row.feature}
                     <br />
                     <b>{mapSmilesToShortname(row.category)}</b>
@@ -322,6 +345,11 @@ function getTable(vectors, aggregation, legendAttributes, dataset) {
             ))}
           </TableBody>
         </Table>
+        {!aggregation && (
+          <Typography paddingX={1} paddingY={1} color="textSecondary" variant="body2" maxWidth={250}>
+            To show different features, adjust selection settings.
+          </Typography>
+        )}
       </div>
     </div>
   );
@@ -331,6 +359,7 @@ const mapState = (state: RootState) => {
   return {
     legendAttributes: state.genericFingerprintAttributes,
     dataset: state.dataset,
+    globalLabels: state.globalLabels,
   };
 };
 
@@ -345,9 +374,9 @@ type Props = PropsFromRedux & {
   selection: IVector[];
 };
 
-export const FeatureLegend = connector(({ selection, aggregate, legendAttributes, dataset }: Props) => {
+export const FeatureLegend = connector(({ selection, aggregate, legendAttributes, dataset, globalLabels }: Props) => {
   if (selection.length <= 0) {
     return <DefaultLegend />;
   }
-  return getTable(selection, aggregate, legendAttributes, dataset);
+  return getTable(selection, aggregate, legendAttributes, dataset, globalLabels.itemLabelPlural);
 });

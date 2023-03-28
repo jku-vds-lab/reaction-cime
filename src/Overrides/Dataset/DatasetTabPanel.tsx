@@ -110,6 +110,7 @@ export const DatasetTabPanel = connector(({ onDataSelected, resetViews, setTrigg
         'interfaceState',
         'selectedLineBy',
         'viewTransform',
+        'stories',
       ]);
     }
     new BackendCSVLoader().resolvePath(
@@ -145,6 +146,20 @@ export const DatasetTabPanel = connector(({ onDataSelected, resetViews, setTrigg
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+      <Box paddingX={2} paddingTop={2}>
+        <Typography variant="subtitle2" gutterBottom>
+          Load dataset
+        </Typography>
+        {!clientConfig.publicVersion ? (
+          <Typography variant="body2" color="textSecondary" gutterBottom>
+            Select or upload a dataset to get started.
+          </Typography>
+        ) : (
+          <Typography variant="body2" color="textSecondary" gutterBottom>
+            Select a dataset to get started.
+          </Typography>
+        )}
+      </Box>
       <UploadedFiles
         onChange={(entry) => {
           triggerUpdate(entry);

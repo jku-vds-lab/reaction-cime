@@ -20,7 +20,7 @@ ENV VISYN_CORE__SECURITY__STORE__NO_SECURITY_STORE__USER anonymous
 # copy the pre-built front-end --> comment for development because we mount the volume anyway
 COPY bundles/ /app/bundles/
 # Add a clientConfig.json indicating a public version
-RUN echo '{"publicVersion": true}' >> /app/bundles/clientConfig.json
+RUN echo '{"publicVersion": false}' >> /app/bundles/clientConfig.json
 
 # expose default port
 EXPOSE 9000

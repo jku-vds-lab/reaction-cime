@@ -2,7 +2,7 @@ import { Grid, Typography, Box, Button } from '@mui/material';
 import { connect, ConnectedProps } from 'react-redux';
 import GetAppIcon from '@mui/icons-material/GetApp';
 import React from 'react';
-import { SelectFeatureComponent } from 'projection-space-explorer';
+import { toSentenceCase, SelectFeatureComponent } from 'projection-space-explorer';
 import FileUploadIcon from '@mui/icons-material/FileUpload';
 import { AppState } from '../../State/Store';
 // @ts-ignore
@@ -71,11 +71,14 @@ export const FilterTabPanel = connector(({ dataset, triggerDatasetUpdate, state 
   return (
     dataset && (
       <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflowY: 'auto' }}>
-        <Box paddingLeft={2} paddingTop={1} paddingRight={2}>
-          {/* TODO: always show info about NO items */}
-          <NOItemsInfo variant="filterOutOfTotal" />
+        <Box paddingX={2} paddingTop={2} paddingBottom={1}>
           <Typography variant="subtitle2" gutterBottom>
             Filter settings
+          </Typography>
+          <Typography variant="body2" color="textSecondary" gutterBottom>
+            Adjust filter settings to show a different subset of {state.globalLabels.itemLabelPlural} in the front end.{' '}
+            {/* TODO: always show info about NO items */}
+            <NOItemsInfo variant="filterOutOfTotal" />
           </Typography>
         </Box>
         <Box paddingLeft={2} paddingTop={1} paddingRight={2}>
@@ -104,8 +107,8 @@ export const FilterTabPanel = connector(({ dataset, triggerDatasetUpdate, state 
             }}
           />
         </Box>
-
-        <Box paddingLeft={2} paddingTop={1} paddingRight={2}>
+        {/* TODO: this downloads the current filter file. this file can later be uploaded again -> not really necessary because filters are saved in backend */}
+        {/* <Box paddingLeft={2} paddingTop={1} paddingRight={2}>
           <Grid container>
             <Grid item xs={6} paddingRight={1}>
               <Button
@@ -143,10 +146,8 @@ export const FilterTabPanel = connector(({ dataset, triggerDatasetUpdate, state 
               </Button>
             </Grid>
           </Grid>
-        </Box>
-        <Box paddingTop={1} paddingRight={2}>
-          <ExceptionSettings state={state} triggerDatasetUpdate={triggerDatasetUpdate} dataset={dataset} />
-        </Box>
+        </Box> */}
+        <ExceptionSettings state={state} triggerDatasetUpdate={triggerDatasetUpdate} dataset={dataset} />
       </div>
     )
   );
