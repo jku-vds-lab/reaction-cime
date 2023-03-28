@@ -1,3 +1,5 @@
+[Back to main README](../../README.md#tab-documentation)
+
 ## Tabular view
 For high-dimensional data exploration, we included a [LineUp table](https://lineup.js.org/) and Parallel Coordinates Plot, which can be viewed on-demand. 
 

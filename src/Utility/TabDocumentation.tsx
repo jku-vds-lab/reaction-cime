@@ -22,6 +22,12 @@ const readmeMap = {
   7: AggregateReadme,
 };
 
+// Remove back link to the documentation page
+for (const key in readmeMap) {
+  const str = '#tab-documentation)';
+  readmeMap[key] = readmeMap[key].substring(readmeMap[key].indexOf(str) + str.length);
+}
+
 export function TabDocumentation({ value }: { value: number }) {
   const [open, setOpen] = React.useState(false);
 

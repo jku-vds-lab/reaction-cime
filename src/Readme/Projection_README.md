@@ -1,3 +1,5 @@
+[Back to main README](../../README.md#tab-documentation)
+
 ## Projection
 When the data is loaded the x and y columns are used as initial positions for the scatter plot. If x and y are not specified they will be randomly initialized. 
 The values for x and y can then be re-calculated with a projection method. 
