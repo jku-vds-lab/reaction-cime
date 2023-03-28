@@ -110,6 +110,7 @@ export const DatasetTabPanel = connector(({ onDataSelected, resetViews, setTrigg
         'interfaceState',
         'selectedLineBy',
         'viewTransform',
+        'stories',
       ]);
     }
     new BackendCSVLoader().resolvePath(

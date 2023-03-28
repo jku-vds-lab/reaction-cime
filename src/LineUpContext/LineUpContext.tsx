@@ -30,6 +30,8 @@ import {
   setHoverState,
   AShallowSet,
   mapValueToColor,
+  RootState,
+  ANormalized,
 } from 'projection-space-explorer';
 import * as d3v5 from 'd3v5';
 import isEqual from 'lodash.isequal';
@@ -54,6 +56,8 @@ const mapStateToProps = (state: AppState) => ({
   pointColorScale: state.multiples.multiples.entities[state.multiples.multiples.ids[0]]?.attributes.pointColorScale,
   channelColor: state.multiples.multiples.entities[state.multiples.multiples.ids[0]]?.attributes.channelColor,
   detailView: state.detailView,
+  scales: state.colorScales.scales,
+  stories: state.stories,
   // splitRef: state.splitRef
   // hoverState: state.hoverState
 });
@@ -416,13 +420,14 @@ function myDynamicHeight(data: IGroupItem[], ranking: Ranking): IDynamicHeight {
   return { defaultHeight: 25, height: () => 25, padding: () => 0 };
 }
 
-function buildLineup(cols, data, pointColorScale, channelColor) {
+function buildLineup(cols, data, pointColorScale, channelColor, groupLabel, scales) {
   // console.log(channelColor) //TODO: update lineup colorscale, if sth changes; TODO: do this for all columns, not just groupLabel
   let groupLabelCatColor;
   if (channelColor?.key === PrebuiltFeatures.ClusterLabel) {
+    const scale = ANormalized.get(scales, pointColorScale as string);
     const groupLabelMapping = {
-      scale: pointColorScale,
-      values: AShallowSet.create(data.map((vector) => vector[PrebuiltFeatures.ClusterLabel])),
+      scale,
+      values: AShallowSet.create(data.map((vector, i) => groupLabel[i])),
       type: 'categorical',
     } as DiscreteMapping;
     groupLabelCatColor = groupLabelMapping.values
@@ -538,6 +543,8 @@ export const LineUpContext = connector(function ({
   activeStory,
   pointColorScale,
   setHoverstate,
+  scales,
+  stories,
 }: Props) {
   // In case we have no input, dont render at all
   if (!lineUpInput || !lineUpInput_data) {
@@ -688,7 +695,7 @@ export const LineUpContext = connector(function ({
     const lineupData = tempData[0];
     const columns = tempData[1];
 
-    const builder = buildLineup(columns, lineupData, pointColorScale, channelColor); // lineUpInput_data
+    const builder = buildLineup(columns, lineupData, pointColorScale, channelColor, stories.groupLabel, scales); // lineUpInput_data
     const dump = getLineupDump(lineUpInput);
 
     lineUpInput.lineup?.destroy();
