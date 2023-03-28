@@ -173,7 +173,7 @@ const ApplicationWrapper = connector(({ setMouseMoveFn, setMouseClickFn, resetVi
         detailViewSplitRatio: [60, 40],
       }}
       overrideComponents={{
-        // tabContainerPrefix: TabDocumentation,
+        tabContainerPrefix: TabDocumentation,
         mouseInteractionCallbacks: {
           onmousemove: (coords, event_used) => {
             setMouseMoveFn({ x: coords.x, y: coords.y, event_used });
