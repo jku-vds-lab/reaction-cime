@@ -5,7 +5,7 @@ import zlib
 from datetime import datetime
 from uuid import UUID as UUID_TYPE
 
-from sqlalchemy import ARRAY, TEXT, Boolean, Column, DateTime, Integer, PickleType, String
+from sqlalchemy import ARRAY, TEXT, Column, DateTime, Integer, PickleType, String
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.ext.declarative import declarative_base
 

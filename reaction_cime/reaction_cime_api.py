@@ -8,8 +8,8 @@ import os
 import shutil
 import threading
 import time
-from io import BytesIO, StringIO
 import zipfile
+from io import BytesIO, StringIO
 
 import gower
 import hdbscan
@@ -162,7 +162,7 @@ def upload_csv():
     save_name = "_".join(save_name.split(".")[0:-1])
 
     # id = get_cime_dbo().save_dataframe(df, save_name)
-    id, msg = get_cime_dbo().save_dataframe_chunked(storage_path / file_name, save_name, chunksize=10 ** 3)
+    id, msg = get_cime_dbo().save_dataframe_chunked(storage_path / file_name, save_name, chunksize=10**3)
 
     # create default constraints file
     save_poi_constraints(id)

@@ -1,7 +1,7 @@
 import logging
-from pathlib import Path
 import time
 from datetime import datetime
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -39,7 +39,7 @@ class ReactionCIMEDBO:
 
     def save_dataframe_chunked(self, path: Path, save_name: str, chunksize: int):
         msg = "ok"
-        
+
         with create_session() as session:
             p = Project()
             p.name = save_name  # type: ignore
@@ -62,7 +62,7 @@ class ReactionCIMEDBO:
             with engine.begin() as conn:
                 start_time = time.time()
 
-                chunkIndex = 0
+                chunk_index = 0
                 with pd.read_csv(path, chunksize=chunksize) as reader:
                     for chunk in reader:
                         if "x" not in chunk.columns or "y" not in chunk.columns:
@@ -74,15 +74,15 @@ class ReactionCIMEDBO:
                             table_name,
                             schema="cime4r",
                             con=conn,
-                            if_exists="replace" if chunkIndex == 0 else "append",
+                            if_exists="replace" if chunk_index == 0 else "append",
                             index=True,
                             index_label="id",
                             chunksize=5000,
                         )
 
-                        _log.info("--- saved chunk %i of file %s" % (chunkIndex, save_name))
+                        _log.info("--- saved chunk %i of file %s" % (chunk_index, save_name))
 
-                        chunkIndex += 1
+                        chunk_index += 1
 
                 # p.fully_processed = True
 
