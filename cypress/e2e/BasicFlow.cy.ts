@@ -26,7 +26,11 @@ describe('domain_5000_v2', () => {
 
     // Set some encodings
     cy.switchTab('encoding');
-    cy.byId('color-encoding-select').click().wait(300).type('measured{downArrow}{enter}');
+
+    cy.byId('color-encoding-select').click();
+    cy.wait(300);
+    cy.byId('color-encoding-select').type('measured{downArrow}{enter}');
+
     cy.byId('size-encoding-select').click();
     cy.chooseNth(3);
 
@@ -34,16 +38,22 @@ describe('domain_5000_v2', () => {
     cy.get('[title="Measured_yield"]').find('[title="Sort"]').filter(':visible').click();
 
     // Create second view and activate it
-    cy.byId('split-view-button').click({ force: true }).wait(1000);
+    cy.byId('split-view-button').click({ force: true });
+    cy.wait(1000);
+
     cy.get('#app').click(1700, 350);
 
     // Select another encoding for the second view
     cy.switchTab('encoding');
-    cy.byId('color-encoding-select').click().wait(300).type('measured{downArrow}{enter}');
+    cy.byId('color-encoding-select').click();
+    cy.wait(300);
+    cy.byId('color-encoding-select').type('measured{downArrow}{enter}');
 
     // Set some aggregation for the second view
     cy.byId('custom-tab-1').click();
-    cy.byId('aggregate-select').click().wait(300).type('predict{downArrow}{enter}');
+    cy.byId('aggregate-select').click();
+    cy.wait(300);
+    cy.byId('aggregate-select').type('predict{downArrow}{enter}');
 
     // Activate the second cycle
     cy.get('.MuiSlider-root').filter(':visible').get('.MuiSlider-markLabel[data-index="2"]').filter(':visible').click();

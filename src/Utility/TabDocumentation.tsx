@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, IconButton, Tooltip, Typography } from '@mui/material';
+import { Box, Button, Dialog, DialogActions, DialogContent, IconButton, Tooltip, Typography } from '@mui/material';
 import HelpIcon from '@mui/icons-material/Help';
 import ReactMarkdown from 'react-markdown';
 import DatasetReadme from '../Readme/Dataset_README.md?raw';
@@ -24,8 +24,8 @@ const readmeMap = {
 
 // Remove back link to the documentation page
 for (const key in readmeMap) {
-  const str = '[//]: # (document start)';
   if (Object.prototype.hasOwnProperty.call(readmeMap, key)) {
+    const str = '[//]: # (document start)';
     readmeMap[key] = readmeMap[key].substring(readmeMap[key].indexOf(str) + str.length);
   }
 }
