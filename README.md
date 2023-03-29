@@ -20,7 +20,6 @@ Check out the [dataset generation examples](TODO add examples) if you want to tr
 
 Check out the [example datasets](TODO upload to osf) from the paper's use cases.
 
-TODO: add table of contents
 
 # Documentation CIME4R
 The ChemInformatics Model Explorer for Reaction Optimization (short CIME4R) extension of the [Projection Space Explorer library](https://github.com/jku-vds-lab/projection-space-explorer/tree/develop) allows users to interactively explore the parameter space of chemical reactions and information about the iterative optimization process. The application allows users to understand how a machine learning model arrives at its decision on which experiments to perform next in retrospect (e.g., as proposed in [EDBO](https://www.nature.com/articles/s41586-021-03213-y)). It also facilitates interactive human-AI collaboration for reaction optimization to combine the advantages of both worlds for final decision-making: AI precision and human/expert intuition.
@@ -28,6 +27,17 @@ With CIME4R, users can apply a 2D projection to the provided reaction optimizati
 Since parameter spaces of chemical reactions can be huge, users can apply filtering or random subsampling to only show a (representative) subset of the data. The remaining data can be shown optionally using an aggregated view of the projected data. 
 Users can interactively select data points (note: each data point represents one experiment configuration and will be called “experiment” in this documentation) in a 2D scatter plot and show summary statistics of features of all selected experiments in a summary visualization. 
 Instructions for installing the application are provided at the end of this documentation.
+
+##### Table of Contents  
+[General/Controls](#generalcontrols)  
+[Dataset](#dataset)  
+[Projection](#projection)  
+[Filter](#filter)  
+[Aggregate](#aggregate)  
+[Encoding](#encoding)  
+[Selection Info](#selection-info)  
+[Groups](#groups)  
+[Tabular view](#tabular-view)
 
 ## General/Controls
 This section explains the general layout of the tool and the basic controls with which you can interact with the tool.
@@ -145,7 +155,7 @@ When the desired setting is found, users have to click on “Apply filter”, on
 
 During the exploration of experiments, users might cross a specific experiment that is of interest to them. If they want to look into experiments with the same parameters as the found experiment, they can simply right-click on that point and choose the “Set filters to feature values of this experiment” context item. This automatically sets all filters to show exactly this experiment. Users can then adjust the feature values to their interests by removing certain constraints. This function aids users to arrive at the desired filter settings more quickly.
 
-### Exception settings (green)
+### Exception Settings (green)
 Sometimes users might be interested in a certain region of the scatter plot and would like to see all experiments. In that case, **Exceptions** can be defined. They are defined by the x and y coordinates and a range around which all experiments are loaded to the front-end. Exceptions are shown despite the filter settings (e.g., the filter is set to only show experiments that have measured values, except for the defined region in which all experiments are shown).
 
 Users can define such exceptions with a right-click on the scatter plot. This opens the context menu showing the item “Show experiments around this position”. Clicking on this context item adds this position to the exception list. This function allows users to get more detailed information about an area that is of special interest to them.
@@ -157,12 +167,12 @@ Since we only show a subset of experiments in the scatter plot, we provide an ad
 <img src="https://user-images.githubusercontent.com/45741696/227915323-e7c7a913-3ace-4f1a-b539-2e3aaed27479.PNG" width="700">
 
 
-### Select feature (orange)
+### Select Feature (orange)
 Users can choose a feature they want to visualize using the auto-complete text-input field. The values of the chosen feature are then shown in the background of the scatter plot as an aggregation of the data in the back-end into hexagonal bins. The aggregated value for each hexagon is encoded with colors.
 
 Depending on whether or not the chosen feature is of temporal nature (i.e., temporal features are features that have values for each experiment cycle), a slider is shown, where users can choose the timestep they want to see. 
 
-### Color encoding (yellow)
+### Color Encoding (yellow)
 Users can adapt the color encoding by selecting a different colormap in the drop-down selection input.
 Depending on whether the chosen feature consists of one or two values, the color encoding is slightly different:
 
@@ -235,7 +245,7 @@ Parameters can be changed either by adjusting the slider (few groups...many grou
 
 <img src="https://user-images.githubusercontent.com/45741696/227916909-993fd38a-a396-45db-b41b-1e2434a21fa3.png" width="400">
 
-### Groups and collections (green)
+### Groups and Collections (green)
 A group collection is a set of groups - and possible connections between those groups - that were either created automatically or manually composed. This way, users can view various groupings by just switching between collections.
 
 <img src="https://user-images.githubusercontent.com/45741696/227917115-4149b61b-c2eb-422a-be39-8a00718c4bd0.png" width="700">
@@ -249,7 +259,7 @@ The groups in a collection are listed below the user select. Each item in the li
 Holding CTRL adds a group to the selection.
 Next to each group label there is a settings button where users can adjust group names or delete a group.
 
-### Group sequences and comparison
+### Group Sequences and Comparison
 Users can manually define relationships between groups by drawing directed edges between group centers in the scatter plot (orange). Edges can be removed again with a right-click on the edge and selecting “Delete edge”. 
 
 
@@ -262,7 +272,7 @@ The differences for numerical features are encoded with two box plots. The upper
 Differences for categorical values are encoded with bar charts. Each categorical value that changes its occurrence count between the two groups is visualized as one bar that either goes in a positive or negative direction. If the count of this feature value is lower in the second group, the bar shows the percentage of the difference in the negative direction. If the count is higher in the second group, the bar shows the percentage of the difference in the positive direction.
 The difference plots are sorted by how much a feature changes between the two groups.
 
-## Tabular view
+## Tabular View
 For high-dimensional data exploration, we included a [LineUp table](https://lineup.js.org/) and Parallel Coordinates Plot, which can be viewed on-demand. 
 
 ### LineUp
