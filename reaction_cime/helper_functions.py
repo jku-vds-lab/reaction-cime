@@ -6,8 +6,7 @@ from io import BytesIO
 import numpy as np
 import pandas as pd
 from rdkit import Chem
-# type: ignore
-from rdkit.Chem import Draw, rdFMCS
+from rdkit.Chem import Draw, rdFMCS  # type: ignore
 
 _log = logging.getLogger(__name__)
 # ---------------- preprocess dataset --------------------
