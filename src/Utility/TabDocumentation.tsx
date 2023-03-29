@@ -25,7 +25,9 @@ const readmeMap = {
 // Remove back link to the documentation page
 for (const key in readmeMap) {
   const str = '[//]: # (document start)';
-  readmeMap[key] = readmeMap[key].substring(readmeMap[key].indexOf(str) + str.length);
+  if (Object.prototype.hasOwnProperty.call(readmeMap, key)) {
+    readmeMap[key] = readmeMap[key].substring(readmeMap[key].indexOf(str) + str.length);
+  }
 }
 
 export function TabDocumentation({ value }: { value: number }) {
