@@ -11,6 +11,7 @@ Finally, in the advanced settings (green) users can specify a SMILES lookup tabl
 With the SMILES lookup table, users can define key-value pairs of SMILES strings and human-readable names for those SMILES, which are then used by CIME4R to show the human-readable names instead of SMILES. The file has to be a CSV file with the columns “smiles” and “shortname”. Check out the [example SMILES lookup table](TODO: add example).
 The export button allows users to save the current session of CIME4R so that they can later continue or even share the session with a colleague.
 
+![dataset screenshot](https://user-images.githubusercontent.com/45741696/227914723-6b7a48a0-9d41-4519-b4b6-7cbb31f4f525.PNG)
 
 ### Data Format
 Data is handed to the system using a [comma separated values (CSV)](https://en.wikipedia.org/wiki/Comma-separated_values) file format that contains a collection of chemical reaction parameter configurations, measured target values (e.g., measured yield), during which cycle the measurement was performed, and additional properties that can be customized (e.g., predicted yield, SHAP values).

@@ -8,6 +8,8 @@ The values for x and y can then be re-calculated with a projection method.
 
 Currently, there are options for [UMAP](https://umap-learn.readthedocs.io/), [t-SNE](https://opentsne.readthedocs.io/), and [PCA](https://scikit-learn.org/stable/modules/generated/sklearn.decomposition.PCA.html) projection implemented. The projection calculations are done in the back-end on the whole dataset. The positions of the points can be refined with [Overlap removal](https://arxiv.org/pdf/1903.06262.pdf) ([Code on Github](https://github.com/fpaulovich/dimensionality-reduction)), which uses a grid-based method to reduce overlaps of points and therefore helps to minimize visual clutter in the scatter plot.
 
+![filter screenshot](https://user-images.githubusercontent.com/45741696/227914984-5ff9c14b-d424-4e6d-a7e4-7436beb8ffe3.PNG)
+
 
 ### Parameters (orange)
 For calculating the projection, users can click on one of the projection methods (orange). This opens a dialog, where users can choose the features which should be used for the projection by selecting and deselecting the corresponding checkboxes. To select or deselect whole semantic groups of features (e.g., select all features that belong to a descriptor, or all experiment parameters), users can interact with the checkboxes next to the group name. Users can also collapse and expand the list of experiments in a group.
@@ -30,3 +32,4 @@ Projections are calculated in the back-end for all available experiments. The po
 
 ### Settings (green)
 Apart from using the calculated projection coordinates, users can also choose features for the x and y positions of the points. By default, however, the projection coordinates are used (i.e., “x” and “y).
+

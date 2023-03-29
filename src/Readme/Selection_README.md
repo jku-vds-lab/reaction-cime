@@ -5,6 +5,11 @@
 ## Selection Info
 In this tab panel summary visualizations of selected points are shown. The info box at the top (orange) shows the number of selected experiments and the total experiments in the front-end.
 
+![selection screenshot](https://user-images.githubusercontent.com/45741696/227916658-23fa58c1-579d-431a-9e4d-45ab7cade39e.PNG)
+
+
+
+
 Below this information, there are three icon buttons (yellow) explained from left to right:
 External summary: open the selection visualization in an external window
 Clear selection: reset the selection to no selected points

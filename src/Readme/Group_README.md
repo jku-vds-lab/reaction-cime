@@ -6,6 +6,9 @@
 In the "Groups" tab panel users can adjust group settings, automatically define groups by clustering and choose between group collections.
 
 
+![groups screenshot](https://user-images.githubusercontent.com/45741696/227916797-29ef0bc5-0638-4ebd-acd3-9ad4d613f8e9.png)
+
+
 
 ### Group Settings (orange)
 A toggle allows users to show or hide experiments in the scatter plot. The other toggle allows users to show or hide group centers (grey diamonds).
@@ -16,9 +19,15 @@ If users click on a group center (grey diamond), all experiments belonging to th
 Automatic Clustering of the projected features can be done in this panel. The algorithm used for clustering is [HDBSCAN](https://hdbscan.readthedocs.io/). 
 Parameters can be changed either by adjusting the slider (few groups...many groups), or by enabling the **Advanced**-Mode. Chosen parameters are always synchronized with the values in the advanced user inputs. Any other possible parameters that could be used for HDBSCAN are set to the default parameters that can be retrieved from the HDBSCAN docs.
 
+![groups screenshot](https://user-images.githubusercontent.com/45741696/227916909-993fd38a-a396-45db-b41b-1e2434a21fa3.png)
+
 
 ### Groups and collections (green)
 A group collection is a set of groups - and possible connections between those groups - that were either created automatically or manually composed. This way, users can view various groupings by just switching between collections.
+
+
+![groups screenshot](https://user-images.githubusercontent.com/45741696/227917115-4149b61b-c2eb-422a-be39-8a00718c4bd0.png)
+
 
 A new group collection can be created by clicking **New**. 
 Users can manually add groups to a new or existing collection by selecting points in the scatter plot and choosing "Define group from selection" from the context menu that opens with a right-click on the scatter plot.

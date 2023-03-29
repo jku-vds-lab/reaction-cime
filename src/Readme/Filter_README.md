@@ -7,6 +7,9 @@ As already mentioned previously the points shown in the scatter plot are only a 
 
 The subset available in the front-end can be adjusted by users in the *Filter* tab panel. 
 
+![filter screenshot](https://user-images.githubusercontent.com/45741696/227915177-39b14697-6d42-41dd-b8c1-d936d7637e86.PNG)
+
+
 ### Filter Info (orange)
 The filter info tells users how many experiments are shown in the front-end and the total number of points in the back-end. It also indicates this information as a percentage value.
 
@@ -26,4 +29,3 @@ During the exploration of experiments, users might cross a specific experiment t
 Sometimes users might be interested in a certain region of the scatter plot and would like to see all experiments. In that case, **Exceptions** can be defined. They are defined by the x and y coordinates and a range around which all experiments are loaded to the front-end. Exceptions are shown despite the filter settings (e.g., the filter is set to only show experiments that have measured values, except for the defined region in which all experiments are shown).
 
 Users can define such exceptions with a right-click on the scatter plot. This opens the context menu showing the item “Show experiments around this position”. Clicking on this context item adds this position to the exception list. This function allows users to get more detailed information about an area that is of special interest to them.
-

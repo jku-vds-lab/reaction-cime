@@ -8,6 +8,8 @@ For high-dimensional data exploration, we included a [LineUp table](https://line
 ### LineUp
 To show the table you can either use one of the buttons in the tab panel, or you can drag the component from the bottom of the window to increase the size of the table. 
 
+![filter screenshot](https://user-images.githubusercontent.com/45741696/227917268-556df60d-28bb-44e4-b3f8-5e8b6926db51.gif)
+
 
 The table shows all properties that were included in the provided dataset except properties that have the "desc" modifier (i.e., descriptor features are usually too numerous to show). 
 
