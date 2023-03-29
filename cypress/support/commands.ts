@@ -1,3 +1,4 @@
+/* eslint-disable cypress/unsafe-to-chain-command */
 /// <reference types="cypress" />
 // ***********************************************
 // This example commands.ts shows you how to
