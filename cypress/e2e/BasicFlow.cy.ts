@@ -1,3 +1,4 @@
+/* eslint-disable cypress/unsafe-to-chain-command */
 /* eslint-disable cypress/no-unnecessary-waiting */
 Cypress.on('uncaught:exception', (err, runnable) => {
   return !err.message.includes('scrollLeft');
@@ -26,7 +27,9 @@ describe('domain_5000_v2', () => {
 
     // Set some encodings
     cy.switchTab('encoding');
+
     cy.byId('color-encoding-select').click().wait(300).type('measured{downArrow}{enter}');
+
     cy.byId('size-encoding-select').click();
     cy.chooseNth(3);
 
@@ -35,6 +38,7 @@ describe('domain_5000_v2', () => {
 
     // Create second view and activate it
     cy.byId('split-view-button').click({ force: true }).wait(1000);
+
     cy.get('#app').click(1700, 350);
 
     // Select another encoding for the second view
