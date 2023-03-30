@@ -22,6 +22,17 @@ const readmeMap = {
   7: AggregateReadme,
 };
 
+const tooltipMap = {
+  0: 'datasets',
+  1: 'projections',
+  2: 'encodings',
+  3: 'groups',
+  4: 'selections',
+  5: 'the tabular view',
+  6: 'filters',
+  7: 'aggregations',
+};
+
 // Remove back link to the documentation page
 for (const key in readmeMap) {
   if (Object.prototype.hasOwnProperty.call(readmeMap, key)) {
@@ -46,7 +57,7 @@ export function TabDocumentation({ value }: { value: number }) {
       <Dialog open={open} onClose={handleClose} maxWidth="xl">
         <DialogContent>
           <Typography>
-            <ReactMarkdown>{readmeMap[value]}</ReactMarkdown>
+            <ReactMarkdown>{readmeMap[value] ?? ''}</ReactMarkdown>
           </Typography>
         </DialogContent>
         <DialogActions>
@@ -54,7 +65,7 @@ export function TabDocumentation({ value }: { value: number }) {
         </DialogActions>
       </Dialog>
       <Box sx={{ position: 'absolute', right: 8, top: 8 }}>
-        <Tooltip title="Shows the documentation for this tab panel">
+        <Tooltip title={`Further information for ${tooltipMap[value] ?? ''}`}>
           <IconButton size="small" onClick={handleClick}>
             <HelpIcon fontSize="inherit" />
           </IconButton>

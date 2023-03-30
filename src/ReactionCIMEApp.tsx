@@ -252,7 +252,7 @@ export function ReactionCIMEApp() {
             components={{
               afterTitle: (
                 <Tooltip title="Opens the github page for this application including the readme">
-                  <IconButton color="primary" size="small" href="https://github.com/jku-vds-lab/reaction-cime" target="_blank">
+                  <IconButton color="primary" size="small" href="https://github.com/jku-vds-lab/reaction-cime#documentation-cime4r" target="_blank">
                     <HelpIcon fontSize="inherit" />
                   </IconButton>
                 </Tooltip>
