@@ -22,7 +22,7 @@ Parameters can be changed either by adjusting the slider (few groups...many grou
 ![groups screenshot](https://user-images.githubusercontent.com/45741696/227916909-993fd38a-a396-45db-b41b-1e2434a21fa3.png)
 
 
-### Groups and collections (green)
+### Groups and Collections (green)
 A group collection is a set of groups - and possible connections between those groups - that were either created automatically or manually composed. This way, users can view various groupings by just switching between collections.
 
 
@@ -37,7 +37,7 @@ The groups in a collection are listed below the user select. Each item in the li
 Holding CTRL adds a group to the selection.
 Next to each group label there is a settings button where users can adjust group names or delete a group.
 
-### Group sequences and comparison
+### Group sequences and Comparison
 Users can manually define relationships between groups by drawing directed edges between group centers in the scatter plot (orange). Edges can be removed again with a right-click on the edge and selecting “Delete edge”. 
 
 

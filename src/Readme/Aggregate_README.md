@@ -9,7 +9,7 @@ Since we only show a subset of experiments in the scatter plot, we provide an ad
 
 
 
-### Select feature (orange)
+### Select Feature (orange)
 Users can choose a feature they want to visualize using the auto-complete text-input field. The values of the chosen feature are then shown in the background of the scatter plot as an aggregation of the data in the back-end into hexagonal bins. The aggregated value for each hexagon is encoded with colors.
 
 Depending on whether or not the chosen feature is of temporal nature (i.e., temporal features are features that have values for each experiment cycle), a slider is shown, where users can choose the timestep they want to see. 

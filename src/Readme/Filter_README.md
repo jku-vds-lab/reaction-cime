@@ -25,7 +25,7 @@ When the desired setting is found, users have to click on “Apply filter”, on
 
 During the exploration of experiments, users might cross a specific experiment that is of interest to them. If they want to look into experiments with the same parameters as the found experiment, they can simply right-click on that point and choose the “Set filters to feature values of this experiment” context item. This automatically sets all filters to show exactly this experiment. Users can then adjust the feature values to their interests by removing certain constraints. This function aids users to arrive at the desired filter settings more quickly.
 
-### Exception settings (green)
+### Exception Settings (green)
 Sometimes users might be interested in a certain region of the scatter plot and would like to see all experiments. In that case, **Exceptions** can be defined. They are defined by the x and y coordinates and a range around which all experiments are loaded to the front-end. Exceptions are shown despite the filter settings (e.g., the filter is set to only show experiments that have measured values, except for the defined region in which all experiments are shown).
 
 Users can define such exceptions with a right-click on the scatter plot. This opens the context menu showing the item “Show experiments around this position”. Clicking on this context item adds this position to the exception list. This function allows users to get more detailed information about an area that is of special interest to them.

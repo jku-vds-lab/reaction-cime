@@ -20,14 +20,23 @@ Check out the [dataset generation examples](TODO add examples) if you want to tr
 
 Check out the [example datasets](TODO upload to osf) from the paper's use cases.
 
-TODO: add table of contents
-
 # Documentation CIME4R
 The ChemInformatics Model Explorer for Reaction Optimization (short CIME4R) extension of the [Projection Space Explorer library](https://github.com/jku-vds-lab/projection-space-explorer/tree/develop) allows users to interactively explore the parameter space of chemical reactions and information about the iterative optimization process. The application allows users to understand how a machine learning model arrives at its decision on which experiments to perform next in retrospect (e.g., as proposed in [EDBO](https://www.nature.com/articles/s41586-021-03213-y)). It also facilitates interactive human-AI collaboration for reaction optimization to combine the advantages of both worlds for final decision-making: AI precision and human/expert intuition.
 With CIME4R, users can apply a 2D projection to the provided reaction optimization data and show the high-dimensional data in a LineUp table, parallel coordinates plot, or hover view.
 Since parameter spaces of chemical reactions can be huge, users can apply filtering or random subsampling to only show a (representative) subset of the data. The remaining data can be shown optionally using an aggregated view of the projected data. 
 Users can interactively select data points (note: each data point represents one experiment configuration and will be called “experiment” in this documentation) in a 2D scatter plot and show summary statistics of features of all selected experiments in a summary visualization. 
 Instructions for installing the application are provided at the end of this documentation.
+
+##### Table of Contents  
+[General/Controls](#generalcontrols)  
+[Dataset](#dataset)  
+[Projection](#projection)  
+[Filter](#filter)  
+[Aggregate](#aggregate)  
+[Encoding](#encoding)  
+[Selection Info](#selection-info)  
+[Groups](#groups)  
+[Tabular view](#tabular-view)
 
 ## General/Controls
 This section explains the general layout of the tool and the basic controls with which you can interact with the tool.

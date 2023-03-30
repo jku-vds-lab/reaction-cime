@@ -2,7 +2,7 @@
 
 [//]: # (document start)
 
-## Tabular view
+## Tabular View
 For high-dimensional data exploration, we included a [LineUp table](https://lineup.js.org/) and Parallel Coordinates Plot, which can be viewed on-demand. 
 
 ### LineUp
