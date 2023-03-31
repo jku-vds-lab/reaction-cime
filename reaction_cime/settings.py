@@ -8,12 +8,8 @@ class ReactionCimeSettings(BaseModel):
     dburl: str = "postgresql://admin:admin@localhost:5432/db"
     # statement_timeout: Any = None
     bundles_dir: str | None = None
-    uploaded_files_path: str = "/tmp/uploaded_files"
+    uploaded_files_path: Path = Path("/tmp/uploaded_files")
     # migration: Dict = {"autoUpgrade": True}
-
-    @property
-    def storage_path(self):
-        return Path(get_settings().uploaded_files_path) / "storage"
 
 
 # TODO: We can now actually use the type-safe settings...

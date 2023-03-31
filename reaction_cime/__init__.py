@@ -37,6 +37,8 @@ class VisynPlugin(AVisynPlugin):
 
         _log = logging.getLogger(__name__)
 
+        get_settings().uploaded_files_path.mkdir(parents=True, exist_ok=True)
+
         flask_app = Flask(__name__)
 
         from .ReactionCIMEDBO import ReactionCIMEDBO

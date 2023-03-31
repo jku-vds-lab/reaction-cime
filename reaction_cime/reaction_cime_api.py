@@ -106,7 +106,7 @@ def upload_csv():
     _log.info("Received new csv to upload")
     file_upload = request.files.get("myFile")
 
-    storage_path = get_settings().storage_path
+    storage_path = get_settings().uploaded_files_path
 
     # --- check if file is corrupt
     if not file_upload or not file_upload.filename:
@@ -161,8 +161,7 @@ def upload_csv():
     save_name = file_name or ""
     save_name = "_".join(save_name.split(".")[0:-1])
 
-    # id = get_cime_dbo().save_dataframe(df, save_name)
-    id, msg = get_cime_dbo().save_dataframe_chunked(storage_path / file_name, save_name, chunksize=10**3)
+    id, msg = get_cime_dbo().save_dataframe(storage_path / file_name, save_name, chunksize=1_000)
 
     # create default constraints file
     save_poi_constraints(id)

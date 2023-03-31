@@ -18,7 +18,7 @@ _log = logging.getLogger(__name__)
 class ReactionCIMEDBO:
     def get_table_names(self):
         with create_session() as session:
-            return [{"name": p.name, "id": p.id, "creator": p.creator, "permissions": p.permissions, "buddies": p.buddies, "group": p.group} for p in session.query(Project.id, Project.name, Project.creator, Project.permissions, Project.buddies, Project.group).all() if can_read(p)]  # type: ignore
+            return [{"name": p.name, "id": p.id, "creator": p.creator, "permissions": p.permissions, "buddies": p.buddies, "group": p.group} for p in session.query(Project.id, Project.name, Project.creator, Project.permissions, Project.buddies, Project.group).where(Project.fully_processed).all() if can_read(p)]  # type: ignore
 
     def get_table_name(self, id, with_schema_prefix: bool = True) -> str:
         return ("cime4r." if with_schema_prefix else "") + f"data_{id}".replace("-", "_")
@@ -37,7 +37,7 @@ class ReactionCIMEDBO:
             session.commit()
             return res == 1
 
-    def save_dataframe_chunked(self, path: Path, save_name: str, chunksize: int):
+    def save_dataframe(self, path: Path, save_name: str, chunksize: int):
         msg = "ok"
 
         with create_session() as session:
@@ -62,9 +62,10 @@ class ReactionCIMEDBO:
             with engine.begin() as conn:
                 start_time = time.time()
 
-                chunk_index = 0
                 with pd.read_csv(path, chunksize=chunksize) as reader:
-                    for chunk in reader:
+                    for chunk_index, chunk in enumerate(reader):
+                        # Sanitize the column names (i.e. disallow % as it breaks column names in postgres)
+                        chunk.columns = [c.strip().replace("%", "_") for c in chunk.columns]
                         if "x" not in chunk.columns or "y" not in chunk.columns:
                             chunk["x"] = np.random.uniform(-50, 50, len(chunk))
                             chunk["y"] = np.random.uniform(-50, 50, len(chunk))
@@ -77,12 +78,10 @@ class ReactionCIMEDBO:
                             if_exists="replace" if chunk_index == 0 else "append",
                             index=True,
                             index_label="id",
-                            chunksize=5000,
+                            chunksize=chunksize,
                         )
 
                         _log.info("--- saved chunk %i of file %s" % (chunk_index, save_name))
-
-                        chunk_index += 1
 
                 p.fully_processed = True  # type: ignore
 
@@ -102,64 +101,6 @@ class ReactionCIMEDBO:
             session.commit()
 
             return str(p.id), msg
-
-    def save_dataframe(self, df: pd.DataFrame, filename: str) -> str:
-        # primary key is not set to index of dataframe by default. this code could be a workaround, but does not work yet
-        # https://stackoverflow.com/questions/30867390/python-pandas-to-sql-how-to-create-a-table-with-a-primary-key/69350803#69350803
-        # https://github.com/pandas-dev/pandas/blob/945c9ed766a61c7d2c0a7cbb251b6edebf9cb7d5/pandas/io/sql.py#L933
-        # pandas_sql = pd.io.sql.pandasSQL_builder(self.db.engine)
-        # table = SQLiteTable(
-        #     table_name,
-        #     pandas_sql,
-        #     frame=df,
-        #     index=True,
-        #     index_label="id",
-        #     keys="id",
-        # )
-        # # _log.info(table.sql_schema())
-        # table.create()
-        # res = table.insert(chunksize=5000, method=None) # method="multi"
-        with create_session() as session:
-            p = Project()
-            p.name = filename  # type: ignore
-            p.description = ""  # type: ignore
-            # Security
-            p.buddies = []  # type: ignore
-            p.permissions = 744  # TODO: the user itself can write, everyone else can read
-            p.creator = current_username()
-            p.creation_date = datetime.utcnow()
-            p.modifier = None
-            p.modification_date = None
-            session.add(p)
-            session.flush()
-            session.refresh(p)
-
-            table_name_with_schema = self.get_table_name(p.id, with_schema_prefix=True)
-            table_name = self.get_table_name(p.id, with_schema_prefix=False)
-
-            engine: Engine = session.get_bind()
-            with engine.begin() as conn:
-                start_time = time.time()
-                df.to_sql(
-                    table_name, schema="cime4r", con=conn, if_exists="replace", index=True, index_label="id", chunksize=5000
-                )  # , schema=table.sql_schema()) # method="multi" 'STRING PRIMARY KEY'
-                # https://www.sqlitetutorial.net/sqlite-index/
-                delta_time = time.time() - start_time
-                _log.info("--- took %i min %f s to save file %s" % (delta_time / 60, delta_time % 60, filename))
-
-                start_time = time.time()
-                conn.execute(f"DROP INDEX IF EXISTS {table_name}_index;")
-                delta_time = time.time() - start_time
-                _log.info("--- took %i min %f s to drop index of file %s" % (delta_time / 60, delta_time % 60, filename))
-
-                start_time = time.time()
-                conn.execute(f"create unique index {table_name}_index on {table_name_with_schema}(id)")
-                delta_time = time.time() - start_time
-                _log.info("--- took %i min %f s to create index of file %s" % (delta_time / 60, delta_time % 60, filename))
-
-            session.commit()
-
-            return str(p.id)
 
     # This version of bulk update is much faster (5000rows: <1s)
     def update_row_bulk(self, id, id_list, update_dict_list: dict):
