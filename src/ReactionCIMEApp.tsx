@@ -13,6 +13,8 @@ import {
   useCancellablePromise,
 } from 'projection-space-explorer';
 import { connect, ConnectedProps, useDispatch } from 'react-redux';
+import HelpIcon from '@mui/icons-material/Help';
+import { IconButton, Tooltip } from '@mui/material';
 import { useVisynAppContext } from 'visyn_core';
 import { Anchor } from '@mantine/core';
 import { VisynApp, VisynHeader } from 'visyn_core/app';
@@ -248,6 +250,13 @@ export function ReactionCIMEApp() {
         ) : (
           <VisynHeader
             components={{
+              afterTitle: (
+                <Tooltip title="Opens the github page for this application including the readme">
+                  <IconButton color="primary" size="small" href="https://github.com/jku-vds-lab/reaction-cime#documentation-cime4r" target="_blank">
+                    <HelpIcon fontSize="inherit" />
+                  </IconButton>
+                </Tooltip>
+              ),
               beforeRight: (
                 <>
                   <Anchor
