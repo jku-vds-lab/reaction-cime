@@ -84,6 +84,7 @@ export function UploadedFiles({ onChange, refresh }) {
           >
             <LoadingIndicatorView area={loadingArea} />
 
+            {files.length === 0 ? <Typography color="gray">No datasets uploaded</Typography> : null}
             {files.map((file) => (
               <ListItem
                 disablePadding

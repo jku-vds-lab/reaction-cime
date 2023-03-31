@@ -4,8 +4,11 @@ import contextlib
 import ctypes
 import json
 import logging
+import os
+import shutil
 import threading
 import time
+import zipfile
 from io import BytesIO, StringIO
 
 import gower
@@ -24,6 +27,8 @@ from sklearn.decomposition import PCA
 from visyn_core import manager
 from visyn_core.middleware.request_context_plugin import get_request
 
+from reaction_cime.settings import get_settings
+
 from .helper_functions import (
     aggregate_by_col_interpolate,
     circ_radius_to_radius,
@@ -41,6 +46,7 @@ _log = logging.getLogger(__name__)
 
 router = APIRouter(tags=["Reaction-CIME"])
 reaction_cime_api = Blueprint("reaction_cime", __name__)
+
 
 # TODO: Do not enable this route!
 # @reaction_cime_api.route("/refresh_db", methods=["GET"])
@@ -97,13 +103,15 @@ def handle_dataset_cache(id, cols=None, x_channel="x", y_channel="y"):
 @reaction_cime_api.route("/upload_csv", methods=["OPTIONS", "POST"])
 def upload_csv():
     start_time = time.time()
-    msg = "ok"
     _log.info("Received new csv to upload")
     file_upload = request.files.get("myFile")
 
+    storage_path = get_settings().uploaded_files_path
+
     # --- check if file is corrupt
-    if not file_upload or file_upload.filename == "":
+    if not file_upload or not file_upload.filename:
         abort(500, "No valid file provided")
+
     file_upload.seek(0, 2)  # sets file's current position at 0th offset from the end (2)
     file_length = file_upload.tell()  # get absolute offset of current position
     supposed_file_size = int(request.form["file_size"])
@@ -113,27 +121,57 @@ def upload_csv():
     file_upload.seek(0, 0)  # resets file's current position at 0th offset from start (0)
     # ---
 
-    _log.info(f"Uploading file {file_upload.filename}")
-    df = pd.read_csv(request.files["myFile"].stream)
+    file_name = file_upload.filename
 
-    if "x" not in df.columns or "y" not in df.columns:
-        _log.info("--- randomly init x and y coordinates")
-        df["x"] = np.random.uniform(-50, 50, len(df))
-        df["y"] = np.random.uniform(-50, 50, len(df))
-        msg = "Could not find x and y coordinates in the dataset. Randomly initialized x and y coordinates. Project the dataset to get a better visualization."
+    try:
+        if not storage_path.exists():
+            storage_path.mkdir(exist_ok=True, parents=True)
+
+        with open(storage_path / file_name, "wb") as f:
+            file_upload.save(f)
+
+        with zipfile.ZipFile(storage_path / file_name, "r") as f:
+            _log.info("Uploaded a zip-file, unpacking...")
+
+            if len(f.filelist) == 0:
+                _log.error("zip-file is empty")
+                abort(400, "zip-file is empty")
+
+            if len(f.filelist) != 1:
+                _log.warn(f"zip-File contains more than one file, using first: {f.filelist}")
+                # abort(400, 'zip-files must have a single-file only')
+
+            with f.open(f"{f.filelist[0].filename}", "r") as csv_f, open(f"{storage_path}/{file_name}_csv", "wb") as csv_target_f:
+                shutil.copyfileobj(csv_f, csv_target_f)
+                _log.info(f"{f.filename} has been unzipped")
+
+        # If it was a zip file, remove it and change the file_name to the extracted csv
+        os.remove(storage_path / file_name)
+        file_name = f"{file_name}_csv"
+    except zipfile.BadZipFile:
+        _log.exception("Error parsing zip-file")
+        # Not a zip-file, ignore
+        pass
+
+    _log.info(f"Uploading file {file_name}")
+
+    # df = pd.read_csv(storage_path / file_name)
 
     _log.info("--- save file to database")
-    filename = file_upload.filename or ""
-    filename = "_".join(filename.split(".")[0:-1])
+    save_name = file_name or ""
+    save_name = "_".join(save_name.split(".")[0:-1])
 
-    id = get_cime_dbo().save_dataframe(df, filename)
+    id, msg = get_cime_dbo().save_dataframe(storage_path / file_name, save_name, chunksize=1_000)
 
     # create default constraints file
     save_poi_constraints(id)
     save_poi_exceptions(id)
 
     delta_time = time.time() - start_time
-    _log.info("--- took %i min %f s to upload file %s" % (delta_time / 60, delta_time % 60, filename))
+    _log.info("--- took %i min %f s to upload file %s" % (delta_time / 60, delta_time % 60, save_name))
+
+    # delete csv file
+    os.remove(storage_path / file_name)
 
     return {"filename": file_upload.filename, "id": id, "msg": msg}
 
@@ -739,6 +777,7 @@ def project_dataset():
             n_epochs=int(params["iterations"]),
             init=initialization,  # type: ignore
             verbose=True,
+            low_memory=True,
         )  # output_metric="euclidean" --> ? learning_rate=float(params["learningRate"]) --> if we have user input for this, we would need "auto" as an option
         proj_data = proj.fit_transform(normalized_values)
     elif params["embedding_method"] == "tsne":
@@ -934,6 +973,7 @@ class ProjectionThread(threading.Thread):
             init=initialization,
             tqdm_kwds={"bar_format": "{n_fmt}", "file": CustomTQDM(self)},
             verbose=True,
+            low_memory=True,
         )  # output_metric="euclidean" --> ? learning_rate=float(params["learningRate"]) --> if we have user input for this, we would need "auto" as an option
         proj_data = proj.fit_transform(normalized_values)
         return proj_data

@@ -251,7 +251,7 @@ export function ReactionCIMEApp() {
           <VisynHeader
             components={{
               afterTitle: (
-                <Tooltip title="Opens the github page for this application including the readme">
+                <Tooltip title="Opens the documentation page for CIME4R">
                   <IconButton color="primary" size="small" href="https://github.com/jku-vds-lab/reaction-cime#documentation-cime4r" target="_blank">
                     <HelpIcon fontSize="inherit" />
                   </IconButton>
