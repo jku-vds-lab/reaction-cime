@@ -13,8 +13,10 @@ import {
   useCancellablePromise,
 } from 'projection-space-explorer';
 import { connect, ConnectedProps, useDispatch } from 'react-redux';
+import HelpIcon from '@mui/icons-material/Help';
+import { IconButton, Tooltip } from '@mui/material';
 import { useVisynAppContext } from 'visyn_core';
-import { Anchor } from '@mantine/core';
+import { Anchor, useMantineTheme } from '@mantine/core';
 import { VisynApp, VisynHeader } from 'visyn_core/app';
 import { BrowserRouter, useSearchParams } from 'react-router-dom';
 import { LineUpContext } from './LineUpContext';
@@ -239,6 +241,7 @@ export function ReactionCIMEApp() {
 
   const { user } = useVisynAppContext();
   const { clientConfig } = useVisynAppContext();
+  const theme = useMantineTheme();
 
   return (
     <VisynApp
@@ -248,6 +251,7 @@ export function ReactionCIMEApp() {
           <></>
         ) : (
           <VisynHeader
+            backgroundColor={theme.colors.dark[theme.fn.primaryShade()]}
             components={{
               aboutAppModal: {
                 content: <BuildInfoContent />,
@@ -255,6 +259,11 @@ export function ReactionCIMEApp() {
               },
               beforeRight: (
                 <>
+                  <Tooltip title="Opens the documentation page for CIME4R">
+                    <IconButton color="primary" size="small" href="https://github.com/jku-vds-lab/reaction-cime#documentation-cime4r" target="_blank">
+                      <HelpIcon fontSize="inherit" />
+                    </IconButton>
+                  </Tooltip>
                   <Anchor
                     href="https://www.bayer.com/"
                     rel="noreferrer"
