@@ -16,7 +16,7 @@ import { connect, ConnectedProps, useDispatch } from 'react-redux';
 import HelpIcon from '@mui/icons-material/Help';
 import { IconButton, Tooltip } from '@mui/material';
 import { useVisynAppContext } from 'visyn_core';
-import { Anchor } from '@mantine/core';
+import { Anchor, useMantineTheme } from '@mantine/core';
 import { VisynApp, VisynHeader } from 'visyn_core/app';
 import { BrowserRouter, useSearchParams } from 'react-router-dom';
 import { LineUpContext } from './LineUpContext';
@@ -39,6 +39,7 @@ import vdsLogo from './assets/jku-vds-lab-logo.svg';
 import bayerLogo from './assets/bayer_logo.svg';
 import { BackendCSVLoader } from './Overrides/Dataset/BackendCSVLoader';
 import { TabDocumentation } from './Utility/TabDocumentation';
+import { BuildInfoContent, BuildInfoLogos } from './Utility/HeaderCustomization';
 
 PluginRegistry.getInstance().registerPlugin(new ReactionsPlugin());
 
@@ -240,6 +241,7 @@ export function ReactionCIMEApp() {
 
   const { user } = useVisynAppContext();
   const { clientConfig } = useVisynAppContext();
+  const theme = useMantineTheme();
 
   return (
     <VisynApp
@@ -249,16 +251,19 @@ export function ReactionCIMEApp() {
           <></>
         ) : (
           <VisynHeader
+            backgroundColor={theme.colors.dark[theme.fn.primaryShade()]}
             components={{
-              afterTitle: (
-                <Tooltip title="Opens the documentation page for CIME4R">
-                  <IconButton color="primary" size="small" href="https://github.com/jku-vds-lab/reaction-cime#documentation-cime4r" target="_blank">
-                    <HelpIcon fontSize="inherit" />
-                  </IconButton>
-                </Tooltip>
-              ),
+              aboutAppModal: {
+                content: <BuildInfoContent />,
+                customerLogo: <BuildInfoLogos />,
+              },
               beforeRight: (
                 <>
+                  <Tooltip title="Opens the documentation page for CIME4R">
+                    <IconButton color="primary" size="small" href="https://github.com/jku-vds-lab/reaction-cime#documentation-cime4r" target="_blank">
+                      <HelpIcon fontSize="inherit" />
+                    </IconButton>
+                  </Tooltip>
                   <Anchor
                     href="https://www.bayer.com/"
                     rel="noreferrer"
