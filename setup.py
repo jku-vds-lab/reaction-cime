@@ -9,7 +9,7 @@ pkg = load((here / "package.json").open())
 
 def read_it(name):
     fn = here / name
-    return fn.read_text() if fn.exists() else ""
+    return fn.read_text(encoding="utf8") if fn.exists() else ""
 
 
 def requirements(file):
