@@ -362,74 +362,119 @@ def aggregate_by_col(df, value_cols, sample_size=20):
 
 
 # --- rescale and encode values
-def rescale_and_encode(proj_df, params, selected_feature_info):
+def rescale_and_encode(proj_df, params, col, info):
     feature_weights = []
     feature_weights_end = []
-    categorical_feature_list = []
-    for col in selected_feature_info:
-        info = selected_feature_info[col]
+    categorical = False
+    featurizer = lambda df, col: df.drop(columns=[col], inplace=True)  # NOQA
 
-        if info["featureType"] == "String":
-            proj_df = proj_df.drop(columns=[col])
-            _log.info("featureType: String --> TODO: handle")
+    if info["featureType"] == "String":
+        # proj_df = proj_df.drop(columns=[col])
+        _log.info("featureType: String --> TODO: handle")
 
-        elif info["featureType"] == "Quantitative":
-            # TODO: This is not included in the PSE params anymore
-            if info.get("normalize"):
-                if params["normalizationMethod"] == "normalize01":  # scale values between [0;1]
-                    # upper = info["range"]["max"] # do not use this! it is info from the front-end that only has POI dataset
-                    # lower = info["range"]["min"] # do not use this! it is info from the front-end that only has POI dataset
-                    upper = proj_df[col].max()
-                    lower = proj_df[col].min()
-                    div = upper - lower
-                    if div == 0:  # when all values are equal in a column, the range is 0, which would lead to an error
-                        div = 1
-                    proj_df[col] = (proj_df[col] - lower) / div
-                else:  # otherwise: "standardize" values to have 0 mean and unit standard deviation
-                    mean = proj_df[col].mean()
-                    std = proj_df[col].std()
-                    if std <= 0:  # when all values are equal in a column, the standard deviation can be 0, which would lead to an error
-                        std = 1
-                    proj_df[col] = (proj_df[col] - mean) / std
+    elif info["featureType"] == "Quantitative":
+        # TODO: This is not included in the PSE params anymore
+        if info.get("normalize"):
+            if params["normalizationMethod"] == "normalize01":  # scale values between [0;1]
+                # upper = info["range"]["max"] # do not use this! it is info from the front-end that only has POI dataset
+                # lower = info["range"]["min"] # do not use this! it is info from the front-end that only has POI dataset
+                upper = proj_df[col].max()
+                lower = proj_df[col].min()
+                div = upper - lower
+                if div == 0:  # when all values are equal in a column, the range is 0, which would lead to an error
+                    div = 1
+                # proj_df[col] = (proj_df[col] - lower) / div
+                def featurize_normalize01(df, col):
+                    df[col] = df[col].apply(lambda x: (x - lower) / div)
+                    # return df
 
-            feature_weights.append(float(info["weight"]))
+                featurizer = featurize_normalize01
+
+            else:  # otherwise: "standardize" values to have 0 mean and unit standard deviation
+                mean = proj_df[col].mean()
+                std = proj_df[col].std()
+                if std <= 0:  # when all values are equal in a column, the standard deviation can be 0, which would lead to an error
+                    std = 1
+                # proj_df[col] = (proj_df[col] - mean) / std
+                def featurize_normalize(df, col):
+                    df[col] = df[col].apply(lambda x: (x - mean) / std)
+                    # return df
+
+                featurizer = featurize_normalize
+
+        else:
+
+            def _featurizer(df, col):
+                pass
+
+            featurizer = _featurizer
+
+        feature_weights.append(float(info["weight"]))
+        # feature_weights.append(float(info["weight"]) if info.get("useWeight") else 1)
+
+    elif info["featureType"] == "Categorical":
+        if params["encodingMethod"] == "onehot":
+            from sklearn.preprocessing import OneHotEncoder
+
+            enc = OneHotEncoder()
+            enc.fit(proj_df[col].values.reshape(-1, 1))
+
+            categories: list[str] = enc.categories_[0]  # type: ignore
+
+            def featurize_onehot(df, col):
+                hot_encoded = enc.transform(df[col].values.reshape(-1, 1))
+                df.drop(columns=[col], inplace=True)
+                # Make columns for each category
+                for i, category in enumerate(categories):
+                    df[f"{col}_{category}"] = hot_encoded[:, i].toarray()  # type: ignore
+                # return df
+
+            featurizer = featurize_onehot
+
+            # hot_encoded = pd.get_dummies(proj_df[col], prefix=col, dummy_na=True)
+            # proj_df = proj_df.drop(columns=[col])
+            # proj_df = proj_df.join(hot_encoded)
+
+            # add weights for each new column
+            for _ in categories:
+                # feature_weights_end.append(float(info["weight"]) / len(hot_encoded.columns) if info.get("useWeight") else 1)
+                feature_weights_end.append(float(info["weight"]) / len(categories))
+        else:
+            # proj_df[col] = pd.Categorical(proj_df[col]).codes
+            def featurize_categorical(df, col):
+                df[col] = df[col].apply(lambda x: pd.Categorical([x]).codes)
+                # return df
+
+            featurizer = featurize_categorical
+
+            categorical = True
+
             # feature_weights.append(float(info["weight"]) if info.get("useWeight") else 1)
-
-        elif info["featureType"] == "Categorical":
-            if params["encodingMethod"] == "onehot":
-                hot_encoded = pd.get_dummies(proj_df[col], prefix=col, dummy_na=True)
-                proj_df = proj_df.drop(columns=[col])
-                proj_df = proj_df.join(hot_encoded)
-
-                # add weights for each new column
-                for _ in hot_encoded.columns:
-                    # feature_weights_end.append(float(info["weight"]) / len(hot_encoded.columns) if info.get("useWeight") else 1)
-                    feature_weights_end.append(float(info["weight"]) / len(hot_encoded.columns))
-            else:
-                categorical_feature_list.append(col)
-                proj_df[col] = pd.Categorical(proj_df[col]).codes
-                # feature_weights.append(float(info["weight"]) if info.get("useWeight") else 1)
-                feature_weights.append(float(info["weight"]))
-
-        elif info["featureType"] == "Date":
-            proj_df = proj_df.drop(columns=[col])
-            _log.info("featureType: Date --> TODO: handle")
-
-        elif info["featureType"] == "Binary":
-            proj_df[col] = pd.Categorical(proj_df[col]).codes
-            # feature_weights.append(float(info["weight"]) if info.get("useWeight") else 1)
             feature_weights.append(float(info["weight"]))
 
-        elif info["featureType"] == "Ordinal":
-            proj_df = proj_df.drop(columns=[col])
-            _log.info("featureType: Ordinal --> TODO: handle")
+    elif info["featureType"] == "Date":
+        # proj_df = proj_df.drop(columns=[col])
+        _log.info("featureType: Date --> TODO: handle")
 
-        elif info["featureType"] == "Array":
-            proj_df = proj_df.drop(columns=[col])
-            _log.info("featureType: Array --> TODO: handle")
+    elif info["featureType"] == "Binary":
+        # proj_df[col] = pd.Categorical(proj_df[col]).codes
+        def _featurizer(df, col):
+            df[col] = df[col].apply(lambda x: pd.Categorical([x]).codes)
+            # return df
 
-    categorical_features = [col in categorical_feature_list for col in proj_df.columns]  # np.zeros((len(proj_df.columns),), dtype=np.bool)
-    return proj_df, categorical_features, np.array(feature_weights + feature_weights_end)
+        featurizer = _featurizer
+
+        # feature_weights.append(float(info["weight"]) if info.get("useWeight") else 1)
+        feature_weights.append(float(info["weight"]))
+
+    elif info["featureType"] == "Ordinal":
+        # proj_df = proj_df.drop(columns=[col])
+        _log.info("featureType: Ordinal --> TODO: handle")
+
+    elif info["featureType"] == "Array":
+        # proj_df = proj_df.drop(columns=[col])
+        _log.info("featureType: Array --> TODO: handle")
+    return categorical, feature_weights + feature_weights_end, featurizer
 
 
 # ----------------- chem functions ----------------------

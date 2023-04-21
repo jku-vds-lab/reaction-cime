@@ -9,7 +9,7 @@ from sqlalchemy import MetaData, Table, bindparam
 from sqlalchemy.engine import Engine
 from visyn_core.security import can_read, current_username
 
-from .db import create_session
+from .db import create_session, get_engine
 from .models import Project
 
 _log = logging.getLogger(__name__)
@@ -120,21 +120,26 @@ class ReactionCIMEDBO:
             session.execute(stmt, mappings)
             session.commit()
 
-    def get_dataframe_from_table(self, id, columns=None):
+    def get_dataframe_from_table(self, id, columns: list[str] | None = None, chunksize: int | None = None):
         if columns is not None and "id" not in columns:
             columns.append("id")
-        with create_session() as session:
-            df = pd.read_sql_table(
-                self.get_table_name(id, with_schema_prefix=False),
-                session.get_bind(),
-                schema="cime4r",
-                index_col="id",
-                columns=columns or [],
-            )
-            if columns is not None:
-                columns.remove("id")
-                df = df[columns]
-            return df
+        with get_engine().connect() as conn:  # NOQA: SIM117
+            # We need to set stream_results to true as otherwise read_sql_table will fetch the entire dataframe...
+            with conn.execution_options(stream_results=True) as bind:
+                chunks = pd.read_sql_table(
+                    self.get_table_name(id, with_schema_prefix=False),
+                    bind,
+                    schema="cime4r",
+                    index_col="id",
+                    columns=columns or [],
+                    chunksize=chunksize,
+                )
+
+                # Either return a single dataframe of a generator of dataframes
+                for df in [chunks] if isinstance(chunks, pd.DataFrame) else chunks:
+                    if columns is not None:
+                        df = df.loc[:, [col for col in columns if col != "id"]]  # type: ignore
+                    yield df
 
     def get_dataframe_from_table_complete_filter(self, id, filter):
         """
@@ -221,11 +226,10 @@ class ReactionCIMEDBO:
         with create_session() as session:
             return pd.read_sql(sql_stmt, session.get_bind())
 
-    def get_no_points_from_table(self, id):
-        # TODO: This is very bad, as it enables SQL injections! https://xkcd.com/327/
+    def get_no_points_from_table(self, id) -> int:
         sql_stmt = f"SELECT COUNT(*) as count FROM {self.get_table_name(id)}"
         with create_session() as session:
-            return pd.read_sql(sql_stmt, session.get_bind())
+            return int(pd.read_sql(sql_stmt, session.get_bind())["count"][0])
 
     def drop_table(self, id):
         with create_session() as session:
@@ -233,7 +237,6 @@ class ReactionCIMEDBO:
             if p:
                 _log.info(f"Deleting {id} table")
                 session.delete(p)
-                # TODO: This is very bad, as it enables SQL injections! https://xkcd.com/327/
                 session.execute(f"DROP TABLE {self.get_table_name(id)}")
                 session.commit()
                 return True
