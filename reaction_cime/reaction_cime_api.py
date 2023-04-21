@@ -814,7 +814,7 @@ class ProjectionThread(threading.Thread):
         row_size_in_mb = get_size(first_row.values) / 1e6
         size_in_mb_required = row_count * row_size_in_mb
 
-        max_memory_used_for_dataset = 100  # The real memory used is higher than that, as we allocate new arrays, ...
+        max_memory_used_for_dataset = get_settings().max_memory_usage_for_projections
         max_memory_used_for_projection = max_memory_used_for_dataset // 5
         self.log(f"Dataset {self.id} has {row_count} points.")
 
