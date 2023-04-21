@@ -201,8 +201,7 @@ class ReactionCIMEDBO:
                 datapoint_count = self.get_filter_mask(id, filter)["mask"].sum()
                 if datapoint_count > max_datapoints:
                     subsample_flag = True
-                    # https://www.sqlitetutorial.net/sqlite-functions/sqlite-random/
-                    sql_stmt += f" AND abs(RANDOM()%100) < {max_datapoints/datapoint_count*100}"  # add random selection filter based on the ratio between maximum allowed datapoints and NO datapoints that would be selected without sampling
+                    sql_stmt += f" AND random()*100 < {max_datapoints/datapoint_count*100} LIMIT {max_datapoints}"  # add random selection filter based on the ratio between maximum allowed datapoints and NO datapoints that would be selected without sampling
         with create_session() as session:
             return pd.read_sql(sql_stmt, session.get_bind(), index_col="id"), subsample_flag
 

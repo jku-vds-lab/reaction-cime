@@ -187,7 +187,7 @@ def get_no_datapoints(id):
 
 # region --------------- Points of Interest ------------------
 
-MAX_POINTS = 10000
+MAX_POINTS = 10_000
 
 # --- save
 
