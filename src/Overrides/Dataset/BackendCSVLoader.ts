@@ -2,6 +2,7 @@ import { trackPromise } from 'react-promise-tracker';
 import { AVector, CSVLoader, Dataset, DatasetType, IVector, Loader, useCancellablePromise } from 'projection-space-explorer';
 import * as d3v5 from 'd3v5';
 import { ReactionCIMEBackendFromEnv } from '../../Backend/ReactionCIMEBackend';
+import { type Project } from '../../State/ProjectsDuck';
 
 function convertFromCSV(vectors) {
   return vectors.map((vector) => {
@@ -55,8 +56,29 @@ export class BackendCSVLoader implements Loader {
     trackPromise(
       promise
         .then((uploaded) => {
-          this.backendMessage = uploaded.msg;
+          this.backendMessage = uploaded.file_status;
           this.loadPOICSV(onChange, { display: '', type: this.datasetType, path: uploaded.id }, cancellablePromise, modifiers, controller);
+        })
+        .catch((error) => {
+          console.log(error);
+        }),
+      this.loadingArea,
+    );
+  }
+
+  upload_file(
+    file: any,
+    afterUpload: (project: Project) => void,
+    cancellablePromise?: ReturnType<typeof useCancellablePromise>['cancellablePromise'],
+    controller?: AbortController,
+  ) {
+    const promise = cancellablePromise
+      ? cancellablePromise(ReactionCIMEBackendFromEnv.upload_csv_file(file, controller), controller)
+      : ReactionCIMEBackendFromEnv.upload_csv_file(file, controller);
+    trackPromise(
+      promise
+        .then((uploaded) => {
+          afterUpload(uploaded);
         })
         .catch((error) => {
           console.log(error);

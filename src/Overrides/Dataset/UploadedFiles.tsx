@@ -1,6 +1,7 @@
 import {
   Box,
   Button,
+  CircularProgress,
   Dialog,
   DialogActions,
   DialogContent,
@@ -18,10 +19,12 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import { useCancellablePromise, usePSESelector } from 'projection-space-explorer';
 import React, { CSSProperties } from 'react';
 import RefreshIcon from '@mui/icons-material/Refresh';
-import { trackPromise } from 'react-promise-tracker';
-import { ISecureItem, userSession, useVisynAppContext } from 'visyn_core';
+import { userSession, useVisynAppContext } from 'visyn_core';
+import { useDispatch, useSelector } from 'react-redux';
 import { ReactionCIMEBackendFromEnv } from '../../Backend/ReactionCIMEBackend';
-import { LoadingIndicatorView } from './LoadingIndicatorDialog';
+
+import { AppState } from '../../State/Store';
+import { deleteProject, syncProjects } from '../../State/ProjectsDuck';
 
 const textOverflowStyle: CSSProperties = {
   textOverflow: 'ellipsis',
@@ -29,40 +32,34 @@ const textOverflowStyle: CSSProperties = {
   whiteSpace: 'nowrap',
 };
 
-const loadingArea = 'update_uploaded_files_list';
 export function UploadedFiles({ onChange, refresh }) {
   const { clientConfig } = useVisynAppContext();
-  const [files, setFiles] = React.useState<({ name: string; id: string } & ISecureItem)[]>([]);
+  const dispatch = useDispatch();
+  const files = useSelector((state: AppState) => Object.values(state.projects.projects.entities));
   const { cancellablePromise } = useCancellablePromise();
   const dataset = usePSESelector((state) => state.dataset);
   const [deleteDialog, setDeleteDialog] = React.useState(false);
   const [item, setItem] = React.useState<{ name: string; id: string }>();
 
   const updateFiles = () => {
-    trackPromise(
-      cancellablePromise(ReactionCIMEBackendFromEnv.getUploadedFiles())
-        .then((data) => {
-          if (data) {
-            setFiles(data);
-          }
-        })
-        .catch((error) => console.log(error)),
-      loadingArea,
-    );
+    dispatch(syncProjects());
   };
+
+  const updateRef = React.useRef(updateFiles);
+  updateRef.current = updateFiles;
+
+  React.useEffect(() => {
+    const interval = setInterval(() => {
+      updateRef.current();
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   React.useEffect(() => {
     updateFiles();
     // eslint-disable-next-line
   }, [refresh]);
-
-  const handleDelete = (file: string) => {
-    cancellablePromise(ReactionCIMEBackendFromEnv.deleteFile(file))
-      .then((response) => {
-        if (response && response.deleted === 'true') setFiles(files.filter((f) => f.id !== file));
-      })
-      .catch((error) => console.log(error));
-  };
 
   return (
     files && (
@@ -82,8 +79,6 @@ export function UploadedFiles({ onChange, refresh }) {
             subheader={<li />}
             style={{ backgroundColor: 'white', border: '1px solid lightgrey', borderRadius: '4px', overflowY: 'auto', maxHeight: '400px' }}
           >
-            <LoadingIndicatorView area={loadingArea} />
-
             {files.length === 0 ? <Typography color="gray">No datasets uploaded</Typography> : null}
             {files.map((file) => (
               <ListItem
@@ -91,7 +86,9 @@ export function UploadedFiles({ onChange, refresh }) {
                 key={file.id}
                 selected={file.id === dataset?.info?.path}
                 secondaryAction={
-                  !clientConfig.publicVersion && userSession.canWrite(file) ? (
+                  file.file_status === 'processing' ? (
+                    <CircularProgress />
+                  ) : !clientConfig.publicVersion && userSession.canWrite(file) ? (
                     <Tooltip placement="right" title={<Typography variant="subtitle2">Permanently delete dataset &quot;{file.name}&quot;.</Typography>}>
                       <IconButton
                         edge="end"
@@ -114,6 +111,7 @@ export function UploadedFiles({ onChange, refresh }) {
                   <ListItemButton
                     style={{ width: '100%' }}
                     key={file.id}
+                    disabled={file.file_status.startsWith('Error')}
                     data-cy="uploaded-data-list-item"
                     href={`/?project=${file.id}`}
                     component="a"
@@ -121,12 +119,13 @@ export function UploadedFiles({ onChange, refresh }) {
                   >
                     <ListItemText
                       primary={file.name}
-                      secondary={`By ${file.creator}`}
+                      secondary={file.file_status.startsWith('Error') ? 'Processing errors' : `By ${file.creator}`}
                       primaryTypographyProps={{
                         style: textOverflowStyle,
                       }}
                       secondaryTypographyProps={{
                         style: textOverflowStyle,
+                        color: file.file_status.startsWith('Error') ? 'error' : 'textSecondary',
                       }}
                     />
                   </ListItemButton>
@@ -146,7 +145,7 @@ export function UploadedFiles({ onChange, refresh }) {
             <Button onClick={() => setDeleteDialog(false)}>Cancel</Button>
             <Button
               onClick={() => {
-                handleDelete(item?.id);
+                dispatch(deleteProject(item?.id));
                 setDeleteDialog(false);
               }}
               autoFocus

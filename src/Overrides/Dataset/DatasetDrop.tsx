@@ -2,11 +2,15 @@ import * as React from 'react';
 import { Alert, Button, Grid, IconButton, Snackbar } from '@mui/material';
 import { Dataset } from 'projection-space-explorer';
 import CloseIcon from '@mui/icons-material/Close';
+import { useDispatch } from 'react-redux';
 import { BackendCSVLoader } from './BackendCSVLoader';
+import { Project, ProjectActions } from '../../State/ProjectsDuck';
 
 export function DatasetDrop({ onDatasetChange, cancellablePromise, abort_controller }) {
   const fileInput = React.useRef<HTMLInputElement>();
   const [msg, setMsg] = React.useState('');
+
+  const dispatch = useDispatch();
 
   const openSnack = (value: string) => {
     setMsg(value);
@@ -46,13 +50,10 @@ export function DatasetDrop({ onDatasetChange, cancellablePromise, abort_control
 
           if (fileName.endsWith('csv') || fileName.endsWith('zip')) {
             const loader = new BackendCSVLoader();
-            loader.resolveContent(
+            loader.upload_file(
               file,
-              (dataset: Dataset) => {
-                if (loader.backendMessage !== 'ok') {
-                  openSnack(loader.backendMessage);
-                }
-                onDatasetChange(dataset);
+              (project: Project) => {
+                dispatch(ProjectActions.addProject(project));
               },
               cancellablePromise,
               abort_controller,

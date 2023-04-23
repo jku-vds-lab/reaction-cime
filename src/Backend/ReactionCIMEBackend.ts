@@ -1,7 +1,7 @@
 import * as d3v5 from 'd3v5';
 import { useCancellablePromise } from 'projection-space-explorer';
 import { trackPromise } from 'react-promise-tracker';
-import { ISecureItem } from 'visyn_core';
+import { type Project } from '../State/ProjectsDuck';
 
 export class ReactionCIMEBackend {
   protected smiles_cache = {};
@@ -52,7 +52,7 @@ export class ReactionCIMEBackend {
     return data;
   };
 
-  public getUploadedFiles = async (): Promise<({ name: string; id: string } & ISecureItem)[]> => {
+  public getUploadedFiles = async (): Promise<Project[]> => {
     const path = `${this.baseUrl}/get_uploaded_files_list`;
 
     return fetch(path, {
@@ -219,7 +219,7 @@ export class ReactionCIMEBackend {
       });
   };
 
-  public upload_csv_file = async (file, controller?): Promise<{ name: string; id: number; msg: string }> => {
+  public upload_csv_file = async (file, controller?): Promise<Project> => {
     // upload the csv file to the server
     // the response is a unique filename that can be used to make further requests
     const formDataFile = new FormData();

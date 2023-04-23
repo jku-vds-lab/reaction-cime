@@ -9,7 +9,9 @@ import shutil
 import threading
 import time
 import zipfile
+from concurrent.futures import ThreadPoolExecutor
 from io import BytesIO, StringIO
+from pathlib import Path
 
 import gower
 import hdbscan
@@ -26,6 +28,8 @@ from rdkit.Chem import Draw
 from sklearn.decomposition import PCA
 from visyn_core import manager
 from visyn_core.middleware.request_context_plugin import get_request
+from reaction_cime.db import create_session
+from reaction_cime.models import Project
 
 from reaction_cime.settings import get_settings
 
@@ -41,6 +45,8 @@ from .helper_functions import (
     smiles_to_base64,
 )
 from .ReactionCIMEDBO import ReactionCIMEDBO
+
+project_executor = ThreadPoolExecutor(1)
 
 _log = logging.getLogger(__name__)
 
@@ -98,11 +104,32 @@ def handle_dataset_cache(id, cols=None, x_channel="x", y_channel="y"):
 
 
 # region --------------- process dataset ------------------
+def process_dataset(path: Path, save_name: str, project_id, dbo):
+    try:
+        _log.info("Processing dataset %s" % save_name)
+        start_time = time.time()
+        dbo.save_dataframe(path, save_name, 1_000, project_id)
+
+        # create default constraints file
+        save_poi_constraints(project_id, dbo=dbo)
+        save_poi_exceptions(project_id, dbo=dbo)
+
+        delta_time = time.time() - start_time
+        _log.info("--- took %i min %f s to upload file %s" % (delta_time / 60, delta_time % 60, save_name))
+
+        os.remove(path)
+    except Exception as e:
+        with create_session() as session:
+            project = session.query(Project).get(project_id)
+            if project:
+                project.file_status = f"Error {str(e)}"
+            session.commit()
+
+        _log.exception(f"An unknown exception occurred when processing {path}")
 
 
 @reaction_cime_api.route("/upload_csv", methods=["OPTIONS", "POST"])
 def upload_csv():
-    start_time = time.time()
     _log.info("Received new csv to upload")
     file_upload = request.files.get("myFile")
 
@@ -155,25 +182,26 @@ def upload_csv():
 
     _log.info(f"Uploading file {file_name}")
 
-    # df = pd.read_csv(storage_path / file_name)
-
     _log.info("--- save file to database")
     save_name = file_name or ""
     save_name = "_".join(save_name.split(".")[0:-1])
 
-    id, msg = get_cime_dbo().save_dataframe(storage_path / file_name, save_name, chunksize=1_000)
+    # create project entry
+    project = get_cime_dbo().save_project(save_name)
 
-    # create default constraints file
-    save_poi_constraints(id)
-    save_poi_exceptions(id)
+    # submit project processing
+    project_executor.submit(process_dataset, storage_path / file_name, save_name, project.id, get_cime_dbo())
 
-    delta_time = time.time() - start_time
-    _log.info("--- took %i min %f s to upload file %s" % (delta_time / 60, delta_time % 60, save_name))
-
-    # delete csv file
-    os.remove(storage_path / file_name)
-
-    return {"filename": file_upload.filename, "id": id, "msg": msg}
+    # return project with processing status so it will immediately show up in the list
+    return {
+        "id": project.id,
+        "name": project.name,
+        "file_status": "processing",
+        "creator": project.creator,
+        "group": project.group,
+        "permissions": project.permissions,
+        "buddies": project.buddies,
+    }
 
 
 @reaction_cime_api.route("/get_no_datapoints/<id>", methods=["GET"])
@@ -191,20 +219,20 @@ MAX_POINTS = 10000
 # --- save
 
 
-def save_poi_exceptions(id, exceptions=None):
+def save_poi_exceptions(id, exceptions=None, dbo=None):
     if exceptions is None:
         exceptions = []
     exceptions = (
         pd.DataFrame(exceptions) if len(exceptions) > 0 else pd.DataFrame(columns=["x_col", "y_col", "x_coord", "y_coord", "radius"])
     )
-    return get_cime_dbo().update_project(id, {"file_exceptions": exceptions})
+    return (get_cime_dbo() if dbo is None else dbo).update_project(id, {"file_exceptions": exceptions})
 
 
-def save_poi_constraints(id, constraints=None):
+def save_poi_constraints(id, constraints=None, dbo=None):
     if constraints is None:
         constraints = [{"col": cycle_column, "operator": "BETWEEN", "val1": 0, "val2": 100}]
     constraints = pd.DataFrame(constraints)
-    return get_cime_dbo().update_project(id, {"file_constraints": constraints})
+    return (get_cime_dbo() if dbo is None else dbo).update_project(id, {"file_constraints": constraints})
 
 
 # --- load
@@ -255,7 +283,7 @@ def add_poi_exceptions():
             poi_count = (
                 get_cime_dbo().get_filter_mask(id, get_poi_constraints_filter(id, load_poi_constraints(id), exceptions_df))["mask"].sum()
             )  # check if constraints are limited enough
-            saved = save_poi_exceptions(id, exceptions_df)
+            saved = save_poi_exceptions(id, exceptions=exceptions_df)
             if not saved:
                 return {"msg": "Error when saving constraints"}
             if poi_count > MAX_POINTS:
@@ -290,7 +318,7 @@ def update_poi_exceptions():
             poi_count = (
                 get_cime_dbo().get_filter_mask(id, get_poi_constraints_filter(id, load_poi_constraints(id), exceptions_df))["mask"].sum()
             )  # check if constraints are limited enough
-            save_poi_exceptions(id, exceptions_df)
+            save_poi_exceptions(id, exceptions=exceptions_df)
             if poi_count > MAX_POINTS:
                 return {"msg": "Too many experiments within the selected filter. Only a subset of the data will be shown."}
             return {"msg": "ok"}
@@ -324,13 +352,13 @@ def update_poi_constraints():
             )  # check if constraints are limited enough
             if poi_count <= 0:
                 return {"msg": "No experiments are found with this filter. Please adjust the settings."}
-            save_poi_constraints(id, constraints_df)
+            save_poi_constraints(id, constraints=constraints_df)
             if poi_count > MAX_POINTS:
                 return {"msg": "Too many experiments within the selected filter. Only a subset of the data will be shown."}
             return {"msg": "ok"}
 
         if len(constraints_df) <= 0:
-            save_poi_constraints(id, pd.DataFrame(columns=["col", "operator", "val1", "val2"]))
+            save_poi_constraints(id, constraints=pd.DataFrame(columns=["col", "operator", "val1", "val2"]))
             return {"msg": "ok"}
 
         return {
