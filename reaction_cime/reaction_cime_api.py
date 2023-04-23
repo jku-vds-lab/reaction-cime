@@ -196,7 +196,7 @@ def upload_csv():
     return {
         "id": project.id,
         "name": project.name,
-        "file_status": "processing",
+        "file_status": "Processing 0",
         "creator": project.creator,
         "group": project.group,
         "permissions": project.permissions,

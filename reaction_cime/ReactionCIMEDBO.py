@@ -66,7 +66,7 @@ class ReactionCIMEDBO:
             _log.info("retreiving project")
             p = session.get(Project, project_id)
 
-            p.file_status = "processing"  # type: ignore
+            p.file_status = "Processing 0"  # type: ignore
 
             session.commit()
 
@@ -95,6 +95,9 @@ class ReactionCIMEDBO:
                             index_label="id",
                             chunksize=chunksize,
                         )
+
+                        p.file_status = f"Processing {chunk_index}"
+                        session.commit()
 
                         _log.info("--- saved chunk %i of file %s" % (chunk_index, save_name))
 

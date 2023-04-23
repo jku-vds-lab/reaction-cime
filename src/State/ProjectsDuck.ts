@@ -8,6 +8,11 @@ const projectAdapter = createEntityAdapter<Project>();
 
 const initialState = { projects: projectAdapter.getInitialState() };
 
+export const deleteProject = createAsyncThunk('projects/delete', async (id: string, { dispatch }) => {
+  await ReactionCIMEBackendFromEnv.deleteFile(id);
+  return id;
+});
+
 export const projects = createSlice({
   name: 'projects',
   initialState,
@@ -19,6 +24,11 @@ export const projects = createSlice({
       projectAdapter.setAll(state.projects, action.payload);
     },
   },
+  extraReducers: (builder) => {
+    builder.addCase(deleteProject.fulfilled, (state, action) => {
+      projectAdapter.removeOne(state.projects, action.meta.arg);
+    });
+  },
 });
 
 export const ProjectActions = { ...projects.actions };
@@ -26,9 +36,4 @@ export const ProjectActions = { ...projects.actions };
 export const syncProjects = createAsyncThunk('projects/sync', async (_, { dispatch }) => {
   const files = await ReactionCIMEBackendFromEnv.getUploadedFiles();
   dispatch(projects.actions.setProjects(files));
-});
-
-export const deleteProject = createAsyncThunk('projects/delete', async (id: string, { dispatch }) => {
-  await ReactionCIMEBackendFromEnv.deleteFile(id);
-  dispatch(syncProjects());
 });

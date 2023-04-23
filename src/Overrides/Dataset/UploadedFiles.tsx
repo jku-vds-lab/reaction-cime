@@ -2,6 +2,7 @@ import {
   Box,
   Button,
   CircularProgress,
+  CircularProgressProps,
   Dialog,
   DialogActions,
   DialogContent,
@@ -21,7 +22,6 @@ import React, { CSSProperties } from 'react';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import { userSession, useVisynAppContext } from 'visyn_core';
 import { useDispatch, useSelector } from 'react-redux';
-import { ReactionCIMEBackendFromEnv } from '../../Backend/ReactionCIMEBackend';
 
 import { AppState } from '../../State/Store';
 import { deleteProject, syncProjects } from '../../State/ProjectsDuck';
@@ -31,6 +31,28 @@ const textOverflowStyle: CSSProperties = {
   overflow: 'hidden',
   whiteSpace: 'nowrap',
 };
+
+function CircularProgressWithLabel(props: CircularProgressProps & { value: number }) {
+  return (
+    <Box sx={{ position: 'relative', display: 'inline-flex' }}>
+      <CircularProgress />
+      <Box
+        sx={{
+          top: 0,
+          left: 0,
+          bottom: 0,
+          right: 0,
+          position: 'absolute',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        <Typography variant="caption" component="div" color="text.secondary">{`${Math.round(props.value)}`}</Typography>
+      </Box>
+    </Box>
+  );
+}
 
 export function UploadedFiles({ onChange, refresh }) {
   const { clientConfig } = useVisynAppContext();
@@ -86,8 +108,8 @@ export function UploadedFiles({ onChange, refresh }) {
                 key={file.id}
                 selected={file.id === dataset?.info?.path}
                 secondaryAction={
-                  file.file_status === 'processing' ? (
-                    <CircularProgress />
+                  file.file_status.startsWith('Processing') ? (
+                    <CircularProgressWithLabel value={Number.parseInt(file.file_status.substring('Processing '.length), 10)} />
                   ) : !clientConfig.publicVersion && userSession.canWrite(file) ? (
                     <Tooltip placement="right" title={<Typography variant="subtitle2">Permanently delete dataset &quot;{file.name}&quot;.</Typography>}>
                       <IconButton
