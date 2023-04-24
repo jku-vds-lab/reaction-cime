@@ -28,9 +28,9 @@ from rdkit.Chem import Draw
 from sklearn.decomposition import PCA
 from visyn_core import manager
 from visyn_core.middleware.request_context_plugin import get_request
+
 from reaction_cime.db import create_session
 from reaction_cime.models import Project
-
 from reaction_cime.settings import get_settings
 
 from .helper_functions import (

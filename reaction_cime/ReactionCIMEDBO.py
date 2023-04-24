@@ -18,8 +18,21 @@ _log = logging.getLogger(__name__)
 class ReactionCIMEDBO:
     def get_table_names(self):
         with create_session() as session:
-            # type: ignore
-            return [{"name": p.name, "id": p.id, "creator": p.creator, "permissions": p.permissions, "buddies": p.buddies, "group": p.group, "file_status": p.file_status} for p in session.query(Project.id, Project.name, Project.creator, Project.permissions, Project.buddies, Project.group, Project.file_status).all() if can_read(p)]
+            return [
+                {
+                    "name": p.name,
+                    "id": p.id,
+                    "creator": p.creator,
+                    "permissions": p.permissions,
+                    "buddies": p.buddies,
+                    "group": p.group,
+                    "file_status": p.file_status,
+                }
+                for p in session.query(
+                    Project.id, Project.name, Project.creator, Project.permissions, Project.buddies, Project.group, Project.file_status  # type: ignore
+                ).all()
+                if can_read(p)
+            ]
 
     def get_table_name(self, id, with_schema_prefix: bool = True) -> str:
         return ("cime4r." if with_schema_prefix else "") + f"data_{id}".replace("-", "_")
