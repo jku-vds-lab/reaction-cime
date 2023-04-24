@@ -116,8 +116,6 @@ class ReactionCIMEDBO:
                 delta_time = time.time() - start_time
                 _log.info("--- took %i min %f s to create index of file %s" % (delta_time / 60, delta_time % 60, save_name))
 
-            # self.update_project(p.id, p)
-
             session.commit()
 
             return str(p.id), msg

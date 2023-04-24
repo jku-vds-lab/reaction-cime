@@ -21,7 +21,7 @@ def upgrade():
     connection.execute(
         """
         ALTER TABLE cime4r.project
-        ADD "file_status" TEXT NOT NULL;
+        ADD "file_status" TEXT NOT NULL DEFAULT 'done';
 
         ALTER TABLE cime4r.project
         DROP COLUMN "fully_processed";
