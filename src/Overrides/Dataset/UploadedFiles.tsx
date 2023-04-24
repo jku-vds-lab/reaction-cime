@@ -136,7 +136,7 @@ export function UploadedFiles({ onChange, refresh }) {
                   <ListItemButton
                     style={{ width: '100%' }}
                     key={file.id}
-                    disabled={file.file_status.startsWith('Error')}
+                    disabled={file.file_status.startsWith('Error') || file.file_status.startsWith('Processing')}
                     data-cy="uploaded-data-list-item"
                     href={`/?project=${file.id}`}
                     component="a"
