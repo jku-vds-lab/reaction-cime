@@ -6,7 +6,7 @@ from uuid import UUID
 
 import numpy as np
 import pandas as pd
-from sqlalchemy import MetaData, Table, bindparam
+from sqlalchemy import MetaData, Table, bindparam, desc
 from sqlalchemy.engine import Engine
 from visyn_core.security import can_read, current_username
 
@@ -39,7 +39,9 @@ class ReactionCIMEDBO:
                 }
                 for p in session.query(
                     Project.id, Project.name, Project.creator, Project.permissions, Project.buddies, Project.group, Project.file_status  # type: ignore
-                ).all()
+                )
+                .order_by(desc(Project.creation_date))
+                .all()
                 if can_read(p)
             ]
 
