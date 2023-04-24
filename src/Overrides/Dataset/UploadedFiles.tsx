@@ -48,7 +48,7 @@ function CircularProgressWithLabel(props: CircularProgressProps & { value: numbe
           justifyContent: 'center',
         }}
       >
-        <Typography variant="caption" component="div" color="text.secondary">{`${Math.round(props.value)}`}</Typography>
+        <Typography display="none" variant="caption" component="div" color="text.secondary">{`${Math.round(props.value)}`}</Typography>
       </Box>
     </Box>
   );
@@ -109,7 +109,7 @@ export function UploadedFiles({ onChange, refresh }) {
                 selected={file.id === dataset?.info?.path}
                 secondaryAction={
                   file.file_status.startsWith('Processing') ? (
-                    <CircularProgressWithLabel value={Number.parseInt(file.file_status.substring('Processing '.length), 10)} />
+                    <CircularProgressWithLabel value={Number.parseInt(file.file_status.substring('Processing_'.length), 10)} />
                   ) : !clientConfig.publicVersion && userSession.canWrite(file) ? (
                     <Tooltip placement="right" title={<Typography variant="subtitle2">Permanently delete dataset &quot;{file.name}&quot;.</Typography>}>
                       <IconButton
@@ -141,7 +141,7 @@ export function UploadedFiles({ onChange, refresh }) {
                   >
                     <ListItemText
                       primary={file.name}
-                      secondary={file.file_status.startsWith('Error') ? 'Processing errors' : `By ${file.creator}`}
+                      secondary={file.file_status.startsWith('Error') ? file.file_status : `By ${file.creator}`}
                       primaryTypographyProps={{
                         style: textOverflowStyle,
                       }}

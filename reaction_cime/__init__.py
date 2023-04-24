@@ -29,7 +29,7 @@ class VisynPlugin(AVisynPlugin):
         )
 
         # Add after server started to cleanup/retry pending processing
-        # registry.append("after_server_started", "reaction_cime_retry_datasets", "reaction_cime.after_server_started", {})
+        registry.append("after_server_started", "reaction_cime_retry_datasets", "reaction_cime.after_server_started", {})
         pass
 
     def init_app(self, app: FastAPI):

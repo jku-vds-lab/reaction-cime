@@ -116,8 +116,6 @@ def process_dataset(path: Path, save_name: str, project_id, dbo):
 
         delta_time = time.time() - start_time
         _log.info("--- took %i min %f s to upload file %s" % (delta_time / 60, delta_time % 60, save_name))
-
-        os.remove(path)
     except Exception as e:
         with create_session() as session:
             project = session.query(Project).get(project_id)
@@ -126,6 +124,11 @@ def process_dataset(path: Path, save_name: str, project_id, dbo):
             session.commit()
 
         _log.exception(f"An unknown exception occurred when processing {path}")
+    finally:
+        try:
+            os.remove(path)
+        except OSError:
+            pass
 
 
 @reaction_cime_api.route("/upload_csv", methods=["OPTIONS", "POST"])

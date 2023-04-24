@@ -58,6 +58,7 @@ export function DatasetDrop({ onDatasetChange, cancellablePromise, abort_control
               cancellablePromise,
               abort_controller,
             );
+            e.target.value = null;
           }
         }}
       />

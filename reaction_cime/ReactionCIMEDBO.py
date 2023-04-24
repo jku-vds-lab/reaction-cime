@@ -2,6 +2,7 @@ import logging
 import time
 from datetime import datetime
 from pathlib import Path
+from uuid import UUID
 
 import numpy as np
 import pandas as pd
@@ -13,6 +14,14 @@ from .db import create_session
 from .models import Project
 
 _log = logging.getLogger(__name__)
+
+
+def is_valid_uuid(uuid_to_test):
+    try:
+        to_test = str(uuid_to_test)
+        return str(UUID(to_test)) == to_test
+    except ValueError:
+        return False
 
 
 class ReactionCIMEDBO:
@@ -35,6 +44,8 @@ class ReactionCIMEDBO:
             ]
 
     def get_table_name(self, id, with_schema_prefix: bool = True) -> str:
+        if not is_valid_uuid(id):
+            raise Exception(f"ID {id} is not a valid UUID.")
         return ("cime4r." if with_schema_prefix else "") + f"data_{id}".replace("-", "_")
 
     def get_project(self, id) -> Project:
@@ -65,7 +76,7 @@ class ReactionCIMEDBO:
             p.creation_date = datetime.utcnow()
             p.modifier = None
             p.modification_date = None
-            p.file_status = "none"
+            p.file_status = "not_started"
 
             session.add(p)
             session.commit()
@@ -79,7 +90,7 @@ class ReactionCIMEDBO:
             _log.info("retreiving project")
             p = session.get(Project, project_id)
 
-            p.file_status = "Processing 0"  # type: ignore
+            p.file_status = "Processing_0"  # type: ignore
 
             session.commit()
 
@@ -109,7 +120,7 @@ class ReactionCIMEDBO:
                             chunksize=chunksize,
                         )
 
-                        p.file_status = f"Processing {chunk_index}"
+                        p.file_status = f"Processing_{chunk_index}"
                         session.commit()
 
                         _log.info("--- saved chunk %i of file %s" % (chunk_index, save_name))
@@ -265,8 +276,10 @@ class ReactionCIMEDBO:
             if p:
                 _log.info(f"Deleting {id} table")
                 session.delete(p)
-                # TODO: This is very bad, as it enables SQL injections! https://xkcd.com/327/
-                session.execute(f"DROP TABLE {self.get_table_name(id)}")
                 session.commit()
+                try:
+                    session.execute(f"DROP TABLE {self.get_table_name(id)}")
+                except Exception as e:
+                    _log.error(f"Could not drop table {self.get_table_name(id)}: {e}")
                 return True
         return False
