@@ -71,12 +71,15 @@ export function UploadedFiles({ onChange, refresh }) {
   updateRef.current = updateFiles;
 
   React.useEffect(() => {
-    const interval = setInterval(() => {
-      updateRef.current();
-    }, 5000);
+    if (files?.some((file) => file.file_status.startsWith('Processing'))) {
+      const interval = setInterval(() => {
+        updateRef.current();
+      }, 5000);
 
-    return () => clearInterval(interval);
-  }, []);
+      return () => clearInterval(interval);
+    }
+    return undefined;
+  }, [files]);
 
   React.useEffect(() => {
     updateFiles();
