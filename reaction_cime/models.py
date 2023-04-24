@@ -5,7 +5,7 @@ import zlib
 from datetime import datetime
 from uuid import UUID as UUID_TYPE
 
-from sqlalchemy import ARRAY, TEXT, Boolean, Column, DateTime, Integer, PickleType, String
+from sqlalchemy import ARRAY, TEXT, Column, DateTime, Integer, PickleType, String
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.ext.declarative import declarative_base
 
@@ -31,7 +31,7 @@ class Project(Base):  # type: ignore
     description = Column(String, nullable=False, default="")
     file_exceptions = Column(PickleType(pickler=CompressedPickler()))  # type: ignore
     file_constraints = Column(PickleType(pickler=CompressedPickler()))  # type: ignore
-    fully_processed = Column(Boolean, nullable=False, default=False)  # type: ignore
+    file_status: str = Column(String, nullable=False)  # type: ignore
     # Security
     creator: str = Column(TEXT, nullable=False)  # type: ignore
     creation_date: datetime = Column(DateTime, nullable=False)  # type: ignore
