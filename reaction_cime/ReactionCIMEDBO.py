@@ -2,6 +2,7 @@ import logging
 import time
 from datetime import datetime
 from pathlib import Path
+from uuid import UUID
 
 import numpy as np
 import pandas as pd
@@ -15,12 +16,36 @@ from .models import Project
 _log = logging.getLogger(__name__)
 
 
+def is_valid_uuid(uuid_to_test):
+    try:
+        to_test = str(uuid_to_test)
+        return str(UUID(to_test)) == to_test
+    except ValueError:
+        return False
+
+
 class ReactionCIMEDBO:
     def get_table_names(self):
         with create_session() as session:
-            return [{"name": p.name, "id": p.id, "creator": p.creator, "permissions": p.permissions, "buddies": p.buddies, "group": p.group} for p in session.query(Project.id, Project.name, Project.creator, Project.permissions, Project.buddies, Project.group).where(Project.fully_processed).all() if can_read(p)]  # type: ignore
+            return [
+                {
+                    "name": p.name,
+                    "id": p.id,
+                    "creator": p.creator,
+                    "permissions": p.permissions,
+                    "buddies": p.buddies,
+                    "group": p.group,
+                    "file_status": p.file_status,
+                }
+                for p in session.query(
+                    Project.id, Project.name, Project.creator, Project.permissions, Project.buddies, Project.group, Project.file_status  # type: ignore
+                ).all()
+                if can_read(p)
+            ]
 
     def get_table_name(self, id, with_schema_prefix: bool = True) -> str:
+        if not is_valid_uuid(id):
+            raise Exception(f"ID {id} is not a valid UUID.")
         return ("cime4r." if with_schema_prefix else "") + f"data_{id}".replace("-", "_")
 
     def get_project(self, id) -> Project:
@@ -37,8 +62,8 @@ class ReactionCIMEDBO:
             session.commit()
             return res == 1
 
-    def save_dataframe(self, path: Path, save_name: str, chunksize: int):
-        msg = "ok"
+    def save_project(self, save_name: str):
+        p: Project
 
         with create_session() as session:
             p = Project()
@@ -51,9 +76,23 @@ class ReactionCIMEDBO:
             p.creation_date = datetime.utcnow()
             p.modifier = None
             p.modification_date = None
+            p.file_status = "not_started"
+
             session.add(p)
-            session.flush()
+            session.commit()
             session.refresh(p)
+
+        return p
+
+    def save_dataframe(self, path: Path, save_name: str, chunksize: int, project_id, cancel_event):
+        msg = ""
+        with create_session() as session:
+            _log.info("retreiving project")
+            p = session.get(Project, project_id)
+
+            p.file_status = "Processing_0"  # type: ignore
+
+            session.commit()
 
             table_name_with_schema = self.get_table_name(p.id, with_schema_prefix=True)
             table_name = self.get_table_name(p.id, with_schema_prefix=False)
@@ -64,6 +103,9 @@ class ReactionCIMEDBO:
 
                 with pd.read_csv(path, chunksize=chunksize) as reader:
                     for chunk_index, chunk in enumerate(reader):
+                        if cancel_event.is_set():
+                            raise Exception("cancelled dataframe processing")
+
                         # Sanitize the column names (i.e. disallow % as it breaks column names in postgres)
                         chunk.columns = [c.strip().replace("%", "_") for c in chunk.columns]
                         if "x" not in chunk.columns or "y" not in chunk.columns:
@@ -81,9 +123,12 @@ class ReactionCIMEDBO:
                             chunksize=chunksize,
                         )
 
+                        p.file_status = f"Processing_{chunk_index}"
+                        session.commit()
+
                         _log.info("--- saved chunk %i of file %s" % (chunk_index, save_name))
 
-                p.fully_processed = True  # type: ignore
+                p.file_status = "done"  # type: ignore
 
                 delta_time = time.time() - start_time
                 _log.info("--- took %i min %f s to save file %s" % (delta_time / 60, delta_time % 60, save_name))
@@ -197,7 +242,8 @@ class ReactionCIMEDBO:
                 if datapoint_count > max_datapoints:
                     subsample_flag = True
                     # https://www.sqlitetutorial.net/sqlite-functions/sqlite-random/
-                    sql_stmt += f" AND abs(RANDOM()%100) < {max_datapoints/datapoint_count*100}"  # add random selection filter based on the ratio between maximum allowed datapoints and NO datapoints that would be selected without sampling
+                    # add random selection filter based on the ratio between maximum allowed datapoints and NO datapoints that would be selected without sampling
+                    sql_stmt += f" AND abs(RANDOM()%100) < {max_datapoints/datapoint_count*100}"
         with create_session() as session:
             return pd.read_sql(sql_stmt, session.get_bind(), index_col="id"), subsample_flag
 
@@ -233,8 +279,10 @@ class ReactionCIMEDBO:
             if p:
                 _log.info(f"Deleting {id} table")
                 session.delete(p)
-                # TODO: This is very bad, as it enables SQL injections! https://xkcd.com/327/
-                session.execute(f"DROP TABLE {self.get_table_name(id)}")
                 session.commit()
+                try:
+                    session.execute(f"DROP TABLE {self.get_table_name(id)}")
+                except Exception as e:
+                    _log.error(f"Could not drop table {self.get_table_name(id)}: {e}")
                 return True
         return False

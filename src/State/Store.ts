@@ -8,6 +8,7 @@ import { handleDataset } from './HandleDatasetDuck';
 import lineUpInput from './LineUpInputDuck';
 import { mouseInteractionHooks } from './MouseInteractionHooksDuck';
 import { pacoSettings } from './PacoSettingsDuck';
+import { projects } from './ProjectsDuck';
 import { selection } from './SelectionDuck';
 
 const resetViews = createAction<void>('view/resetView');
@@ -32,6 +33,7 @@ export const CIMEReducers = {
   selection,
   handleDataset,
   pacoSettings,
+  projects: projects.reducer,
 };
 
 const cimeCombined = combineReducers(CIMEReducers);
