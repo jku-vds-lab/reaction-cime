@@ -13,7 +13,7 @@ def create():
         with create_session() as session:
             unfinished_projects: list[Project] = (
                 session.query(Project)
-                .filter(or_(Project.file_status.in_(("processing", "not_started")), Project.file_status.ilike("Processing 18")))  # type: ignore
+                .filter(or_(Project.file_status.in_(("processing", "not_started")), Project.file_status.ilike("Processing%")))  # type: ignore
                 .all()
             )
 

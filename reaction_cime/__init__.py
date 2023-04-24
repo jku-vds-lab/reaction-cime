@@ -48,7 +48,7 @@ class VisynPlugin(AVisynPlugin):
         # Make DBO accessible in FastAPI
         app.state.reaction_cime_dbo = dbo
 
-        from .reaction_cime_api import reaction_cime_api, router
+        from .reaction_cime_api import cancel_events, project_executor, reaction_cime_api, router
 
         app.include_router(router, prefix="/api/reaction_cime/v2")
 
@@ -65,6 +65,12 @@ class VisynPlugin(AVisynPlugin):
                 # Mount the bundles directory as static file to enable the frontend (required in single Dockerfile mode)
                 _log.info(f"Mounting bundles dir: {bundles_dir}")
                 app.mount("/", StaticFiles(directory=bundles_dir, html=True), name="reaction_cime_bundles")
+
+        @app.on_event("shutdown")
+        async def shutdown():
+            for event in cancel_events:
+                event.set()
+            project_executor.shutdown(wait=True)
 
     @property
     def setting_class(self) -> type[BaseModel]:

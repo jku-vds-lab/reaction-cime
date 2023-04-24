@@ -84,7 +84,7 @@ class ReactionCIMEDBO:
 
         return p
 
-    def save_dataframe(self, path: Path, save_name: str, chunksize: int, project_id):
+    def save_dataframe(self, path: Path, save_name: str, chunksize: int, project_id, cancel_event):
         msg = ""
         with create_session() as session:
             _log.info("retreiving project")
@@ -103,6 +103,9 @@ class ReactionCIMEDBO:
 
                 with pd.read_csv(path, chunksize=chunksize) as reader:
                     for chunk_index, chunk in enumerate(reader):
+                        if cancel_event.is_set():
+                            raise Exception("cancelled dataframe processing")
+
                         # Sanitize the column names (i.e. disallow % as it breaks column names in postgres)
                         chunk.columns = [c.strip().replace("%", "_") for c in chunk.columns]
                         if "x" not in chunk.columns or "y" not in chunk.columns:

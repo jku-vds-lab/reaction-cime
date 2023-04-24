@@ -12,6 +12,7 @@ import zipfile
 from concurrent.futures import ThreadPoolExecutor
 from io import BytesIO, StringIO
 from pathlib import Path
+from threading import Event
 
 import gower
 import hdbscan
@@ -47,6 +48,7 @@ from .helper_functions import (
 from .ReactionCIMEDBO import ReactionCIMEDBO
 
 project_executor = ThreadPoolExecutor(1)
+cancel_events = []
 
 _log = logging.getLogger(__name__)
 
@@ -104,11 +106,11 @@ def handle_dataset_cache(id, cols=None, x_channel="x", y_channel="y"):
 
 
 # region --------------- process dataset ------------------
-def process_dataset(path: Path, save_name: str, project_id, dbo):
+def process_dataset(path: Path, save_name: str, project_id, dbo, cancel_event: Event):
     try:
         _log.info("Processing dataset %s" % save_name)
         start_time = time.time()
-        dbo.save_dataframe(path, save_name, 1_000, project_id)
+        dbo.save_dataframe(path, save_name, 1_000, project_id, cancel_event=cancel_event)
 
         # create default constraints file
         save_poi_constraints(project_id, dbo=dbo)
@@ -125,10 +127,8 @@ def process_dataset(path: Path, save_name: str, project_id, dbo):
 
         _log.exception(f"An unknown exception occurred when processing {path}")
     finally:
-        try:
+        with contextlib.suppress(OSError):
             os.remove(path)
-        except OSError:
-            pass
 
 
 @reaction_cime_api.route("/upload_csv", methods=["OPTIONS", "POST"])
@@ -192,8 +192,12 @@ def upload_csv():
     # create project entry
     project = get_cime_dbo().save_project(save_name)
 
+    cancel_event = Event()
     # submit project processing
-    project_executor.submit(process_dataset, storage_path / file_name, save_name, project.id, get_cime_dbo())
+    future = project_executor.submit(process_dataset, storage_path / file_name, save_name, project.id, get_cime_dbo(), cancel_event)
+
+    cancel_events.append(cancel_event)
+    future.add_done_callback(lambda f: cancel_events.remove(cancel_event))
 
     # return project with processing status so it will immediately show up in the list
     return {
