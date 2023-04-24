@@ -282,6 +282,7 @@ class ReactionCIMEDBO:
                 session.commit()
                 try:
                     session.execute(f"DROP TABLE {self.get_table_name(id)}")
+                    session.commit()
                 except Exception as e:
                     _log.error(f"Could not drop table {self.get_table_name(id)}: {e}")
                 return True
