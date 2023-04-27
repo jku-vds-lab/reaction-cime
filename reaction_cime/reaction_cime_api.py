@@ -626,7 +626,7 @@ def get_aggregated_dataset_cached(id):
         * (agg_domain["y"] > range["y_min"])
     ]
 
-    agg_df = aggregate_by_col_interpolate(agg_domain, retrieve_cols, sample_size=sample_size)
+    agg_df = aggregate_by_col_interpolate(agg_domain, retrieve_cols, sample_size=sample_size)  # type: ignore
     # agg_df = aggregate_by_col(agg_domain, retrieve_cols, sample_size=sample_size)
 
     csv_buffer = StringIO()
