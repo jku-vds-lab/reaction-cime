@@ -362,15 +362,17 @@ def aggregate_by_col(df, value_cols, sample_size=20):
 
 
 # --- rescale and encode values
-def rescale_and_encode(proj_df, params, col, info):
+def rescale_and_encode(proj_df, params, col, info, log=None):
     feature_weights = []
     feature_weights_end = []
     categorical = False
     featurizer = lambda df, col: df.drop(columns=[col], inplace=True)  # NOQA
 
+    log = log or logging.getLogger(__name__).info
+
     if info["featureType"] == "String":
         # proj_df = proj_df.drop(columns=[col])
-        _log.info("featureType: String --> TODO: handle")
+        log("featureType: String --> TODO: handle")
 
     elif info["featureType"] == "Quantitative":
         # TODO: This is not included in the PSE params anymore
@@ -440,13 +442,12 @@ def rescale_and_encode(proj_df, params, col, info):
                 # feature_weights_end.append(float(info["weight"]) / len(hot_encoded.columns) if info.get("useWeight") else 1)
                 feature_weights_end.append(float(info["weight"]) / len(categories))
         else:
-            # proj_df[col] = pd.Categorical(proj_df[col]).codes
+            lookup = {k: i for i, k in enumerate(proj_df[col].unique())}
+
             def featurize_categorical(df, col):
-                df[col] = df[col].apply(lambda x: pd.Categorical([x]).codes)
-                # return df
+                df[col] = df[col].apply(lambda x: lookup[x])
 
             featurizer = featurize_categorical
-
             categorical = True
 
             # feature_weights.append(float(info["weight"]) if info.get("useWeight") else 1)
@@ -454,7 +455,7 @@ def rescale_and_encode(proj_df, params, col, info):
 
     elif info["featureType"] == "Date":
         # proj_df = proj_df.drop(columns=[col])
-        _log.info("featureType: Date --> TODO: handle")
+        log("featureType: Date --> TODO: handle")
 
     elif info["featureType"] == "Binary":
         # proj_df[col] = pd.Categorical(proj_df[col]).codes
@@ -469,11 +470,11 @@ def rescale_and_encode(proj_df, params, col, info):
 
     elif info["featureType"] == "Ordinal":
         # proj_df = proj_df.drop(columns=[col])
-        _log.info("featureType: Ordinal --> TODO: handle")
+        log("featureType: Ordinal --> TODO: handle")
 
     elif info["featureType"] == "Array":
         # proj_df = proj_df.drop(columns=[col])
-        _log.info("featureType: Array --> TODO: handle")
+        log("featureType: Array --> TODO: handle")
     return categorical, feature_weights + feature_weights_end, featurizer
 
 

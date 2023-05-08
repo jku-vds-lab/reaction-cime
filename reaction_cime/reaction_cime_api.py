@@ -28,6 +28,7 @@ from openTSNE import TSNE
 from rdkit import Chem
 from rdkit.Chem import Draw
 from sklearn.decomposition import PCA
+from starlette.background import BackgroundTask
 from visyn_core import manager
 from visyn_core.middleware.request_context_plugin import get_request
 
@@ -883,7 +884,7 @@ class ProjectionThread(threading.Thread):
             for col_name in col_chunks:
                 # rescale numerical values and encode categorical values
                 categorical, feature_weights, featurizer = rescale_and_encode(
-                    column_df, self.params, col_name, self.selected_feature_info[col_name]
+                    column_df, self.params, col_name, self.selected_feature_info[col_name], log=self.log
                 )
 
                 featurizers[col_name] = featurizer
@@ -923,6 +924,8 @@ class ProjectionThread(threading.Thread):
                     ipca.partial_fit(normalized_values)
                 except Exception:
                     _log.exception("Error computing incremental PCA")
+
+            # self.log(f"PCA fit with explained variance {ipca.explained_variance_ratio_.sum()}")
 
             # Create new empty array to store the PCA-transformed values
             pca_normalized_values = np.zeros((0, n_pca_components))
@@ -1122,14 +1125,20 @@ async def project_dataset_async_v2(request: Request):
     app = get_app()
     setattr(app.state, f"TERMINATE_PROJECTION_{id}", False)
 
+    async def stop_embedding():
+        setattr(app.state, f"TERMINATE_PROJECTION_{id}", True)
+
     async def calculate_embeddings():
         proj = ProjectionThread(id, params, selected_feature_info, cime_dbo, get_poi_mask(id, cime_dbo)["mask"])
         proj.start()
         while True:
-            await asyncio.sleep(0.1)
+            await asyncio.sleep(1)
             terminate = False
             with contextlib.suppress(KeyError):
-                terminate = getattr(app.state, f"TERMINATE_PROJECTION_{id}")
+                # TODO: Check if this actually works
+                terminate = getattr(app.state, f"TERMINATE_PROJECTION_{id}", False) or getattr(
+                    app.state, "TERMINATE_ALL_PROJECTIONS", False
+                )
 
             # https://stackoverflow.com/questions/41146144/how-to-fix-assertionerror-value-must-be-bytes-error-in-python2-7-with-apache
             yield json.dumps({"step": proj.current_step, "msg": proj.msg, "emb": proj.emb}).encode("utf-8")
@@ -1137,12 +1146,12 @@ async def project_dataset_async_v2(request: Request):
                 proj.raise_exception()
                 proj.join()
             if proj.done:  # proj.current_step >= params["iterations"] or proj.interrupt:
-                await asyncio.sleep(0.1)
+                await asyncio.sleep(1)
                 df = get_poi_df_from_db(id)[0][["x", "y"]].to_dict("records")
                 yield json.dumps({"step": None, "msg": None, "emb": df}).encode("utf-8")
                 break
 
-    return StreamingResponse(calculate_embeddings(), headers={"X-Accel-Buffering": "no"})
+    return StreamingResponse(calculate_embeddings(), headers={"X-Accel-Buffering": "no"}, background=BackgroundTask(stop_embedding))
 
 
 # endregion

@@ -75,6 +75,7 @@ class VisynPlugin(AVisynPlugin):
         async def shutdown():
             for event in cancel_events:
                 event.set()
+            app.state.TERMINATE_ALL_PROJECTIONS = True
             project_executor.shutdown(wait=True)
 
     @property
