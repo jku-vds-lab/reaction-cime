@@ -1142,7 +1142,7 @@ async def project_dataset_async_v2(request: Request):
                 yield json.dumps({"step": None, "msg": None, "emb": df}).encode("utf-8")
                 break
 
-    return StreamingResponse(calculate_embeddings())
+    return StreamingResponse(calculate_embeddings(), headers={"X-Accel-Buffering": "no"})
 
 
 # endregion

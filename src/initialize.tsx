@@ -5,14 +5,15 @@ import { ReactionCIMEApp } from './ReactionCIMEApp';
 import './index.css';
 import 'lineupjs/build/LineUpJS.css';
 
+// Globally extend the clientConfig
+declare module 'visyn_core' {
+  export interface IClientConfig {
+    publicVersion?: boolean;
+  }
+}
+
 ReactDOM.render(
-  <VisynAppProvider
-    appName="CIME4R"
-    defaultClientConfig={{
-      // The visyn app will load a clientConfig.json from the root of the webservice, and override those properties here. See the Dockerfile for more information.
-      publicVersion: false,
-    }}
-  >
+  <VisynAppProvider appName="CIME4R">
     <ReactionCIMEApp />
   </VisynAppProvider>,
   document.getElementById('app'),

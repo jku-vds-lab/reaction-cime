@@ -7,6 +7,7 @@ from flask import Flask
 from pydantic import BaseModel
 from visyn_core.plugin.model import AVisynPlugin, RegHelper
 from visyn_core.server.utils import init_legacy_app
+from visyn_core.settings.client_config import visyn_client_config
 
 from .settings import ReactionCimeSettings, get_settings
 
@@ -56,6 +57,10 @@ class VisynPlugin(AVisynPlugin):
 
         init_legacy_app(flask_app)
         app.mount("/api/reaction_cime", WSGIMiddleware(flask_app))
+
+        @visyn_client_config
+        class CIME4RClientConfigModel(BaseModel):
+            publicVersion: bool = False  # NOQA N815
 
         @app.on_event("startup")
         async def startup():
