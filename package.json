@@ -93,7 +93,6 @@
     "react-dom": "~18.2.0",
     "visyn_core": "git+ssh://git@github.com/datavisyn/visyn_core#react18",
     "visyn_scripts": "git+ssh://git@github.com/datavisyn/visyn_scripts#react18",
-    "typescript": "~5.0.4",
     "vega-lite@4.16.8": "patch:vega-lite@npm:4.16.8#.yarn/patches/vega-lite-npm-4.16.8-2acecf824b.patch"
   },
   "visyn": {
