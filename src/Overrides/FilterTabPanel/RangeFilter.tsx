@@ -25,9 +25,6 @@ export function RangeFilter({ col, value, setValue, remove, dataset }: Props) {
     });
   }, [dataset.info.path, col]);
 
-  const handleChange = (event, newValue) => {
-    setValue(newValue);
-  };
   return (
     <Grid container paddingTop={0}>
       <Grid item xs={3} textAlign="right">
@@ -45,10 +42,12 @@ export function RangeFilter({ col, value, setValue, remove, dataset }: Props) {
         <Typography id={`filter_${col}`} marginBottom="-5px" style={{ textOverflow: 'ellipsis', overflow: 'hidden' }}>
           {col}
         </Typography>
-        <Slider
+        {min === max ? <>Only contains value {min}</> : <Slider
           getAriaLabel={() => col}
           value={value}
-          onChange={handleChange}
+          onChange={(event, newValue) => {
+            setValue(Array.isArray(newValue) ? newValue : [newValue, newValue]);
+          }}
           valueLabelDisplay="auto"
           aria-labelledby={`filter_${col}`}
           min={min}
@@ -59,7 +58,7 @@ export function RangeFilter({ col, value, setValue, remove, dataset }: Props) {
             { value: min || 0, label: formatLabel(min || 0, min, max) },
             { value: max || 1, label: formatLabel(max || 1, min, max) },
           ]}
-        />
+        />}
       </Grid>
     </Grid>
   );

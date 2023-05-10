@@ -431,7 +431,7 @@ def get_poi_constraints_filter(id, df_constraints: pd.DataFrame | None = None, d
     if df_exceptions is None:
         df_exceptions = load_poi_exceptions(id)
 
-    cols = list(set(df_constraints["col"]))
+    cols = list(set(df_constraints["col"] if "col" in df_constraints.columns else []))
     col_filters = []
     for col in cols:
         df_constraints_col = df_constraints[df_constraints["col"] == col]
