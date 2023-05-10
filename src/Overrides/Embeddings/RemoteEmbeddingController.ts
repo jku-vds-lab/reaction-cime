@@ -41,6 +41,7 @@ export class RemoteEmbeddingController extends EmbeddingController {
       init_coordinates: workspace.positions.map((v, i) => {
         return { x: v.x, y: v.y };
       }),
+      ids: dataset.vectors.map((d) => d['id']),
       path: dataset.info.path,
       params,
       selected_feature_info: selectedFeatureInfo,

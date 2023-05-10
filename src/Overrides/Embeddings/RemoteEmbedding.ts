@@ -2,14 +2,6 @@ import type { IBaseProjection } from 'projection-space-explorer';
 import { ReactionCIMEBackend } from '../../Backend/ReactionCIMEBackend';
 
 export class RemoteEmbedding {
-  private dataset: string = null;
-
-  private params: object = null;
-
-  private selected_feature_info: object = null;
-
-  private embedding: IBaseProjection = null;
-
   private current_steps = 0;
 
   private abort_controller = null;
@@ -18,11 +10,7 @@ export class RemoteEmbedding {
 
   private backend: ReactionCIMEBackend;
 
-  constructor(backendUrl: string, dataset: string, params: object, init_embedding: IBaseProjection, selected_feature_info: object) {
-    this.dataset = dataset;
-    this.params = params;
-    this.embedding = init_embedding;
-    this.selected_feature_info = selected_feature_info;
+  constructor(backendUrl: string, protected dataset: string, protected params: object, protected embedding: IBaseProjection, protected selected_feature_info: object, protected ids: string[]) {
     this.abort_controller = new AbortController();
     this.backend = new ReactionCIMEBackend(backendUrl, {});
   }
@@ -81,7 +69,7 @@ export class RemoteEmbedding {
       }
     };
 
-    this.backend.project_dataset(this.dataset, this.params, this.selected_feature_info, this.abort_controller).then((response) => {
+    this.backend.project_dataset(this.dataset, this.params, this.selected_feature_info, this.ids, this.abort_controller).then((response) => {
       const reader = response.body.getReader();
       readStream(reader);
     });

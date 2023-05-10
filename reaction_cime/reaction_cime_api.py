@@ -463,21 +463,21 @@ def get_poi_constraints_filter(id, df_constraints: pd.DataFrame | None = None, d
 def get_points_of_interest(id):
     start_time = time.time()
 
-    poi_domain, is_subsample = get_poi_df_from_db(id)  # TODO: tell front-end that it is subsampled
+    df, is_subsample = get_poi_df_from_db(id)  # TODO: tell front-end that it is subsampled
 
-    if len(poi_domain) > 0:
-        poi_domain = preprocess_dataset(poi_domain)
+    if len(df) > 0:
+        df = preprocess_dataset(df)
 
     csv_buffer = StringIO()
-    poi_domain.to_csv(csv_buffer, index=False)
+    df.to_csv(csv_buffer, index=False)
 
     delta_time = time.time() - start_time
     _log.info("--- took %i min %f s to load file %s" % (delta_time / 60, delta_time % 60, id))
     return csv_buffer.getvalue()
 
 
-def get_poi_df_from_db(id):
-    poi_domain, is_subsample = get_cime_dbo().get_dataframe_from_table_filter(id, get_poi_constraints_filter(id), max_datapoints=MAX_POINTS)
+def get_poi_df_from_db(id, ids: list[int] | None = None):
+    poi_domain, is_subsample = get_cime_dbo().get_dataframe_from_table_filter(id, get_poi_constraints_filter(id), ids=ids, max_datapoints=-1 if ids else MAX_POINTS)
     return poi_domain, is_subsample
 
 
@@ -1116,10 +1116,11 @@ class ProjectionThread(threading.Thread):
 @router.api_route("/project_dataset_async", methods=["POST"])
 async def project_dataset_async_v2(request: Request):
     # TODO: Use FastAPI/Pydantic models for validation instead of directly using the rqeuest...
-    form_data = await request.form()
+    form_data = await request.json()
     id: str = form_data["filename"]  # type: ignore
     params = json.loads(form_data["params"])  # type: ignore
     selected_feature_info = json.loads(form_data["selected_feature_info"])  # type: ignore
+    ids = form_data["ids"]  # type: ignore
     cime_dbo = get_cime_dbo()
 
     app = get_app()
@@ -1147,7 +1148,7 @@ async def project_dataset_async_v2(request: Request):
                 proj.join()
             if proj.done:  # proj.current_step >= params["iterations"] or proj.interrupt:
                 await asyncio.sleep(1)
-                df = get_poi_df_from_db(id)[0][["x", "y"]].to_dict("records")
+                df = get_poi_df_from_db(id, ids)[0].loc[ids][["x", "y"]].to_dict("records")
                 yield json.dumps({"step": None, "msg": None, "emb": df}).encode("utf-8")
                 break
 

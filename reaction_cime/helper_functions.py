@@ -12,7 +12,7 @@ _log = logging.getLogger(__name__)
 # ---------------- preprocess dataset --------------------
 
 
-def preprocess_dataset(domain):
+def preprocess_dataset(df):
     # calculates the error between measurement and prediction
     # target_column = [col for col in domain.columns if target_modifier in col.lower()][0]
     # if error_calc_modifier is not None:
@@ -20,12 +20,13 @@ def preprocess_dataset(domain):
     #     error_col = domain.apply(lambda x: np.nan if x[cycle_column] < 0 else abs(x[target_column] - x['%s_mean_%i'%(error_calc_col, x[cycle_column])]), axis=1)
     # index = list(domain.columns).index(target_column)
 
-    new_cols = generate_rename_list(domain)
-    domain.columns = new_cols
+    new_cols = generate_rename_list(df)
+    df.columns = new_cols
     # if error_calc_modifier is not None:
     #     domain.insert(loc=index+1, column='error{"project":false,"paco":false,"real_column":false}', value=error_col)
 
-    return domain
+    df['id{"noLineUp":true, "project": false, "paco": false}'] = df.index
+    return df
 
 
 # def add_meta_info_time_series_data(column, timesteps, featureLabel, timeSeriesGroup, globalRange=None, colorMapping=None):
