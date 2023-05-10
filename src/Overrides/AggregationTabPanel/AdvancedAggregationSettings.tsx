@@ -175,11 +175,13 @@ export const AdvancedAggregationSettings = connector(
               Choose aggregation method
             </Typography>
             <FormControl>
-              <InputLabel id="selectValueAggregation">Agg</InputLabel>
+              <InputLabel id="selectValueAggregation">Aggregation</InputLabel>
               <Select
                 labelId="selectValueAggregation"
                 value={aggregateSettings.advancedSettings.aggregationMethod.valueAggregationMethod}
-                label="Value Aggregation"
+                label="Aggregation"
+                size="small"
+                style={{ minWidth: 150 }}
                 onChange={(event) => {
                   setAggregationMethod({
                     valueAggregationMethod: event.target.value,
