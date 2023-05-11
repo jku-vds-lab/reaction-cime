@@ -34,6 +34,9 @@ export class RemoteEmbedding {
     let start = ss.indexOf('{');
     let open = 0;
     const res = [];
+    if (start === -1) {
+      return res;
+    }
     for (let i = start; i < ss.length; i++) {
       if (ss[i] === '{' && (i < 2 || ss.slice(i - 2, i) !== '\\"')) {
         open++;
@@ -44,6 +47,7 @@ export class RemoteEmbedding {
             res.push(JSON.parse(ss.substring(start, i + 1)));
             start = i + 1;
           } catch (e) {
+            console.error(`Could not properly parse JSON object from '${ss}', ignoring it`, e);
             // ignore
           }
         }
@@ -57,23 +61,33 @@ export class RemoteEmbedding {
     const readStream = async (reader) => {
       let done;
       let value;
+      /**
+       * True if the embedding has been set at least once, used to show the user an error if they should reload the page.
+       */
+      let hasSetEmbedding = false;
       while (!done) {
         // eslint-disable-next-line no-await-in-loop
         ({ value, done } = await reader.read());
         if (done) {
-          console.log('The stream is closed!');
+          if (!hasSetEmbedding) {
+            callback_fn(this.embedding, this.current_steps, 'Embedding could not be loaded, please reload the application to see the new embedding.');
+          }
         } else {
           try {
             const valueString = new TextDecoder().decode(value);
             // In case multiple JSON objects are received at once, we need to parse them all
             const splitValue = this.jsonParseMultiple(valueString);
+            if (splitValue.length === 0) continue;
             const resObj = splitValue[splitValue.length - 1];
             if (parseInt(resObj.step, 10)) this.current_steps = parseInt(resObj.step, 10);
-            if (resObj.emb && resObj.emb.length > 0) this.embedding = resObj.emb;
+            if (resObj.emb && resObj.emb.length > 0) {
+              hasSetEmbedding = true;
+              this.embedding = resObj.emb;
+            }
             if (resObj.msg) this.msg = resObj.msg;
             callback_fn(this.embedding, this.current_steps, this.msg);
           } catch (error) {
-            console.log(error);
+            console.error('Error while projecting', error);
             callback_fn(this.embedding, this.current_steps, this.msg);
           }
         }
