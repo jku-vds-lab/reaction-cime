@@ -25,6 +25,7 @@ from fastapi.responses import StreamingResponse
 from flask import Blueprint, Response, abort, jsonify, request
 from flask.helpers import make_response
 from openTSNE import TSNE
+from pydantic import BaseModel
 from rdkit import Chem
 from rdkit.Chem import Draw
 from sklearn.decomposition import PCA
@@ -1112,6 +1113,15 @@ class ProjectionThread(threading.Thread):
 
         self.done = True
         self.log("client-side termination")
+
+
+class GetCoordinatesBody(BaseModel):
+    ids: list[int]
+
+
+@router.api_route("/get_coordinates/{id}", methods=["POST"])
+async def get_coordinates(id: str, data: GetCoordinatesBody):
+    return get_poi_df_from_db(id, data.ids)[0].loc[data.ids][["x", "y"]].to_dict("records")
 
 
 # different approach could have been with sockets: https://www.shanelynn.ie/asynchronous-updates-to-a-webpage-with-flask-and-socket-io/

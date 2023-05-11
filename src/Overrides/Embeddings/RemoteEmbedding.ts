@@ -16,7 +16,7 @@ export class RemoteEmbedding {
     protected params: object,
     protected embedding: IBaseProjection,
     protected selected_feature_info: object,
-    protected ids: string[],
+    protected ids: number[],
   ) {
     this.abort_controller = new AbortController();
     this.backend = new ReactionCIMEBackend(backendUrl, {});
@@ -74,7 +74,15 @@ export class RemoteEmbedding {
           ({ value, done } = await reader.read());
           if (done) {
             if (!hasSetEmbedding) {
-              callback_fn(this.embedding, this.current_steps, 'Embedding could not be loaded, please reload the application to see the new embedding.');
+              try {
+                // The embedding was not set automatically, so we fetch it here
+                // eslint-disable-next-line no-await-in-loop
+                const coordinates = await this.backend.get_coordinates(this.dataset, this.ids);
+                callback_fn(coordinates, this.current_steps, this.msg);
+              } catch (e) {
+                console.error('Error while fetching embedding', e);
+                callback_fn(this.embedding, this.current_steps, 'Embedding could not be loaded, please reload the application to see the new embedding.');
+              }
             }
           } else {
             try {

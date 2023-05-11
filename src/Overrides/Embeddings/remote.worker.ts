@@ -1,37 +1,26 @@
+/* eslint-disable no-restricted-globals */
 // import "regenerator-runtime/runtime";
 
 import { RemoteEmbedding } from './RemoteEmbedding';
 
-/* eslint-disable-next-line no-restricted-globals */
-const ctx = self;
-
 const callbackFnStep = (emb, step, msg) => {
-  ctx.postMessage({ messageType: 'step', embedding: emb, step, msg });
+  self.postMessage({ messageType: 'step', embedding: emb, step, msg });
 };
 const callbackFnTerminated = () => {
-  ctx.postMessage({ messageType: 'terminated' });
+  self.postMessage({ messageType: 'terminated' });
 };
 
-ctx.addEventListener(
-  'message',
-  function (e) {
-    if (e.data.messageType === 'init') {
-      const embedding = new RemoteEmbedding(e.data.backendUrl, e.data.path, e.data.params, e.data.init_coordinates, e.data.selected_feature_info, e.data.ids);
-      embedding.initializeFit(callbackFnStep);
-      // embedding.step(callback_fn)
+let embedding: RemoteEmbedding | null;
 
-      // @ts-ignore
-      ctx.embedding = embedding;
+self.addEventListener(
+  'message',
+  (e) => {
+    if (e.data.messageType === 'init') {
+      embedding = new RemoteEmbedding(e.data.backendUrl, e.data.path, e.data.params, e.data.init_coordinates, e.data.selected_feature_info, e.data.ids);
+      embedding.initializeFit(callbackFnStep);
     } else if (e.data.messageType === 'abort') {
-      // @ts-ignore
-      const { embedding } = ctx;
-      embedding.abort(callbackFnTerminated);
+      embedding?.abort(callbackFnTerminated);
     }
-    // else {
-    //     // @ts-ignore
-    //     const embedding = ctx.embedding;
-    //     embedding.step(callback_fn)
-    // }
   },
   false,
 );
