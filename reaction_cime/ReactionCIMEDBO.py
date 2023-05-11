@@ -6,11 +6,11 @@ from uuid import UUID
 
 import numpy as np
 import pandas as pd
-from sqlalchemy import MetaData, Table, bindparam
+from sqlalchemy import MetaData, Table, bindparam, desc
 from sqlalchemy.engine import Engine
 from visyn_core.security import can_read, current_username
 
-from .db import create_session
+from .db import create_session, get_engine
 from .models import Project
 
 _log = logging.getLogger(__name__)
@@ -39,7 +39,9 @@ class ReactionCIMEDBO:
                 }
                 for p in session.query(
                     Project.id, Project.name, Project.creator, Project.permissions, Project.buddies, Project.group, Project.file_status  # type: ignore
-                ).all()
+                )
+                .order_by(desc(Project.creation_date))
+                .all()
                 if can_read(p)
             ]
 
@@ -153,6 +155,7 @@ class ReactionCIMEDBO:
         df.index = id_list  # type: ignore
         # Transform payload to [{_id: 0, x: ..., y: ...}, {_id: 1, x: ..., y: ...}, ...]
         mappings = [{"_id": id, **values} for id, values in df.to_dict("index").items()]
+        mappings.sort(key=lambda x: x["_id"])  # type: ignore
         with create_session() as session:
             # Bulk execute the update
             table = Table(
@@ -165,21 +168,26 @@ class ReactionCIMEDBO:
             session.execute(stmt, mappings)
             session.commit()
 
-    def get_dataframe_from_table(self, id, columns=None):
+    def get_dataframe_from_table(self, id, columns: list[str] | None = None, chunksize: int | None = None):
         if columns is not None and "id" not in columns:
             columns.append("id")
-        with create_session() as session:
-            df = pd.read_sql_table(
-                self.get_table_name(id, with_schema_prefix=False),
-                session.get_bind(),
-                schema="cime4r",
-                index_col="id",
-                columns=columns or [],
-            )
-            if columns is not None:
-                columns.remove("id")
-                df = df[columns]
-            return df
+        with get_engine().connect() as conn:  # NOQA: SIM117
+            # We need to set stream_results to true as otherwise read_sql_table will fetch the entire dataframe...
+            with conn.execution_options(stream_results=True) as bind:
+                chunks = pd.read_sql_table(
+                    self.get_table_name(id, with_schema_prefix=False),
+                    bind,
+                    schema="cime4r",
+                    index_col="id",
+                    columns=columns or [],
+                    chunksize=chunksize,
+                )
+
+                # Either return a single dataframe of a generator of dataframes
+                for df in [chunks] if isinstance(chunks, pd.DataFrame) else chunks:
+                    if columns is not None:
+                        df = df.loc[:, [col for col in columns if col != "id"]]  # type: ignore
+                    yield df
 
     def get_dataframe_from_table_complete_filter(self, id, filter):
         """
@@ -203,7 +211,7 @@ class ReactionCIMEDBO:
         with create_session() as session:
             return pd.read_sql(sql_stmt, session.get_bind(), index_col="id")
 
-    def get_dataframe_from_table_filter(self, id, filter, columns=None, max_datapoints=-1):
+    def get_dataframe_from_table_filter(self, id, filter, columns=None, ids: list[int] | None = None, max_datapoints=-1):
         """
         Routes an SQL query including the filter on the given table_name and returns a corresponding pandas dataframe.
 
@@ -234,16 +242,26 @@ class ReactionCIMEDBO:
             for col in columns:
                 select_cols += f', "{col}"'
         # TODO: This is very bad, as it enables SQL injections! https://xkcd.com/327/
-        sql_stmt = "SELECT " + select_cols + " FROM " + self.get_table_name(id) + ""
+        sql_stmt = "SELECT " + select_cols + " FROM " + self.get_table_name(id)
+
+        all_filters = []
+
         if filter is not None and filter != "":
-            sql_stmt += " WHERE " + filter
-            if max_datapoints > 0:
+            all_filters.append(filter)
+            if not ids and max_datapoints > 0:
                 datapoint_count = self.get_filter_mask(id, filter)["mask"].sum()
                 if datapoint_count > max_datapoints:
                     subsample_flag = True
-                    # https://www.sqlitetutorial.net/sqlite-functions/sqlite-random/
                     # add random selection filter based on the ratio between maximum allowed datapoints and NO datapoints that would be selected without sampling
-                    sql_stmt += f" AND abs(RANDOM()%100) < {max_datapoints/datapoint_count*100}"
+                    all_filters.append(f"random()*100 < {max_datapoints/datapoint_count*100} LIMIT {max_datapoints}")
+
+        if ids:
+            # If ids are passed, we ignore the filter and only select the ids
+            all_filters = [f"id IN ({','.join([str(id) for id in ids])})"]
+
+        if all_filters:
+            sql_stmt += " WHERE " + " AND ".join(all_filters)
+
         with create_session() as session:
             return pd.read_sql(sql_stmt, session.get_bind(), index_col="id"), subsample_flag
 
@@ -267,11 +285,10 @@ class ReactionCIMEDBO:
         with create_session() as session:
             return pd.read_sql(sql_stmt, session.get_bind())
 
-    def get_no_points_from_table(self, id):
-        # TODO: This is very bad, as it enables SQL injections! https://xkcd.com/327/
+    def get_no_points_from_table(self, id) -> int:
         sql_stmt = f"SELECT COUNT(*) as count FROM {self.get_table_name(id)}"
         with create_session() as session:
-            return pd.read_sql(sql_stmt, session.get_bind())
+            return int(pd.read_sql(sql_stmt, session.get_bind())["count"][0])
 
     def drop_table(self, id):
         with create_session() as session:

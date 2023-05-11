@@ -198,15 +198,16 @@ export class ReactionCIMEBackend {
     window.open(path);
   };
 
-  public project_dataset = async (filename: string, params: object, selected_feature_info: object, controller?) => {
-    const formData = new FormData();
-    formData.append('filename', filename);
-    formData.append('params', JSON.stringify(params));
-    formData.append('selected_feature_info', JSON.stringify(selected_feature_info));
+  public project_dataset = async (filename: string, params: object, selected_feature_info: object, ids: string[], controller?) => {
     return fetch(`${this.baseUrl}/v2/project_dataset_async`, {
       ...this.fetchParams,
       method: 'POST',
-      body: formData,
+      body: JSON.stringify({
+        filename,
+        params: JSON.stringify(params),
+        selected_feature_info: JSON.stringify(selected_feature_info),
+        ids,
+      }),
       signal: controller?.signal,
     })
       .then(this.handleErrors)

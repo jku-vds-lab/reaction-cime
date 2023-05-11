@@ -13,6 +13,7 @@ from concurrent.futures import ThreadPoolExecutor
 from io import BytesIO, StringIO
 from pathlib import Path
 from threading import Event
+from typing import Any
 
 import gower
 import hdbscan
@@ -27,6 +28,7 @@ from openTSNE import TSNE
 from rdkit import Chem
 from rdkit.Chem import Draw
 from sklearn.decomposition import PCA
+from starlette.background import BackgroundTask
 from visyn_core import manager
 from visyn_core.middleware.request_context_plugin import get_request
 
@@ -46,6 +48,7 @@ from .helper_functions import (
     smiles_to_base64,
 )
 from .ReactionCIMEDBO import ReactionCIMEDBO
+from .utils import chunkify, get_size
 
 project_executor = ThreadPoolExecutor(1)
 cancel_events = []
@@ -102,7 +105,7 @@ def handle_dataset_cache(id, cols=None, x_channel="x", y_channel="y"):
     if cols is None:
         cols = []
     all_cols = list(set(cols + [x_channel, y_channel, "x", "y"]))
-    return get_cime_dbo().get_dataframe_from_table(id, columns=all_cols)
+    return next(get_cime_dbo().get_dataframe_from_table(id, columns=all_cols))
 
 
 # region --------------- process dataset ------------------
@@ -213,15 +216,14 @@ def upload_csv():
 
 @reaction_cime_api.route("/get_no_datapoints/<id>", methods=["GET"])
 def get_no_datapoints(id):
-    count = get_cime_dbo().get_no_points_from_table(id)["count"][0]
-    return {"no_datapoints": int(count)}
+    return {"no_datapoints": get_cime_dbo().get_no_points_from_table(id)}
 
 
 # endregion
 
 # region --------------- Points of Interest ------------------
 
-MAX_POINTS = 10000
+MAX_POINTS = 10_000
 
 # --- save
 
@@ -429,7 +431,7 @@ def get_poi_constraints_filter(id, df_constraints: pd.DataFrame | None = None, d
     if df_exceptions is None:
         df_exceptions = load_poi_exceptions(id)
 
-    cols = list(set(df_constraints["col"]))
+    cols = list(set(df_constraints["col"] if "col" in df_constraints.columns else []))
     col_filters = []
     for col in cols:
         df_constraints_col = df_constraints[df_constraints["col"] == col]
@@ -461,21 +463,23 @@ def get_poi_constraints_filter(id, df_constraints: pd.DataFrame | None = None, d
 def get_points_of_interest(id):
     start_time = time.time()
 
-    poi_domain, is_subsample = get_poi_df_from_db(id)  # TODO: tell front-end that it is subsampled
+    df, is_subsample = get_poi_df_from_db(id)  # TODO: tell front-end that it is subsampled
 
-    if len(poi_domain) > 0:
-        poi_domain = preprocess_dataset(poi_domain)
+    if len(df) > 0:
+        df = preprocess_dataset(df)
 
     csv_buffer = StringIO()
-    poi_domain.to_csv(csv_buffer, index=False)
+    df.to_csv(csv_buffer, index=False)
 
     delta_time = time.time() - start_time
     _log.info("--- took %i min %f s to load file %s" % (delta_time / 60, delta_time % 60, id))
     return csv_buffer.getvalue()
 
 
-def get_poi_df_from_db(id):
-    poi_domain, is_subsample = get_cime_dbo().get_dataframe_from_table_filter(id, get_poi_constraints_filter(id), max_datapoints=MAX_POINTS)
+def get_poi_df_from_db(id, ids: list[int] | None = None):
+    poi_domain, is_subsample = get_cime_dbo().get_dataframe_from_table_filter(
+        id, get_poi_constraints_filter(id), ids=ids, max_datapoints=-1 if ids else MAX_POINTS
+    )
     return poi_domain, is_subsample
 
 
@@ -769,80 +773,6 @@ def get_density_of_hex(id, col_name, x_channel="x", y_channel="y"):
 # endregion
 
 # region --------------- projection ------------------
-
-
-# depricated
-@reaction_cime_api.route("/project_dataset", methods=["OPTIONS", "POST"])
-def project_dataset():
-    id = request.form.get("filename")
-    params = json.loads(request.form["params"])
-    selected_feature_info = json.loads(request.form["selected_feature_info"])
-    proj_df = get_cime_dbo().get_dataframe_from_table(id, columns=list(selected_feature_info.keys()))
-
-    # TODO: if params["useSelection"]: only project selected points --> do this in front-end? do this at all?
-
-    # handle custom initialization of coordinates
-    initialization = None
-    if params["seeded"]:  # take custom seed from current coordinates
-        initialization = get_poi_df_from_db(id)[0][["x", "y"]].values
-
-    # rescale numerical values and encode categorical values
-    # TODO: currently weighted features is only used with gowers distance -> implement for all
-    proj_df, categorical_features, feature_weights = rescale_and_encode(proj_df, params, selected_feature_info)
-
-    # handle custom metrics
-    metric = params["distanceMetric"]
-    if metric is None or metric == "":
-        metric = "euclidean"
-    if metric == "gower":  # we precompute the similarity matrix with the gower metric
-        metric = "precomputed"
-        normalized_values = gower.gower_matrix(proj_df, cat_features=categorical_features, weight=feature_weights)
-    else:  # otherwise, the similarity can be done by a pre-configured function and we just hand over the values
-        normalized_values = proj_df.values
-
-    # project the data
-    if params["embedding_method"] == "umap":
-        if initialization is None:
-            initialization = "spectral"
-
-        proj = umap.UMAP(
-            n_neighbors=int(params["nNeighbors"]),
-            n_components=2,
-            metric=metric,
-            n_epochs=int(params["iterations"]),
-            init=initialization,  # type: ignore
-            verbose=True,
-            low_memory=True,
-        )  # output_metric="euclidean" --> ? learning_rate=float(params["learningRate"]) --> if we have user input for this, we would need "auto" as an option
-        proj_data = proj.fit_transform(normalized_values)
-    elif params["embedding_method"] == "tsne":
-        if initialization is None:
-            initialization = "pca"
-        proj = TSNE(
-            2,
-            metric=metric,
-            perplexity=int(params["perplexity"]),
-            n_iter=int(params["iterations"]),
-            initialization=initialization,  # type: ignore
-            verbose=True,
-        )  # , learning_rate=float(params["learningRate"]) --> if we have user input for this, we would need "auto" as an option
-        proj_data = proj.fit(normalized_values)
-    else:
-        _log.info("--- defaulting to PCA embedding")
-        pca = PCA(n_components=2)
-        proj_data = pca.fit_transform(normalized_values)
-
-    # update the coordinates in the dataset
-    start_time = time.time()
-    get_cime_dbo().update_row_bulk(id, proj_df.index, {"x": proj_data[:, 0], "y": proj_data[:, 1]})  # type: ignore
-    delta_time = time.time() - start_time
-    _log.info("--- took %i min %f s to update database" % (delta_time / 60, delta_time % 60))
-
-    _log.info("return poi positions")
-    df = get_poi_df_from_db(id)[0][["x", "y"]].to_dict("records")
-    return {"done": "true", "embedding": df}
-
-
 @reaction_cime_api.route("/terminate_projection_thread/<id>", methods=["GET"])
 def terminate_projection_thread(id):
     app = get_app()
@@ -856,7 +786,7 @@ class ProjectionThread(threading.Thread):
         threading.Thread.__init__(self)
         self.id = id
         self.params = params
-        self.selected_feature_info = selected_feature_info
+        self.selected_feature_info: dict[str, Any] = selected_feature_info
         self.cime_dbo: ReactionCIMEDBO = cime_dbo
         self.poi_mask = poi_mask
 
@@ -868,79 +798,202 @@ class ProjectionThread(threading.Thread):
     def run(self):
         try:
             if self.params["embedding_method"] == "rmOverlap":
-                proj_data, proj_df = self.run_rm_overlap()
+                proj_data, index = self.run_rm_overlap()
             else:
-                metric, normalized_values, proj_df, initialization = self.preprocess_dataset()
+                metric, normalized_values, index, initialization = self.preprocess_dataset()
 
-                self.msg = "calc embedding..."
-                # project the data
-                # --- umap
-                if self.params["embedding_method"] == "umap":
-                    proj_data = self.run_umap(metric, normalized_values, initialization)
-
-                # --- tsne
-                elif self.params["embedding_method"] == "tsne":
-                    proj_data = self.run_tsne(metric, normalized_values, initialization)
-
-                # --- pca
+                # If we are already at two dimensions, return that
+                if normalized_values.shape[1] == 2:
+                    self.log("PCA already returned 2D, no further projection needed")
+                    proj_data = normalized_values
                 else:
-                    _log.info("--- defaulting to PCA embedding")
-                    pca = PCA(n_components=2)
-                    proj_data = pca.fit_transform(normalized_values)
+                    self.log("Calculating projection...")
+                    # project the data
+                    if self.params["embedding_method"] == "umap":
+                        proj_data = self.run_umap(metric, normalized_values, initialization)
+
+                    elif self.params["embedding_method"] == "tsne":
+                        proj_data = self.run_tsne(metric, normalized_values, initialization)
+
+                    else:
+                        _log.info("--- defaulting to PCA embedding")
+                        pca = PCA(n_components=2)
+                        proj_data = pca.fit_transform(normalized_values)
 
             self.current_step = self.params["iterations"]
-            self.msg = "save embedding..."
+            self.log("Save projection...")
             # update the coordinates in the dataset
             start_time = time.time()
-            self.cime_dbo.update_row_bulk(self.id, proj_df.index, {"x": proj_data[:, 0], "y": proj_data[:, 1]})  # type: ignore
-            delta_time = time.time() - start_time
-            _log.info("--- took %i min %f s to update database" % (delta_time / 60, delta_time % 60))
+            self.cime_dbo.update_row_bulk(self.id, index, {"x": proj_data[:, 0], "y": proj_data[:, 1]})  # type: ignore
+            time.time() - start_time
+            self.log("Finished!")
 
-            self.msg = "finished!"
-
-        except Exception:
-            self.msg = "error during projection"
-            logging.getLogger().exception("Error during projection")
+        except Exception as e:
+            self.log(f"Error during projection: {str(e)}")
+            _log.exception("Error during projection")
 
         finally:
             self.done = True
 
-    def preprocess_dataset(self):
-        self.msg = "load dataset..."
-        proj_df = self.cime_dbo.get_dataframe_from_table(self.id, columns=list(self.selected_feature_info.keys()))
+    def log(self, msg: str):
+        self.msg = msg
+        _log.info(msg)
 
-        self.msg = "seeding..."
+    def preprocess_dataset(self):
+        columns = list(self.selected_feature_info.keys())
+
+        if len(columns) <= 1:
+            raise Exception("At least two columns are required")
+
+        row_count = self.cime_dbo.get_no_points_from_table(self.id)
+        col_count = len(self.selected_feature_info.keys())
+
+        first_row = next(self.cime_dbo.get_dataframe_from_table(self.id, columns=columns, chunksize=1))
+        row_size_in_mb = get_size(first_row.values) / 1e6
+        size_in_mb_required = row_count * row_size_in_mb
+
+        max_memory_used_for_dataset = get_settings().max_memory_usage_for_projections
+        max_memory_used_for_projection = max_memory_used_for_dataset // 5
+        self.log(f"Dataset {self.id} has {row_count} points.")
+
+        self.msg = "Seeding..."
         # handle custom initialization of coordinates
         initialization = None
-        if self.params["seeded"]:  # take custom seed from current coordinates
-            # initialization = get_poi_df_from_db(self.id, self.cime_dbo)[["x","y"]].values # does this make sense?
-            initialization = proj_df[["x", "y"]].values
+        if self.params["seeded"]:
+            initialization = next(self.cime_dbo.get_dataframe_from_table(self.id, columns=["x", "y"]))[["x", "y"]].values
 
-        # TODO: if params["useSelection"]: only project selected points --> do this in front-end? do this at all? --> for now, remove this option in front-end
-
-        self.msg = "rescale and encode..."
-        # rescale numerical values and encode categorical values
-        proj_df, categorical_features, feature_weights = rescale_and_encode(proj_df, self.params, self.selected_feature_info)
-
-        self.msg = "calc metric..."
         # handle custom metrics
         metric = self.params["distanceMetric"]
         if metric is None or metric == "":
             metric = "euclidean"
 
-        if metric == "gower":  # we precompute the similarity matrix with the gower metric
-            metric = "precomputed"
-            normalized_values = gower.gower_matrix(proj_df, cat_features=categorical_features, weight=feature_weights)
+        if metric == "gower" and row_count >= 10_000:
+            raise Exception("Gower metric is not supported for datasets with more than 10.000 points")
+
+        self.log(f"Dataset requires ~{int(size_in_mb_required)} MB of memory.")
+
+        # We can only load a certain number of columns at once, because we need to keep the memory usage low
+        cols_to_load = max((int(max_memory_used_for_dataset / size_in_mb_required * col_count), 1))
+
+        self.log(f"Starting preprocessing dataset {self.id} with {cols_to_load} columns at once...")
+        featurizers = {}
+        weights = []
+        categorical_features = []
+        # First, load every column individually to determine the ranges, categories, ...
+        for i, col_chunks in enumerate(chunkify(self.selected_feature_info.keys(), cols_to_load)):
+            column_df = next(self.cime_dbo.get_dataframe_from_table(self.id, columns=list(col_chunks)))
+            self.log(f"Preprocessing columns {i * cols_to_load} to {min(((i + 1) * cols_to_load, col_count))}...")
+            for col_name in col_chunks:
+                # rescale numerical values and encode categorical values
+                categorical, feature_weights, featurizer = rescale_and_encode(
+                    column_df, self.params, col_name, self.selected_feature_info[col_name], log=self.log
+                )
+
+                featurizers[col_name] = featurizer
+                weights += feature_weights
+                categorical_features += [categorical]
+
+        # We want the number of PCA components to be as low as possible, but still high enough to
+        # capture the variance of the data. We vary the number of components such that it fits in memory.
+        n_pca_components = (
+            2
+            if self.params["embedding_method"] == "pca"
+            else min((max((int(max_memory_used_for_projection / (row_count * 8 / 1e6)), 2)), len(weights)))
+        )
+
+        # Compute the number of rows that we can load at once
+        chunksize = max((int(max_memory_used_for_dataset / size_in_mb_required * row_count), 100))
+
+        if metric != "gower" and (n_pca_components == 2 or n_pca_components <= len(weights) / 2):
+            self.log(f"Using {n_pca_components} PCA components to fit in memory")
+
+            # Run incremental PCA to further reduce the dimensions of normalized_values
+            from sklearn.decomposition import IncrementalPCA
+
+            ipca = IncrementalPCA(n_components=n_pca_components)
+
+            # Now, load the entire dataset in chunks and featurize it
+            for i, chunk_df in enumerate(self.cime_dbo.get_dataframe_from_table(self.id, columns=columns, chunksize=chunksize)):
+                self.log(f"Featurizing rows {i * chunksize} to {min(((i +1 ) * chunksize, row_count))}...")
+                for col_name in self.selected_feature_info:
+                    featurizers[col_name](chunk_df, col_name)
+
+                # TODO: Distance metrics
+                normalized_values = chunk_df.values
+
+                try:
+                    self.log(f"Fitting incremental PCA for rows {i * chunksize} to {min(((i +1 ) * chunksize, row_count))}...")
+                    ipca.partial_fit(normalized_values)
+                except Exception:
+                    _log.exception("Error computing incremental PCA")
+
+            # self.log(f"PCA fit with explained variance {ipca.explained_variance_ratio_.sum()}")
+
+            # Create new empty array to store the PCA-transformed values
+            pca_normalized_values = np.zeros((0, n_pca_components))
+
+            index = []
+            # now that the PCA is initialized, transform the data in chunks to avoid memory issues
+            for i, chunk_df in enumerate(self.cime_dbo.get_dataframe_from_table(self.id, columns=columns, chunksize=chunksize)):
+                self.log(f"Featurizing rows {i * chunksize} to {min(((i +1 ) * chunksize, row_count))}...")
+                for col_name in self.selected_feature_info:
+                    featurizers[col_name](chunk_df, col_name)
+
+                # TODO: Distance metrics
+                normalized_values = chunk_df.values
+
+                index += chunk_df.index.tolist()
+                # Transform the data in chunks and append to the new array
+                self.log(f"PCA transform rows {i * chunksize} to {min(((i +1 ) * chunksize, row_count))}...")
+                pca_normalized_values = (
+                    np.concatenate(
+                        (pca_normalized_values, ipca.transform(normalized_values)),
+                        axis=0,
+                    )
+                    if len(normalized_values) > 0
+                    else pca_normalized_values
+                )
+
+            return "euclidean", pca_normalized_values, index, initialization
+        elif metric == "gower":
+            df = next(self.cime_dbo.get_dataframe_from_table(self.id, columns=columns))
+
+            self.log("Featurizing entire dataset...")
+            for col_name in self.selected_feature_info:
+                featurizers[col_name](df, col_name)
+
+            self.log("Computing gower matrix...")
+            normalized_values = gower.gower_matrix(df, cat_features=np.array(categorical_features), weight=np.array(weights))
 
             if initialization == "pca" and self.params["embedding_method"] == "tsne":
-                _log.info("--- calculating PCA for tSNE with Gowers distance")
+                self.log("--- calculating PCA for tSNE with Gowers distance")
                 pca = PCA(n_components=2)
-                initialization = pca.fit_transform(proj_df.values)
+                initialization = pca.fit_transform(normalized_values)
 
-        else:  # otherwise, the similarity can be done by a pre-configured function and we just hand over the values
-            normalized_values = proj_df.values
+            return "precomputed", normalized_values, df.index, initialization
+        else:
+            self.log("Returning original data, because it fits in memory for downstream projections.")
+            index = []
+            # Create new empty array to store the featurized values
+            normalized_values = np.zeros((0, len(weights)))
+            # now that the PCA is initialized, transform the data in chunks to avoid memory issues
+            for i, chunk_df in enumerate(self.cime_dbo.get_dataframe_from_table(self.id, columns=columns, chunksize=chunksize)):
+                if len(chunk_df.index) == 0:
+                    break
 
-        return metric, normalized_values, proj_df, initialization
+                self.log(f"Featurizing rows {i * chunksize} to {min(((i +1 ) * chunksize, row_count))}...")
+                for col_name in self.selected_feature_info:
+                    featurizers[col_name](chunk_df, col_name)
+
+                index += chunk_df.index.tolist()
+
+                # Transform the data in chunks and append to the new array
+                normalized_values = np.concatenate(
+                    (normalized_values, chunk_df.values),
+                    axis=0,
+                )
+
+            return metric, normalized_values, index, initialization
 
     def run_tsne(self, metric, normalized_values, initialization):
         # https://github.com/pavlin-policar/openTSNE/blob/master/openTSNE/callbacks.py
@@ -953,7 +1006,7 @@ class ProjectionThread(threading.Thread):
 
             def optimization_about_to_start(self):
                 """This is called at the beginning of the optimization procedure."""
-                _log.info("start optimization")
+                self.parent.log("Starting optimization")
                 pass
 
             def __call__(self, iteration, error, embedding):  # error is current KL divergence of the given embedding
@@ -961,8 +1014,6 @@ class ProjectionThread(threading.Thread):
                 self.parent.current_step = iteration
                 if self.poi_mask is not None:
                     self.parent.emb = [{"x": row[0], "y": row[1]} for row in embedding[self.poi_mask]]
-
-        #         return True # with this optimization will be interrupted
 
         if initialization is None:
             initialization = "pca"
@@ -987,7 +1038,7 @@ class ProjectionThread(threading.Thread):
         # https://pypi.org/project/tqdm/#parameters
         # use TQDM to update steps for front-end
         class CustomTQDM:
-            def __init__(self, parent):
+            def __init__(self, parent: ProjectionThread):
                 self.parent = parent
 
             def write(self, str):
@@ -995,7 +1046,7 @@ class ProjectionThread(threading.Thread):
                     int(str)  # if it is not possible to parse it as int, we reached the end?
                     self.parent.current_step = str
                 except ValueError:
-                    _log.info(str)
+                    self.parent.log(str)
 
             def flush(self):
                 pass
@@ -1014,10 +1065,10 @@ class ProjectionThread(threading.Thread):
         return proj_data
 
     def run_rm_overlap(self):
-        self.msg = "load dataset..."
-        proj_df = self.cime_dbo.get_dataframe_from_table(self.id, columns=["x", "y"])
+        self.log("Load dataset...")
+        proj_df = next(self.cime_dbo.get_dataframe_from_table(self.id, columns=["x", "y"]))
 
-        self.msg = "calc embedding..."
+        self.log("Calculate overlap...")
         from .dgrid import DGrid
 
         # TODO: make parameters dynamic
@@ -1040,8 +1091,8 @@ class ProjectionThread(threading.Thread):
             proj_df[["x", "y"]].values
         )
         delta_time = time.time() - start_time
-        _log.info("--- took %i min %f s to calculate remove overlap" % (delta_time / 60, delta_time % 60))
-        return proj_data, proj_df
+        self.log("--- took %i min %f s to calculate remove overlap" % (delta_time / 60, delta_time % 60))
+        return proj_data, proj_df.index
 
     def get_id(self):
 
@@ -1057,33 +1108,40 @@ class ProjectionThread(threading.Thread):
         res = ctypes.pythonapi.PyThreadState_SetAsyncExc(thread_id, ctypes.py_object(SystemExit))
         if res > 1:
             ctypes.pythonapi.PyThreadState_SetAsyncExc(thread_id, 0)
-            _log.info("Exception raise failure")
+            self.log("Exception raise failure")
 
         self.done = True
-        self.msg = "client-side termination"
+        self.log("client-side termination")
 
 
 # different approach could have been with sockets: https://www.shanelynn.ie/asynchronous-updates-to-a-webpage-with-flask-and-socket-io/
 @router.api_route("/project_dataset_async", methods=["POST"])
 async def project_dataset_async_v2(request: Request):
     # TODO: Use FastAPI/Pydantic models for validation instead of directly using the rqeuest...
-    form_data = await request.form()
+    form_data = await request.json()
     id: str = form_data["filename"]  # type: ignore
     params = json.loads(form_data["params"])  # type: ignore
     selected_feature_info = json.loads(form_data["selected_feature_info"])  # type: ignore
+    ids = form_data["ids"]  # type: ignore
     cime_dbo = get_cime_dbo()
 
     app = get_app()
     setattr(app.state, f"TERMINATE_PROJECTION_{id}", False)
 
+    async def stop_embedding():
+        setattr(app.state, f"TERMINATE_PROJECTION_{id}", True)
+
     async def calculate_embeddings():
         proj = ProjectionThread(id, params, selected_feature_info, cime_dbo, get_poi_mask(id, cime_dbo)["mask"])
         proj.start()
         while True:
-            await asyncio.sleep(2)
+            await asyncio.sleep(1)
             terminate = False
             with contextlib.suppress(KeyError):
-                terminate = getattr(app.state, f"TERMINATE_PROJECTION_{id}")
+                # TODO: Check if this actually works
+                terminate = getattr(app.state, f"TERMINATE_PROJECTION_{id}", False) or getattr(
+                    app.state, "TERMINATE_ALL_PROJECTIONS", False
+                )
 
             # https://stackoverflow.com/questions/41146144/how-to-fix-assertionerror-value-must-be-bytes-error-in-python2-7-with-apache
             yield json.dumps({"step": proj.current_step, "msg": proj.msg, "emb": proj.emb}).encode("utf-8")
@@ -1092,11 +1150,16 @@ async def project_dataset_async_v2(request: Request):
                 proj.join()
             if proj.done:  # proj.current_step >= params["iterations"] or proj.interrupt:
                 await asyncio.sleep(1)
-                df = get_poi_df_from_db(id)[0][["x", "y"]].to_dict("records")
+                df = get_poi_df_from_db(id, ids)[0].loc[ids][["x", "y"]].to_dict("records")
                 yield json.dumps({"step": None, "msg": None, "emb": df}).encode("utf-8")
                 break
 
-    return StreamingResponse(calculate_embeddings())
+    return StreamingResponse(
+        calculate_embeddings(),
+        media_type="application/x-ndjson",
+        headers={"X-Accel-Buffering": "no"},
+        background=BackgroundTask(stop_embedding),
+    )
 
 
 # endregion
@@ -1205,7 +1268,7 @@ def segmentation():
 
         clusterer.fit_predict(x)
 
-        # _log.info(clusterer.labels_)
+        # self.log(clusterer.labels_)
         # clusterer.probabilities_ = np.array(len(x))
 
         return {"result": [int(label) for label in clusterer.labels_]}

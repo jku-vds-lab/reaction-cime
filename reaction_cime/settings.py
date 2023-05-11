@@ -9,6 +9,11 @@ class ReactionCimeSettings(BaseModel):
     # statement_timeout: Any = None
     bundles_dir: str | None = None
     uploaded_files_path: Path = Path("/tmp/uploaded_files")
+    max_memory_usage_for_projections: int = 50
+    """
+    Limit of dataset size in MB which we use to compute chunk sizes.
+    The real memory used is higher than that, as we allocate new arrays, ...
+    """
     # migration: Dict = {"autoUpgrade": True}
 
 

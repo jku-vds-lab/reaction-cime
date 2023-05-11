@@ -16,11 +16,11 @@ ENV REACTION_CIME__BUNDLES_DIR /app/bundles
 # Disable the login and always use a anonymous user
 ENV VISYN_CORE__SECURITY__STORE__NO_SECURITY_STORE__ENABLE true
 ENV VISYN_CORE__SECURITY__STORE__NO_SECURITY_STORE__USER anonymous
+# Add a clientConfig indicating a public version
+ENV VISYN_CORE__CLIENT_CONFIG '{"publicVersion": true}'
 
 # copy the pre-built front-end --> comment for development because we mount the volume anyway
 COPY bundles/ /app/bundles/
-# Add a clientConfig.json indicating a public version
-RUN echo '{"publicVersion": false}' >> /app/bundles/clientConfig.json
 
 # expose default port
 EXPOSE 9000
