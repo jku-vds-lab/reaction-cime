@@ -824,9 +824,7 @@ class ProjectionThread(threading.Thread):
             self.current_step = self.params["iterations"]
             self.log("Save projection...")
             # update the coordinates in the dataset
-            start_time = time.time()
             self.cime_dbo.update_row_bulk(self.id, index, {"x": proj_data[:, 0], "y": proj_data[:, 1]})  # type: ignore
-            time.time() - start_time
             self.log("Finished!")
 
         except Exception as e:
@@ -1119,9 +1117,14 @@ class GetCoordinatesBody(BaseModel):
     ids: list[int]
 
 
+class GetCoordinatesResponseModel(BaseModel):
+    x: float
+    y: float
+
+
 @router.api_route("/get_coordinates/{id}", methods=["POST"])
-async def get_coordinates(id: str, data: GetCoordinatesBody):
-    return get_poi_df_from_db(id, data.ids)[0].loc[data.ids][["x", "y"]].to_dict("records")
+async def get_coordinates(id: str, data: GetCoordinatesBody) -> list[GetCoordinatesResponseModel]:
+    return get_poi_df_from_db(id, data.ids)[0].loc[data.ids][["x", "y"]].to_dict("records")  # type: ignore
 
 
 # different approach could have been with sockets: https://www.shanelynn.ie/asynchronous-updates-to-a-webpage-with-flask-and-socket-io/
