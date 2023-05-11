@@ -1,5 +1,5 @@
 import { createAsyncThunk, createEntityAdapter, createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { ISecureItem } from 'visyn_core';
+import { ISecureItem } from 'visyn_core/security';
 import { ReactionCIMEBackendFromEnv } from '../Backend/ReactionCIMEBackend';
 
 export type Project = { name: string; id: string; file_status: string } & ISecureItem;
