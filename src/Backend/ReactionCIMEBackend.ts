@@ -38,7 +38,7 @@ export class ReactionCIMEBackend {
     this.cache[key] = value;
   };
 
-  handleErrors = (response) => {
+  handleErrors = (response: Response): Response => {
     if (!response.ok) {
       throw Error(response.statusText);
     }
@@ -198,7 +198,7 @@ export class ReactionCIMEBackend {
     window.open(path);
   };
 
-  public project_dataset = async (filename: string, params: object, selected_feature_info: object, ids: string[], controller?) => {
+  public project_dataset = async (filename: string, params: object, selected_feature_info: object, ids: string[], controller?): Promise<Response> => {
     return fetch(`${this.baseUrl}/v2/project_dataset_async`, {
       ...this.fetchParams,
       method: 'POST',
@@ -214,9 +214,6 @@ export class ReactionCIMEBackend {
       .then((response) => {
         this.resetAggregationCache();
         return response;
-      })
-      .catch((error) => {
-        console.log(error);
       });
   };
 
