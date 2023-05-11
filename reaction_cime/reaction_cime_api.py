@@ -477,7 +477,9 @@ def get_points_of_interest(id):
 
 
 def get_poi_df_from_db(id, ids: list[int] | None = None):
-    poi_domain, is_subsample = get_cime_dbo().get_dataframe_from_table_filter(id, get_poi_constraints_filter(id), ids=ids, max_datapoints=-1 if ids else MAX_POINTS)
+    poi_domain, is_subsample = get_cime_dbo().get_dataframe_from_table_filter(
+        id, get_poi_constraints_filter(id), ids=ids, max_datapoints=-1 if ids else MAX_POINTS
+    )
     return poi_domain, is_subsample
 
 
@@ -1152,7 +1154,12 @@ async def project_dataset_async_v2(request: Request):
                 yield json.dumps({"step": None, "msg": None, "emb": df}).encode("utf-8")
                 break
 
-    return StreamingResponse(calculate_embeddings(), headers={"X-Accel-Buffering": "no"}, background=BackgroundTask(stop_embedding))
+    return StreamingResponse(
+        calculate_embeddings(),
+        media_type="application/x-ndjson",
+        headers={"X-Accel-Buffering": "no"},
+        background=BackgroundTask(stop_embedding),
+    )
 
 
 # endregion

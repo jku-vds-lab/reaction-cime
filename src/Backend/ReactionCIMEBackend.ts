@@ -206,7 +206,7 @@ export class ReactionCIMEBackend {
         filename,
         params: JSON.stringify(params),
         selected_feature_info: JSON.stringify(selected_feature_info),
-        ids
+        ids,
       }),
       signal: controller?.signal,
     })

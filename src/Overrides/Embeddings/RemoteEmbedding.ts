@@ -10,7 +10,14 @@ export class RemoteEmbedding {
 
   private backend: ReactionCIMEBackend;
 
-  constructor(backendUrl: string, protected dataset: string, protected params: object, protected embedding: IBaseProjection, protected selected_feature_info: object, protected ids: string[]) {
+  constructor(
+    backendUrl: string,
+    protected dataset: string,
+    protected params: object,
+    protected embedding: IBaseProjection,
+    protected selected_feature_info: object,
+    protected ids: string[],
+  ) {
     this.abort_controller = new AbortController();
     this.backend = new ReactionCIMEBackend(backendUrl, {});
   }
@@ -33,8 +40,12 @@ export class RemoteEmbedding {
       } else if (ss[i] === '}' && (i < 2 || ss.slice(i - 2, i) !== '\\"')) {
         open--;
         if (open === 0) {
-          res.push(JSON.parse(ss.substring(start, i + 1)));
-          start = i + 1;
+          try {
+            res.push(JSON.parse(ss.substring(start, i + 1)));
+            start = i + 1;
+          } catch (e) {
+            // ignore
+          }
         }
       }
     }

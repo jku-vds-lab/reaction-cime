@@ -42,23 +42,27 @@ export function RangeFilter({ col, value, setValue, remove, dataset }: Props) {
         <Typography id={`filter_${col}`} marginBottom="-5px" style={{ textOverflow: 'ellipsis', overflow: 'hidden' }}>
           {col}
         </Typography>
-        {min === max ? <>Only contains value {min}</> : <Slider
-          getAriaLabel={() => col}
-          value={value}
-          onChange={(event, newValue) => {
-            setValue(Array.isArray(newValue) ? newValue : [newValue, newValue]);
-          }}
-          valueLabelDisplay="auto"
-          aria-labelledby={`filter_${col}`}
-          min={min}
-          max={max}
-          step={max == null || min == null || Math.floor(max) === max || Math.floor(min) === min ? 1 : (max - min) / 100} // use step of 1 for natural numbers;
-          valueLabelFormat={(newValue) => formatLabel(newValue, min, max)}
-          marks={[
-            { value: min || 0, label: formatLabel(min || 0, min, max) },
-            { value: max || 1, label: formatLabel(max || 1, min, max) },
-          ]}
-        />}
+        {min === max ? (
+          <>Only contains value {min}</>
+        ) : (
+          <Slider
+            getAriaLabel={() => col}
+            value={value}
+            onChange={(event, newValue) => {
+              setValue(Array.isArray(newValue) ? newValue : [newValue, newValue]);
+            }}
+            valueLabelDisplay="auto"
+            aria-labelledby={`filter_${col}`}
+            min={min}
+            max={max}
+            step={max == null || min == null || Math.floor(max) === max || Math.floor(min) === min ? 1 : (max - min) / 100} // use step of 1 for natural numbers;
+            valueLabelFormat={(newValue) => formatLabel(newValue, min, max)}
+            marks={[
+              { value: min || 0, label: formatLabel(min || 0, min, max) },
+              { value: max || 1, label: formatLabel(max || 1, min, max) },
+            ]}
+          />
+        )}
       </Grid>
     </Grid>
   );
