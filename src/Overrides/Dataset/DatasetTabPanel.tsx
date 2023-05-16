@@ -5,7 +5,7 @@ import { Dataset, IProjection, isEntityId, RootActions, useCancellablePromise, U
 import { connect, ConnectedProps, ReactReduxContext, useDispatch } from 'react-redux';
 import { useState } from 'react';
 import ManageSearchIcon from '@mui/icons-material/ManageSearch';
-import { useVisynAppContext } from 'visyn_core';
+import { useVisynAppContext } from 'visyn_core/app';
 import { DatasetDrop } from './DatasetDrop';
 import { AppState, CIME4RViewActions } from '../../State/Store';
 import { UploadedFiles } from './UploadedFiles';
