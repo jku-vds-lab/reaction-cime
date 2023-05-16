@@ -15,10 +15,11 @@ import {
 import { connect, ConnectedProps, useDispatch } from 'react-redux';
 import HelpIcon from '@mui/icons-material/Help';
 import { IconButton, Tooltip } from '@mui/material';
-import { useVisynAppContext } from 'visyn_core';
+import { useVisynAppContext } from 'visyn_core/app';
 import { Anchor, useMantineTheme } from '@mantine/core';
 import { VisynApp, VisynHeader } from 'visyn_core/app';
 import { BrowserRouter, useSearchParams } from 'react-router-dom';
+import { IClientConfig } from 'visyn_core/base';
 import { LineUpContext } from './LineUpContext';
 import { LineUpTabPanel } from './Overrides/LineUpTabPanel';
 import { AppState, CIME4RViewActions, createCIMERootReducer } from './State/Store';
@@ -244,64 +245,64 @@ export function ReactionCIMEApp() {
   const theme = useMantineTheme();
 
   return (
-    <VisynApp
-      header={
-        clientConfig?.publicVersion ? (
-          // eslint-disable-next-line react/jsx-no-useless-fragment
-          <></>
-        ) : (
-          <VisynHeader
-            backgroundColor={theme.colors.dark[theme.fn.primaryShade()]}
-            components={{
-              aboutAppModal: {
-                content: <BuildInfoContent />,
-                customerLogo: <BuildInfoLogos />,
-              },
-              beforeRight: (
-                <>
-                  <Tooltip title="Opens the documentation page for CIME4R">
-                    <IconButton color="primary" size="small" href="https://github.com/jku-vds-lab/reaction-cime#documentation-cime4r" target="_blank">
-                      <HelpIcon fontSize="inherit" />
-                    </IconButton>
-                  </Tooltip>
-                  <Anchor
-                    href="https://www.bayer.com/"
-                    rel="noreferrer"
-                    target="_blank"
-                    sx={{
-                      // Center the image
-                      display: 'flex',
-                      alignItems: 'center',
-                    }}
-                  >
-                    <img src={bayerLogo} alt="Bayer logo" style={{ height: '32px', transform: 'scale(1.1)' }} />
-                  </Anchor>
-                  <Anchor
-                    href="https://jku-vds-lab.at/"
-                    rel="noreferrer"
-                    target="_blank"
-                    sx={{
-                      // Center the image
-                      display: 'flex',
-                      alignItems: 'center',
-                    }}
-                  >
-                    <img src={vdsLogo} alt="JKU VDS Lab logo" style={{ height: '24px' }} />
-                  </Anchor>
-                </>
-              ),
-            }}
-          />
-        )
-      }
-    >
-      {user ? (
-        <PSEContextProvider context={context}>
+    <PSEContextProvider context={context}>
+      <VisynApp
+        header={
+          clientConfig?.publicVersion ? (
+            // eslint-disable-next-line react/jsx-no-useless-fragment
+            <></>
+          ) : (
+            <VisynHeader
+              backgroundColor={theme.colors.dark[theme.fn.primaryShade()]}
+              components={{
+                aboutAppModal: {
+                  content: <BuildInfoContent />,
+                  customerLogo: <BuildInfoLogos />,
+                },
+                beforeRight: (
+                  <>
+                    <Tooltip title="Opens the documentation page for CIME4R">
+                      <IconButton color="primary" size="small" href="https://github.com/jku-vds-lab/reaction-cime#documentation-cime4r" target="_blank">
+                        <HelpIcon fontSize="inherit" />
+                      </IconButton>
+                    </Tooltip>
+                    <Anchor
+                      href="https://www.bayer.com/"
+                      rel="noreferrer"
+                      target="_blank"
+                      sx={{
+                        // Center the image
+                        display: 'flex',
+                        alignItems: 'center',
+                      }}
+                    >
+                      <img src={bayerLogo} alt="Bayer logo" style={{ height: '32px', transform: 'scale(1.1)' }} />
+                    </Anchor>
+                    <Anchor
+                      href="https://jku-vds-lab.at/"
+                      rel="noreferrer"
+                      target="_blank"
+                      sx={{
+                        // Center the image
+                        display: 'flex',
+                        alignItems: 'center',
+                      }}
+                    >
+                      <img src={vdsLogo} alt="JKU VDS Lab logo" style={{ height: '24px' }} />
+                    </Anchor>
+                  </>
+                ),
+              }}
+            />
+          )
+        }
+      >
+        {user ? (
           <BrowserRouter>
             <ApplicationWrapper />
           </BrowserRouter>
-        </PSEContextProvider>
-      ) : null}
-    </VisynApp>
+        ) : null}
+      </VisynApp>
+    </PSEContextProvider>
   );
 }

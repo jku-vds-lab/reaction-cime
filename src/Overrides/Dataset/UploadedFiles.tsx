@@ -20,7 +20,8 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import { useCancellablePromise, usePSESelector } from 'projection-space-explorer';
 import React, { CSSProperties } from 'react';
 import RefreshIcon from '@mui/icons-material/Refresh';
-import { userSession, useVisynAppContext } from 'visyn_core';
+import { useVisynAppContext } from 'visyn_core/app';
+import { userSession } from 'visyn_core/security';
 import { useDispatch, useSelector } from 'react-redux';
 
 import { AppState } from '../../State/Store';
@@ -136,7 +137,7 @@ export function UploadedFiles({ onChange, refresh }) {
                   <ListItemButton
                     style={{ width: '100%' }}
                     key={file.id}
-                    disabled={file.file_status.startsWith('Error')}
+                    disabled={file.file_status.startsWith('Error') || file.file_status.startsWith('Processing')}
                     data-cy="uploaded-data-list-item"
                     href={`/?project=${file.id}`}
                     component="a"

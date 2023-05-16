@@ -45,7 +45,7 @@ export function CategoryFilter({ col, value, setValue, remove, dataset }: Props)
               <Tooltip placement="right" title={<Typography variant="subtitle2">{val}</Typography>} key={val}>
                 <ToggleButton
                   // fullWidth
-                  style={{ margin: '1px', textOverflow: 'ellipsis', overflow: 'hidden' }}
+                  style={{ margin: '2px', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', display: 'inherit', maxWidth: 200 }}
                   color="primary"
                   value={val}
                   selected={value.includes(val)}

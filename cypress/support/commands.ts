@@ -46,6 +46,8 @@ Cypress.Commands.add('createProject', (path: string) => {
 
   // eslint-disable-next-line cypress/no-unnecessary-waiting
   cy.wait('@loginMutation');
+
+  cy.byId('uploaded-data-list-item').click({ timeout: 100000 });
 });
 
 Cypress.Commands.add('selectSomething', () => {
