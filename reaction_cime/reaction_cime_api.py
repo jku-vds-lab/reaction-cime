@@ -1157,7 +1157,8 @@ async def project_dataset_async_v2(request: Request):
                 )
 
             # https://stackoverflow.com/questions/41146144/how-to-fix-assertionerror-value-must-be-bytes-error-in-python2-7-with-apache
-            yield json.dumps({"step": proj.current_step, "msg": proj.msg, "emb": proj.emb}).encode("utf-8")
+            # TODO: Passing the proj.emb will cause the frontend to crash, because too much data is set. We now just show the last result to the user.
+            yield json.dumps({"step": proj.current_step, "msg": proj.msg, "emb": None}).encode("utf-8")
             if terminate:
                 proj.raise_exception()
                 proj.join()
