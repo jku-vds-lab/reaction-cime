@@ -17,6 +17,10 @@ on:
   schedule:
     - cron: '15 1 * * *'
 
+permissions:
+  contents: read
+  id-token: write
+
 jobs:
   build:
     uses: datavisyn/github-workflows/.github/workflows/build-node-python.yml@new_deployment
