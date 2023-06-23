@@ -18,6 +18,7 @@ on:
     - cron: '15 1 * * *'
 
 permissions:
+  contents: write
   id-token: write
 
 jobs:
