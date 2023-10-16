@@ -1,0 +1,22 @@
+version: '2.0'
+services:
+  api:
+    image: ghcr.io/jku-vds-lab/reaction-cime:develop
+    ports:
+      - 9000:9000
+    environment:
+      - REACTION_CIME__DBURL=postgresql://admin:admin@db_postgres:5432/db
+      - VISYN_CORE__SECURITY__STORE__NO_SECURITY_STORE__ENABLE=true
+      - VISYN_CORE__SECURITY__STORE__NO_SECURITY_STORE__USER=admin
+  db_postgres:
+    image: postgres:13
+    ports:
+      - 5432:5432
+    volumes:
+      - db_postgres_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
+      POSTGRES_DB: db
+volumes:
+  db_postgres_data:

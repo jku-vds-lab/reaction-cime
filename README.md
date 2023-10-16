@@ -86,12 +86,21 @@ The following describes a list of controls:
 
 There are multiple ways to run CIME4R. Option 1 is the easiest method.
 
-## Option 1 (recommended) - Run CIME4R with Docker
-Once you have Docker installed, you can quickly run the following commands and have CIME4R ready to use.
+## Option 1 (recommended) - Run CIME4R with Docker Compose
+Once you have Docker and Docker Compose installed, you can quickly run the following commands and have CIME4R ready to use.
+
+Simply copy the `docker-compose-demo.yml` from this repository (or checkout this repository) and run: 
+
+```bash
+docker compose -f ./docker-compose-demo.yml up
+```
+
+This will start the server and a corresponding postgres for the datasets. You can the navigate to http://localhost:9000/ and use the application.
+
+## Option 2 - Run CIME4R with Docker
+If you don't want to use Docker Compose, you need to bring your own postgres. Make sure it is installed locally or override it with the env variable (REACTION_CIME__DBURL=postgresql://admin:admin@db_postgres:5432/db).
 
 To **install** the latest version of CIME4R: 
-TODO: ask michael about this
-TODO: add docker for database
 ```bash 
 docker pull ghcr.io/jku-vds-lab/reaction-cime:develop
 docker run -d -p 9000:9000 --name cime4r --detach jkuvdslab/cime
@@ -99,18 +108,18 @@ docker run -d -p 9000:9000 --name cime4r --detach jkuvdslab/cime
 
 To **update** CIME4R:
 ```bash
-docker rm --force cime
+docker rm --force cime4r
 docker pull jkuvdslab/cime
-docker run -d -p 8080:8080 --name cime --detach jkuvdslab/cime
+docker run -d -p 8080:8080 --name cime4r --detach jkuvdslab/cime
 ```
 
 To **uninstall** CIME4R:
 ```bash
-docker rm --force cime
+docker rm --force cime4r
 ```
 
 
-## Option 2 - Build and run CIME4R from source (for development)
+## Option 3 - Build and run CIME4R from source (for development)
 
 ### Back-end
 First, create a new virtual environment for the dependencies
