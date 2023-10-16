@@ -17,9 +17,7 @@ on:
   schedule:
     - cron: '15 1 * * *'
 
-permissions:
-  contents: write-all
-  id-token: write-all
+permissions: write-all
 
 jobs:
   build:
