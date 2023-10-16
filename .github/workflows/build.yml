@@ -18,8 +18,8 @@ on:
     - cron: '15 1 * * *'
 
 permissions:
-  contents: write
-  id-token: write
+  contents: write-all
+  id-token: write-all
 
 jobs:
   build:
