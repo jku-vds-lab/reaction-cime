@@ -8,6 +8,7 @@ services:
       - REACTION_CIME__DBURL=postgresql://admin:admin@db_postgres:5432/db
       - VISYN_CORE__SECURITY__STORE__NO_SECURITY_STORE__ENABLE=true
       - VISYN_CORE__SECURITY__STORE__NO_SECURITY_STORE__USER=admin
+      - 'VISYN_CORE__CLIENT_CONFIG={"publicVersion": false}'
   db_postgres:
     image: postgres:13
     ports:
