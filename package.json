@@ -34,7 +34,6 @@
     "docs": "visyn_scripts docs",
     "lint:fix": "visyn_scripts lint --fix",
     "lint": "visyn_scripts lint",
-    "prepack": "yarn run build",
     "start:fast": "visyn_scripts start --env workspace_mode=single fast=true",
     "start": "visyn_scripts start --env workspace_mode=single",
     "storybook:build": "NODE_OPTIONS=--max_old_space_size=4096 build-storybook",
@@ -78,8 +77,8 @@
     "react-router-dom": "^6.9.0",
     "react-vega": "^7.6.0",
     "redux": "^4.1.2",
-    "visyn_core": "git+ssh://git@github.com/datavisyn/visyn_core#develop",
-    "visyn_scripts": "git+ssh://git@github.com/datavisyn/visyn_scripts#develop",
+    "visyn_core": "git+ssh://git@github.com/datavisyn/visyn_core#no_dist",
+    "visyn_scripts": "git+ssh://git@github.com/datavisyn/visyn_scripts#no_dist",
     "vsup": "^1.1.0",
     "worker-loader": "^3.0.8"
   },
