@@ -26,6 +26,7 @@ jobs:
     with:
       cypress_enable: true
       cypress_run_because_flag: ${{ inputs.cypress == true }}
+      cypress_runs_on: "Ubuntu-22.04"
 
   build-docker:
     # needs: [build]
