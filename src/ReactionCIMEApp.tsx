@@ -174,7 +174,7 @@ const ApplicationWrapper = connector(({ setMouseMoveFn, setMouseClickFn, resetVi
         baseUrl: ReactionCIMEBackendFromEnv.baseUrl,
       }}
       features={{
-        embeddings: clientConfig.publicVersion
+        embeddings: clientConfig?.publicVersion
           ? [
               {
                 id: 'noProjection',
