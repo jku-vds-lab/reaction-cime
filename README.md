@@ -106,18 +106,6 @@ docker pull ghcr.io/jku-vds-lab/reaction-cime:develop
 docker run -d -p 9000:9000 --name cime4r --detach jkuvdslab/cime
 ```
 
-To **update** CIME4R:
-```bash
-docker rm --force cime4r
-docker pull jkuvdslab/cime
-docker run -d -p 8080:8080 --name cime4r --detach jkuvdslab/cime
-```
-
-To **uninstall** CIME4R:
-```bash
-docker rm --force cime4r
-```
-
 
 ## Option 3 - Build and run CIME4R from source (for development)
 
