@@ -13,9 +13,13 @@ This repository includes:
 * [Installation](#installation)
 * [How to cite?](#how-to-cite)
 
+Check out our [project website](https://jku-vds-lab.at/publications/2024_cime4r/).
+
 Check out our [paper](https://doi.org/10.26434/chemrxiv-2023-218lq) for further details about the implementation and use cases of CIME4R. 
 
-Check out the [DEMO website](https://reaction-optimization.jku-vds-lab.at) of CIME4R, which includes the datasets used in the use cases.
+Check out the [Demo website](https://reaction-optimization.jku-vds-lab.at) of CIME4R, which includes the datasets used in the use cases.
+
+Check out the [Demo video](https://www.youtube.com/watch?v=feqZWesf5Ws) of CIME4R.
 
 Check out the [example datasets and generation scripts](https://osf.io/vda72/) used in the paper.
 
