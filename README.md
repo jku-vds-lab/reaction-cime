@@ -65,7 +65,7 @@ The following describes a list of controls:
 
 
 ## Tab Documentation
-[Dataset documentation](src/Readme/Dataset_README.md)
+[Dataset](src/Readme/Dataset_README.md)
 
 [Projection documentation](src/Readme/Projection_README.md)
 
