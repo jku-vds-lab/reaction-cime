@@ -1,24 +1,27 @@
-# ChemInformatics Model Explorer for Reaction Optimization (CIME4R): TODO…
-This is the repository for CIME4R (as discussed in the paper). It builds upon the [Projection Space Explorer library](https://github.com/jku-vds-lab/projection-space-explorer).
+# CIME4R: Exploring iterative, AI-guided chemical reaction optimization campaigns in their parameter space
+This is the repository for CIME4R. It builds upon the [Projection Space Explorer library](https://github.com/jku-vds-lab/projection-space-explorer).
 
-#### Published in: TODO ####
-#### DOI: TODO ###
+#### Submitted to: Journal of Cheminformatics ####
+#### Preprint: https://doi.org/10.26434/chemrxiv-2023-218lq ####
+#### DOI: 10.26434/chemrxiv-2023-218lq ###
 
 This repository includes:
 * The implementation of CIME4R
-    * [Front-end](Application/) web application written in TypeScript using React
-    * [Back-end](Application/reaction_cime/) python server
-* [Documentation](#documentation)
+    * Front-end web application written in TypeScript using React
+    * [Back-end](reaction_cime/) python server
+* [Documentation](#documentation-cime4r)
 * [Installation](#installation)
 * [How to cite?](#how-to-cite)
 
-Check out our [paper](TODO url) for further details about the implementation and use cases of CIME4R. 
+Check out our [project website](https://jku-vds-lab.at/publications/2024_cime4r/).
 
-Check out the [DEMO website](https://reaction-optimization.jku-vds-lab.at) of CIME4R, which includes the datasets used in the use cases.
+Check out our [paper](https://doi.org/10.26434/chemrxiv-2023-218lq) for further details about the implementation and use cases of CIME4R. 
 
-Check out the [dataset generation examples](TODO add examples) if you want to try CIME4R with your own dataset.
+Check out the [Demo website](https://reaction-optimization.jku-vds-lab.at) of CIME4R, which includes the datasets used in the use cases.
 
-Check out the [example datasets](TODO upload to osf) from the paper's use cases.
+Check out the [Demo video](https://www.youtube.com/watch?v=feqZWesf5Ws) of CIME4R.
+
+Check out the [example datasets and generation scripts](https://osf.io/vda72/) used in the paper.
 
 # Documentation CIME4R
 The ChemInformatics Model Explorer for Reaction Optimization (short CIME4R) extension of the [Projection Space Explorer library](https://github.com/jku-vds-lab/projection-space-explorer/tree/develop) allows users to interactively explore the parameter space of chemical reactions and information about the iterative optimization process. The application allows users to understand how a machine learning model arrives at its decision on which experiments to perform next in retrospect (e.g., as proposed in [EDBO](https://www.nature.com/articles/s41586-021-03213-y)). It also facilitates interactive human-AI collaboration for reaction optimization to combine the advantages of both worlds for final decision-making: AI precision and human/expert intuition.
@@ -26,17 +29,6 @@ With CIME4R, users can apply a 2D projection to the provided reaction optimizati
 Since parameter spaces of chemical reactions can be huge, users can apply filtering or random subsampling to only show a (representative) subset of the data. The remaining data can be shown optionally using an aggregated view of the projected data. 
 Users can interactively select data points (note: each data point represents one experiment configuration and will be called “experiment” in this documentation) in a 2D scatter plot and show summary statistics of features of all selected experiments in a summary visualization. 
 Instructions for installing the application are provided at the end of this documentation.
-
-##### Table of Contents  
-[General/Controls](#generalcontrols)  
-[Dataset](#dataset)  
-[Projection](#projection)  
-[Filter](#filter)  
-[Aggregate](#aggregate)  
-[Encoding](#encoding)  
-[Selection Info](#selection-info)  
-[Groups](#groups)  
-[Tabular view](#tabular-view)
 
 ## General/Controls
 This section explains the general layout of the tool and the basic controls with which you can interact with the tool.
@@ -95,27 +87,15 @@ Simply copy the `docker-compose-demo.yml` from this repository (or checkout this
 docker compose -f ./docker-compose-demo.yml up
 ```
 
-This will start the server and a corresponding postgres for the datasets. You can the navigate to http://localhost:9000/ and use the application.
+This will start the server and a corresponding postgreSQL database for the datasets. You can then navigate to http://localhost:9000/ and use the application.
 
 ## Option 2 - Run CIME4R with Docker
-If you don't want to use Docker Compose, you need to bring your own postgres. Make sure it is installed locally or override it with the env variable (REACTION_CIME__DBURL=postgresql://admin:admin@db_postgres:5432/db).
+If you don't want to use Docker Compose, you need to bring your own postgreSQL database. Make sure it is installed locally or override the environment variable (REACTION_CIME__DBURL=postgresql://admin:admin@db_postgres:5432/db) to link a remote database.
 
 To **install** the latest version of CIME4R: 
 ```bash 
 docker pull ghcr.io/jku-vds-lab/reaction-cime:develop
-docker run -d -p 9000:9000 --name cime4r --detach jkuvdslab/cime
-```
-
-To **update** CIME4R:
-```bash
-docker rm --force cime4r
-docker pull jkuvdslab/cime
-docker run -d -p 8080:8080 --name cime4r --detach jkuvdslab/cime
-```
-
-To **uninstall** CIME4R:
-```bash
-docker rm --force cime4r
+docker run -d -p 9000:9000 --name cime4r --detach ghcr.io/jku-vds-lab/reaction-cime:develop
 ```
 
 
@@ -165,12 +145,14 @@ and launch the webpack-dev-server via
 yarn start
 ```
 
-Now, if a login screen pops up, you can use admin:admin to login. If you want to disable the login screen and go directly to the application, create a `reaction_cime/.env` with the following contents. After restarting the server, you will be automatically logged in.
+Now, if a login screen pops up, you can use admin:admin to login. If you want to disable the login screen and go directly to the application, create a `reaction_cime/.env` with the following contents. 
 
 ```
 VISYN_CORE__SECURITY__STORE__NO_SECURITY_STORE__ENABLE=true
 VISYN_CORE__SECURITY__STORE__NO_SECURITY_STORE__USER=admin
 ```
+
+After restarting the server, you will be automatically logged in.
 
 ### Link PSE
 If you want to make changes to PSE and view the changes without having to push to the repo and reinstalling dependencies, the recommended way is to use the yarn link/portal and/or our webpack resolveAliases feature.
@@ -200,7 +182,7 @@ To now include `projection-space-explorer` to your webpack build, add a `.yo-rc-
 
 With that, you can now edit all files of `projection-space-explorer`, including auto-completion (as the node_modules of the application will be used as main lookup), and get hot-reloading.
 
-## Option 3 - Run Application with Docker from Source
+## Option 4 - Run Application with Docker from Source
 ```bash
 yarn install
 ```
@@ -217,7 +199,7 @@ docker build -f Dockerfile -t reaction_cime .
 docker run --rm -it --network host reaction_cime
 ```
 
-Beware that you will need a Postgres to run the image. By default, it will use the connection string in `settings.py`, which you can override via ENV variables. For example, you can set `REACTION_CIME__DBURL=postgresql://...` and use any database of your liking.
+Beware that you will need a Postgres to run the image. By default, it will use the connection string in `settings.py`, which you can override via environment variables. For example, you can set `REACTION_CIME__DBURL=postgresql://...` and use any database of your liking.
 
 
 
@@ -227,13 +209,14 @@ You can cite CIME4R using the following bibtex:
 
 ```bibtex
 @article{humer2023cime4r,
-  author={TODO},
-  journal={TODO},
-  title={TODO},
+  author={Humer, Christina and Nicholls, Rachel and Heberle, Henry and Heckmann, Moritz and Pühringer, Michael and Wolf, Thomas and Lübbesmeyer, Maximilian and Heinrich, Julian and Hillenbrand, Julius and Volpin, Giulio and Streit, Marc},
+  journal={ChemRxiv},
+  title={{CIME4R}: {Exploring} iterative, {AI}-guided chemical reaction optimization campaigns in their parameter space},
+  shorttitle = {{CIME4R}},
   year={2023},
-  doi={TODO},
-  volume={TODO},
-  number={TODO},
+  month = dec,
+  doi={10.26434/chemrxiv-2023-218lq},
+  note={This content is a preprint and has not been peer-reviewed.}
 }
 ```
 
