@@ -83,15 +83,15 @@ Simply copy the `docker-compose-demo.yml` from this repository (or checkout this
 docker compose -f ./docker-compose-demo.yml up
 ```
 
-This will start the server and a corresponding postgres for the datasets. You can the navigate to http://localhost:9000/ and use the application.
+This will start the server and a corresponding postgreSQL database for the datasets. You can then navigate to http://localhost:9000/ and use the application.
 
 ## Option 2 - Run CIME4R with Docker
-If you don't want to use Docker Compose, you need to bring your own postgres. Make sure it is installed locally or override it with the env variable (REACTION_CIME__DBURL=postgresql://admin:admin@db_postgres:5432/db).
+If you don't want to use Docker Compose, you need to bring your own postgreSQL database. Make sure it is installed locally or override the environment variable (REACTION_CIME__DBURL=postgresql://admin:admin@db_postgres:5432/db) to link a remote database.
 
 To **install** the latest version of CIME4R: 
 ```bash 
 docker pull ghcr.io/jku-vds-lab/reaction-cime:develop
-docker run -d -p 9000:9000 --name cime4r --detach jkuvdslab/cime
+docker run -d -p 9000:9000 --name cime4r --detach ghcr.io/jku-vds-lab/reaction-cime:develop
 ```
 
 
@@ -141,12 +141,14 @@ and launch the webpack-dev-server via
 yarn start
 ```
 
-Now, if a login screen pops up, you can use admin:admin to login. If you want to disable the login screen and go directly to the application, create a `reaction_cime/.env` with the following contents. After restarting the server, you will be automatically logged in.
+Now, if a login screen pops up, you can use admin:admin to login. If you want to disable the login screen and go directly to the application, create a `reaction_cime/.env` with the following contents. 
 
 ```
 VISYN_CORE__SECURITY__STORE__NO_SECURITY_STORE__ENABLE=true
 VISYN_CORE__SECURITY__STORE__NO_SECURITY_STORE__USER=admin
 ```
+
+After restarting the server, you will be automatically logged in.
 
 ### Link PSE
 If you want to make changes to PSE and view the changes without having to push to the repo and reinstalling dependencies, the recommended way is to use the yarn link/portal and/or our webpack resolveAliases feature.
@@ -176,7 +178,7 @@ To now include `projection-space-explorer` to your webpack build, add a `.yo-rc-
 
 With that, you can now edit all files of `projection-space-explorer`, including auto-completion (as the node_modules of the application will be used as main lookup), and get hot-reloading.
 
-## Option 3 - Run Application with Docker from Source
+## Option 4 - Run Application with Docker from Source
 ```bash
 yarn install
 ```
@@ -193,7 +195,7 @@ docker build -f Dockerfile -t reaction_cime .
 docker run --rm -it --network host reaction_cime
 ```
 
-Beware that you will need a Postgres to run the image. By default, it will use the connection string in `settings.py`, which you can override via ENV variables. For example, you can set `REACTION_CIME__DBURL=postgresql://...` and use any database of your liking.
+Beware that you will need a Postgres to run the image. By default, it will use the connection string in `settings.py`, which you can override via environment variables. For example, you can set `REACTION_CIME__DBURL=postgresql://...` and use any database of your liking.
 
 
 
