@@ -26,17 +26,6 @@ Since parameter spaces of chemical reactions can be huge, users can apply filter
 Users can interactively select data points (note: each data point represents one experiment configuration and will be called “experiment” in this documentation) in a 2D scatter plot and show summary statistics of features of all selected experiments in a summary visualization. 
 Instructions for installing the application are provided at the end of this documentation.
 
-##### Table of Contents  
-[General/Controls](#generalcontrols)  
-[Dataset](#dataset)  
-[Projection](#projection)  
-[Filter](#filter)  
-[Aggregate](#aggregate)  
-[Encoding](#encoding)  
-[Selection Info](#selection-info)  
-[Groups](#groups)  
-[Tabular view](#tabular-view)
-
 ## General/Controls
 This section explains the general layout of the tool and the basic controls with which you can interact with the tool.
 
@@ -65,7 +54,7 @@ The following describes a list of controls:
 
 
 ## Tab Documentation
-[Dataset](src/Readme/Dataset_README.md)
+[Dataset documentation](src/Readme/Dataset_README.md)
 
 [Projection documentation](src/Readme/Projection_README.md)
 
