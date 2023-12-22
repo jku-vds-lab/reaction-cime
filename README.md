@@ -9,7 +9,7 @@ This repository includes:
 * The implementation of CIME4R
     * Front-end web application written in TypeScript using React
     * [Back-end](reaction_cime/) python server
-* [Documentation](#documentation)
+* [Documentation](#documentation-cime4r)
 * [Installation](#installation)
 * [How to cite?](#how-to-cite)
 
