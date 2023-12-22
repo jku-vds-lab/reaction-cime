@@ -1,24 +1,23 @@
-# ChemInformatics Model Explorer for Reaction Optimization (CIME4R): TODO…
-This is the repository for CIME4R (as discussed in the paper). It builds upon the [Projection Space Explorer library](https://github.com/jku-vds-lab/projection-space-explorer).
+# CIME4R: Exploring iterative, AI-guided chemical reaction optimization campaigns in their parameter space
+This is the repository for CIME4R. It builds upon the [Projection Space Explorer library](https://github.com/jku-vds-lab/projection-space-explorer).
 
-#### Published in: TODO ####
-#### DOI: TODO ###
+#### Submitted to: Journal of Cheminformatics ####
+#### Preprint: https://doi.org/10.26434/chemrxiv-2023-218lq ####
+#### DOI: 10.26434/chemrxiv-2023-218lq ###
 
 This repository includes:
 * The implementation of CIME4R
-    * [Front-end](Application/) web application written in TypeScript using React
-    * [Back-end](Application/reaction_cime/) python server
+    * Front-end web application written in TypeScript using React
+    * [Back-end](reaction_cime/) python server
 * [Documentation](#documentation)
 * [Installation](#installation)
 * [How to cite?](#how-to-cite)
 
-Check out our [paper](TODO url) for further details about the implementation and use cases of CIME4R. 
+Check out our [paper](https://doi.org/10.26434/chemrxiv-2023-218lq) for further details about the implementation and use cases of CIME4R. 
 
 Check out the [DEMO website](https://reaction-optimization.jku-vds-lab.at) of CIME4R, which includes the datasets used in the use cases.
 
-Check out the [dataset generation examples](TODO add examples) if you want to try CIME4R with your own dataset.
-
-Check out the [example datasets](TODO upload to osf) from the paper's use cases.
+Check out the [example datasets and generation scripts](https://osf.io/vda72/) used in the paper.
 
 # Documentation CIME4R
 The ChemInformatics Model Explorer for Reaction Optimization (short CIME4R) extension of the [Projection Space Explorer library](https://github.com/jku-vds-lab/projection-space-explorer/tree/develop) allows users to interactively explore the parameter space of chemical reactions and information about the iterative optimization process. The application allows users to understand how a machine learning model arrives at its decision on which experiments to perform next in retrospect (e.g., as proposed in [EDBO](https://www.nature.com/articles/s41586-021-03213-y)). It also facilitates interactive human-AI collaboration for reaction optimization to combine the advantages of both worlds for final decision-making: AI precision and human/expert intuition.
@@ -215,13 +214,14 @@ You can cite CIME4R using the following bibtex:
 
 ```bibtex
 @article{humer2023cime4r,
-  author={TODO},
-  journal={TODO},
-  title={TODO},
+  author={Humer, Christina and Nicholls, Rachel and Heberle, Henry and Heckmann, Moritz and Pühringer, Michael and Wolf, Thomas and Lübbesmeyer, Maximilian and Heinrich, Julian and Hillenbrand, Julius and Volpin, Giulio and Streit, Marc},
+  journal={ChemRxiv},
+  title={{CIME4R}: {Exploring} iterative, {AI}-guided chemical reaction optimization campaigns in their parameter space},
+  shorttitle = {{CIME4R}},
   year={2023},
-  doi={TODO},
-  volume={TODO},
-  number={TODO},
+  month = dec,
+  doi={10.26434/chemrxiv-2023-218lq},
+  note={This content is a preprint and has not been peer-reviewed.}
 }
 ```
 
