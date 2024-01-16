@@ -16,10 +16,9 @@ import { connect, ConnectedProps, useDispatch } from 'react-redux';
 import HelpIcon from '@mui/icons-material/Help';
 import { IconButton, Tooltip } from '@mui/material';
 import { useVisynAppContext, VisynApp, VisynHeader } from 'visyn_core/app';
-import { Anchor, useMantineTheme } from '@mantine/core';
+import { Anchor, useMantineTheme, MantineColorShade } from '@mantine/core';
 
 import { BrowserRouter, useSearchParams } from 'react-router-dom';
-import { IClientConfig } from 'visyn_core/base';
 import { LineUpContext } from './LineUpContext';
 import { LineUpTabPanel } from './Overrides/LineUpTabPanel';
 import { AppState, CIME4RViewActions, createCIMERootReducer } from './State/Store';
@@ -269,7 +268,7 @@ export function ReactionCIMEApp() {
             <></>
           ) : (
             <VisynHeader
-              backgroundColor={theme.colors.dark[theme.fn.primaryShade()]}
+              backgroundColor={theme.colors.dark[theme.primaryShade as MantineColorShade]}
               components={{
                 aboutAppModal: {
                   content: <BuildInfoContent />,
@@ -286,7 +285,7 @@ export function ReactionCIMEApp() {
                       href="https://www.bayer.com/"
                       rel="noreferrer"
                       target="_blank"
-                      sx={{
+                      style={{
                         // Center the image
                         display: 'flex',
                         alignItems: 'center',
@@ -298,7 +297,7 @@ export function ReactionCIMEApp() {
                       href="https://jku-vds-lab.at/"
                       rel="noreferrer"
                       target="_blank"
-                      sx={{
+                      style={{
                         // Center the image
                         display: 'flex',
                         alignItems: 'center',
