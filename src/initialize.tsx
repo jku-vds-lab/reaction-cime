@@ -13,7 +13,7 @@ declare module 'visyn_core/base' {
 }
 
 createRoot(document.getElementById('app')).render(
-  <VisynAppProvider appName="CIME4R">
+  <VisynAppProvider disableMantine6 appName="CIME4R">
     <ReactionCIMEApp />
   </VisynAppProvider>,
 );

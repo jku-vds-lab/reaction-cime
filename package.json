@@ -90,7 +90,8 @@
     "@types/react-dom": "~18.2.0",
     "react": "~18.2.0",
     "react-dom": "~18.2.0",
-    "vega-lite@4.16.8": "patch:vega-lite@npm:4.16.8#.yarn/patches/vega-lite-npm-4.16.8-2acecf824b.patch"
+    "vega-lite@4.16.8": "patch:vega-lite@npm:4.16.8#.yarn/patches/vega-lite-npm-4.16.8-2acecf824b.patch",
+    "visyn_core": "git+ssh://git@github.com/datavisyn/visyn_core#mantine7"
   },
   "visyn": {
     "entries": {
