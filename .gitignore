@@ -37,7 +37,7 @@ yarn.lock
 !.yarn/sdks
 !.yarn/versions
 
-yarn.lock
+!yarn.lock
 
 # pyenv
 .python-version
