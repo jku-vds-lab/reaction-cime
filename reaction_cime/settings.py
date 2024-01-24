@@ -2,10 +2,11 @@ from pathlib import Path
 
 from pydantic import BaseModel
 from visyn_core import manager
+from visyn_core.settings.utils import get_default_postgres_url
 
 
 class ReactionCimeSettings(BaseModel):
-    dburl: str = "postgresql://admin:admin@localhost:5432/db"
+    dburl: str = get_default_postgres_url()
     # statement_timeout: Any = None
     bundles_dir: str | None = None
     uploaded_files_path: Path = Path("/tmp/uploaded_files")
