@@ -6,9 +6,9 @@
 In the “Dataset” tab users can choose to either upload their own dataset (orange) or load datasets that were already uploaded previously (yellow).
 The “Select dataset” lists datasets that are already available in the back-end (from any user!) and can be deleted with the delete button next to the filename.
 The list can also be manually refreshed with the refresh button next to “Select dataset” (this is only necessary if another user uploads a file during a simultaneous session and the current user needs this exact file).
-If a user wants to upload a custom file, it must be a CSV or a zipped CSV. CIME4R recognizes special naming of columns in the dataset as described in the “Data Format” subsection. We provide a [datafile generation example](TODO: add examples) to get users started with their own datasets.
+If a user wants to upload a custom file, it must be a CSV or a zipped CSV. CIME4R recognizes special naming of columns in the dataset as described in the “Data Format” subsection. We provide [datafile generation examples](https://osf.io/vda72/) to get users started with their own datasets.
 Finally, in the advanced settings (green) users can specify a SMILES lookup table and export/import a PSE session. 
-With the SMILES lookup table, users can define key-value pairs of SMILES strings and human-readable names for those SMILES, which are then used by CIME4R to show the human-readable names instead of SMILES. The file has to be a CSV file with the columns “smiles” and “shortname”. Check out the [example SMILES lookup table](TODO: add example).
+With the SMILES lookup table, users can define key-value pairs of SMILES strings and human-readable names for those SMILES, which are then used by CIME4R to show the human-readable names instead of SMILES. The file has to be a CSV file with the columns “smiles” and “shortname”. Check out the [example SMILES lookup table](https://osf.io/9kzpc).
 The export button allows users to save the current session of CIME4R so that they can later continue or even share the session with a colleague.
 
 ![dataset screenshot](https://user-images.githubusercontent.com/45741696/227914723-6b7a48a0-9d41-4519-b4b6-7cbb31f4f525.PNG)
@@ -18,7 +18,7 @@ Data is handed to the system using a [comma separated values (CSV)](https://en.w
 New files are first uploaded to the python back-end that runs with Flask (https://palletsprojects.com/p/flask/) and then preprocessed and stored in a [PostgreSQL](https://www.postgresql.org/) database.
 For big files, the initial upload and preprocessing can take several minutes. If the files are already uploaded, it is much faster.
 
-An example dataset can be found in [TODO: add example dataset](TODO). Datasets used in CIME4R's article are available in the data repository: [TODO: add link to OSF](TODO)
+An example dataset and the datasets used in the CIME4R article are available in the [data repository](https://osf.io/vda72/).
 
 ### Special Column Names
 Users can define arbitrary column names. There are some special column names and column modifiers that are recognized by the system and have special meanings:
