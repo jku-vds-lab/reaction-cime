@@ -2,8 +2,8 @@
 This is the repository for CIME4R. It builds upon the [Projection Space Explorer library](https://github.com/jku-vds-lab/projection-space-explorer).
 
 #### Submitted to: Journal of Cheminformatics ####
-#### Preprint: https://doi.org/10.26434/chemrxiv-2023-218lq ####
-#### DOI: 10.26434/chemrxiv-2023-218lq ###
+#### Paper: https://doi.org/10.1186/s13321-024-00840-1 ####
+#### DOI: 10.1186/s13321-024-00840-1 ###
 
 This repository includes:
 * The implementation of CIME4R
@@ -15,7 +15,7 @@ This repository includes:
 
 Check out our [project website](https://jku-vds-lab.at/publications/2024_cime4r/).
 
-Check out our [paper](https://doi.org/10.26434/chemrxiv-2023-218lq) for further details about the implementation and use cases of CIME4R. 
+Check out our [paper](https://doi.org/10.1186/s13321-024-00840-1) for further details about the implementation and use cases of CIME4R. 
 
 Check out the [Demo website](https://reaction-optimization.jku-vds-lab.at) of CIME4R, which includes the datasets used in the use cases.
 
