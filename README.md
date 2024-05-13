@@ -208,15 +208,20 @@ Beware that you will need a Postgres to run the image. By default, it will use t
 You can cite CIME4R using the following bibtex:
 
 ```bibtex
-@article{humer2023cime4r,
-  author={Humer, Christina and Nicholls, Rachel and Heberle, Henry and Heckmann, Moritz and Pühringer, Michael and Wolf, Thomas and Lübbesmeyer, Maximilian and Heinrich, Julian and Hillenbrand, Julius and Volpin, Giulio and Streit, Marc},
-  journal={ChemRxiv},
-  title={{CIME4R}: {Exploring} iterative, {AI}-guided chemical reaction optimization campaigns in their parameter space},
-  shorttitle = {{CIME4R}},
-  year={2023},
-  month = dec,
-  doi={10.26434/chemrxiv-2023-218lq},
-  note={This content is a preprint and has not been peer-reviewed.}
+@article{humer_cime4r_2024,
+	title = {{CIME4R}: {Exploring} iterative, {AI}-guided chemical reaction optimization campaigns in their parameter space},
+	volume = {16},
+	shorttitle = {{CIME4R}},
+	url = {https://doi.org/10.1186/s13321-024-00840-1},
+	doi = {10.1186/s13321-024-00840-1},
+	number = {51},
+	urldate = {2024-05-13},
+	journal = {Journal of Cheminformatics},
+	author = {Humer, Christina and Nicholls, Rachel and Heberle, Henry and Heckmann, Moritz and Pühringer, Michael and Wolf, Thomas and Lübbesmeyer, Maximilian and Heinrich, Julian and Hillenbrand, Julius and Volpin, Giulio and Streit, Marc},
+	month = {5},
+	year = {2024},
+	keywords = {Artificial intelligence, Bayesian optimization, Explainable AI, Interpretable, Reaction optimization},
+	pages = {51},
 }
 ```
 
