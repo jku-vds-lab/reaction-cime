@@ -6,15 +6,6 @@ on:
     - cron: '15 1 * * *'
 
 jobs:
-  build-main:
-    uses: datavisyn/github-workflows/.github/workflows/build-node-python.yml@main
-    secrets: inherit
-    with:
-      cypress_enable: true
-      cypress_run_because_flag: true
-      cypress_runs_on: "Ubuntu-22.04"
-      deduplication_id: main
-      branch: main
   build-develop:
     uses: datavisyn/github-workflows/.github/workflows/build-node-python.yml@main
     secrets: inherit
