@@ -5,6 +5,8 @@ on:
   schedule:
     - cron: '15 1 * * *'
 
+permissions: write-all
+
 jobs:
   build-develop:
     uses: datavisyn/github-workflows/.github/workflows/build-node-python.yml@main
