@@ -10,7 +10,10 @@ export class ReactionCIMEBackend {
 
   protected cache = {};
 
-  constructor(public readonly baseUrl: string, public readonly fetchParams: Parameters<typeof fetch>[1] = {}) {}
+  constructor(
+    public readonly baseUrl: string,
+    public readonly fetchParams: Parameters<typeof fetch>[1] = {},
+  ) {}
 
   protected handleSmilesCache = (smiles: string, highlight = false) => {
     // already downloaded this image -> saved in smiles cache
